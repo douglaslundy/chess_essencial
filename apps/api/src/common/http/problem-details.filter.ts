@@ -27,7 +27,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         exception instanceof Error
           ? exception.name + ': ' + exception.message
           : 'Unknown internal error';
-      this.logger.error(message);
+      this.logger.error(message, exception instanceof Error ? exception.stack : undefined);
     }
 
     reply
