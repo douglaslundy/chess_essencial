@@ -1,31 +1,28 @@
 # Progresso do Projeto
 
 ## Última atualização
-2026-07-16 23:12:00 -03:00
+2026-07-16 23:29:00 -03:00
 
 ## Tarefa em andamento
-Infraestrutura de publicação Git e deploy automático por `git pull`. A Fase 5 foi concluída, testada e implantada; falta publicar o repositório e ativar o agendador na VPS.
+Fase 6 — interface de partida. O fluxo GitHub → git pull automático na VPS foi configurado e comprovado após a conclusão da Fase 5.
 
 ## Contexto necessário
-- `AGENTS.md`: regra estrutural de deploy por Git pull.
-- `deploy/auto-deploy.sh` e `deploy/remote-deploy.sh`: pull bloqueado por lock e implantação local.
-- `docs/DEPLOY_GIT_PULL.md`: procedimento operacional.
-- `scripts/publish-deploy.ps1`: publicação da `main`.
-- GitHub: repositorio privado e vazio; usar deploy key somente-leitura para o pull da VPS.
-- `prompts/06_GAME_UI.md`: próxima fase, somente após concluir o bootstrap Git.
+- `prompts/06_GAME_UI.md`: requisitos e critérios de aceite da fase atual.
+- `frontend/DESIGN_SYSTEM.md` e `frontend/PAGES.md`: convenções visuais e de páginas.
+- `apps/web/src/app/`: frontend existente a ser evoluído.
+- `packages/contracts/src/game.ts` e `packages/contracts/src/realtime.ts`: contratos autoritativos já disponíveis.
+- `docs/REALTIME_PROTOCOL.md`: protocolo realtime implementado.
 
 ## Concluído
 - [x] Fases 1 a 4 concluídas, testadas e implantadas.
-- [x] Fase 5: motor puro de rating com tabela local, diferença efetiva, K 40/20/10 e arredondamento auditável.
-- [x] Fase 5: filas por controle/pool, expansão bilateral, bloqueios, preferência contra repetição, cores e lock transacional.
-- [x] Fase 5: desafios diretos com expiração e criação autoritativa de partida.
-- [x] Fase 5: finalização atualiza rating de forma idempotente; ledger imutável e reversões explícitas.
-- [x] Fase 5: histórico, leaderboard, contratos, OpenAPI, schema e documentação sincronizados.
-- [x] Fase 5: format, lint, typecheck, testes locais e build aprovados.
-- [x] Fase 5: 17/17 e2e aprovados em PostgreSQL temporário limpo.
-- [x] Fase 5: migration 0002, rollback, reaplicação e seed verificados.
-- [x] Fase 5: imagem `xadrez-essencial:phase5` saudável na VPS.
+- [x] Fase 5 concluída: matchmaking, desafios, rating por pool, ledger, histórico e leaderboard.
+- [x] Fase 5 aprovada com format, lint, typecheck, testes, build e 17/17 e2e em PostgreSQL limpo.
+- [x] Repositório privado publicado em `douglaslundy/chess_essencial`, branch `main`.
+- [x] Deploy key somente leitura configurada na VPS.
+- [x] Timer systemd executa `deploy/auto-deploy.sh` a cada minuto com `git pull --ff-only`.
+- [x] Autopull comprovado no commit `d34e398e999035bead103404885ef513a530d872`.
+- [x] Healthchecks externos de API, web e worker aprovados após o autopull.
 - [x] Nenhuma credencial fornecida pelo usuário foi gravada no repositório.
 
 ## Próxima tarefa
-Publicar a árvore em `https://github.com/douglaslundy/chess_essencial.git`, ativar e comprovar o autopull sem transferência de código por SSH. Depois, iniciar a Fase 6 e não avançar à Fase 7 antes dos testes e critérios de aceite.
+Ler o contexto listado, implementar a Fase 6 e não avançar à Fase 7 antes de executar todos os testes e atender aos critérios de aceite.
