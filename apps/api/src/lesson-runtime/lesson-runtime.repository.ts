@@ -16,7 +16,6 @@ import {
 import type { TransactionSql } from 'postgres';
 
 import { DatabaseService } from '../database/database.service.js';
-import { jsonValue } from '../database/json-value.js';
 
 interface AttemptRow {
   contentSnapshot: unknown;
@@ -96,7 +95,7 @@ export class LessonRuntimeRepository {
     const [attempt] = await this.database.client<AttemptRow[]>`
       INSERT INTO lesson_attempts (user_id, lesson_id, current_step_key, status, state, lesson_version, content_snapshot)
       VALUES (${userId}, ${lessonId}, ${snapshot.steps[0]!.stepKey}, 'started',
-        ${this.database.client.json(jsonValue(state))}, ${lessonVersion!.version}, ${this.database.client.json(jsonValue(snapshot))})
+        ${JSON.stringify(state)}::text::jsonb, ${lessonVersion!.version}, ${JSON.stringify(snapshot)}::text::jsonb)
       RETURNING id, user_id AS "userId", lesson_id AS "lessonId", current_step_key AS "currentStepKey",
         status, score, state, lesson_version AS "lessonVersion", content_snapshot AS "contentSnapshot",
         updated_at AS "updatedAt"
@@ -141,12 +140,12 @@ export class LessonRuntimeRepository {
       await tx`
         INSERT INTO lesson_attempt_actions (attempt_id, sequence, step_key, action, outcome, state_after)
         VALUES (${attempt.id}, ${sequence!.next}, ${step.stepKey},
-          ${tx.json(jsonValue(action))}, ${outcome}, ${tx.json(jsonValue(nextState))})
+          ${JSON.stringify(action)}::text::jsonb, ${outcome}, ${JSON.stringify(nextState)}::text::jsonb)
       `;
       const [updated] = await tx<AttemptRow[]>`
         UPDATE lesson_attempts SET current_step_key = ${completed ? null : lesson.steps[nextIndex]!.stepKey},
           status = ${completed ? 'completed' : 'started'}, score = ${score},
-          state = ${tx.json(jsonValue(nextState))}, updated_at = now(),
+          state = ${JSON.stringify(nextState)}::text::jsonb, updated_at = now(),
           completed_at = ${completed ? new Date() : null}
         WHERE id = ${attempt.id}
         RETURNING id, user_id AS "userId", lesson_id AS "lessonId", current_step_key AS "currentStepKey",

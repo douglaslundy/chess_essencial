@@ -16,6 +16,7 @@ Fase 9 — runtime de aula interativa, conforme `prompts/09_LESSON_RUNTIME.md`.
 - Correção: `jsonValue` + `sql.json(...)` nos writes de CMS, seed e runtime; leitura do runtime tolera registros legados duplamente serializados.
 - Teste unitário cobre preservação de arrays/objetos JSON e remoção de `undefined`; typecheck e testes API passaram.
 - Quarta execução: o carregamento da aula passou; o bind de JSON estruturado falhou com `TypeError` para `Array`/`Object`. Stack trace seguro habilitado para localizar a chamada no driver.
+- Stack confirmou o erro no `Bind` do Postgres.js. Binding corrigido para parâmetro `text` seguido de cast PostgreSQL `::text::jsonb`, evitando objeto bruto e dupla serialização.
 - Docker não está instalado neste Windows; a reprodução PostgreSQL continua pelo job isolado do GitHub.
 - O usuário determinou continuar sem deploy. Não acessar nem modificar a VPS.
 
