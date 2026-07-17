@@ -146,7 +146,7 @@ describeDatabase('course CMS database integration', () => {
     expect(detail.statusCode, detail.body).toBe(200);
     expect(detail.json().modules).toHaveLength(10);
     expect(
-      detail.json().modules.every((module: { lessons: unknown[] }) => module.lessons.length === 1),
+      detail.json().modules.every((module: { lessons: unknown[] }) => module.lessons.length >= 1),
     ).toBe(true);
   });
 });

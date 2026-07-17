@@ -477,19 +477,65 @@ paths:
         '403': {$ref: '#/components/responses/Problem'}
   /lessons/{lessonId}:
     get:
-      summary: Obter aula e primeira etapa autorizada
+      summary: Obter metadados e primeira etapa sanitizada
+      operationId: getLessonOverview
+      parameters:
+        - {name: lessonId, in: path, required: true, schema: {type: string, format: uuid}}
       responses:
-        '200': {description: OK}
+        '200':
+          description: Aula disponível sem respostas futuras
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LessonOverview'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
   /lesson-attempts:
     post:
-      summary: Iniciar tentativa de aula
+      summary: Iniciar ou retomar tentativa
+      operationId: startLessonAttempt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/StartLessonAttemptInput'}
       responses:
-        '201': {description: Criada}
+        '201':
+          description: Estado atual da tentativa
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LessonAttemptView'}
+  /lesson-attempts/{attemptId}:
+    get:
+      summary: Retomar estado persistido da tentativa
+      operationId: getLessonAttempt
+      parameters:
+        - {name: attemptId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Estado atual
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LessonAttemptView'}
+        '404': {$ref: '#/components/responses/Problem'}
   /lesson-attempts/{attemptId}/actions:
     post:
-      summary: Submeter movimento ou resposta da etapa
+      summary: Submeter ação para avaliação autoritativa
+      operationId: submitLessonAction
+      parameters:
+        - {name: attemptId, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LessonActionInput'}
       responses:
-        '200': {description: Estado atualizado}
+        '201':
+          description: Estado atualizado e persistido
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LessonAttemptView'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
   /exercises:
     get:
       summary: Pesquisar exercícios
@@ -519,6 +565,55 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    PublicLessonStep:
+      type: object
+      required: [stepKey, stepType, bodyMd, title, initialFen, orientation]
+      properties:
+        stepKey: {type: string}
+        stepType: {type: string, enum: [text, board_instruction, quiz, explanation, checkpoint, summary]}
+        title: {type: [string, 'null']}
+        bodyMd: {type: string}
+        initialFen: {type: [string, 'null']}
+        orientation: {type: [string, 'null'], enum: [white, black, null]}
+    LessonOverview:
+      type: object
+      required: [lessonId, title, module, estimatedMinutes, firstStep]
+      properties:
+        lessonId: {type: string, format: uuid}
+        title: {type: string}
+        module: {type: integer, minimum: 1, maximum: 10}
+        estimatedMinutes: {type: integer, minimum: 1}
+        firstStep: {$ref: '#/components/schemas/PublicLessonStep'}
+    StartLessonAttemptInput:
+      type: object
+      required: [lessonId]
+      properties:
+        lessonId: {type: string, format: uuid}
+    LessonActionInput:
+      oneOf:
+        - {type: object, required: [type], properties: {type: {const: continue}}}
+        - {type: object, required: [type, uci], properties: {type: {const: move}, uci: {type: string}}}
+        - {type: object, required: [type, value], properties: {type: {const: answer}, value: {type: [string, number, boolean]}}}
+    LessonAttemptView:
+      type: object
+      required: [attemptId, lessonId, status, currentStep, feedback, progress, score, updatedAt]
+      properties:
+        attemptId: {type: string, format: uuid}
+        lessonId: {type: string, format: uuid}
+        status: {type: string, enum: [started, completed, abandoned]}
+        currentStep:
+          oneOf:
+            - {$ref: '#/components/schemas/PublicLessonStep'}
+            - {type: 'null'}
+        feedback: {type: [string, 'null']}
+        progress:
+          type: object
+          required: [completedSteps, totalSteps]
+          properties:
+            completedSteps: {type: integer, minimum: 0}
+            totalSteps: {type: integer, minimum: 1}
+        score: {type: [number, 'null'], minimum: 0, maximum: 100}
+        updatedAt: {type: string, format: date-time}
     CourseSummary:
       type: object
       required: [id, slug, title, description, status, version, moduleCount]

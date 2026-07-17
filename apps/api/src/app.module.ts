@@ -8,6 +8,7 @@ import { DatabaseModule } from './database/database.module.js';
 import { GamesModule } from './games/games.module.js';
 import { HealthController } from './health/health.controller.js';
 import { HealthService } from './health/health.service.js';
+import { LessonRuntimeModule } from './lesson-runtime/lesson-runtime.module.js';
 import { MatchmakingModule } from './matchmaking/matchmaking.module.js';
 import { RatingsModule } from './ratings/ratings.module.js';
 
@@ -17,6 +18,7 @@ import { RatingsModule } from './ratings/ratings.module.js';
     CoursesModule,
     DatabaseModule,
     GamesModule,
+    LessonRuntimeModule,
     MatchmakingModule,
     RatingsModule,
     ConfigModule.forRoot({

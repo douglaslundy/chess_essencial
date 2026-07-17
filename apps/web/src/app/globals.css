@@ -1249,3 +1249,66 @@ input:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+
+.lessonPlayerPage {
+  padding: clamp(1rem, 3vw, 2.5rem);
+}
+.lessonHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 1rem;
+}
+.lessonProgress {
+  height: 0.55rem;
+  margin: 1rem 0 1.5rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #302d28;
+}
+.lessonProgress span {
+  display: block;
+  height: 100%;
+  background: #d8b85f;
+  transition: width 0.25s ease;
+}
+.lessonRuntimeGrid {
+  display: grid;
+  grid-template-columns: minmax(18rem, 1fr) minmax(18rem, 0.75fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+.lessonStepCard,
+.lessonComplete {
+  border: 1px solid #3d3933;
+  border-radius: 0.75rem;
+  background: #201e1b;
+  padding: clamp(1rem, 3vw, 2rem);
+}
+.lessonStepCard > span {
+  color: #d8b85f;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.lessonStepCard form,
+.lessonStepCard label {
+  display: grid;
+  gap: 0.65rem;
+}
+.lessonStepCard input {
+  border: 1px solid #4b463e;
+  border-radius: 0.4rem;
+  background: #161514;
+  color: #fff;
+  padding: 0.7rem;
+}
+.lessonFeedback {
+  min-height: 1.5rem;
+  color: #ebcf7d;
+}
+@media (max-width: 820px) {
+  .lessonRuntimeGrid {
+    grid-template-columns: 1fr;
+  }
+}

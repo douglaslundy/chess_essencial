@@ -30,7 +30,7 @@ docker exec "$POSTGRES_CONTAINER"   psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" 
 "${COMPOSE[@]}" run --rm   -e DATABASE_URL="$TEST_DATABASE_URL"   -e NODE_ENV=test   api pnpm --filter @xadrez/api db:rollback
 
 rollback_result="$(
-  docker exec "$POSTGRES_CONTAINER"     psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$DATABASE_NAME"     -tAc "SELECT to_regclass('public.user_roles') IS NULL AND to_regclass('public.game_review_annotations') IS NOT NULL;"
+  docker exec "$POSTGRES_CONTAINER"     psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$DATABASE_NAME"     -tAc "SELECT to_regclass('public.lesson_attempt_actions') IS NULL AND to_regclass('public.user_roles') IS NOT NULL;"
 )"
 [[ "$rollback_result" == "t" ]]
 printf '%s\n' 'migration.rollback_verified=true'

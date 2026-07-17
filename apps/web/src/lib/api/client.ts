@@ -6,6 +6,8 @@ import type {
   GameHistoryPage,
   GameMove,
   GameState,
+  LessonActionInput,
+  LessonAttemptView,
   ReviewAnnotation,
   ReviewAnnotationInput,
 } from '@xadrez/contracts';
@@ -59,6 +61,18 @@ async function requestText(path: string, token: string): Promise<string> {
   return response.text();
 }
 export const api = {
+  startLessonAttempt: (lessonId: string, token: string) =>
+    request<LessonAttemptView>('/lesson-attempts', token, {
+      method: 'POST',
+      body: JSON.stringify({ lessonId }),
+    }),
+  getLessonAttempt: (attemptId: string, token: string) =>
+    request<LessonAttemptView>(`/lesson-attempts/${attemptId}`, token),
+  submitLessonAction: (attemptId: string, input: LessonActionInput, token: string) =>
+    request<LessonAttemptView>(`/lesson-attempts/${attemptId}/actions`, token, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
   getCourseEditor: (courseId: string, token: string) =>
     request<CourseDetail>(`/courses/${courseId}/editor`, token),
   saveCourseLesson: (courseId: string, slug: string, input: SaveLessonInput, token: string) =>

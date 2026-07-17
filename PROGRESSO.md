@@ -1,26 +1,31 @@
 # Progresso do Projeto
 
 ## Última atualização
-2026-07-17 — Fase 8 aguardando gate PostgreSQL no CI
+2026-07-17 — implementação local da Fase 9 concluída; aguardando validação PostgreSQL no CI
 
 ## Tarefa em andamento
-Fase 8 — cursos e CMS. Implementação e gates locais concluídos. O primeiro CI aprovou qualidade, migration e e2e PostgreSQL, mas falhou apenas na asserção do rollback. A correção foi enviada no commit `c68b82b`; a nova execução aguarda confirmação porque a consulta externa atingiu o limite de uso do Codex.
+Fase 9 — runtime de aula interativa, conforme `prompts/09_LESSON_RUNTIME.md`.
 
 ## Contexto necessário
-- Especificação: `prompts/08_COURSE_CMS.md`.
-- Implementados contratos do schema de aula, API pública/editorial, papéis admin/editor, páginas-fonte, pré-requisitos, snapshots por versão, publicação transacional, seed dos 10 módulos e editor web com preview.
-- Gates locais aprovados: geração OpenAPI, format, lint, typecheck, testes e build.
-- Não há Docker local; usar o job `database-integration` do PR para migration `0005`, e2e do CMS, rollback e reaplicação.
+- Branch `codex/phase9-lesson-runtime`.
+- Runtime autoritativo em `apps/api/src/lesson-runtime/`, contratos em `packages/contracts/src/lesson-runtime.ts` e migration `0006_lesson_runtime`.
+- A resposta pública expõe somente a etapa atual sanitizada; respostas e etapas futuras ficam no snapshot privado do servidor.
+- Cada ação é persistida no ledger `lesson_attempt_actions`; tentativas iniciadas podem ser retomadas.
+- Aula demonstrativa completa do módulo 1 criada no seed e player em `/app/aula/[lessonId]`.
+- OpenAPI, cliente web gerado, testes contratuais e e2e foram atualizados.
+- Gates locais aprovados: format, lint, typecheck, testes unitários, build API e build web de produção.
 - O usuário determinou continuar sem deploy. Não acessar nem modificar a VPS.
 
 ## Concluído
-- [x] Fases 1 a 7 concluídas e aprovadas.
-- [x] Implementação e validações locais da Fase 8 concluídas.
+- [x] Fases 1 a 8 concluídas e aprovadas.
+- [x] Implementação funcional da Fase 9 concluída localmente.
+- [x] Varreduras UTF-8/mojibake e secrets aprovadas; senhas encontradas são apenas fixtures de integração.
 - [x] Nenhuma credencial fornecida pelo usuário foi gravada.
 
 ## Pendências
-- [ ] Confirmar a nova execução dos jobs `quality` e `database-integration` após `c68b82b`.
+- [ ] Executar e aprovar os jobs `quality` e `database-integration` da Fase 9.
+- [ ] Corrigir qualquer falha do CI antes de mesclar.
 - [ ] Não executar deploy.
 
 ## Próxima tarefa
-Consultar os checks do PR #3 quando o acesso externo voltar. Se ambos passarem, atualizar este arquivo, mesclar sem deploy e iniciar a Fase 9. Não avançar antes dessa confirmação.
+Commitar e publicar a branch, abrir PR da Fase 9 e acompanhar os dois jobs; somente após aprovação, mesclar e iniciar `prompts/10_EXERCISES_IMPORT.md`.

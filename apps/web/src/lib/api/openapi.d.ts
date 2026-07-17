@@ -452,25 +452,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Obter aula e primeira etapa autorizada */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content?: never;
-        };
-      };
-    };
+    /** Obter metadados e primeira etapa sanitizada */
+    get: operations['getLessonOverview'];
     put?: never;
     post?: never;
     delete?: never;
@@ -488,25 +471,25 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Iniciar tentativa de aula */
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description Criada */
-        201: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content?: never;
-        };
-      };
+    /** Iniciar ou retomar tentativa */
+    post: operations['startLessonAttempt'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/lesson-attempts/{attemptId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
+    /** Retomar estado persistido da tentativa */
+    get: operations['getLessonAttempt'];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -522,25 +505,8 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Submeter movimento ou resposta da etapa */
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description Estado atualizado */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content?: never;
-        };
-      };
-    };
+    /** Submeter ação para avaliação autoritativa */
+    post: operations['submitLessonAction'];
     delete?: never;
     options?: never;
     head?: never;
@@ -619,6 +585,60 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    PublicLessonStep: {
+      stepKey: string;
+      /** @enum {string} */
+      stepType: 'text' | 'board_instruction' | 'quiz' | 'explanation' | 'checkpoint' | 'summary';
+      title: string | null;
+      bodyMd: string;
+      initialFen: string | null;
+      /** @enum {string|null} */
+      orientation: 'white' | 'black' | null;
+    };
+    LessonOverview: {
+      /** Format: uuid */
+      lessonId: string;
+      title: string;
+      module: number;
+      estimatedMinutes: number;
+      firstStep: components['schemas']['PublicLessonStep'];
+    };
+    StartLessonAttemptInput: {
+      /** Format: uuid */
+      lessonId: string;
+    };
+    LessonActionInput:
+      | {
+          /** @constant */
+          type: 'continue';
+        }
+      | {
+          /** @constant */
+          type: 'move';
+          uci: string;
+        }
+      | {
+          /** @constant */
+          type: 'answer';
+          value: string | number | boolean;
+        };
+    LessonAttemptView: {
+      /** Format: uuid */
+      attemptId: string;
+      /** Format: uuid */
+      lessonId: string;
+      /** @enum {string} */
+      status: 'started' | 'completed' | 'abandoned';
+      currentStep: components['schemas']['PublicLessonStep'] | null;
+      feedback: string | null;
+      progress: {
+        completedSteps: number;
+        totalSteps: number;
+      };
+      score: number | null;
+      /** Format: date-time */
+      updatedAt: string;
+    };
     CourseSummary: {
       /** Format: uuid */
       id: string;
@@ -1704,6 +1724,105 @@ export interface operations {
       };
       400: components['responses']['Problem'];
       403: components['responses']['Problem'];
+    };
+  };
+  getLessonOverview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        lessonId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Aula disponível sem respostas futuras */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LessonOverview'];
+        };
+      };
+      403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  startLessonAttempt: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['StartLessonAttemptInput'];
+      };
+    };
+    responses: {
+      /** @description Estado atual da tentativa */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LessonAttemptView'];
+        };
+      };
+    };
+  };
+  getLessonAttempt: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        attemptId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Estado atual */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LessonAttemptView'];
+        };
+      };
+      404: components['responses']['Problem'];
+    };
+  };
+  submitLessonAction: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        attemptId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LessonActionInput'];
+      };
+    };
+    responses: {
+      /** @description Estado atualizado e persistido */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LessonAttemptView'];
+        };
+      };
+      400: components['responses']['Problem'];
+      404: components['responses']['Problem'];
     };
   };
 }

@@ -94,3 +94,16 @@ export {
   type LessonVersion,
   type SaveLessonInput,
 } from './course.js';
+
+export {
+  lessonActionInputSchema,
+  lessonAttemptViewSchema,
+  lessonOverviewSchema,
+  publicLessonStepSchema,
+  startLessonAttemptInputSchema,
+  type LessonActionInput,
+  type LessonAttemptView,
+  type LessonOverview,
+  type PublicLessonStep,
+  type StartLessonAttemptInput,
+} from './lesson-runtime.js';
