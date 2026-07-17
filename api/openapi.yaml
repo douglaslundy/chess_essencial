@@ -407,14 +407,74 @@ paths:
     get:
       security: []
       summary: Listar cursos publicados
+      operationId: listPublishedCourses
       responses:
-        '200': {description: OK}
+        '200':
+          description: Cursos publicados
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/CourseSummary'}}
   /courses/{slug}:
     get:
       security: []
-      summary: Obter curso
+      summary: Obter curso publicado
+      operationId: getPublishedCourse
+      parameters:
+        - {name: slug, in: path, required: true, schema: {type: string}}
       responses:
-        '200': {description: OK}
+        '200':
+          description: Curso com módulos e aulas
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseDetail'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /courses/{courseId}/editor:
+    get:
+      summary: Abrir curso no editor
+      operationId: getCourseEditor
+      parameters:
+        - {name: courseId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Curso incluindo rascunhos
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseDetail'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /courses/{courseId}/lessons/{slug}:
+    put:
+      summary: Criar ou versionar aula
+      operationId: saveCourseLesson
+      parameters:
+        - {name: courseId, in: path, required: true, schema: {type: string, format: uuid}}
+        - {name: slug, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SaveLessonInput'}
+      responses:
+        '200':
+          description: Snapshot da versão criada
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LessonVersion'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /courses/{courseId}/publish:
+    post:
+      summary: Publicar curso editorialmente completo
+      operationId: publishCourse
+      parameters:
+        - {name: courseId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '201':
+          description: Curso publicado
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseSummary'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
   /lessons/{lessonId}:
     get:
       summary: Obter aula e primeira etapa autorizada
@@ -459,6 +519,74 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    CourseSummary:
+      type: object
+      required: [id, slug, title, description, status, version, moduleCount]
+      properties:
+        id: {type: string, format: uuid}
+        slug: {type: string}
+        title: {type: string}
+        description: {type: string}
+        status: {type: string, enum: [draft, published, archived]}
+        version: {type: integer, minimum: 1}
+        moduleCount: {type: integer, minimum: 0}
+    CourseDetail:
+      allOf:
+        - {$ref: '#/components/schemas/CourseSummary'}
+        - type: object
+          required: [modules]
+          properties:
+            modules:
+              type: array
+              items:
+                type: object
+                required: [id, position, title, sourceVolume, lessons]
+                properties:
+                  id: {type: string, format: uuid}
+                  position: {type: integer}
+                  title: {type: string}
+                  sourceVolume: {type: integer}
+                  lessons: {type: array, items: {type: object}}
+    InteractiveLesson:
+      type: object
+      required: [slug, title, module, sourcePages, estimatedMinutes, prerequisites, steps]
+      properties:
+        slug: {type: string, pattern: '^[a-z0-9-]+$'}
+        title: {type: string}
+        module: {type: integer, minimum: 1, maximum: 10}
+        sourcePages: {type: array, minItems: 1, items: {type: integer, minimum: 1}}
+        estimatedMinutes: {type: integer, minimum: 1}
+        prerequisites: {type: array, items: {type: string}}
+        steps:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [stepKey, stepType, bodyMd]
+            properties:
+              stepKey: {type: string}
+              stepType: {type: string, enum: [text, board_instruction, quiz, explanation, checkpoint, summary]}
+              bodyMd: {type: string}
+              initialFen: {type: [string, 'null']}
+              orientation: {type: string, enum: [white, black]}
+              expectedActions: {type: array, items: {type: object}}
+              feedback: {type: object}
+              nextStepRules: {type: array, items: {type: object}}
+    SaveLessonInput:
+      type: object
+      required: [expectedVersion, lesson]
+      properties:
+        expectedVersion: {type: integer, minimum: 0}
+        lesson: {$ref: '#/components/schemas/InteractiveLesson'}
+    LessonVersion:
+      type: object
+      required: [lessonId, version, content, createdByUserId, createdAt]
+      properties:
+        lessonId: {type: string, format: uuid}
+        version: {type: integer, minimum: 1}
+        content: {$ref: '#/components/schemas/InteractiveLesson'}
+        createdByUserId: {type: string, format: uuid}
+        createdAt: {type: string, format: date-time}
     HealthStatus:
       type: object
       required: [service, status, timestamp]
