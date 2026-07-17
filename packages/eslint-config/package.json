@@ -1,0 +1,22 @@
+{
+  "name": "@xadrez/eslint-config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./base.mjs",
+    "./next": "./next.mjs"
+  },
+  "dependencies": {
+    "@eslint/js": "catalog:",
+    "eslint-config-next": "16.2.10",
+    "eslint-config-prettier": "catalog:",
+    "typescript-eslint": "catalog:"
+  },
+  "peerDependencies": {
+    "eslint": "\u003e=9.0.0 \u003c10.0.0"
+  },
+  "devDependencies": {
+    "eslint": "catalog:"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "name": "@xadrez/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "db:migrate": "tsx src/database/migrate.ts",
+    "db:rollback": "tsx src/database/migrate.ts down",
+    "db:seed": "tsx src/database/seed.ts",
+    "dev": "tsx watch src/main.ts",
+    "lint": "eslint .",
+    "start": "node dist/main.js",
+    "test": "vitest run --exclude dist/**",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@nestjs/common": "11.1.28",
+    "@nestjs/config": "4.0.4",
+    "@nestjs/core": "11.1.28",
+    "@nestjs/platform-fastify": "11.1.28",
+    "@nestjs/platform-ws": "11.1.28",
+    "@nestjs/websockets": "11.1.28",
+    "@xadrez/chess-domain": "workspace:*",
+    "@xadrez/contracts": "workspace:*",
+    "@xadrez/rating-domain": "workspace:*",
+    "argon2": "0.44.0",
+    "drizzle-orm": "0.45.2",
+    "fastify": "5.10.0",
+    "jose": "6.2.3",
+    "postgres": "3.4.9",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2",
+    "ws": "8.18.3",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/ws": "8.18.1",
+    "@xadrez/eslint-config": "workspace:*",
+    "@xadrez/tsconfig": "workspace:*",
+    "drizzle-kit": "0.31.10",
+    "eslint": "catalog:",
+    "tsx": "4.23.1",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

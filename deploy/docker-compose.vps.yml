@@ -1,0 +1,131 @@
+name: xadrez-essencial
+
+x-app-defaults: &app-defaults
+  image: xadrez-essencial:phase5
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: postgres:17.10-alpine3.23
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7.4.9-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - redis_data:/data
+
+  mailpit:
+    image: axllent/mailpit:v1.30.0
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: 500
+      MP_SMTP_AUTH_ACCEPT_ANY: '1'
+      MP_SMTP_AUTH_ALLOW_INSECURE: '1'
+    ports:
+      - '${MAILPIT_SMTP_PORT}:1025'
+      - '${MAILPIT_UI_PORT}:8025'
+
+  api:
+    <<: *app-defaults
+    command: ['pnpm', '--filter', '@xadrez/api', 'start']
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      API_PORT: 4000
+      AUTH_ACCESS_SECRET: ${AUTH_ACCESS_SECRET}
+      AUTH_EXPOSE_VERIFICATION_TOKEN: ${AUTH_EXPOSE_VERIFICATION_TOKEN}
+      AUTH_IP_HASH_SECRET: ${AUTH_IP_HASH_SECRET}
+      AUTH_REFRESH_SECRET: ${AUTH_REFRESH_SECRET}
+      AUTH_VERIFICATION_SECRET: ${AUTH_VERIFICATION_SECRET}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      WEB_ORIGIN: ${WEB_ORIGIN}
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4000/v1/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    ports:
+      - '${API_PORT}:4000'
+
+  worker:
+    <<: *app-defaults
+    command: ['pnpm', '--filter', '@xadrez/worker', 'start']
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      WORKER_HEALTH_PORT: 4001
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4001/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    ports:
+      - '${WORKER_PORT}:4001'
+
+  web:
+    <<: *app-defaults
+    command: ['pnpm', '--filter', '@xadrez/web', 'start']
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    ports:
+      - '${WEB_PORT}:3000'
+
+volumes:
+  postgres_data:
+  redis_data:

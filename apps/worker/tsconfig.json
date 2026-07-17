@@ -1,0 +1,10 @@
+{
+  "extends": "@xadrez/tsconfig/nestjs.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "emitDecoratorMetadata": false,
+    "experimentalDecorators": false,
+    "rootDir": "src"
+  },
+  "include": ["src/**/*.ts"]
+}

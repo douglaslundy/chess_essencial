@@ -1,0 +1,29 @@
+{
+  "name": "xadrez-essencial",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plataforma Xadrez Essencial",
+  "packageManager": "pnpm@11.5.1",
+  "engines": {
+    "node": ">=20.9.0",
+    "pnpm": ">=11.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "turbo run lint",
+    "smoke:dev": "node scripts/smoke-dev.mjs",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "26.1.1",
+    "eslint": "9.39.5",
+    "prettier": "3.9.5",
+    "turbo": "2.10.5",
+    "typescript": "6.0.3",
+    "vitest": "4.1.10"
+  }
+}

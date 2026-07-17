@@ -1,0 +1,4 @@
+# O Compose canônico da Fase 1 está em ../compose.yml.
+# Execute a partir da raiz com: docker compose up -d
+include:
+  - ../compose.yml

@@ -1,0 +1,34 @@
+-- Rollback da migration 0001_base.
+-- Execute apenas em ambiente controlado: remove todos os dados do schema base.
+DROP TABLE IF EXISTS audit_logs;
+DROP TABLE IF EXISTS outbox_events;
+DROP TABLE IF EXISTS study_annotations;
+DROP TABLE IF EXISTS exercise_attempts;
+DROP TABLE IF EXISTS exercises;
+DROP TABLE IF EXISTS lesson_attempts;
+DROP TABLE IF EXISTS user_course_enrollments;
+DROP TABLE IF EXISTS lesson_steps;
+DROP TABLE IF EXISTS lessons;
+DROP TABLE IF EXISTS course_modules;
+DROP TABLE IF EXISTS courses;
+DROP TABLE IF EXISTS matchmaking_queue;
+DROP TABLE IF EXISTS rating_transactions;
+DROP TABLE IF EXISTS draw_offers;
+DROP TABLE IF EXISTS game_pgn;
+DROP TABLE IF EXISTS game_moves;
+DROP TABLE IF EXISTS game_players;
+DROP TABLE IF EXISTS games;
+DROP TABLE IF EXISTS game_time_controls;
+DROP TABLE IF EXISTS rating_profiles;
+DROP TABLE IF EXISTS friendships;
+DROP TABLE IF EXISTS user_sessions;
+DROP TABLE IF EXISTS user_profiles;
+DROP TABLE IF EXISTS users;
+
+DROP TYPE IF EXISTS publication_status;
+DROP TYPE IF EXISTS rating_pool;
+DROP TYPE IF EXISTS color_side;
+DROP TYPE IF EXISTS termination_reason;
+DROP TYPE IF EXISTS game_result;
+DROP TYPE IF EXISTS game_status;
+DROP TYPE IF EXISTS user_status;

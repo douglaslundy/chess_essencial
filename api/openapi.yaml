@@ -1,0 +1,665 @@
+openapi: 3.1.0
+info:
+  title: Xadrez Essencial API
+  version: 1.0.0
+servers:
+  - url: https://api.example.com/v1
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      security: []
+      summary: Verificar saúde da API
+      operationId: getHealth
+      responses:
+        '200':
+          description: Serviço operacional
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+  /auth/register:
+    post:
+      security: []
+      summary: Cadastrar usuário
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterInput'
+      responses:
+        '201':
+          description: Usuário pendente criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationResponse'
+        '400': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /auth/verify:
+    post:
+      security: []
+      summary: Confirmar verificação simulada de e-mail
+      operationId: verifyEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenInput'
+      responses:
+        '200':
+          description: Usuário ativado
+        '401': {$ref: '#/components/responses/Problem'}
+  /auth/login:
+    post:
+      security: []
+      summary: Autenticar
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginInput'
+      responses:
+        '200':
+          description: Sessão criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /auth/refresh:
+    post:
+      security: []
+      summary: Rotacionar refresh token
+      operationId: refresh
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshInput'
+      responses:
+        '200':
+          description: Tokens rotacionados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '401': {$ref: '#/components/responses/Problem'}
+  /auth/logout:
+    post:
+      security: []
+      summary: Revogar sessão
+      operationId: logout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshInput'
+      responses:
+        '204':
+          description: Sessão revogada ou já ausente
+  /me:
+    get:
+      summary: Perfil autenticado
+      operationId: getMe
+      responses:
+        '200':
+          description: Perfil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicUser'
+        '401': {$ref: '#/components/responses/Problem'}
+    patch:
+      summary: Atualizar perfil e configurações
+      operationId: updateMe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMeInput'
+      responses:
+        '200':
+          description: Perfil atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicUser'
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /matchmaking/queues:
+    post:
+      summary: Entrar ou renovar presença na fila
+      operationId: joinMatchmakingQueue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/JoinQueueInput'}
+      responses:
+        '201':
+          description: Enfileirado ou pareado
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QueueStatus'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+    delete:
+      summary: Sair da fila
+      operationId: leaveMatchmakingQueue
+      responses:
+        '204': {description: Removido}
+        '401': {$ref: '#/components/responses/Problem'}
+  /matchmaking/challenges:
+    post:
+      summary: Criar desafio direto
+      operationId: createDirectChallenge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateChallengeInput'}
+      responses:
+        '201': {description: Desafio pendente criado}
+        '400': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /matchmaking/challenges/{challengeId}/respond:
+    post:
+      summary: Aceitar ou recusar desafio direto
+      operationId: respondDirectChallenge
+      parameters:
+        - name: challengeId
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RespondChallengeInput'}
+      responses:
+        '201': {description: Desafio resolvido; gameId presente quando aceito}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /games:
+    post:
+      summary: Criar partida entre dois usuários ativos
+      operationId: createGame
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGameInput'
+      responses:
+        '201':
+          description: Partida criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameState'
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /games/{gameId}:
+    parameters:
+      - $ref: '#/components/parameters/GameId'
+    get:
+      summary: Obter estado autorizado da partida
+      operationId: getGame
+      responses:
+        '200':
+          description: Estado canônico
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameState'
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /games/{gameId}/moves:
+    parameters:
+      - $ref: '#/components/parameters/GameId'
+    get:
+      summary: Listar lances persistidos
+      operationId: listGameMoves
+      responses:
+        '200':
+          description: Lances em ordem de ply
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GameMove'
+    post:
+      summary: Propor e persistir um lance
+      description: O servidor deriva SAN, FEN, turno, resultado e versão. O cliente envia somente UCI e idempotência.
+      operationId: commitGameMove
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitMoveInput'
+      responses:
+        '201':
+          description: Lance confirmado ou resposta idempotente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommitMoveResponse'
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /games/{gameId}/pgn:
+    parameters:
+      - $ref: '#/components/parameters/GameId'
+    get:
+      summary: Baixar PGN após o término
+      operationId: getGamePgn
+      responses:
+        '200':
+          description: PGN
+          content:
+            application/x-chess-pgn:
+              schema: {type: string}
+        '404': {$ref: '#/components/responses/Problem'}
+  /games/{gameId}/resign:
+    post:
+      summary: Abandonar partida
+      responses:
+        '200': {description: Finalizada}
+  /games/{gameId}/draw-offers:
+    post:
+      summary: Oferecer empate
+      responses:
+        '201': {description: Oferta criada}
+  /ratings/me:
+    get:
+      summary: Ratings Xadrez Essencial do usuário por pool
+      operationId: getMyRatings
+      responses:
+        '200':
+          description: Perfis de rating
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/RatingProfile'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /ratings/me/history:
+    get:
+      summary: Histórico imutável de rating do usuário
+      operationId: getMyRatingHistory
+      parameters:
+        - name: pool
+          in: query
+          schema: {$ref: '#/components/schemas/RatingPool'}
+      responses:
+        '200':
+          description: Entradas do ledger em ordem decrescente
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/RatingHistoryEntry'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /ratings/{pool}/leaderboard:
+    get:
+      summary: Leaderboard do Rating Xadrez Essencial
+      operationId: getRatingLeaderboard
+      parameters:
+        - name: pool
+          in: path
+          required: true
+          schema: {$ref: '#/components/schemas/RatingPool'}
+        - name: limit
+          in: query
+          schema: {type: integer, minimum: 1, maximum: 100, default: 50}
+      responses:
+        '200':
+          description: Classificação do pool
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/LeaderboardEntry'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /courses:
+    get:
+      security: []
+      summary: Listar cursos publicados
+      responses:
+        '200': {description: OK}
+  /courses/{slug}:
+    get:
+      security: []
+      summary: Obter curso
+      responses:
+        '200': {description: OK}
+  /lessons/{lessonId}:
+    get:
+      summary: Obter aula e primeira etapa autorizada
+      responses:
+        '200': {description: OK}
+  /lesson-attempts:
+    post:
+      summary: Iniciar tentativa de aula
+      responses:
+        '201': {description: Criada}
+  /lesson-attempts/{attemptId}/actions:
+    post:
+      summary: Submeter movimento ou resposta da etapa
+      responses:
+        '200': {description: Estado atualizado}
+  /exercises:
+    get:
+      summary: Pesquisar exercícios
+      responses:
+        '200': {description: OK}
+  /exercises/{exerciseId}/attempts:
+    post:
+      summary: Submeter tentativa
+      responses:
+        '201': {description: Avaliada}
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    HealthStatus:
+      type: object
+      required: [service, status, timestamp]
+      properties:
+        service:
+          type: string
+          const: api
+        status:
+          type: string
+          const: ok
+        timestamp:
+          type: string
+          format: date-time
+      additionalProperties: false
+    RegisterInput:
+      type: object
+      required: [email, username, password, displayName]
+      properties:
+        email: {type: string, format: email}
+        username: {type: string, minLength: 3, maxLength: 30}
+        password: {type: string, minLength: 12}
+        displayName: {type: string, minLength: 2, maxLength: 80}
+    TokenInput:
+      type: object
+      required: [token]
+      properties:
+        token: {type: string, minLength: 20}
+      additionalProperties: false
+    LoginInput:
+      type: object
+      required: [identifier, password]
+      properties:
+        identifier: {type: string, minLength: 3, maxLength: 254}
+        password: {type: string, minLength: 1, maxLength: 128}
+      additionalProperties: false
+    RefreshInput:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken: {type: string, minLength: 20}
+      additionalProperties: false
+    UpdateMeInput:
+      type: object
+      minProperties: 1
+      properties:
+        displayName: {type: string, minLength: 2, maxLength: 80}
+        avatarUrl: {type: [string, 'null'], format: uri}
+        countryCode: {type: [string, 'null'], minLength: 2, maxLength: 2}
+        timezone: {type: string, minLength: 1, maxLength: 64}
+        locale: {type: string, minLength: 2, maxLength: 10}
+        birthYear: {type: [integer, 'null'], minimum: 1900}
+        bio: {type: [string, 'null'], maxLength: 500}
+        isProfilePublic: {type: boolean}
+      additionalProperties: false
+    UserProfile:
+      type: object
+      required: [displayName, avatarUrl, countryCode, timezone, locale, birthYear, bio, isProfilePublic]
+      properties:
+        displayName: {type: string}
+        avatarUrl: {type: [string, 'null']}
+        countryCode: {type: [string, 'null']}
+        timezone: {type: string}
+        locale: {type: string}
+        birthYear: {type: [integer, 'null']}
+        bio: {type: [string, 'null']}
+        isProfilePublic: {type: boolean}
+      additionalProperties: false
+    PublicUser:
+      type: object
+      required: [id, email, username, status, emailVerifiedAt, profile]
+      properties:
+        id: {type: string, format: uuid}
+        email: {type: string, format: email}
+        username: {type: string}
+        status: {type: string, enum: [pending, active, suspended, deleted]}
+        emailVerifiedAt: {type: [string, 'null'], format: date-time}
+        profile:
+          $ref: '#/components/schemas/UserProfile'
+      additionalProperties: false
+    TokenPair:
+      type: object
+      required: [accessToken, accessTokenExpiresIn, refreshToken, refreshTokenExpiresIn]
+      properties:
+        accessToken: {type: string}
+        accessTokenExpiresIn: {type: integer, minimum: 1}
+        refreshToken: {type: string}
+        refreshTokenExpiresIn: {type: integer, minimum: 1}
+      additionalProperties: false
+    RegistrationResponse:
+      type: object
+      required: [user]
+      properties:
+        user:
+          $ref: '#/components/schemas/PublicUser'
+        verificationToken:
+          type: string
+          description: Presente somente quando a simulação local está habilitada.
+      additionalProperties: false
+    LoginResponse:
+      type: object
+      required: [user, tokens]
+      properties:
+        user:
+          $ref: '#/components/schemas/PublicUser'
+        tokens:
+          $ref: '#/components/schemas/TokenPair'
+      additionalProperties: false
+    ProblemDetails:
+      type: object
+      required: [type, title, status, detail, instance]
+      properties:
+        type: {type: string, format: uri}
+        title: {type: string}
+        status: {type: integer, minimum: 400, maximum: 599}
+        detail: {type: string}
+        instance: {type: string}
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              path: {type: string}
+              message: {type: string}
+      additionalProperties: false
+    RatingPool:
+      type: string
+      enum: [bullet, blitz, rapid, classical, correspondence]
+    JoinQueueInput:
+      type: object
+      required: [timeControlCode]
+      properties:
+        timeControlCode: {type: string, minLength: 1, maxLength: 40}
+      additionalProperties: false
+    QueueStatus:
+      type: object
+      required: [status, pool, timeControlCode, minRating, maxRating, enqueuedAt]
+      properties:
+        status: {type: string, enum: [queued, matched]}
+        pool: {$ref: '#/components/schemas/RatingPool'}
+        timeControlCode: {type: string}
+        minRating: {type: integer}
+        maxRating: {type: integer}
+        enqueuedAt: {type: string, format: date-time}
+        gameId: {type: string, format: uuid}
+      additionalProperties: false
+    CreateChallengeInput:
+      type: object
+      required: [challengedUserId, timeControlCode]
+      properties:
+        challengedUserId: {type: string, format: uuid}
+        timeControlCode: {type: string, minLength: 1, maxLength: 40}
+        challengerColor: {type: [string, 'null'], enum: [white, black, null], default: null}
+      additionalProperties: false
+    RespondChallengeInput:
+      type: object
+      required: [accept]
+      properties:
+        accept: {type: boolean}
+      additionalProperties: false
+    RatingProfile:
+      type: object
+      required: [pool, rating, gamesCount, wins, draws, losses, peakRating, provisional]
+      properties:
+        pool: {$ref: '#/components/schemas/RatingPool'}
+        rating: {type: integer}
+        gamesCount: {type: integer, minimum: 0}
+        wins: {type: integer, minimum: 0}
+        draws: {type: integer, minimum: 0}
+        losses: {type: integer, minimum: 0}
+        peakRating: {type: integer}
+        provisional: {type: boolean}
+      additionalProperties: false
+    RatingHistoryEntry:
+      type: object
+      required: [id, gameId, pool, ratingBefore, opponentRating, expectedScore, actualScore, kFactor, rawDelta, delta, ratingAfter, transactionType, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        gameId: {type: string, format: uuid}
+        pool: {$ref: '#/components/schemas/RatingPool'}
+        ratingBefore: {type: integer}
+        opponentRating: {type: integer}
+        expectedScore: {type: number}
+        actualScore: {type: number, enum: [0, 0.5, 1]}
+        kFactor: {type: integer}
+        rawDelta: {type: number}
+        delta: {type: integer}
+        ratingAfter: {type: integer}
+        transactionType: {type: string, enum: [game, reversal]}
+        createdAt: {type: string, format: date-time}
+      additionalProperties: false
+    LeaderboardEntry:
+      type: object
+      required: [rank, userId, username, displayName, rating, gamesCount, provisional]
+      properties:
+        rank: {type: integer, minimum: 1}
+        userId: {type: string, format: uuid}
+        username: {type: string}
+        displayName: {type: string}
+        rating: {type: integer}
+        gamesCount: {type: integer, minimum: 0}
+        provisional: {type: boolean}
+      additionalProperties: false
+    CreateGameInput:
+      type: object
+      required: [opponentUserId, timeControlCode]
+      properties:
+        opponentUserId: {type: string, format: uuid}
+        timeControlCode: {type: string, minLength: 1, maxLength: 40}
+        creatorColor: {type: string, enum: [white, black], default: white}
+      additionalProperties: false
+    SubmitMoveInput:
+      type: object
+      required: [clientMoveId, expectedVersion, uci]
+      properties:
+        clientMoveId: {type: string, format: uuid}
+        expectedVersion: {type: integer, minimum: 0}
+        uci: {type: string, pattern: '^[a-h][1-8][a-h][1-8][qrbn]?$'}
+      additionalProperties: false
+    GamePlayer:
+      type: object
+      required: [userId, color, ratingBefore]
+      properties:
+        userId: {type: string, format: uuid}
+        color: {type: string, enum: [white, black]}
+        ratingBefore: {type: integer}
+      additionalProperties: false
+    GameState:
+      type: object
+      required: [id, status, result, termination, currentFen, sideToMove, version, whiteClockMs, blackClockMs, activeClockStartedAt, startedAt, finishedAt, players]
+      properties:
+        id: {type: string, format: uuid}
+        status: {type: string, enum: [created, waiting, active, finished, aborted]}
+        result: {type: string, enum: [white_win, black_win, draw, none]}
+        termination:
+          type: string
+          enum: [checkmate, resignation, timeout, stalemate, repetition, fifty_move, insufficient_material, agreement, abandonment, admin, none]
+        currentFen: {type: string}
+        sideToMove: {type: string, enum: [white, black]}
+        version: {type: integer, minimum: 0}
+        whiteClockMs: {type: integer, minimum: 0}
+        blackClockMs: {type: integer, minimum: 0}
+        activeClockStartedAt: {type: [string, 'null'], format: date-time}
+        startedAt: {type: [string, 'null'], format: date-time}
+        finishedAt: {type: [string, 'null'], format: date-time}
+        players:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items: {$ref: '#/components/schemas/GamePlayer'}
+      additionalProperties: false
+    GameMove:
+      type: object
+      required: [id, ply, color, clientMoveId, uci, san, from, to, promotion, fenBefore, fenAfter, flags, committedAt]
+      properties:
+        id: {type: integer, minimum: 1}
+        ply: {type: integer, minimum: 1}
+        color: {type: string, enum: [white, black]}
+        clientMoveId: {type: string, format: uuid}
+        uci: {type: string}
+        san: {type: string}
+        from: {type: string, minLength: 2, maxLength: 2}
+        to: {type: string, minLength: 2, maxLength: 2}
+        promotion: {type: [string, 'null']}
+        fenBefore: {type: string}
+        fenAfter: {type: string}
+        flags: {type: object}
+        committedAt: {type: string, format: date-time}
+      additionalProperties: false
+    CommitMoveResponse:
+      type: object
+      required: [move, state]
+      properties:
+        move: {$ref: '#/components/schemas/GameMove'}
+        state: {$ref: '#/components/schemas/GameState'}
+      additionalProperties: false
