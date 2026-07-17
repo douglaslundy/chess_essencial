@@ -247,7 +247,11 @@ export class LessonRuntimeRepository {
       prerequisites: prerequisites.map((item) => item.slug),
       slug: lesson.slug,
       sourcePages: pages.map((item) => item.page),
-      steps,
+      steps: steps.map((step) => ({
+        ...step,
+        orientation: step.orientation ?? undefined,
+        title: step.title ?? undefined,
+      })),
       title: lesson.title,
     });
   }
