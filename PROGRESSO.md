@@ -1,10 +1,10 @@
 # Progresso do Projeto
 
 ## Última atualização
-2026-07-17 — Fase 12 concluída e aprovada localmente e na CI
+2026-07-17 — integração atômica e bootstrap da VPS em andamento
 
 ## Tarefa em andamento
-Nenhuma fase de desenvolvimento em andamento. As Fases 1 a 12 do blueprint estão concluídas.
+Integrar a release cumulativa das Fases 9–12 em `main` e executar o bootstrap autorizado da VPS nova.
 
 ## Contexto necessário
 - Branch `codex/phase12-release`, empilhada sobre a Fase 11 aprovada.
@@ -33,4 +33,4 @@ Nenhuma fase de desenvolvimento em andamento. As Fases 1 a 12 do blueprint estã
 - [ ] Confirmar containers, healthchecks, carga e jornada crítica após o primeiro deploy.
 
 ## Próxima tarefa
-Após autorização de integração e deploy, integrar os PRs aprovados em `main` e executar o bootstrap da VPS `192.168.0.233` sem transferência de código por SSH.
+Retargetar o PR #7 para `main`, aprovar a CI da release cumulativa, fazer um único merge e então preparar a VPS `192.168.0.233` para receber o código por clone/Git pull.
