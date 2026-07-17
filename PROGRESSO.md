@@ -1,32 +1,29 @@
 # Progresso do Projeto
 
 ## Última atualização
-2026-07-17 00:52:00 -03:00
+2026-07-17 01:00:00 -03:00
 
 ## Tarefa em andamento
-Fase 6 — interface de partida. O fluxo GitHub → git pull automático na VPS foi configurado e comprovado após a conclusão da Fase 5.
+Finalização operacional da Fase 6 — interface de partida. Implementação e critérios técnicos aprovados; deploy automático aguarda a VPS voltar à rede.
 
 ## Contexto necessário
-- `prompts/06_GAME_UI.md`: requisitos e critérios de aceite da fase atual.
-- `frontend/DESIGN_SYSTEM.md` e `frontend/PAGES.md`: convenções visuais e de páginas.
-- `apps/web/src/app/`: frontend existente a ser evoluído.
-- `packages/contracts/src/game.ts` e `packages/contracts/src/realtime.ts`: contratos autoritativos já disponíveis.
-- `docs/REALTIME_PROTOCOL.md`: protocolo realtime implementado.
-- Fase 6 em andamento: shell, fila, tabuleiro, clocks, cliente OpenAPI e socket tipado implementados.
-- Lacuna de contrato corrigida: desistência e oferta/aceite de empate agora têm persistência, encerramento autoritativo, PGN, outbox, realtime e processamento de rating.
-- Validações locais aprovadas: format, lint, typecheck, suíte completa e build de produção.
-- Integração PostgreSQL no CI em correção: primeira execução não compilou dependências internas antes do Vitest; job ajustado para executar o build do workspace.
+- `main` contém a Fase 6 no merge commit `350e0b6` do PR #1.
+- GitHub CI aprovado: job de qualidade e job PostgreSQL com migrations, e2e, rollback e reaplicação.
+- A VPS `192.168.0.115` estava inacessível por ping e SSH em 2026-07-17 01:00 -03:00.
+- Não disparar deploy por SSH. Ao voltar, o timer `xadrez-auto-deploy.timer` deve executar `deploy/auto-deploy.sh` com `git pull --ff-only`.
+- Após o autopull, verificar commit remoto, `.deploy/last-successful`, serviços e healthchecks antes de iniciar a Fase 7.
+- Próxima especificação: `prompts/07_HISTORY_REVIEW.md`.
 
 ## Concluído
-- [x] Fases 1 a 4 concluídas, testadas e implantadas.
-- [x] Fase 5 concluída: matchmaking, desafios, rating por pool, ledger, histórico e leaderboard.
-- [x] Fase 5 aprovada com format, lint, typecheck, testes, build e 17/17 e2e em PostgreSQL limpo.
+- [x] Fases 1 a 5 concluídas, testadas e implantadas.
 - [x] Repositório privado publicado em `douglaslundy/chess_essencial`, branch `main`.
-- [x] Deploy key somente leitura configurada na VPS.
-- [x] Timer systemd executa `deploy/auto-deploy.sh` a cada minuto com `git pull --ff-only`.
-- [x] Autopull comprovado no commit `d34e398e999035bead103404885ef513a530d872`.
-- [x] Healthchecks externos de API, web e worker aprovados após o autopull.
+- [x] Deploy key somente leitura e timer de autopull configurados na VPS.
+- [x] Fase 6 implementada: shell autenticado, fila, tabuleiro responsivo, drag/click, destaques, promoção, clocks, jogadores, lances e reconexão.
+- [x] Cliente gerado do OpenAPI e socket tipado com snapshot, jogadas, encerramento e ofertas de empate.
+- [x] Desistência e oferta/aceite de empate persistidos com estado autoritativo, PGN, outbox, realtime e rating.
+- [x] Fase 6 aprovada com format, lint, typecheck, suíte completa e build de produção.
+- [x] Integração PostgreSQL aprovada no CI com migration `0003`, e2e, rollback e reaplicação.
 - [x] Nenhuma credencial fornecida pelo usuário foi gravada no repositório.
 
 ## Próxima tarefa
-Ler o contexto listado, implementar a Fase 6 e não avançar à Fase 7 antes de executar todos os testes e atender aos critérios de aceite.
+Quando a VPS voltar à rede, comprovar o autopull e os healthchecks da Fase 6. Somente depois iniciar a Fase 7 — histórico e revisão.
