@@ -66,7 +66,7 @@ Atualização de 2026-07-17. O estado detalhado e os achados estão em `docs/PHA
 - A VPS possui 10 módulos, 1 aula e nenhum dos 1.298 exercícios; a Fase 14 é o gate de conteúdo.
 - O relay SMTP incluído atende a VPS local com Mailpit. Produção pública exige TLS/autenticação na Fase 17.
 - A homologação completa de acessibilidade e responsividade pertence à Fase 16.
-- A branch da Fase 13 deve repetir CI, deploy automático e healthchecks antes de ser encerrada.
+- A Fase 13 repetiu CI, deploy automático e healthchecks e foi encerrada em `aa982db`.
 
 ## Evidências finais da Fase 1
 

@@ -25,10 +25,10 @@ Atualização: 2026-07-17. Evidências detalhadas em `docs/PHASE13_AUDIT.md`.
 - [x] Cadastro/login web, SMTP, reenvio de verificação e refresh automático implementados.
 - [x] Códigos de matchmaking alinhados ao seed.
 - [x] Teste web de refresh aprovado: 1 arquivo e 2 testes com config local mínima.
-- [ ] Formatação completa, lint, testes completos e build aprovados.
-- [ ] Três jobs da CI aprovados para a branch.
-- [ ] Merge em `main` e deploy automático por `git pull --ff-only` concluídos.
-- [ ] Healthchecks, commit implantado, SMTP/Mailpit e jornada crítica revalidados na VPS.
+- [x] Formatação, lint, testes completos e build aprovados pela CI Linux.
+- [x] Três jobs aprovados no PR e novamente em `main` na CI `29613488363`.
+- [x] Merge em `main` e deploy automático por `git pull --ff-only` concluídos.
+- [x] Healthchecks, commit, SMTP/Mailpit, autenticação e matchmaking revalidados na VPS.
 
 ## Pendências que bloqueiam declarações futuras
 
