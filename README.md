@@ -2,7 +2,7 @@
 
 Monorepo da plataforma Xadrez Essencial: frontend e backend separados, partidas de xadrez com servidor autoritativo, rating por ritmo, histórico, curso interativo e exercícios.
 
-A Fase 1 entrega o bootstrap executável. As funcionalidades de domínio entram somente nas fases seguintes, na ordem definida em `prompts/`.
+As Fases 1–12 entregam a plataforma executável e o deploy automatizado. O estado auditado, os gates atuais e o backlog V2 estão em `docs/PHASE13_AUDIT.md` e `TAREFAS.md`.
 
 ## Stack da Fase 1
 
@@ -19,7 +19,7 @@ As versões e decisões de compatibilidade estão em `docs/COMPATIBILITY_MATRIX.
 ## Fase 2 — banco e autenticação
 
 A API agora inclui migrations SQL transacionais, Drizzle ORM para identidade, seed idempotente
-e os fluxos de cadastro, verificação local, login, refresh rotativo, logout e perfil.
+e os fluxos de cadastro, entrega e reenvio de verificação por SMTP, login, refresh rotativo, logout e perfil.
 
 ```bash
 pnpm --filter @xadrez/api db:migrate
@@ -30,9 +30,9 @@ pnpm --filter @xadrez/api db:rollback
 O rollback de `0001_base` remove todas as tabelas e deve ser usado apenas em ambiente
 controlado. Em produção, os quatro segredos `AUTH_*_SECRET` são obrigatórios. O token de
 verificação só é devolvido pela API quando `AUTH_EXPOSE_VERIFICATION_TOKEN=true`, destinado
-à simulação local.
+à confirmação automatizada em testes locais. Com o token oculto, a mensagem é entregue pelo SMTP configurado.
 
-Endpoints entregues nesta fase: `/v1/auth/register`, `/v1/auth/verify`,
+Endpoints entregues nesta fase: `/v1/auth/register`, `/v1/auth/resend-verification`, `/v1/auth/verify`,
 `/v1/auth/login`, `/v1/auth/refresh`, `/v1/auth/logout`, `GET /v1/me` e
 `PATCH /v1/me`. Erros HTTP seguem `application/problem+json`.
 

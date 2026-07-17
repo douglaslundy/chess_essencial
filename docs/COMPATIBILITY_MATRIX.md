@@ -42,29 +42,31 @@ As versões exatas foram consultadas no registro oficial do npm. A estabilidade 
 | Execução         | README com um fluxo local                            | Blueprint, sem comandos executáveis | Instruções para infra, install e dev            | Atendido |
 | OpenAPI          | Contrato versionado                                  | Existe sem health endpoint          | Documentar `/health` sob servidor `/v1`         | Atendido |
 
-## Compatibilidade das fases seguintes
+## Compatibilidade consolidada das Fases 1–12
 
-| Fase | Área                               | Compatibilidade documental                                | Implementação |
-| ---: | ---------------------------------- | --------------------------------------------------------- | ------------- |
-|    2 | Banco, migrations, auth e usuários | Schema e arquitetura definidos                            | Pendente      |
-|    3 | Domínio de xadrez                  | Regras e persistência especificadas                       | Pendente      |
-|    4 | WebSocket e relógios               | Eventos e servidor autoritativo especificados             | Pendente      |
-|    5 | Matchmaking e rating               | Pools, tabela e ledger especificados                      | Pendente      |
-|    6 | Interface de jogo                  | Páginas e design system definidos                         | Pendente      |
-|    7 | Histórico e revisão                | Fluxos e persistência definidos                           | Pendente      |
-|    8 | Curso e CMS                        | Currículo, schema e modelo SQL definidos                  | Pendente      |
-|    9 | Runtime de aulas                   | Máquina de estados especificada                           | Pendente      |
-|   10 | Exercícios                         | Importação e validações especificadas; JSON fonte ausente | Pendente      |
-|   11 | Segurança e observabilidade        | Controles e métricas especificados                        | Pendente      |
-|   12 | Homologação e release              | Plano de testes e deployment definidos                    | Pendente      |
+Atualização de 2026-07-17. O estado detalhado e os achados estão em `docs/PHASE13_AUDIT.md`.
 
-## Lacunas e riscos registrados
+| Fase | Área                        | Implementação                                                      | Estado auditado                             |
+| ---: | --------------------------- | ------------------------------------------------------------------ | ------------------------------------------- |
+|    1 | Bootstrap                   | Monorepo, web, API, worker, contratos, CI e Compose                | Atendido                                    |
+|    2 | Banco e autenticação        | Migrations, sessões rotativas, usuários e verificação por e-mail   | Atendido após patches F13                   |
+|    3 | Domínio de xadrez           | Legalidade, SAN/FEN/PGN, persistência e idempotência               | Atendido                                    |
+|    4 | Realtime e relógios         | WebSocket autenticado, snapshots, reconexão e relógio autoritativo | Atendido                                    |
+|    5 | Matchmaking e rating        | Filas, desafios, pools e ledger imutável                           | Atendido após patch de códigos F13          |
+|    6 | Interface de jogo           | Fluxo responsivo, teclado, promoção e estados de partida           | Atendido; homologação formal F16            |
+|    7 | Histórico e revisão         | Lista, PGN e anotações                                             | Atendido                                    |
+|    8 | Curso e CMS                 | Dez módulos, editor versionado e publicação autorizada             | Infraestrutura atendida                     |
+|    9 | Runtime de aulas            | Tentativas e ações autoritativas                                   | Atendido                                    |
+|   10 | Exercícios                  | Importador, treino, tentativas e métricas                          | Código atendido; conteúdo real pendente F14 |
+|   11 | Segurança e observabilidade | Rate limit, privacidade, auditoria, métricas e tracing opcional    | Atendido                                    |
+|   12 | Release                     | CI, imagens não root, backup/restore e deploy por Git pull         | Atendido                                    |
 
-- O diretório não contém uma aplicação prévia; a estratégia correta é bootstrap, não migração.
-- A pasta `.git` existe, mas não é um repositório Git válido. Nenhum commit será criado sem inicialização explícita.
-- Docker não está disponível no PATH local; o Compose será validado estruturalmente, mas a subida real dos containers dependerá da instalação do Docker.
-- O JSON `Xadrez_Essencial_Exercicios_1_a_1298.json` não está presente e bloqueará a Fase 10, não a Fase 1.
-- TypeScript 7 não será adotado enquanto a cadeia oficial de lint usada no projeto não declarar compatibilidade.
+## Lacunas atuais e gates
+
+- A VPS possui 10 módulos, 1 aula e nenhum dos 1.298 exercícios; a Fase 14 é o gate de conteúdo.
+- O relay SMTP incluído atende a VPS local com Mailpit. Produção pública exige TLS/autenticação na Fase 17.
+- A homologação completa de acessibilidade e responsividade pertence à Fase 16.
+- A branch da Fase 13 deve repetir CI, deploy automático e healthchecks antes de ser encerrada.
 
 ## Evidências finais da Fase 1
 

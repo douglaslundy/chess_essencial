@@ -1,28 +1,43 @@
 # Progresso do Projeto
 
 ## Última atualização
-2026-07-17 — Fases 1 a 12 e bootstrap da VPS concluídos.
+
+2026-07-17 — Fase 13 implementada localmente; integração, CI e deploy ainda pendentes.
 
 ## Tarefa em andamento
-Nenhuma tarefa em andamento; release cumulativa publicada e validada.
+
+Fase 13 — auditoria pós-release e saneamento documental.
 
 ## Contexto necessário
-- `main` no commit `7c0117d`, com quality, database-integration e container-validation aprovados na CI `29607483626`.
+
+- `main` no commit `d3a6803`, com `quality`, `database-integration` e `container-validation` aprovados na CI `29607483626`.
+- Branch atual: `codex/phase13-audit`; correções no commit `90949db`.
 - VPS de teste: `192.168.0.233`; repositório em `/home/lundy/xadrez-essencial`.
-- Deploy exclusivamente por `git pull --ff-only` via `deploy/auto-deploy.sh` e timer systemd versionado a cada minuto.
-- API, worker, web, PostgreSQL, Redis e Mailpit saudáveis; healthchecks externos aprovados.
-- Banco com 8 migrations, 7 controles de tempo e 1 curso seed; dois backups com SHA-256 validados.
-- `.env.vps` permanece fora do Git, com modo 600; nenhuma credencial foi versionada.
-- `helper_files/` permanece ignorado.
-- Alterações aparentes nos sete arquivos de cursos/web/contratos são preexistentes e sem diff de conteúdo; não incluí-las em commits.
+- Deploy exclusivamente por `git pull --ff-only` via `deploy/auto-deploy.sh` e timer systemd.
+- API, worker, web, PostgreSQL, Redis e Mailpit estavam saudáveis na baseline; revalidar somente após merge em `main`.
+- Banco auditado com 8 migrations, 7 controles de tempo, 10 módulos, 1 aula e 0/1.298 exercícios.
+- `helper_files/` permanece ignorado; o JSON fonte passou na validação estática de 1.298 IDs, números, diagramas e checksums.
+- O conteúdo incompleto é P1 atribuído à Fase 14 e não deve ser importado antes de concluir a Fase 13.
+- Sete arquivos de cursos/web/contratos aparecem modificados sem diff de conteúdo; não incluí-los no commit.
+- O teste web novo passa com config local mínima; o config oficial e a etapa final do Next build encontram bloqueio de criação de processo no sandbox Windows. A CI Linux é o gate.
 
 ## Concluído
-- [x] Fases 1 a 12 implementadas, testadas e integradas em `main`.
-- [x] Condição de corrida do teste realtime eliminada por correlação de `clientMoveId`.
-- [x] Deploy key somente leitura, clone inicial e timer systemd configurados.
-- [x] Retry do timer e espera explícita de PostgreSQL/Redis/Mailpit corrigidos.
-- [x] Containers, healthchecks, carga, migrations, seed e backups validados na VPS.
-- [x] Fluxo de deploy exclusivamente por Git pull comprovado de ponta a ponta.
+
+- [x] Fases 1–12 implementadas, testadas, integradas e implantadas.
+- [x] Backlog V2 criado em `TAREFAS.md` com gates das Fases 13–18.
+- [x] Matriz consolidada, checklist de produção e relatório `docs/PHASE13_AUDIT.md` atualizados.
+- [x] Cadastro/login web, envio SMTP, reenvio anti-enumeração e refresh automático implementados.
+- [x] Contratos e frontend alinhados aos sete controles de tempo com hífen; seletor de rating sem efeito removido.
+- [x] Lint e typecheck completos aprovados.
+- [x] Contratos: 9 arquivos/24 testes; API direcionada: 3 arquivos/8 testes; web refresh: 1 arquivo/2 testes.
+- [x] OpenAPI e cliente TypeScript regenerados.
+- [x] Correções e testes versionados no commit `90949db`.
+- [x] `git diff --check`, varredura de charset e varredura de segredos aprovados.
 
 ## Próxima tarefa
-Definir e priorizar o backlog da V2; `TAREFAS.md` ainda não existe.
+
+1. Versionar a documentação da auditoria sem incluir os sete arquivos fantasma.
+2. Fazer push da branch e aguardar os três jobs da CI.
+3. Corrigir qualquer falha, integrar em `main` e aguardar o deploy automático.
+4. Validar commit, healthchecks, SMTP/Mailpit e jornada crítica na VPS.
+5. Somente então marcar a Fase 13 concluída e iniciar a Fase 14.
