@@ -89,6 +89,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build API workspace dependencies
+        run: pnpm --filter @xadrez/api... build
+
       - name: Apply migrations and seed
         run: |
           pnpm --filter @xadrez/api db:migrate

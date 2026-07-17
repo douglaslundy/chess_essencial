@@ -14,7 +14,8 @@ Fase 6 — interface de partida. O fluxo GitHub → git pull automático na VPS 
 - `docs/REALTIME_PROTOCOL.md`: protocolo realtime implementado.
 - Fase 6 em andamento: shell, fila, tabuleiro, clocks, cliente OpenAPI e socket tipado implementados.
 - Lacuna de contrato corrigida: desistência e oferta/aceite de empate agora têm persistência, encerramento autoritativo, PGN, outbox, realtime e processamento de rating.
-- Validações locais aprovadas: format, lint, typecheck, suíte completa e build de produção; integração PostgreSQL no CI ainda pendente.
+- Validações locais aprovadas: format, lint, typecheck, suíte completa e build de produção.
+- Integração PostgreSQL no CI em correção: primeira execução não compilou dependências internas antes do Vitest; job ajustado para executar o build do workspace.
 
 ## Concluído
 - [x] Fases 1 a 4 concluídas, testadas e implantadas.
