@@ -183,7 +183,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** Listar histórico paginado do usuário */
+    get: operations['listGameHistory'];
     put?: never;
     /** Criar partida entre dois usuários ativos */
     post: operations['createGame'];
@@ -229,6 +230,26 @@ export interface paths {
      * @description O servidor deriva SAN, FEN, turno, resultado e versão. O cliente envia somente UCI e idempotência.
      */
     post: operations['commitGameMove'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/games/{gameId}/review-annotations': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        gameId: components['parameters']['GameId'];
+      };
+      cookie?: never;
+    };
+    /** Listar anotações privadas da revisão */
+    get: operations['listReviewAnnotations'];
+    /** Salvar anotação de um ply */
+    put: operations['saveReviewAnnotation'];
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -793,6 +814,49 @@ export interface components {
       finishedAt: string | null;
       players: components['schemas']['GamePlayer'][];
     };
+    GameHistoryItem: {
+      /** Format: uuid */
+      id: string;
+      status: string;
+      result: string;
+      termination: string;
+      pool: components['schemas']['RatingPool'];
+      rated: boolean;
+      /** @enum {string} */
+      color: 'white' | 'black';
+      timeControl: string;
+      /** Format: date-time */
+      startedAt: string | null;
+      /** Format: date-time */
+      finishedAt: string | null;
+      opponent: {
+        /** Format: uuid */
+        userId: string;
+        username: string;
+        displayName: string;
+        rating: number;
+      };
+    };
+    GameHistoryPage: {
+      items: components['schemas']['GameHistoryItem'][];
+      page: number;
+      limit: number;
+      total: number;
+    };
+    ReviewAnnotationInput: {
+      ply: number;
+      comment: string | null;
+      arrows: Record<string, never>[];
+      highlights: Record<string, never>[];
+    };
+    ReviewAnnotation: components['schemas']['ReviewAnnotationInput'] & {
+      /** Format: uuid */
+      gameId: string;
+      /** Format: uuid */
+      userId: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
     DrawOfferAction: {
       accepted: boolean;
       /** Format: uuid */
@@ -1132,6 +1196,34 @@ export interface operations {
       409: components['responses']['Problem'];
     };
   };
+  listGameHistory: {
+    parameters: {
+      query?: {
+        page?: number;
+        limit?: number;
+        status?: string;
+        result?: string;
+        pool?: components['schemas']['RatingPool'];
+        color?: 'white' | 'black';
+        rated?: boolean;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Página do histórico */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GameHistoryPage'];
+        };
+      };
+    };
+  };
   createGame: {
     parameters: {
       query?: never;
@@ -1233,6 +1325,54 @@ export interface operations {
       401: components['responses']['Problem'];
       403: components['responses']['Problem'];
       409: components['responses']['Problem'];
+    };
+  };
+  listReviewAnnotations: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        gameId: components['parameters']['GameId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Anotações por ply */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReviewAnnotation'][];
+        };
+      };
+    };
+  };
+  saveReviewAnnotation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        gameId: components['parameters']['GameId'];
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReviewAnnotationInput'];
+      };
+    };
+    responses: {
+      /** @description Anotação salva */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReviewAnnotation'];
+        };
+      };
     };
   };
   getGamePgn: {

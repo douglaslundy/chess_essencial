@@ -13,5 +13,7 @@ pnpm --filter @xadrez/api db:rollback
 
 `0003_game_actions.down.sql` remove as ofertas de empate persistidas. Partidas já encerradas por acordo ou desistência permanecem encerradas, pois o estado autoritativo vive em `games`.
 
+`0004_history_review.down.sql` remove as anotações privadas de revisão. O histórico autoritativo, os lances e o PGN permanecem preservados.
+
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.

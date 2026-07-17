@@ -1006,3 +1006,170 @@ input:focus-visible {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Phase 7: history and review */
+.historyPage,
+.reviewPage {
+  padding: clamp(24px, 4vw, 56px);
+}
+.pageHeading h1,
+.reviewHeader h1 {
+  font-family: Georgia, serif;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  margin: 8px 0;
+}
+.historyFilters,
+.annotationFields {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 24px 0;
+}
+.historyFilters label,
+.reviewPanel label,
+.annotationFields label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+}
+.historyFilters select,
+.reviewPanel textarea,
+.annotationFields input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  padding: 12px;
+}
+.historyGrid {
+  display: grid;
+  gap: 16px;
+}
+.historyCard {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr auto auto;
+  padding: 20px;
+}
+.historyCard > div {
+  display: grid;
+}
+.historyCard span,
+.historyCard dt {
+  color: var(--muted);
+}
+.historyCard dl {
+  display: flex;
+  gap: 24px;
+  margin: 0;
+}
+.historyCard dl div {
+  display: grid;
+}
+.historyCard a,
+.reviewHeader button,
+.reviewPanel > button {
+  background: var(--red);
+  border: 0;
+  border-radius: 10px;
+  color: white;
+  padding: 12px 18px;
+  text-align: center;
+}
+.pagination {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 28px;
+}
+.pagination button,
+.reviewNavigation button,
+.reviewMoves button {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 9px 12px;
+}
+.reviewPage {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(320px, 720px) minmax(300px, 1fr);
+}
+.reviewHeader {
+  align-items: center;
+  display: flex;
+  grid-column: 1 / -1;
+  justify-content: space-between;
+}
+.reviewBoard {
+  min-width: 0;
+}
+.annotationPreview {
+  background: rgba(216, 182, 108, 0.12);
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  margin: 10px 0 0;
+  padding: 8px 12px;
+}
+.reviewPanel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  padding: 20px;
+}
+.reviewNavigation {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.fenDisplay {
+  background: var(--bg);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+  padding: 12px;
+}
+.reviewMoves {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 190px;
+  overflow: auto;
+}
+.reviewMoves .activePly {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.reviewPanel textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+.futureEvaluation {
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  display: grid;
+  gap: 4px;
+  padding-top: 16px;
+}
+.futureEvaluation strong {
+  color: var(--text);
+}
+@media (max-width: 900px) {
+  .reviewPage {
+    grid-template-columns: 1fr;
+  }
+  .historyCard {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+}

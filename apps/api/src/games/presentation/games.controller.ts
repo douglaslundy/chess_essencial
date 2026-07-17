@@ -1,5 +1,22 @@
-import { createGameInputSchema, submitMoveInputSchema } from '@xadrez/contracts';
-import { Body, Controller, Get, HttpCode, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  createGameInputSchema,
+  gameHistoryQuerySchema,
+  reviewAnnotationInputSchema,
+  submitMoveInputSchema,
+} from '@xadrez/contracts';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Put,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import type { FastifyReply } from 'fastify';
 import { z } from 'zod';
 
@@ -19,6 +36,13 @@ export class GamesController {
     private readonly gamesGateway: GamesGateway,
   ) {}
 
+  @Get()
+  history(@Req() request: AuthenticatedRequest, @Query() query: Record<string, unknown>) {
+    return this.gamesService.history(
+      request.auth.userId,
+      parseInput(gameHistoryQuerySchema, query),
+    );
+  }
   @Post()
   create(@Req() request: AuthenticatedRequest, @Body() body: unknown) {
     return this.gamesService.create(request.auth.userId, parseInput(createGameInputSchema, body));
@@ -71,6 +95,26 @@ export class GamesController {
     return result;
   }
 
+  @Get(':gameId/review-annotations')
+  listReviewAnnotations(@Req() request: AuthenticatedRequest, @Param('gameId') gameId: string) {
+    return this.gamesService.listReviewAnnotations(
+      parseInput(gameIdSchema, gameId),
+      request.auth.userId,
+    );
+  }
+
+  @Put(':gameId/review-annotations')
+  saveReviewAnnotation(
+    @Req() request: AuthenticatedRequest,
+    @Param('gameId') gameId: string,
+    @Body() body: unknown,
+  ) {
+    return this.gamesService.saveReviewAnnotation(
+      parseInput(gameIdSchema, gameId),
+      request.auth.userId,
+      parseInput(reviewAnnotationInputSchema, body),
+    );
+  }
   @Get(':gameId/pgn')
   async getPgn(
     @Req() request: AuthenticatedRequest,

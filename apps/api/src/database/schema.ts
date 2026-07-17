@@ -189,6 +189,30 @@ export const gameDrawOffers = pgTable('game_draw_offers', {
   resolvedAt: timestamp('resolved_at', { withTimezone: true }),
 });
 
+export const gameReviewAnnotations = pgTable(
+  'game_review_annotations',
+  {
+    gameId: uuid('game_id')
+      .notNull()
+      .references(() => games.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    ply: integer('ply').notNull(),
+    comment: varchar('comment', { length: 2000 }),
+    arrows: jsonb('arrows')
+      .$type<Array<{ color: string; from: string; to: string }>>()
+      .notNull()
+      .default([]),
+    highlights: jsonb('highlights')
+      .$type<Array<{ color: string; square: string }>>()
+      .notNull()
+      .default([]),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.gameId, table.userId, table.ply] })],
+);
 export const outboxEvents = pgTable('outbox_events', {
   id: uuid('id').defaultRandom().primaryKey(),
   aggregateType: varchar('aggregate_type', { length: 60 }).notNull(),
