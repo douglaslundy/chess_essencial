@@ -21,5 +21,7 @@ pnpm --filter @xadrez/api db:rollback
 
 `0007_exercises_runtime.down.sql` removes import runs, lesson links and training sessions, then restores the base exercise tables. Existing exercises and attempts are preserved; only Phase 10 extension columns are removed.
 
+`0008_security_observability.down.sql` remove denúncias, bloqueios direcionais, índices de auditoria e preferências adicionais de privacidade. Usuários, perfis e o histórico base de auditoria são preservados.
+
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.

@@ -137,6 +137,94 @@ paths:
                 $ref: '#/components/schemas/PublicUser'
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
+  /metrics:
+    get:
+      summary: Expor métricas agregadas no formato Prometheus
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Métricas agregadas sem dados pessoais
+          content:
+            text/plain:
+              schema: {type: string}
+        '401': {$ref: '#/components/responses/Problem'}
+  /me/privacy:
+    get:
+      summary: Consultar controles de privacidade
+      operationId: getPrivacy
+      responses:
+        '200':
+          description: Preferências atuais
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PrivacySettings'}
+        '401': {$ref: '#/components/responses/Problem'}
+    patch:
+      summary: Atualizar controles de privacidade
+      operationId: updatePrivacy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdatePrivacyInput'}
+      responses:
+        '200':
+          description: Preferências atualizadas
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PrivacySettings'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /me/blocks:
+    get:
+      summary: Listar usuários bloqueados
+      operationId: listBlocks
+      responses:
+        '200':
+          description: Bloqueios direcionais
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/BlockedUser'}}
+        '401': {$ref: '#/components/responses/Problem'}
+  /me/blocks/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    put:
+      summary: Bloquear usuário
+      operationId: blockUser
+      responses:
+        '204': {description: Usuário bloqueado}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+    delete:
+      summary: Remover bloqueio
+      operationId: unblockUser
+      responses:
+        '204': {description: Bloqueio removido ou já ausente}
+        '401': {$ref: '#/components/responses/Problem'}
+  /reports:
+    post:
+      summary: Criar denúncia para revisão manual
+      operationId: createReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateReportInput'}
+      responses:
+        '201':
+          description: Denúncia registrada
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ReportReceipt'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
   /matchmaking/queues:
     post:
       summary: Entrar ou renovar presença na fila
@@ -918,6 +1006,55 @@ components:
       properties:
         refreshToken: {type: string, minLength: 20}
       additionalProperties: false
+    PrivacySettings:
+      type: object
+      required: [isProfilePublic, allowChallenges, allowFriendRequests]
+      properties:
+        isProfilePublic: {type: boolean}
+        allowChallenges: {type: boolean}
+        allowFriendRequests: {type: boolean}
+      additionalProperties: false
+    UpdatePrivacyInput:
+      type: object
+      minProperties: 1
+      properties:
+        isProfilePublic: {type: boolean}
+        allowChallenges: {type: boolean}
+        allowFriendRequests: {type: boolean}
+      additionalProperties: false
+    BlockedUser:
+      type: object
+      required: [id, username, displayName, blockedAt]
+      properties:
+        id: {type: string, format: uuid}
+        username: {type: string}
+        displayName: {type: string}
+        blockedAt: {type: string, format: date-time}
+      additionalProperties: false
+    ReportCategory:
+      type: string
+      enum: [cheating, harassment, spam, inappropriate_profile, other]
+    CreateReportInput:
+      type: object
+      required: [category]
+      anyOf:
+        - required: [reportedUserId]
+        - required: [gameId]
+      properties:
+        reportedUserId: {type: string, format: uuid}
+        gameId: {type: string, format: uuid}
+        category: {$ref: '#/components/schemas/ReportCategory'}
+        description: {type: string, minLength: 3, maxLength: 1000}
+      additionalProperties: false
+    ReportReceipt:
+      type: object
+      required: [id, category, status, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        category: {$ref: '#/components/schemas/ReportCategory'}
+        status: {type: string, enum: [open]}
+        createdAt: {type: string, format: date-time}
+      additionalProperties: false
     UpdateMeInput:
       type: object
       minProperties: 1
@@ -986,13 +1123,14 @@ components:
       additionalProperties: false
     ProblemDetails:
       type: object
-      required: [type, title, status, detail, instance]
+      required: [type, title, status, detail, instance, requestId]
       properties:
         type: {type: string, format: uri}
         title: {type: string}
         status: {type: integer, minimum: 400, maximum: 599}
         detail: {type: string}
         instance: {type: string}
+        requestId: {type: string}
         errors:
           type: array
           items:

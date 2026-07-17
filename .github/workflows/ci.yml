@@ -110,10 +110,11 @@ jobs:
           src/games/games.e2e.test.ts
           src/games/realtime.e2e.test.ts
           src/matchmaking/matchmaking-rating.e2e.test.ts
+          src/safety/safety.e2e.test.ts
 
       - name: Verify latest migration rollback and reapply
         run: |
           pnpm --filter @xadrez/api db:rollback
-          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.exercise_training_sessions') IS NULL AND to_regclass('public.lesson_attempt_actions') IS NOT NULL;")" = "t"
+          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.moderation_reports') IS NULL AND to_regclass('public.exercise_training_sessions') IS NOT NULL;")" = "t"
           pnpm --filter @xadrez/api db:migrate
-          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.exercise_training_sessions') IS NOT NULL AND to_regclass('public.lesson_attempt_actions') IS NOT NULL;")" = "t"
+          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.moderation_reports') IS NOT NULL AND to_regclass('public.exercise_training_sessions') IS NOT NULL;")" = "t"

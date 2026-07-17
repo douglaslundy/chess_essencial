@@ -39,6 +39,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         status,
         detail: details.detail,
         instance: request.url,
+        requestId: request.id,
         ...(details.errors ? { errors: details.errors } : {}),
       });
   }

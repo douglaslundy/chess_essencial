@@ -327,4 +327,19 @@ describeDatabase('realtime game integration', () => {
       whiteClockMs: 0,
     });
   }, 10_000);
+
+  it('rate limits commands on each WebSocket connection', async () => {
+    const socket = await connect(white);
+    const rejected = waitFor(socket, 'game.error');
+    for (let index = 0; index < 30; index += 1) {
+      send(socket, 'auth.authenticate', {
+        accessToken: white.accessToken,
+        protocolVersion: 1,
+      });
+    }
+    expect((await rejected).data).toMatchObject({
+      event: 'auth.authenticate',
+      status: 429,
+    });
+  });
 });

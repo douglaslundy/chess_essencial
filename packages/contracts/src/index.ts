@@ -135,3 +135,16 @@ export {
   type StartExerciseTrainingInput,
   type SubmitExerciseAttemptInput,
 } from './exercise.js';
+export {
+  blockedUserSchema,
+  createReportInputSchema,
+  privacySettingsSchema,
+  reportCategorySchema,
+  reportReceiptSchema,
+  updatePrivacyInputSchema,
+  type BlockedUser,
+  type CreateReportInput,
+  type PrivacySettings,
+  type ReportReceipt,
+  type UpdatePrivacyInput,
+} from './safety.js';

@@ -1,6 +1,7 @@
 import type { PublicUser, UpdateMeInput } from '@xadrez/contracts';
 import { Injectable, NotFoundException } from '@nestjs/common';
 
+import { sanitizeUserText } from '../common/security/sanitize-user-text.js';
 import { UsersRepository, type IdentityUser } from './users.repository.js';
 
 @Injectable()
@@ -14,7 +15,12 @@ export class UsersService {
   }
 
   async updateMe(userId: string, input: UpdateMeInput): Promise<PublicUser> {
-    const user = await this.users.updateProfile(userId, input);
+    const sanitized = {
+      ...input,
+      ...(input.displayName ? { displayName: sanitizeUserText(input.displayName) } : {}),
+      ...(input.bio ? { bio: sanitizeUserText(input.bio) } : {}),
+    };
+    const user = await this.users.updateProfile(userId, sanitized);
     if (!user) throw new NotFoundException('Usuário não encontrado');
     return this.toPublicUser(user);
   }

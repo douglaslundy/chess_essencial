@@ -32,6 +32,8 @@ class FakeUsersRepository {
       id: '018f47f4-7b2f-4d90-8a66-9abcdef01234',
       passwordHash: input.passwordHash,
       profile: {
+        allowChallenges: true,
+        allowFriendRequests: true,
         avatarUrl: null,
         bio: null,
         birthYear: null,

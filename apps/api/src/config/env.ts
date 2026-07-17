@@ -17,7 +17,10 @@ export const apiEnvSchema = z.object({
   AUTH_VERIFICATION_SECRET: optionalSecret,
   AUTH_VERIFICATION_TTL_SECONDS: z.coerce.number().int().min(300).max(604_800).default(86_400),
   DATABASE_URL: z.string().url().default('postgresql://chess:chess@localhost:5432/chess'),
+  METRICS_TOKEN: z.string().min(24).optional(),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().optional(),
+  OTEL_SERVICE_NAME: z.string().min(1).max(100).default('xadrez-api'),
   REDIS_URL: z.string().url().default('redis://localhost:6379'),
   WEB_ORIGIN: z.string().url().default('http://localhost:3000'),
 });

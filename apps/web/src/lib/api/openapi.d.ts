@@ -124,6 +124,95 @@ export interface paths {
     patch: operations['updateMe'];
     trace?: never;
   };
+  '/metrics': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Expor métricas agregadas no formato Prometheus */
+    get: operations['getMetrics'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/me/privacy': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Consultar controles de privacidade */
+    get: operations['getPrivacy'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Atualizar controles de privacidade */
+    patch: operations['updatePrivacy'];
+    trace?: never;
+  };
+  '/me/blocks': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Listar usuários bloqueados */
+    get: operations['listBlocks'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/me/blocks/{userId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        userId: string;
+      };
+      cookie?: never;
+    };
+    get?: never;
+    /** Bloquear usuário */
+    put: operations['blockUser'];
+    post?: never;
+    /** Remover bloqueio */
+    delete: operations['unblockUser'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/reports': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Criar denúncia para revisão manual */
+    post: operations['createReport'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/matchmaking/queues': {
     parameters: {
       query?: never;
@@ -854,6 +943,46 @@ export interface components {
     RefreshInput: {
       refreshToken: string;
     };
+    PrivacySettings: {
+      isProfilePublic: boolean;
+      allowChallenges: boolean;
+      allowFriendRequests: boolean;
+    };
+    UpdatePrivacyInput: {
+      isProfilePublic?: boolean;
+      allowChallenges?: boolean;
+      allowFriendRequests?: boolean;
+    };
+    BlockedUser: {
+      /** Format: uuid */
+      id: string;
+      username: string;
+      displayName: string;
+      /** Format: date-time */
+      blockedAt: string;
+    };
+    /** @enum {string} */
+    ReportCategory: 'cheating' | 'harassment' | 'spam' | 'inappropriate_profile' | 'other';
+    CreateReportInput:
+      | {
+          /** Format: uuid */
+          reportedUserId?: string;
+          /** Format: uuid */
+          gameId?: string;
+          category: components['schemas']['ReportCategory'];
+          description?: string;
+        }
+      | unknown
+      | unknown;
+    ReportReceipt: {
+      /** Format: uuid */
+      id: string;
+      category: components['schemas']['ReportCategory'];
+      /** @enum {string} */
+      status: 'open';
+      /** Format: date-time */
+      createdAt: string;
+    };
     UpdateMeInput: {
       displayName?: string;
       /** Format: uri */
@@ -909,6 +1038,7 @@ export interface components {
       status: number;
       detail: string;
       instance: string;
+      requestId: string;
       errors?: {
         path?: string;
         message?: string;
@@ -1320,6 +1450,167 @@ export interface operations {
       };
       400: components['responses']['Problem'];
       401: components['responses']['Problem'];
+    };
+  };
+  getMetrics: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Métricas agregadas sem dados pessoais */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'text/plain': string;
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  getPrivacy: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Preferências atuais */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PrivacySettings'];
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  updatePrivacy: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdatePrivacyInput'];
+      };
+    };
+    responses: {
+      /** @description Preferências atualizadas */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PrivacySettings'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+    };
+  };
+  listBlocks: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Bloqueios direcionais */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BlockedUser'][];
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  blockUser: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Usuário bloqueado */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  unblockUser: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Bloqueio removido ou já ausente */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  createReport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateReportInput'];
+      };
+    };
+    responses: {
+      /** @description Denúncia registrada */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReportReceipt'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+      409: components['responses']['Problem'];
     };
   };
   joinMatchmakingQueue: {

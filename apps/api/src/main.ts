@@ -1,3 +1,4 @@
+import './telemetry.js';
 import 'reflect-metadata';
 
 import { ConfigService } from '@nestjs/config';
