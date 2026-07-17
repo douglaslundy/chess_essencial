@@ -1,7 +1,6 @@
 name: xadrez-essencial
 
 x-app-defaults: &app-defaults
-  image: xadrez-essencial:phase5
   restart: unless-stopped
 
 services:
@@ -45,7 +44,7 @@ services:
 
   api:
     <<: *app-defaults
-    command: ['pnpm', '--filter', '@xadrez/api', 'start']
+    image: xadrez-api:${IMAGE_TAG:-local}
     depends_on:
       postgres:
         condition: service_healthy
@@ -80,7 +79,7 @@ services:
 
   worker:
     <<: *app-defaults
-    command: ['pnpm', '--filter', '@xadrez/worker', 'start']
+    image: xadrez-worker:${IMAGE_TAG:-local}
     depends_on:
       redis:
         condition: service_healthy
@@ -105,7 +104,7 @@ services:
 
   web:
     <<: *app-defaults
-    command: ['pnpm', '--filter', '@xadrez/web', 'start']
+    image: xadrez-web:${IMAGE_TAG:-local}
     depends_on:
       api:
         condition: service_healthy

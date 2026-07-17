@@ -16,7 +16,9 @@
     "lint": "turbo run lint",
     "smoke:dev": "node scripts/smoke-dev.mjs",
     "test": "turbo run test",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "load:basic": "node scripts/basic-load.mjs",
+    "db:verify-backup-restore": "bash scripts/verify-backup-restore.sh"
   },
   "devDependencies": {
     "@types/node": "26.1.1",

@@ -7,6 +7,8 @@ cd "$ROOT_DIR"
 ENV_FILE="$ROOT_DIR/.env.vps"
 COMPOSE_FILE="$ROOT_DIR/deploy/docker-compose.vps.yml"
 PROJECT_NAME="xadrez-essencial"
+IMAGE_TAG="$(git rev-parse --short=12 HEAD)"
+export IMAGE_TAG
 
 if [[ ! -f "$ENV_FILE" ]]; then
   umask 077
@@ -23,6 +25,7 @@ MAILPIT_UI_PORT=8026
 PUBLIC_API_URL=http://192.168.0.233:4100/v1
 WEB_ORIGIN=http://192.168.0.233:3100
 AUTH_EXPOSE_VERIFICATION_TOKEN=false
+DEMO_SEED_ENABLED=false
 EOF
 fi
 
@@ -42,7 +45,7 @@ append_value_if_missing() {
 }
 
 append_value_if_missing AUTH_EXPOSE_VERIFICATION_TOKEN false
-
+append_value_if_missing DEMO_SEED_ENABLED false
 append_secret_if_missing AUTH_ACCESS_SECRET
 append_secret_if_missing AUTH_REFRESH_SECRET
 append_secret_if_missing AUTH_VERIFICATION_SECRET
@@ -53,16 +56,35 @@ set -a
 source "$ENV_FILE"
 set +a
 
-docker compose --project-name "$PROJECT_NAME" --file "$COMPOSE_FILE" --env-file "$ENV_FILE" config >/dev/null
-docker build   --file "$ROOT_DIR/deploy/Dockerfile"   --build-arg "NEXT_PUBLIC_API_URL=$PUBLIC_API_URL"   --tag xadrez-essencial:phase5   "$ROOT_DIR"
+compose=(docker compose --project-name "$PROJECT_NAME" --file "$COMPOSE_FILE" --env-file "$ENV_FILE")
+"${compose[@]}" config >/dev/null
 
-docker compose   --project-name "$PROJECT_NAME"   --file "$COMPOSE_FILE"   --env-file "$ENV_FILE"   up --detach postgres redis mailpit
+docker build --file "$ROOT_DIR/deploy/Dockerfile" --target api \
+  --build-arg "NEXT_PUBLIC_API_URL=$PUBLIC_API_URL" --tag "xadrez-api:$IMAGE_TAG" "$ROOT_DIR"
+docker build --file "$ROOT_DIR/deploy/Dockerfile" --target worker \
+  --build-arg "NEXT_PUBLIC_API_URL=$PUBLIC_API_URL" --tag "xadrez-worker:$IMAGE_TAG" "$ROOT_DIR"
+docker build --file "$ROOT_DIR/deploy/Dockerfile" --target web \
+  --build-arg "NEXT_PUBLIC_API_URL=$PUBLIC_API_URL" --tag "xadrez-web:$IMAGE_TAG" "$ROOT_DIR"
 
-docker compose   --project-name "$PROJECT_NAME"   --file "$COMPOSE_FILE"   --env-file "$ENV_FILE"   run --rm api pnpm --filter @xadrez/api db:migrate
+"${compose[@]}" up --detach postgres redis mailpit
 
-docker compose   --project-name "$PROJECT_NAME"   --file "$COMPOSE_FILE"   --env-file "$ENV_FILE"   run --rm api pnpm --filter @xadrez/api db:seed
+schema_exists="$("${compose[@]}" exec --no-TTY postgres psql --username "$POSTGRES_USER" \
+  --dbname "$POSTGRES_DB" --tuples-only --no-align \
+  --command "SELECT to_regclass('public.schema_migrations') IS NOT NULL;")"
+if [[ "$schema_exists" == "t" ]]; then
+  bash deploy/backup-database.sh
+fi
 
-docker compose   --project-name "$PROJECT_NAME"   --file "$COMPOSE_FILE"   --env-file "$ENV_FILE"   up --detach --remove-orphans
+"${compose[@]}" run --rm api pnpm --filter @xadrez/api db:migrate
+"${compose[@]}" run --rm api pnpm --filter @xadrez/api db:seed
+
+if [[ "${DEMO_SEED_ENABLED:-false}" == "true" ]]; then
+  : "${DEMO_USER_PASSWORD:?DEMO_USER_PASSWORD is required when demo seed is enabled}"
+  "${compose[@]}" run --rm --env DEMO_SEED_ENABLED=true --env DEMO_USER_PASSWORD \
+    api pnpm --filter @xadrez/api db:seed-demo
+fi
+
+"${compose[@]}" up --detach --remove-orphans
 
 wait_for_url() {
   local name="$1"
@@ -85,4 +107,10 @@ wait_for_url api "http://127.0.0.1:$API_PORT/v1/health"
 wait_for_url worker "http://127.0.0.1:$WORKER_PORT/health"
 wait_for_url web "http://127.0.0.1:$WEB_PORT/api/health"
 
-docker compose --project-name "$PROJECT_NAME" --file "$COMPOSE_FILE" --env-file "$ENV_FILE" ps
+"${compose[@]}" exec --no-TTY \
+  --env LOAD_TEST_URL=http://127.0.0.1:4000/v1/health \
+  --env LOAD_TEST_REQUESTS=40 --env LOAD_TEST_CONCURRENCY=8 \
+  api node scripts/basic-load.mjs
+
+"${compose[@]}" ps
+printf '%s\n' "release.image_tag=$IMAGE_TAG"
