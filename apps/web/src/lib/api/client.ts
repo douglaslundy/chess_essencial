@@ -1,4 +1,7 @@
 import type {
+  CourseDetail,
+  LessonVersion,
+  SaveLessonInput,
   DrawOfferAction,
   GameHistoryPage,
   GameMove,
@@ -56,6 +59,15 @@ async function requestText(path: string, token: string): Promise<string> {
   return response.text();
 }
 export const api = {
+  getCourseEditor: (courseId: string, token: string) =>
+    request<CourseDetail>(`/courses/${courseId}/editor`, token),
+  saveCourseLesson: (courseId: string, slug: string, input: SaveLessonInput, token: string) =>
+    request<LessonVersion>(`/courses/${courseId}/lessons/${slug}`, token, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    }),
+  publishCourse: (courseId: string, token: string) =>
+    request(`/courses/${courseId}/publish`, token, { method: 'POST' }),
   getHistory: (query: URLSearchParams, token: string) =>
     request<GameHistoryPage>(`/games?${query.toString()}`, token),
   getPgn: (gameId: string, token: string) => requestText(`/games/${gameId}/pgn`, token),

@@ -368,24 +368,7 @@ export interface paths {
       cookie?: never;
     };
     /** Listar cursos publicados */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content?: never;
-        };
-      };
-    };
+    get: operations['listPublishedCourses'];
     put?: never;
     post?: never;
     delete?: never;
@@ -401,27 +384,61 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Obter curso */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content?: never;
-        };
-      };
-    };
+    /** Obter curso publicado */
+    get: operations['getPublishedCourse'];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/courses/{courseId}/editor': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Abrir curso no editor */
+    get: operations['getCourseEditor'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/courses/{courseId}/lessons/{slug}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** Criar ou versionar aula */
+    put: operations['saveCourseLesson'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/courses/{courseId}/publish': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Publicar curso editorialmente completo */
+    post: operations['publishCourse'];
     delete?: never;
     options?: never;
     head?: never;
@@ -602,6 +619,61 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    CourseSummary: {
+      /** Format: uuid */
+      id: string;
+      slug: string;
+      title: string;
+      description: string;
+      /** @enum {string} */
+      status: 'draft' | 'published' | 'archived';
+      version: number;
+      moduleCount: number;
+    };
+    CourseDetail: components['schemas']['CourseSummary'] & {
+      modules: {
+        /** Format: uuid */
+        id: string;
+        position: number;
+        title: string;
+        sourceVolume: number;
+        lessons: Record<string, never>[];
+      }[];
+    };
+    InteractiveLesson: {
+      slug: string;
+      title: string;
+      module: number;
+      sourcePages: number[];
+      estimatedMinutes: number;
+      prerequisites: string[];
+      steps: {
+        stepKey: string;
+        /** @enum {string} */
+        stepType: 'text' | 'board_instruction' | 'quiz' | 'explanation' | 'checkpoint' | 'summary';
+        bodyMd: string;
+        initialFen?: string | null;
+        /** @enum {string} */
+        orientation?: 'white' | 'black';
+        expectedActions?: Record<string, never>[];
+        feedback?: Record<string, never>;
+        nextStepRules?: Record<string, never>[];
+      }[];
+    };
+    SaveLessonInput: {
+      expectedVersion: number;
+      lesson: components['schemas']['InteractiveLesson'];
+    };
+    LessonVersion: {
+      /** Format: uuid */
+      lessonId: string;
+      version: number;
+      content: components['schemas']['InteractiveLesson'];
+      /** Format: uuid */
+      createdByUserId: string;
+      /** Format: date-time */
+      createdAt: string;
+    };
     HealthStatus: {
       /** @constant */
       service: 'api';
@@ -1513,6 +1585,125 @@ export interface operations {
       };
       400: components['responses']['Problem'];
       401: components['responses']['Problem'];
+    };
+  };
+  listPublishedCourses: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Cursos publicados */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CourseSummary'][];
+        };
+      };
+    };
+  };
+  getPublishedCourse: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        slug: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Curso com módulos e aulas */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CourseDetail'];
+        };
+      };
+      404: components['responses']['Problem'];
+    };
+  };
+  getCourseEditor: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        courseId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Curso incluindo rascunhos */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CourseDetail'];
+        };
+      };
+      403: components['responses']['Problem'];
+    };
+  };
+  saveCourseLesson: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        courseId: string;
+        slug: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SaveLessonInput'];
+      };
+    };
+    responses: {
+      /** @description Snapshot da versão criada */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LessonVersion'];
+        };
+      };
+      403: components['responses']['Problem'];
+      409: components['responses']['Problem'];
+    };
+  };
+  publishCourse: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        courseId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Curso publicado */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CourseSummary'];
+        };
+      };
+      400: components['responses']['Problem'];
+      403: components['responses']['Problem'];
     };
   };
 }

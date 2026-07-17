@@ -79,3 +79,18 @@ export {
   type RealtimeMoveSubmit,
   type RealtimeProblem,
 } from './realtime.js';
+
+export {
+  courseDetailSchema,
+  courseModuleSchema,
+  courseSummarySchema,
+  interactiveLessonSchema,
+  lessonStepSchema,
+  lessonVersionSchema,
+  saveLessonInputSchema,
+  type CourseDetail,
+  type CourseSummary,
+  type InteractiveLesson,
+  type LessonVersion,
+  type SaveLessonInput,
+} from './course.js';

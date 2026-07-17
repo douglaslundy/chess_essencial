@@ -1,10 +1,7 @@
 import postgres from 'postgres';
 
 const databaseUrl = process.env.DATABASE_URL;
-if (!databaseUrl) {
-  throw new Error('DATABASE_URL is required');
-}
-
+if (!databaseUrl) throw new Error('DATABASE_URL is required');
 const sql = postgres(databaseUrl, { max: 1, prepare: false });
 
 const timeControls = [
@@ -34,44 +31,46 @@ const timeControls = [
     incrementMs: 0,
   },
 ] as const;
+const courseModules = [
+  'Fundamentos',
+  'Pensamento e cálculo',
+  'Tática',
+  'Estratégia',
+  'Finais',
+  'Aberturas',
+  'Ataque e defesa',
+  'Jogo prático',
+  'Competição',
+  'Consolidação',
+] as const;
 
 try {
   await sql.begin(async (transaction) => {
-    for (const control of timeControls) {
+    for (const control of timeControls)
       await transaction`
-        INSERT INTO game_time_controls (
-          code,
-          label,
-          pool,
-          initial_ms,
-          increment_ms,
-          delay_ms,
-          rated,
-          active
-        )
-        VALUES (
-          ${control.code},
-          ${control.label},
-          ${control.pool},
-          ${control.initialMs},
-          ${control.incrementMs},
-          0,
-          true,
-          true
-        )
-        ON CONFLICT (code) DO UPDATE SET
-          label = EXCLUDED.label,
-          pool = EXCLUDED.pool,
-          initial_ms = EXCLUDED.initial_ms,
-          increment_ms = EXCLUDED.increment_ms,
-          delay_ms = EXCLUDED.delay_ms,
-          rated = EXCLUDED.rated,
-          active = EXCLUDED.active
-      `;
-    }
+      INSERT INTO game_time_controls (code, label, pool, initial_ms, increment_ms, delay_ms, rated, active)
+      VALUES (${control.code}, ${control.label}, ${control.pool}, ${control.initialMs}, ${control.incrementMs}, 0, true, true)
+      ON CONFLICT (code) DO UPDATE SET label = EXCLUDED.label, pool = EXCLUDED.pool,
+        initial_ms = EXCLUDED.initial_ms, increment_ms = EXCLUDED.increment_ms,
+        delay_ms = EXCLUDED.delay_ms, rated = EXCLUDED.rated, active = EXCLUDED.active
+    `;
+    const [course] = await transaction`
+      INSERT INTO courses (slug, title, description)
+      VALUES ('xadrez-essencial', 'Xadrez Essencial', 'Currículo progressivo em 10 módulos.')
+      ON CONFLICT (slug) DO UPDATE SET title = EXCLUDED.title, description = EXCLUDED.description
+      RETURNING id
+    `;
+    for (const [index, title] of courseModules.entries())
+      await transaction`
+      INSERT INTO course_modules (course_id, position, title, source_volume)
+      VALUES (${course!.id}, ${index + 1}, ${title}, ${index + 1})
+      ON CONFLICT (course_id, position) DO UPDATE SET title = EXCLUDED.title,
+        source_volume = EXCLUDED.source_volume
+    `;
   });
-
-  process.stdout.write(`seed.time_controls=${timeControls.length}\n`);
+  process.stdout.write(
+    `seed.time_controls=${timeControls.length}\nseed.course_modules=${courseModules.length}\n`,
+  );
 } finally {
   await sql.end({ timeout: 5 });
 }
