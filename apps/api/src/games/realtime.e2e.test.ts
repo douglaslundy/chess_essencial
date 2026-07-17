@@ -13,7 +13,7 @@ interface Identity {
 
 interface MessageEnvelope {
   data: {
-    move: { id: number };
+    move: { clientMoveId: string; id: number };
     offerId: string;
     offeredByUserId: string;
     moves: Array<{ uci: string }>;
@@ -97,12 +97,16 @@ describeDatabase('realtime game integration', () => {
     socket.send(JSON.stringify({ data, event }));
   }
 
-  function waitFor(socket: WebSocket, event: string) {
+  function waitFor(
+    socket: WebSocket,
+    event: string,
+    predicate: (message: MessageEnvelope) => boolean = () => true,
+  ) {
     return new Promise<MessageEnvelope>((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error(`Timeout waiting for ${event}`)), 5_000);
       socket.on('message', function listener(raw) {
         const message = JSON.parse(raw.toString()) as MessageEnvelope;
-        if (message.event !== event) return;
+        if (message.event !== event || !predicate(message)) return;
         clearTimeout(timeout);
         socket.off('message', listener);
         resolve(message);
@@ -117,7 +121,11 @@ describeDatabase('realtime game integration', () => {
     expectedVersion: number,
     uci: string,
   ) {
-    const committed = waitFor(socket, 'game.move_committed');
+    const committed = waitFor(
+      socket,
+      'game.move_committed',
+      (message) => message.data.move.clientMoveId === clientMoveId,
+    );
     send(socket, 'move.submit', { clientMoveId, expectedVersion, gameId, uci });
     return (await committed).data;
   }
