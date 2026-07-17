@@ -4,8 +4,12 @@ import { ChessJsRules, IllegalMoveError } from '@xadrez/chess-domain';
 import type {
   CreateGameInput,
   DrawOfferAction,
+  GameHistoryPage,
+  GameHistoryQuery,
   GameMove,
   GameState,
+  ReviewAnnotation,
+  ReviewAnnotationInput,
   SubmitMoveInput,
 } from '@xadrez/contracts';
 import {
@@ -61,6 +65,32 @@ interface MoveRow {
   uci: string;
 }
 
+interface HistoryRow {
+  color: 'white' | 'black';
+  displayName: string;
+  finishedAt: Date | string | null;
+  id: string;
+  opponentRating: number;
+  opponentUserId: string;
+  pool: NonNullable<GameHistoryQuery['pool']>;
+  rated: boolean;
+  result: GameState['result'];
+  startedAt: Date | string | null;
+  status: GameState['status'];
+  termination: string;
+  timeControl: string;
+  username: string;
+}
+
+interface ReviewAnnotationRow {
+  arrows: ReviewAnnotation['arrows'];
+  comment: string | null;
+  gameId: string;
+  highlights: ReviewAnnotation['highlights'];
+  ply: number;
+  updatedAt: Date | string;
+  userId: string;
+}
 @Injectable()
 export class GamesRepository {
   constructor(private readonly database: DatabaseService) {}
@@ -161,6 +191,107 @@ export class GamesRepository {
     });
   }
 
+  async history(userId: string, input: GameHistoryQuery): Promise<GameHistoryPage> {
+    const offset = (input.page - 1) * input.limit;
+    const status = input.status ?? null;
+    const result = input.result ?? null;
+    const pool = input.pool ?? null;
+    const color = input.color ?? null;
+    const rated = input.rated ?? null;
+    const [count] = await this.database.client<{ total: number }[]>`
+      SELECT count(*)::integer AS total
+      FROM games
+      JOIN game_players mine ON mine.game_id = games.id AND mine.user_id = ${userId}
+      JOIN game_time_controls controls ON controls.id = games.time_control_id
+      WHERE (${status}::text IS NULL OR games.status::text = ${status})
+        AND (${result}::text IS NULL OR games.result::text = ${result})
+        AND (${pool}::text IS NULL OR controls.pool::text = ${pool})
+        AND (${color}::text IS NULL OR mine.color::text = ${color})
+        AND (${rated}::boolean IS NULL OR games.rated = ${rated})
+    `;
+    const rows = await this.database.client<HistoryRow[]>`
+      SELECT games.id, games.status, games.result, games.termination, games.rated,
+        games.started_at AS "startedAt", games.finished_at AS "finishedAt", mine.color,
+        controls.pool, controls.label AS "timeControl", opponent.user_id AS "opponentUserId",
+        opponent.rating_before::integer AS "opponentRating", opponent_user.username::text AS username,
+        opponent_profile.display_name AS "displayName"
+      FROM games
+      JOIN game_players mine ON mine.game_id = games.id AND mine.user_id = ${userId}
+      JOIN game_players opponent ON opponent.game_id = games.id AND opponent.user_id <> ${userId}
+      JOIN users opponent_user ON opponent_user.id = opponent.user_id
+      JOIN user_profiles opponent_profile ON opponent_profile.user_id = opponent.user_id
+      JOIN game_time_controls controls ON controls.id = games.time_control_id
+      WHERE (${status}::text IS NULL OR games.status::text = ${status})
+        AND (${result}::text IS NULL OR games.result::text = ${result})
+        AND (${pool}::text IS NULL OR controls.pool::text = ${pool})
+        AND (${color}::text IS NULL OR mine.color::text = ${color})
+        AND (${rated}::boolean IS NULL OR games.rated = ${rated})
+      ORDER BY COALESCE(games.finished_at, games.started_at, games.created_at) DESC, games.id
+      LIMIT ${input.limit} OFFSET ${offset}
+    `;
+    return {
+      items: rows.map((row) => ({
+        color: row.color,
+        finishedAt: this.toIso(row.finishedAt),
+        id: row.id,
+        opponent: {
+          displayName: row.displayName,
+          rating: row.opponentRating,
+          userId: row.opponentUserId,
+          username: row.username,
+        },
+        pool: row.pool,
+        rated: row.rated,
+        result: row.result,
+        startedAt: this.toIso(row.startedAt),
+        status: row.status,
+        termination: row.termination,
+        timeControl: row.timeControl,
+      })),
+      limit: input.limit,
+      page: input.page,
+      total: count?.total ?? 0,
+    };
+  }
+
+  async listReviewAnnotations(gameId: string, userId: string): Promise<ReviewAnnotation[]> {
+    await this.assertPlayer(gameId, userId);
+    const rows = await this.database.client<ReviewAnnotationRow[]>`
+      SELECT game_id AS "gameId", user_id AS "userId", ply, comment, arrows, highlights,
+             updated_at AS "updatedAt"
+      FROM game_review_annotations
+      WHERE game_id = ${gameId} AND user_id = ${userId}
+      ORDER BY ply
+    `;
+    return rows.map((row) => ({
+      ...row,
+      updatedAt: this.toIso(row.updatedAt) ?? new Date(0).toISOString(),
+    }));
+  }
+
+  async saveReviewAnnotation(
+    gameId: string,
+    userId: string,
+    input: ReviewAnnotationInput,
+  ): Promise<ReviewAnnotation> {
+    await this.assertPlayer(gameId, userId);
+    const [moves] = await this.database.client<{ count: number }[]>`
+      SELECT count(*)::integer AS count FROM game_moves WHERE game_id = ${gameId}
+    `;
+    if (input.ply > (moves?.count ?? 0)) throw new BadRequestException('Ply fora do histórico');
+    const [row] = await this.database.client<ReviewAnnotationRow[]>`
+      INSERT INTO game_review_annotations (game_id, user_id, ply, comment, arrows, highlights)
+      VALUES (${gameId}, ${userId}, ${input.ply}, ${input.comment},
+        ${JSON.stringify(input.arrows)}::jsonb, ${JSON.stringify(input.highlights)}::jsonb)
+      ON CONFLICT (game_id, user_id, ply) DO UPDATE SET
+        comment = EXCLUDED.comment, arrows = EXCLUDED.arrows,
+        highlights = EXCLUDED.highlights, updated_at = now()
+      RETURNING game_id AS "gameId", user_id AS "userId", ply, comment, arrows, highlights,
+                updated_at AS "updatedAt"
+    `;
+    if (!row) throw new InternalServerErrorException('Anotação não foi persistida');
+    return { ...row, updatedAt: this.toIso(row.updatedAt) ?? new Date(0).toISOString() };
+  }
   async getState(gameId: string, userId: string) {
     return this.getStateInTransaction(this.database.client, gameId, userId);
   }

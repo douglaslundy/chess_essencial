@@ -1,4 +1,9 @@
-import type { CreateGameInput, SubmitMoveInput } from '@xadrez/contracts';
+import type {
+  CreateGameInput,
+  GameHistoryQuery,
+  ReviewAnnotationInput,
+  SubmitMoveInput,
+} from '@xadrez/contracts';
 import { Injectable } from '@nestjs/common';
 
 import { RatingsService } from '../../ratings/application/ratings.service.js';
@@ -15,6 +20,17 @@ export class GamesService {
     return this.games.create(userId, input);
   }
 
+  history(userId: string, input: GameHistoryQuery) {
+    return this.games.history(userId, input);
+  }
+
+  listReviewAnnotations(gameId: string, userId: string) {
+    return this.games.listReviewAnnotations(gameId, userId);
+  }
+
+  saveReviewAnnotation(gameId: string, userId: string, input: ReviewAnnotationInput) {
+    return this.games.saveReviewAnnotation(gameId, userId, input);
+  }
   getState(gameId: string, userId: string) {
     return this.games.getState(gameId, userId);
   }

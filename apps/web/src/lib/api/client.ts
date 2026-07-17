@@ -1,4 +1,11 @@
-import type { DrawOfferAction, GameMove, GameState } from '@xadrez/contracts';
+import type {
+  DrawOfferAction,
+  GameHistoryPage,
+  GameMove,
+  GameState,
+  ReviewAnnotation,
+  ReviewAnnotationInput,
+} from '@xadrez/contracts';
 
 import type { components } from './openapi';
 import { webEnv } from '@/env';
@@ -41,7 +48,24 @@ async function request<T>(path: string, token: string, init?: RequestInit): Prom
   return (await response.json()) as T;
 }
 
+async function requestText(path: string, token: string): Promise<string> {
+  const response = await fetch(`${webEnv.NEXT_PUBLIC_API_URL}${path}`, {
+    headers: { Accept: 'application/x-chess-pgn', ...authHeaders(token) },
+  });
+  if (!response.ok) throw new ApiProblem(response.status, 'Não foi possível exportar o PGN.');
+  return response.text();
+}
 export const api = {
+  getHistory: (query: URLSearchParams, token: string) =>
+    request<GameHistoryPage>(`/games?${query.toString()}`, token),
+  getPgn: (gameId: string, token: string) => requestText(`/games/${gameId}/pgn`, token),
+  getReviewAnnotations: (gameId: string, token: string) =>
+    request<ReviewAnnotation[]>(`/games/${gameId}/review-annotations`, token),
+  saveReviewAnnotation: (gameId: string, input: ReviewAnnotationInput, token: string) =>
+    request<ReviewAnnotation>(`/games/${gameId}/review-annotations`, token, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    }),
   getGame: (gameId: string, token: string) => request<GameState>(`/games/${gameId}`, token),
   getMoves: (gameId: string, token: string) => request<GameMove[]>(`/games/${gameId}/moves`, token),
   joinQueue: (timeControlCode: TimeControl, rated: boolean, token: string) =>

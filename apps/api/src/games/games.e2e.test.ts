@@ -148,6 +148,68 @@ describeDatabase('games database integration', () => {
     expect(pgn.body).toContain('Qh4#');
   });
 
+  it('lists paginated history and persists private review annotations', async () => {
+    const history = await app.inject({
+      headers: auth(white),
+      method: 'GET',
+      url: '/v1/games?page=1&limit=1&status=finished&pool=blitz',
+    });
+    expect(history.statusCode, history.body).toBe(200);
+    expect(history.json()).toMatchObject({
+      items: [
+        {
+          color: 'white',
+          id: gameId,
+          opponent: { userId: black.userId },
+          pool: 'blitz',
+          result: 'black_win',
+          status: 'finished',
+        },
+      ],
+      limit: 1,
+      page: 1,
+    });
+    expect(history.json().total).toBeGreaterThanOrEqual(1);
+
+    const saved = await app.inject({
+      headers: auth(white),
+      method: 'PUT',
+      payload: {
+        arrows: [{ color: 'gold', from: 'd1', to: 'h5' }],
+        comment: 'A dama chegou tarde.',
+        highlights: [{ color: 'orange', square: 'h4' }],
+        ply: 4,
+      },
+      url: `/v1/games/${gameId}/review-annotations`,
+    });
+    expect(saved.statusCode, saved.body).toBe(200);
+    expect(saved.json()).toMatchObject({
+      arrows: [{ from: 'd1', to: 'h5' }],
+      comment: 'A dama chegou tarde.',
+      gameId,
+      highlights: [{ square: 'h4' }],
+      ply: 4,
+      userId: white.userId,
+    });
+
+    const listed = await app.inject({
+      headers: auth(white),
+      method: 'GET',
+      url: `/v1/games/${gameId}/review-annotations`,
+    });
+    expect(listed.statusCode).toBe(200);
+    expect(listed.json()).toEqual([saved.json()]);
+
+    const invalidPly = await app.inject({
+      headers: auth(white),
+      method: 'PUT',
+      payload: { ply: 99 },
+      url: `/v1/games/${gameId}/review-annotations`,
+    });
+    expect(invalidPly.statusCode).toBe(400);
+    expect(invalidPly.headers['content-type']).toContain('application/problem+json');
+  });
+
   it('persists and accepts a draw offer from the opponent', async () => {
     const created = await app.inject({
       headers: auth(white),

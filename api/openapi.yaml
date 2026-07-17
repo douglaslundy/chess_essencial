@@ -198,6 +198,23 @@ paths:
         '404': {$ref: '#/components/responses/Problem'}
         '409': {$ref: '#/components/responses/Problem'}
   /games:
+    get:
+      summary: Listar histórico paginado do usuário
+      operationId: listGameHistory
+      parameters:
+        - {name: page, in: query, schema: {type: integer, minimum: 1, default: 1}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 50, default: 20}}
+        - {name: status, in: query, schema: {type: string}}
+        - {name: result, in: query, schema: {type: string}}
+        - {name: pool, in: query, schema: {$ref: '#/components/schemas/RatingPool'}}
+        - {name: color, in: query, schema: {type: string, enum: [white, black]}}
+        - {name: rated, in: query, schema: {type: boolean}}
+      responses:
+        '200':
+          description: Página do histórico
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GameHistoryPage'}
     post:
       summary: Criar partida entre dois usuários ativos
       operationId: createGame
@@ -268,6 +285,32 @@ paths:
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '409': {$ref: '#/components/responses/Problem'}
+  /games/{gameId}/review-annotations:
+    parameters:
+      - $ref: '#/components/parameters/GameId'
+    get:
+      summary: Listar anotações privadas da revisão
+      operationId: listReviewAnnotations
+      responses:
+        '200':
+          description: Anotações por ply
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/ReviewAnnotation'}}
+    put:
+      summary: Salvar anotação de um ply
+      operationId: saveReviewAnnotation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ReviewAnnotationInput'}
+      responses:
+        '200':
+          description: Anotação salva
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ReviewAnnotation'}
   /games/{gameId}/pgn:
     parameters:
       - $ref: '#/components/parameters/GameId'
@@ -666,6 +709,53 @@ components:
           maxItems: 2
           items: {$ref: '#/components/schemas/GamePlayer'}
       additionalProperties: false
+    GameHistoryItem:
+      type: object
+      required: [id, status, result, termination, pool, rated, color, timeControl, startedAt, finishedAt, opponent]
+      properties:
+        id: {type: string, format: uuid}
+        status: {type: string}
+        result: {type: string}
+        termination: {type: string}
+        pool: {$ref: '#/components/schemas/RatingPool'}
+        rated: {type: boolean}
+        color: {type: string, enum: [white, black]}
+        timeControl: {type: string}
+        startedAt: {type: [string, 'null'], format: date-time}
+        finishedAt: {type: [string, 'null'], format: date-time}
+        opponent:
+          type: object
+          required: [userId, username, displayName, rating]
+          properties:
+            userId: {type: string, format: uuid}
+            username: {type: string}
+            displayName: {type: string}
+            rating: {type: integer}
+    GameHistoryPage:
+      type: object
+      required: [items, page, limit, total]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/GameHistoryItem'}}
+        page: {type: integer}
+        limit: {type: integer}
+        total: {type: integer}
+    ReviewAnnotationInput:
+      type: object
+      required: [ply, comment, arrows, highlights]
+      properties:
+        ply: {type: integer, minimum: 0}
+        comment: {type: [string, 'null'], maxLength: 2000}
+        arrows: {type: array, items: {type: object}}
+        highlights: {type: array, items: {type: object}}
+    ReviewAnnotation:
+      allOf:
+        - {$ref: '#/components/schemas/ReviewAnnotationInput'}
+        - type: object
+          required: [gameId, userId, updatedAt]
+          properties:
+            gameId: {type: string, format: uuid}
+            userId: {type: string, format: uuid}
+            updatedAt: {type: string, format: date-time}
     DrawOfferAction:
       type: object
       required: [accepted, offerId, state]

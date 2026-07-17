@@ -19,13 +19,23 @@ export {
 export {
   createGameInputSchema,
   drawOfferActionSchema,
+  gameHistoryItemSchema,
+  gameHistoryPageSchema,
+  gameHistoryQuerySchema,
   gameMoveSchema,
   gameStateSchema,
+  reviewAnnotationInputSchema,
+  reviewAnnotationSchema,
   submitMoveInputSchema,
   type CreateGameInput,
   type DrawOfferAction,
+  type GameHistoryItem,
+  type GameHistoryPage,
+  type GameHistoryQuery,
   type GameMove,
   type GameState,
+  type ReviewAnnotation,
+  type ReviewAnnotationInput,
   type SubmitMoveInput,
 } from './game.js';
 export { healthStatusSchema, type HealthStatus } from './health.js';
