@@ -121,7 +121,10 @@ export function ExerciseTrainer() {
   async function submit() {
     const accessToken = token();
     const exercise = training?.currentExercise;
-    const submittedLine = line.trim().split(/\s+/).filter(Boolean);
+    const submittedLine =
+      exercise?.answerFormat === 'free_text'
+        ? [line.trim()].filter(Boolean)
+        : line.trim().split(/\s+/).filter(Boolean);
     if (!accessToken || !training || !exercise || submittedLine.length === 0) return;
     try {
       const attempt = await api.submitExerciseAttempt(
@@ -212,7 +215,9 @@ export function ExerciseTrainer() {
           <span className={styles.badge}>
             {current.positionType === 'illustrative_diagram'
               ? 'Diagrama ilustrativo'
-              : 'Posição legal'}
+              : current.positionType === 'text_only'
+                ? 'Exercício textual'
+                : 'Posição legal'}
           </span>
           <h2>{current.title ?? `Exercício ${current.sourceNumber ?? ''}`}</h2>
           <p>{current.promptMd}</p>
@@ -228,9 +233,13 @@ export function ExerciseTrainer() {
             </aside>
           ) : null}
           <label className={styles.answer}>
-            Linha em UCI, separada por espaços
+            {current.answerFormat === 'free_text'
+              ? 'Resposta'
+              : 'Linha em UCI, separada por espaços'}
             <input
-              placeholder="e2e4 e7e5"
+              placeholder={
+                current.answerFormat === 'free_text' ? 'Digite sua resposta' : 'e2e4 e7e5'
+              }
               onChange={(event) => setLine(event.target.value)}
               value={line}
             />
@@ -264,7 +273,11 @@ export function ExerciseTrainer() {
               <p>{exercise.promptMd}</p>
               <small>
                 Módulo {exercise.moduleNumber ?? '—'} ·{' '}
-                {exercise.positionType === 'legal_position' ? 'posição legal' : 'diagrama'}
+                {exercise.positionType === 'legal_position'
+                  ? 'posição legal'
+                  : exercise.positionType === 'text_only'
+                    ? 'texto'
+                    : 'diagrama'}
               </small>
             </article>
           ))}

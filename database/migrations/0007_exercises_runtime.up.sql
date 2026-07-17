@@ -1,6 +1,6 @@
 ALTER TABLE exercises
   ADD COLUMN position_type varchar(30) NOT NULL DEFAULT 'legal_position'
-    CHECK (position_type IN ('legal_position', 'illustrative_diagram')),
+    CHECK (position_type IN ('legal_position', 'illustrative_diagram', 'text_only')),
   ADD COLUMN import_run_id uuid,
   ADD COLUMN import_metadata jsonb NOT NULL DEFAULT '{}'::jsonb;
 

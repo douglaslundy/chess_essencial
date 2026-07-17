@@ -73,4 +73,56 @@ describe('normalizeExerciseDataset', () => {
       total: 3,
     });
   });
+  it('imports the real collection shape as text and referenced diagrams', () => {
+    const result = normalizeExerciseDataset(
+      {
+        diagrams: [
+          {
+            fen: 'diagram-data',
+            id: 'diagram-001',
+            legal_for_play: false,
+            position_type: 'illustrative_board',
+          },
+        ],
+        exercises: [
+          {
+            answer_format: 'free_text',
+            chapter: 1,
+            id: 'exercise-0001',
+            module: 1,
+            number: 1,
+            prompt: 'Explain the concept.',
+            solution: 'A reasoned answer.',
+            tag: 'Concept',
+          },
+          {
+            answer_format: 'free_text',
+            chapter: 2,
+            diagram_refs: ['diagram-001'],
+            id: 'exercise-0002',
+            module: 1,
+            number: 2,
+            positions: [{ diagram_id: 'diagram-001', fen: 'diagram-data' }],
+            prompt: 'Read the diagram.',
+            solution: 'The pattern.',
+            tag: 'Application',
+          },
+        ],
+        schema_version: '1.0.0',
+      },
+      'real-shape.json',
+    );
+
+    expect(result.report).toMatchObject({ imported: 2, rejected: 0, total: 2 });
+    expect(result.exercises[0]).toMatchObject({
+      answerFormat: 'free_text',
+      category: 'Concept',
+      externalId: 'exercise-0001',
+      positionType: 'text_only',
+    });
+    expect(result.exercises[1]).toMatchObject({
+      fen: 'diagram-data',
+      positionType: 'illustrative_diagram',
+    });
+  });
 });

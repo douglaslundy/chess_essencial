@@ -10,6 +10,7 @@ describeDatabase('exercise runtime database integration', () => {
   let sql: ReturnType<typeof postgres>;
   let token = '';
   let exerciseId = '';
+  let textualExerciseId = '';
 
   beforeAll(async () => {
     app = await createApp();
@@ -54,6 +55,19 @@ describeDatabase('exercise runtime database integration', () => {
       RETURNING id
     `;
     exerciseId = exercise!.id;
+    const [textualExercise] = await sql<{ id: string }[]>`
+      INSERT INTO exercises (
+        external_id, source_number, module_number, chapter_number, title, prompt_md,
+        solution_md, category, solution_lines, hints, tags, status, position_type, import_metadata
+      ) VALUES (
+        'phase-10-text-integration', 1300, 1, 1, 'Explain the idea', 'Give the reference answer.',
+        'A reasoned answer.', 'concept', '[]'::jsonb, '[]'::jsonb,
+        ARRAY['concept'], 'published', 'text_only', '{"answerFormat":"free_text"}'::jsonb
+      )
+      ON CONFLICT (external_id) DO UPDATE SET updated_at = now()
+      RETURNING id
+    `;
+    textualExerciseId = textualExercise!.id;
   });
 
   afterAll(async () => {
@@ -109,6 +123,16 @@ describeDatabase('exercise runtime database integration', () => {
     });
   });
 
+  it('evaluates free-text answers from the server reference', async () => {
+    const response = await app.inject({
+      headers: auth(),
+      method: 'POST',
+      payload: { durationMs: 500, submittedLine: ['A reasoned answer.'] },
+      url: `/v1/exercises/${textualExerciseId}/attempts`,
+    });
+    expect(response.statusCode, response.body).toBe(201);
+    expect(response.json()).toMatchObject({ correct: true, score: 100 });
+  });
   it('rejects an illegal submitted line as incorrect and reports user metrics', async () => {
     const attempt = await app.inject({
       headers: auth(),
@@ -124,6 +148,6 @@ describeDatabase('exercise runtime database integration', () => {
       url: '/v1/exercise-metrics',
     });
     expect(metrics.statusCode, metrics.body).toBe(200);
-    expect(metrics.json()).toMatchObject({ attempted: 2, correct: 1, hintsUsed: 1 });
+    expect(metrics.json()).toMatchObject({ attempted: 3, correct: 2, hintsUsed: 1 });
   });
 });

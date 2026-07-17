@@ -11,3 +11,4 @@ coverage/
 *.log
 .deploy/
 .DS_Store
+helper_files/

@@ -637,10 +637,12 @@ export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
     /** @enum {string} */
-    ExercisePositionType: 'legal_position' | 'illustrative_diagram';
+    ExercisePositionType: 'legal_position' | 'illustrative_diagram' | 'text_only';
     ExerciseSummary: {
       /** Format: uuid */
       id: string;
+      /** @enum {string} */
+      answerFormat: 'free_text' | 'move_sequence';
       sourceNumber: number | null;
       moduleNumber: number | null;
       chapterNumber: number | null;

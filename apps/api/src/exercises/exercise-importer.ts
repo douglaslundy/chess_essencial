@@ -5,6 +5,7 @@ import type { Sql, TransactionSql } from 'postgres';
 type JsonObject = Record<string, unknown>;
 
 export type NormalizedExercise = {
+  answerFormat: string;
   category: string | null;
   chapterNumber: number | null;
   difficulty: string | null;
@@ -13,7 +14,7 @@ export type NormalizedExercise = {
   hints: string[];
   metadata: JsonObject;
   moduleNumber: number | null;
-  positionType: 'legal_position' | 'illustrative_diagram';
+  positionType: 'legal_position' | 'illustrative_diagram' | 'text_only';
   promptMd: string;
   sideToMove: 'white' | 'black' | null;
   solutionLines: string[][];
@@ -32,7 +33,7 @@ export type NormalizedExerciseDataset = {
 };
 
 const ALIASES = {
-  category: ['category', 'categoria', 'theme', 'tema'],
+  category: ['category', 'categoria', 'theme', 'tema', 'tag'],
   chapter: ['chapterNumber', 'chapter_number', 'chapter', 'capitulo', 'cap\u00edtulo'],
   difficulty: ['difficulty', 'dificuldade', 'level', 'nivel', 'n\u00edvel'],
   fen: ['fen', 'position', 'posicao', 'posi\u00e7\u00e3o'],
@@ -43,8 +44,8 @@ const ALIASES = {
   solution: ['solutionMd', 'solution_md', 'solution', 'solucao', 'solu\u00e7\u00e3o', 'answer'],
   solutionLines: ['solutionLines', 'solution_lines', 'lines', 'variations', 'variantes', 'moves'],
   sourceNumber: ['sourceNumber', 'source_number', 'number', 'numero', 'n\u00famero', 'id'],
-  tags: ['tags', 'etiquetas', 'keywords', 'palavras_chave'],
-  title: ['title', 'titulo', 't\u00edtulo', 'name', 'nome'],
+  tags: ['tags', 'tag', 'etiquetas', 'keywords', 'palavras_chave'],
+  title: ['title', 'titulo', 't\u00edtulo', 'name', 'nome', 'chapter_title'],
 } as const;
 
 function isObject(value: unknown): value is JsonObject {
@@ -110,27 +111,69 @@ function extractItems(input: unknown): unknown[] {
   return [];
 }
 
-function inferPositionType(item: JsonObject): 'legal_position' | 'illustrative_diagram' {
-  const explicit = asString(
-    item.positionType ?? item.position_type ?? item.tipo_posicao,
-  )?.toLowerCase();
-  const illustrative =
-    item.illustrative === true || item.ilustrativo === true || item.diagramOnly === true;
-  return illustrative || explicit?.includes('illustr') || explicit?.includes('ilustr')
-    ? 'illustrative_diagram'
-    : 'legal_position';
+function extractDiagrams(input: unknown): Map<string, JsonObject> {
+  const result = new Map<string, JsonObject>();
+  if (!isObject(input) || !Array.isArray(input.diagrams)) return result;
+  for (const value of input.diagrams) {
+    if (!isObject(value)) continue;
+    const id = asString(value.id);
+    if (id) result.set(id, value);
+  }
+  return result;
 }
 
-function rejectionReason(item: JsonObject): string | null {
+type ExerciseContext = {
+  diagram: JsonObject | null;
+  diagramId: string | null;
+  fen: string | null;
+  positionType: 'legal_position' | 'illustrative_diagram' | 'text_only';
+  sideToMove: 'white' | 'black' | null;
+};
+
+function exerciseContext(item: JsonObject, diagrams: Map<string, JsonObject>): ExerciseContext {
+  const firstPosition =
+    Array.isArray(item.positions) && isObject(item.positions[0]) ? item.positions[0] : null;
+  const firstDiagramRef = Array.isArray(item.diagram_refs) ? asString(item.diagram_refs[0]) : null;
+  const diagramId = asString(firstPosition?.diagram_id) ?? firstDiagramRef;
+  const diagram = diagramId ? (diagrams.get(diagramId) ?? null) : null;
+  const fen =
+    asString(getValue(item, ALIASES.fen)) ?? asString(firstPosition?.fen) ?? asString(diagram?.fen);
+  const explicit = asString(
+    item.positionType ?? item.position_type ?? item.tipo_posicao ?? diagram?.position_type,
+  )?.toLowerCase();
+  const illustrative =
+    item.illustrative === true ||
+    item.ilustrativo === true ||
+    item.diagramOnly === true ||
+    diagram?.legal_for_play === false ||
+    explicit?.includes('illustr') ||
+    explicit?.includes('ilustr');
+  const positionType =
+    fen === null ? 'text_only' : illustrative ? 'illustrative_diagram' : 'legal_position';
+  const explicitSide = asString(
+    item.sideToMove ??
+      item.side_to_move ??
+      item.lado ??
+      firstPosition?.side_to_move ??
+      diagram?.side_to_move,
+  )?.toLowerCase();
+  const fenSide = fen?.split(/\s+/)[1];
+  const sideToMove =
+    explicitSide === 'white' || explicitSide === 'brancas' || fenSide === 'w'
+      ? 'white'
+      : explicitSide === 'black' || explicitSide === 'pretas' || fenSide === 'b'
+        ? 'black'
+        : null;
+  return { diagram, diagramId, fen, positionType, sideToMove };
+}
+
+function rejectionReason(item: JsonObject, context: ExerciseContext): string | null {
   if (asPositiveInteger(getValue(item, ALIASES.sourceNumber)) === null)
     return 'missing_source_number';
   if (asString(getValue(item, ALIASES.prompt)) === null) return 'missing_prompt';
-  const positionType = inferPositionType(item);
-  const fen = asString(getValue(item, ALIASES.fen));
-  if (positionType === 'legal_position' && fen === null) return 'missing_fen';
-  if (positionType === 'legal_position' && fen !== null) {
+  if (context.positionType === 'legal_position' && context.fen !== null) {
     try {
-      new ChessJsRules(fen);
+      new ChessJsRules(context.fen);
     } catch {
       return 'invalid_fen';
     }
@@ -139,12 +182,13 @@ function rejectionReason(item: JsonObject): string | null {
   const lines = asSolutionLines(getValue(item, ALIASES.solutionLines));
   return solution === null && lines.length === 0 ? 'missing_solution' : null;
 }
-
 export function normalizeExerciseDataset(
   input: unknown,
   sourceName: string,
 ): NormalizedExerciseDataset {
   const items = extractItems(input);
+  const diagrams = extractDiagrams(input);
+  const schemaVersion = isObject(input) ? asString(input.schema_version) : null;
   const exercises: NormalizedExercise[] = [];
   const rejections: ExerciseRejection[] = [];
 
@@ -154,37 +198,49 @@ export function normalizeExerciseDataset(
       return;
     }
     const sourceNumber = asPositiveInteger(getValue(rawItem, ALIASES.sourceNumber));
-    const reason = rejectionReason(rawItem);
+    const context = exerciseContext(rawItem, diagrams);
+    const reason = rejectionReason(rawItem, context);
     if (reason !== null || sourceNumber === null) {
       rejections.push({ index, reason: reason ?? 'missing_source_number', sourceNumber });
       return;
     }
 
-    const fen = asString(getValue(rawItem, ALIASES.fen));
-    const positionType = inferPositionType(rawItem);
     const solutionLines = asSolutionLines(getValue(rawItem, ALIASES.solutionLines));
-    const explicitSide = asString(
-      rawItem.sideToMove ?? rawItem.side_to_move ?? rawItem.lado,
-    )?.toLowerCase();
-    const fenSide = fen?.split(/\s+/)[1];
-    const sideToMove =
-      explicitSide === 'white' || explicitSide === 'brancas' || fenSide === 'w'
-        ? 'white'
-        : explicitSide === 'black' || explicitSide === 'pretas' || fenSide === 'b'
-          ? 'black'
-          : null;
+    const answerFormat =
+      asString(rawItem.answer_format ?? rawItem.answerFormat) ??
+      (solutionLines.length > 0 ? 'move_sequence' : 'free_text');
     exercises.push({
+      answerFormat,
       category: asString(getValue(rawItem, ALIASES.category)),
       chapterNumber: asPositiveInteger(getValue(rawItem, ALIASES.chapter)),
       difficulty: asString(getValue(rawItem, ALIASES.difficulty)),
-      externalId: `xadrez-essencial-${sourceNumber}`,
-      fen,
+      externalId: asString(rawItem.id) ?? `xadrez-essencial-${sourceNumber}`,
+      fen: context.fen,
       hints: asStringArray(getValue(rawItem, ALIASES.hints)),
-      metadata: { importedIndex: index, sourceName },
+      metadata: {
+        answerFormat,
+        checksumSha256: asString(rawItem.checksum_sha256),
+        diagram: context.diagram
+          ? {
+              annotations: context.diagram.annotations ?? {},
+              caption: asString(context.diagram.caption),
+              id: context.diagramId,
+              legalForPlay: context.diagram.legal_for_play === true,
+              orientation: asString(context.diagram.orientation),
+              sourcePositionType: asString(context.diagram.position_type),
+            }
+          : null,
+        importedIndex: index,
+        language: asString(rawItem.language),
+        notation: asString(rawItem.notation),
+        schemaVersion,
+        source: isObject(rawItem.source) ? rawItem.source : null,
+        sourceName,
+      },
       moduleNumber: asPositiveInteger(getValue(rawItem, ALIASES.module)),
-      positionType,
+      positionType: context.positionType,
       promptMd: asString(getValue(rawItem, ALIASES.prompt))!,
-      sideToMove,
+      sideToMove: context.sideToMove,
       solutionLines,
       solutionMd:
         asString(getValue(rawItem, ALIASES.solution)) ??

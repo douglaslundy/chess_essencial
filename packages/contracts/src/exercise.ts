@@ -1,6 +1,11 @@
 import { z } from 'zod';
 
-export const exercisePositionTypeSchema = z.enum(['legal_position', 'illustrative_diagram']);
+export const exercisePositionTypeSchema = z.enum([
+  'legal_position',
+  'illustrative_diagram',
+  'text_only',
+]);
+export const exerciseAnswerFormatSchema = z.enum(['free_text', 'move_sequence']);
 
 export const exerciseSearchQuerySchema = z.object({
   category: z.string().min(1).max(60).optional(),
@@ -15,6 +20,7 @@ export const exerciseSearchQuerySchema = z.object({
 });
 
 export const exerciseSummarySchema = z.object({
+  answerFormat: exerciseAnswerFormatSchema,
   category: z.string().nullable(),
   chapterNumber: z.number().int().positive().nullable(),
   difficulty: z.string().nullable(),

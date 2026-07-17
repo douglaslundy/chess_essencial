@@ -9,13 +9,14 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { DatabaseService } from '../database/database.service.js';
 
 type ExerciseRow = {
+  answer_format: 'free_text' | 'move_sequence';
   category: string | null;
   chapter_number: number | null;
   difficulty: string | null;
   fen: string | null;
   id: string;
   module_number: number | null;
-  position_type: 'legal_position' | 'illustrative_diagram';
+  position_type: 'legal_position' | 'illustrative_diagram' | 'text_only';
   prompt_md: string;
   side_to_move: 'white' | 'black' | null;
   source_number: number | null;
@@ -32,6 +33,7 @@ type AttemptExerciseRow = ExerciseRow & {
 
 function summary(row: ExerciseRow) {
   return {
+    answerFormat: row.answer_format,
     category: row.category,
     chapterNumber: row.chapter_number,
     difficulty: row.difficulty,
@@ -64,6 +66,20 @@ function lineIsLegal(exercise: AttemptExerciseRow, line: string[]) {
 }
 
 function answerIsCorrect(exercise: AttemptExerciseRow, submittedLine: string[]) {
+  if (exercise.answer_format === 'free_text') {
+    const submitted = submittedLine
+      .join(' ')
+      .normalize('NFKC')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+    const expected = exercise.solution_md
+      .normalize('NFKC')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+    return submitted === expected;
+  }
   if (!lineIsLegal(exercise, submittedLine)) return false;
   const submitted = normalizedLine(submittedLine);
   return exercise.solution_lines.some((solution) => {
@@ -109,7 +125,7 @@ export class ExercisesRepository {
     `;
     const rows = await sql<ExerciseRow[]>`
       SELECT e.id, e.source_number, e.module_number, e.chapter_number, e.title, e.prompt_md,
-        e.difficulty, e.category, e.fen, e.side_to_move, e.tags, e.position_type,
+        COALESCE(e.import_metadata->>'answerFormat', 'move_sequence') AS answer_format, e.difficulty, e.category, e.fen, e.side_to_move, e.tags, e.position_type,
         CASE WHEN e.source_pages IS NULL THEN '{}'::integer[]
           ELSE ARRAY(SELECT generate_series(lower(e.source_pages), upper(e.source_pages) - 1)) END AS source_pages
         FROM exercises e
@@ -192,7 +208,7 @@ export class ExercisesRepository {
     if (!session) throw new NotFoundException('Training session not found');
     const [current] = await sql<ExerciseRow[]>`
       SELECT e.id, e.source_number, e.module_number, e.chapter_number, e.title, e.prompt_md,
-        e.difficulty, e.category, e.fen, e.side_to_move, e.tags, e.position_type,
+        COALESCE(e.import_metadata->>'answerFormat', 'move_sequence') AS answer_format, e.difficulty, e.category, e.fen, e.side_to_move, e.tags, e.position_type,
         CASE WHEN e.source_pages IS NULL THEN '{}'::integer[]
           ELSE ARRAY(SELECT generate_series(lower(e.source_pages), upper(e.source_pages) - 1)) END AS source_pages
         FROM exercise_training_items i JOIN exercises e ON e.id = i.exercise_id
@@ -243,7 +259,7 @@ export class ExercisesRepository {
     const sql = this.database.client;
     const [exercise] = await sql<AttemptExerciseRow[]>`
       SELECT e.id, e.source_number, e.module_number, e.chapter_number, e.title, e.prompt_md,
-        e.difficulty, e.category, e.fen, e.side_to_move, e.tags, e.position_type,
+        COALESCE(e.import_metadata->>'answerFormat', 'move_sequence') AS answer_format, e.difficulty, e.category, e.fen, e.side_to_move, e.tags, e.position_type,
         e.solution_lines, e.solution_md, e.hints, '{}'::integer[] AS source_pages
         FROM exercises e WHERE e.id = ${exerciseId} AND e.status = 'published'
     `;

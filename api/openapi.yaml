@@ -662,12 +662,13 @@ components:
   schemas:
     ExercisePositionType:
       type: string
-      enum: [legal_position, illustrative_diagram]
+      enum: [legal_position, illustrative_diagram, text_only]
     ExerciseSummary:
       type: object
-      required: [id, sourceNumber, moduleNumber, chapterNumber, title, promptMd, difficulty, category, fen, sideToMove, tags, sourcePages, positionType]
+      required: [id, answerFormat, sourceNumber, moduleNumber, chapterNumber, title, promptMd, difficulty, category, fen, sideToMove, tags, sourcePages, positionType]
       properties:
         id: {type: string, format: uuid}
+        answerFormat: {type: string, enum: [free_text, move_sequence]}
         sourceNumber: {type: [integer, 'null'], minimum: 1}
         moduleNumber: {type: [integer, 'null'], minimum: 1, maximum: 10}
         chapterNumber: {type: [integer, 'null'], minimum: 1}
