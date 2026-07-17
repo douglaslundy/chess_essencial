@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { basename, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import postgres from 'postgres';
 
@@ -11,7 +12,9 @@ import {
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const strict = args.includes('--strict');
+const repositoryRoot = fileURLToPath(new URL('../../../../', import.meta.url));
 const sourcePath = resolve(
+  repositoryRoot,
   args.find((argument) => !argument.startsWith('--')) ??
     'Xadrez_Essencial_Exercicios_1_a_1298.json',
 );
