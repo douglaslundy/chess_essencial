@@ -1,37 +1,35 @@
 # Progresso do Projeto
 
 ## Última atualização
-2026-07-17 — causa raiz JSONB da Fase 9 corrigida; aguardando nova execução PostgreSQL
+2026-07-17 — Fase 9 aprovada; Fase 10 iniciada em branch isolada
 
 ## Tarefa em andamento
-Fase 9 — runtime de aula interativa, conforme `prompts/09_LESSON_RUNTIME.md`.
+Fase 10 — exercícios, importador, treino e métricas, conforme `prompts/10_EXERCISES_IMPORT.md`.
 
 ## Contexto necessário
-- Branch `codex/phase9-lesson-runtime`; PR #4.
-- Runtime autoritativo em `apps/api/src/lesson-runtime/`, contratos em `packages/contracts/src/lesson-runtime.ts` e migration `0006_lesson_runtime`.
-- A resposta pública expõe somente a etapa atual sanitizada; respostas e etapas futuras ficam no snapshot privado do servidor.
-- Cada ação é persistida no ledger `lesson_attempt_actions`; tentativas iniciadas podem ser retomadas.
-- Aula demonstrativa completa do módulo 1 criada no seed e player em `/app/aula/[lessonId]`.
-- Três execuções da PR tiveram `quality` aprovado. O log seguro revelou dupla serialização: arrays/objetos eram gravados como strings dentro de `jsonb`.
-- Correção: `jsonValue` + `sql.json(...)` nos writes de CMS, seed e runtime; leitura do runtime tolera registros legados duplamente serializados.
-- Teste unitário cobre preservação de arrays/objetos JSON e remoção de `undefined`; typecheck e testes API passaram.
-- Quarta execução: o carregamento da aula passou; o bind de JSON estruturado falhou com `TypeError` para `Array`/`Object`. Stack trace seguro habilitado para localizar a chamada no driver.
-- Stack confirmou o erro no `Bind` do Postgres.js. Binding corrigido para parâmetro `text` seguido de cast PostgreSQL `::text::jsonb`, evitando objeto bruto e dupla serialização.
-- Quinta execução: 26/27 integrações passaram; última falha era bind de `Date` em `completed_at`. Corrigido com `CASE WHEN ... THEN now()` no PostgreSQL.
-- Docker não está instalado neste Windows; a reprodução PostgreSQL continua pelo job isolado do GitHub.
-- O usuário determinou continuar sem deploy. Não acessar nem modificar a VPS.
+- Branch `codex/phase10-exercises-import`, empilhada sobre a Fase 9 aprovada.
+- PR #4 da Fase 9 está aberta com `quality` e `database-integration` aprovados; merge em `main` foi bloqueado porque poderia acionar auto-deploy, contrariando a ordem sem deploy.
+- Usar tabelas base `exercises` e `exercise_attempts`, `course/CURRICULUM_BLUEPRINT.md` e placeholders `/exercises` do OpenAPI.
+- Implementar busca/filtros, sessão de treino, tentativa, dica, solução, métricas e associação a aulas.
+- Validar FEN somente para `legal_position`; diagramas ilustrativos devem ser tratados sem motor de legalidade.
+- Contratos de exercícios/treino e migration `0007_exercises_runtime` criados; 20 testes contratuais e typecheck aprovados.
+- Importador normaliza aliases, separa diagramas ilustrativos, valida FEN legal e persiste relatorio idempotente.
+- API autenticada de busca, treino, tentativa, dica, solucao e metricas implementada.
+- Gates locais aprovados: format, lint, typecheck, testes de todos os workspaces e build completo.
+- O arquivo `Xadrez_Essencial_Exercicios_1_a_1298.json` não foi encontrado no repositório, anexos, Desktop, Downloads, `workspace12` ou busca pública. Não inventar contagens reais.
+- O usuário determinou continuar sem deploy. Não acessar nem modificar a VPS e não tocar em `main`.
 
 ## Concluído
 - [x] Fases 1 a 8 concluídas e aprovadas.
-- [x] Implementação funcional da Fase 9 concluída localmente.
-- [x] Gates locais aprovados: format, lint, typecheck, testes unitários, build API e build web.
-- [x] Varreduras UTF-8/mojibake e secrets aprovadas; senhas encontradas são apenas fixtures de integração.
+- [x] Fase 9 implementada e aprovada: `database-integration` 58s e `quality` 1m36s na execução 29580519247.
+- [x] Runtime de aula, migration `0006`, rollback/reaplicação e 27 integrações aprovados.
 - [x] Nenhuma credencial fornecida pelo usuário foi gravada.
 
 ## Pendências
-- [ ] Reexecutar `quality` e `database-integration` com a correção JSONB.
-- [ ] Corrigir qualquer nova falha antes de mesclar.
+- [ ] Implementar e aprovar a Fase 10.
+- [ ] Executar o import real e emitir contagens quando o JSON de 1.298 itens estiver disponível.
+- [ ] Manter PR #4 sem merge enquanto `main` puder disparar deploy.
 - [ ] Não executar deploy.
 
 ## Próxima tarefa
-Publicar a correção JSONB na PR #4 e acompanhar os dois jobs; somente após aprovação, mesclar e iniciar `prompts/10_EXERCISES_IMPORT.md`.
+Enviar a branch isolada e aguardar quality + database-integration; corrigir qualquer falha antes de aprovar a Fase 10.

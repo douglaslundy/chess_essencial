@@ -15,6 +15,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             Jogar
           </Link>
           <Link href="/app/partidas">Partidas</Link>
+          <Link href="/app/exercicios">Exercícios</Link>
           <Link href="/ranking">Ranking</Link>
           <Link href="/cursos">Cursos</Link>
           <Link href="/app/admin/curso">CMS do curso</Link>
