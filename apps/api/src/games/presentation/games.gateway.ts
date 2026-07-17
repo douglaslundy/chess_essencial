@@ -120,6 +120,22 @@ export class GamesGateway implements OnGatewayConnection, OnGatewayDisconnect, O
     }
   }
 
+  notifyFinished(gameId: string, state: GameState) {
+    this.broadcast(gameId, 'game.finished', {
+      clock: this.clock(state),
+      state,
+    });
+  }
+
+  notifyDrawOffered(gameId: string, offerId: string, offeredByUserId: string, state: GameState) {
+    this.broadcast(gameId, 'game.draw_offered', {
+      clock: this.clock(state),
+      offerId,
+      offeredByUserId,
+      state,
+    });
+  }
+
   private authenticatedUserId(client: WebSocket) {
     const userId = this.session(client).userId;
     if (!userId) throw new UnauthorizedException('WebSocket is not authenticated');

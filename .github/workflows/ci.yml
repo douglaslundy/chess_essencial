@@ -49,3 +49,67 @@ jobs:
 
       - name: Build
         run: pnpm build
+  database-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17.10-alpine3.23
+        env:
+          POSTGRES_DB: chess
+          POSTGRES_PASSWORD: chess
+          POSTGRES_USER: chess
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U chess -d chess"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      AUTH_EXPOSE_VERIFICATION_TOKEN: true
+      DATABASE_URL: postgresql://chess:chess@localhost:5432/chess
+      NODE_ENV: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.1
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build API workspace dependencies
+        run: pnpm --filter @xadrez/api... build
+
+      - name: Apply migrations and seed
+        run: |
+          pnpm --filter @xadrez/api db:migrate
+          pnpm --filter @xadrez/api db:seed
+
+      - name: Run database integration tests
+        env:
+          RUN_DB_TESTS: true
+        run: >-
+          pnpm --filter @xadrez/api exec vitest run
+          src/auth/auth.e2e.test.ts
+          src/games/games.e2e.test.ts
+          src/games/realtime.e2e.test.ts
+          src/matchmaking/matchmaking-rating.e2e.test.ts
+
+      - name: Verify latest migration rollback and reapply
+        run: |
+          pnpm --filter @xadrez/api db:rollback
+          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.game_draw_offers') IS NULL AND to_regclass('public.direct_challenges') IS NOT NULL;")" = "t"
+          pnpm --filter @xadrez/api db:migrate
+          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.game_draw_offers') IS NOT NULL;")" = "t"

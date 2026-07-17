@@ -176,6 +176,19 @@ export const gamePgn = pgTable('game_pgn', {
   generatedAt: timestamp('generated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const gameDrawOffers = pgTable('game_draw_offers', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  gameId: uuid('game_id')
+    .notNull()
+    .references(() => games.id, { onDelete: 'cascade' }),
+  offeredByUserId: uuid('offered_by_user_id')
+    .notNull()
+    .references(() => users.id),
+  status: varchar('status', { length: 20 }).notNull().default('pending'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+});
+
 export const outboxEvents = pgTable('outbox_events', {
   id: uuid('id').defaultRandom().primaryKey(),
   aggregateType: varchar('aggregate_type', { length: 60 }).notNull(),

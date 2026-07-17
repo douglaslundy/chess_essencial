@@ -71,7 +71,14 @@ export const gameMoveSchema = z.object({
   committedAt: z.string().datetime(),
 });
 
+export const drawOfferActionSchema = z.object({
+  accepted: z.boolean(),
+  offerId: z.string().uuid(),
+  state: gameStateSchema,
+});
+
 export type CreateGameInput = z.infer<typeof createGameInputSchema>;
 export type SubmitMoveInput = z.infer<typeof submitMoveInputSchema>;
 export type GameState = z.infer<typeof gameStateSchema>;
 export type GameMove = z.infer<typeof gameMoveSchema>;
+export type DrawOfferAction = z.infer<typeof drawOfferActionSchema>;

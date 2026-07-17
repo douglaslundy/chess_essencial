@@ -47,7 +47,8 @@ O servidor valida autenticação, participação, turno, versão, legalidade e r
 - `auth.authenticated`: autenticação concluída.
 - `game.snapshot`: snapshot de entrada ou reconexão.
 - `game.move_committed`: lance persistido e estado atualizado; é transmitido a todos na sala.
-- `game.finished`: timeout confirmado pelo servidor mesmo sem novo lance.
+- `game.draw_offered`: oferta persistida, com autor, estado canônico e relógio sincronizado.
+- `game.finished`: encerramento autoritativo por regra, tempo, desistência ou acordo.
 - `game.error`: erro do comando, sem expor token ou detalhes internos.
 
 ## Relógio e consistência

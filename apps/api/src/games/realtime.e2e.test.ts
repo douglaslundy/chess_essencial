@@ -14,6 +14,8 @@ interface Identity {
 interface MessageEnvelope {
   data: {
     move: { id: number };
+    offerId: string;
+    offeredByUserId: string;
     moves: Array<{ uci: string }>;
     state: {
       result: string;
@@ -186,6 +188,57 @@ describeDatabase('realtime game integration', () => {
     });
     expect(moves.json()).toHaveLength(4);
   }, 20_000);
+  it('broadcasts draw offers and agreement to both players', async () => {
+    const created = await app.inject({
+      headers: { authorization: `Bearer ${white.accessToken}` },
+      method: 'POST',
+      payload: {
+        creatorColor: 'white',
+        opponentUserId: black.userId,
+        timeControlCode: 'blitz-3-0',
+      },
+      url: '/v1/games',
+    });
+    expect(created.statusCode, created.body).toBe(201);
+    const gameId = created.json().id as string;
+    const whiteSocket = await connect(white);
+    const blackSocket = await connect(black);
+
+    const whiteSnapshot = waitFor(whiteSocket, 'game.snapshot');
+    send(whiteSocket, 'game.join', { gameId, lastKnownVersion: 0 });
+    await whiteSnapshot;
+    const blackSnapshot = waitFor(blackSocket, 'game.snapshot');
+    send(blackSocket, 'game.join', { gameId, lastKnownVersion: 0 });
+    await blackSnapshot;
+
+    const offeredEvent = waitFor(blackSocket, 'game.draw_offered');
+    const offered = await app.inject({
+      headers: { authorization: `Bearer ${white.accessToken}` },
+      method: 'POST',
+      url: `/v1/games/${gameId}/draw-offers`,
+    });
+    expect(offered.statusCode, offered.body).toBe(201);
+    expect((await offeredEvent).data).toMatchObject({
+      offerId: offered.json().offerId,
+      offeredByUserId: white.userId,
+      state: { status: 'active' },
+    });
+
+    const whiteFinished = waitFor(whiteSocket, 'game.finished');
+    const accepted = await app.inject({
+      headers: { authorization: `Bearer ${black.accessToken}` },
+      method: 'POST',
+      url: `/v1/games/${gameId}/draw-offers`,
+    });
+    expect(accepted.statusCode, accepted.body).toBe(201);
+    expect((await whiteFinished).data.state).toMatchObject({
+      result: 'draw',
+      status: 'finished',
+      termination: 'agreement',
+      version: 1,
+    });
+  }, 10_000);
+
   it('persists an authoritative timeout before rejecting a late move', async () => {
     const created = await app.inject({
       headers: { authorization: `Bearer ${white.accessToken}` },
