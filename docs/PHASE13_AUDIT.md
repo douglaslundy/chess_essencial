@@ -78,6 +78,8 @@ Pendente como gate de integração:
 - suite web completa no config oficial e build final, ambos bloqueados localmente por criação de processo no sandbox; lint e typecheck completos foram aprovados; três jobs da CI ainda pendentes;
 - deploy por `main` e verificação da VPS.
 
-## Decisão
+## Decisão final
 
-A Fase 13 somente pode ser encerrada após CI verde, merge em `main`, deploy automático e healthchecks. A Fase 14 não deve iniciar antes desses gates.
+Fase 13 aprovada em 2026-07-17. O PR #12 foi integrado em `aa982db`; a CI `29613488363` aprovou os três jobs. O timer implantou o commit exclusivamente por `git pull --ff-only`, criou backup pré-migration, aplicou migrations/seed e aprovou healthchecks e carga com zero falhas.
+
+A jornada externa aprovou cadastro, e-mail UTF-8 no Mailpit, verificação, login, refresh rotativo, logout, reenvio anti-enumeração e os sete controles de tempo. A Fase 14 está liberada, mantendo o conteúdo real como seu gate exclusivo.

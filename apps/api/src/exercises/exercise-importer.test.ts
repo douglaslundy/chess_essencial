@@ -108,12 +108,14 @@ describe('normalizeExerciseDataset', () => {
             tag: 'Application',
           },
         ],
+        modules: [{ number: 1, title: 'Module one' }],
         schema_version: '1.0.0',
       },
       'real-shape.json',
     );
 
     expect(result.report).toMatchObject({ imported: 2, rejected: 0, total: 2 });
+    expect(result.modules).toEqual([{ number: 1, title: 'Module one' }]);
     expect(result.exercises[0]).toMatchObject({
       answerFormat: 'free_text',
       category: 'Concept',

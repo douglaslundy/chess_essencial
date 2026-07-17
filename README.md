@@ -90,6 +90,16 @@ pnpm build
 pnpm format:check
 ```
 
+## Canonical exercise content
+
+The deployable Phase 14 dataset is versioned under database/content/; the original
+helper_files/ directory remains ignored. Before any database write, run
+pnpm content:validate and then run the API exercise importer with both --strict and
+--dry-run against the canonical JSON file.
+
+The CI and VPS release use the same strict import. Inventory, transactional guarantees,
+rollback and acceptance evidence are documented in docs/PHASE14_CONTENT_IMPORT.md.
+
 Os scripts da raiz são orquestrados pelo Turborepo. Para executar uma aplicação isolada:
 
 ```bash

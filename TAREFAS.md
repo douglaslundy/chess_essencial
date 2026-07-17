@@ -8,7 +8,7 @@
 - Mudanças de contrato exigem OpenAPI, cliente TypeScript e documentação atualizados.
 - Deploy continua exclusivamente por `main` e `deploy/auto-deploy.sh` com `git pull --ff-only`.
 
-## Fase 13 — Auditoria pós-release e saneamento documental (P0)
+## Fase 13 — Auditoria pós-release e saneamento documental (concluída)
 
 ### Objetivo
 

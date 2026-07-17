@@ -75,8 +75,10 @@ if [[ "$schema_exists" == "t" ]]; then
   bash deploy/backup-database.sh
 fi
 
+"${compose[@]}" run --rm api pnpm content:validate
 "${compose[@]}" run --rm api pnpm --filter @xadrez/api db:migrate
 "${compose[@]}" run --rm api pnpm --filter @xadrez/api db:seed
+"${compose[@]}" run --rm api pnpm --filter @xadrez/api db:import-exercises database/content/Xadrez_Essencial_Exercicios_1_a_1298.json --strict
 
 if [[ "${DEMO_SEED_ENABLED:-false}" == "true" ]]; then
   : "${DEMO_USER_PASSWORD:?DEMO_USER_PASSWORD is required when demo seed is enabled}"
