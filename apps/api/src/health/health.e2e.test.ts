@@ -57,7 +57,7 @@ describe('GET /v1/health', () => {
   it('rate limits repeated authentication requests', async () => {
     const responses = [];
     for (let index = 0; index < 11; index += 1) {
-      responses.push(await app.inject({ method: 'POST', payload: {}, url: '/v1/auth/register' }));
+      responses.push(await app.inject({ method: 'POST', payload: {}, url: '/v1/auth/login' }));
     }
     expect(responses.at(-1)?.statusCode).toBe(429);
     expect(responses.at(-1)?.headers['retry-after']).toBeDefined();

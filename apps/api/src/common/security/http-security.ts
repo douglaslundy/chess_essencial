@@ -82,9 +82,11 @@ export function registerHttpSecurity(
       });
     }
 
-    const policy = request.url.startsWith('/v1/auth/')
-      ? { bucket: 'auth', limit: 10, windowMs: 60_000 }
-      : request.url.startsWith('/v1/reports')
+    const path = request.url.split('?')[0] ?? request.url;
+    const authAction = path.startsWith('/v1/auth/') ? path.slice('/v1/auth/'.length) : null;
+    const policy = authAction
+      ? { bucket: `auth-${authAction}`, limit: authAction === 'login' ? 10 : 20, windowMs: 60_000 }
+      : path === '/v1/reports'
         ? { bucket: 'reports', limit: 5, windowMs: 60_000 }
         : { bucket: 'global', limit: 120, windowMs: 60_000 };
     const result = limiter.consume(`${policy.bucket}:${request.ip}`, policy.limit, policy.windowMs);

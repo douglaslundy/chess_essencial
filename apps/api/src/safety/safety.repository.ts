@@ -141,7 +141,7 @@ export class SafetyRepository {
           INSERT INTO audit_logs (actor_user_id, action, entity_type, entity_id, metadata)
           VALUES (
             ${reporterUserId}, 'moderation.report_created', 'moderation_report', ${report.id},
-            ${transaction.json({ category: input.category })}
+            ${JSON.stringify({ category: input.category })}::jsonb
           )
         `;
         return { ...report, createdAt: new Date(report.createdAt).toISOString(), status: 'open' };

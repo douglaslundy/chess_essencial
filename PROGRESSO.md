@@ -15,6 +15,7 @@ Fase 11 — segurança e observabilidade, conforme `prompts/11_SECURITY_OBSERVAB
 - HTTP possui headers defensivos, request ID, JSON obrigatório em mutações, body limit e rate limits; WS possui limites de payload, comandos, salas e conexões.
 - Logs HTTP são estruturados; métricas Prometheus estão em `/v1/metrics`; tracing OTLP é opcional por `OTEL_EXPORTER_OTLP_ENDPOINT`.
 - Contratos, OpenAPI, testes unitários e E2E foram atualizados.
+- CI 29596055225: `quality` passou; banco revelou rate limit agregado demais e JSON não serializado na auditoria de denúncia. Ambas as causas foram corrigidas e aguardam nova execução.
 - Gates locais aprovados: format, lint, typecheck, suíte completa e build. Os E2E dependentes de PostgreSQL serão executados pela CI.
 - Futuro host de deploy: `192.168.0.233`, usuário `lundy`; credencial persistida apenas na memória privada do Codex. Nenhum deploy está autorizado nesta fase.
 - Não tocar em `main`, não fazer merge e não executar deploy.
