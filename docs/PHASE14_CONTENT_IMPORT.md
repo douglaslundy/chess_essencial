@@ -47,6 +47,7 @@ pnpm --filter @xadrez/api db:import-exercises database/content/Xadrez_Essencial_
 
 ## CI and release gate
 
+PR #13 CI run 29616080467 passed quality, database integration and container validation.
 The database-integration job validates the source, imports the real collection into a clean
 PostgreSQL database, then runs the importer integration test and the exercise runtime E2E
 suite. The importer integration test proves:
@@ -73,7 +74,6 @@ procedure.
 
 ## Evidence still required before phase approval
 
-- Pull-request CI: quality, database-integration and container-validation.
 - Automatic deploy marker and backup path for the approved `main` commit.
 - VPS counts: 10 modules, 1,298 exercises, 300 referenced diagrams represented in metadata,
   unique source IDs/numbers, zero rejected records.

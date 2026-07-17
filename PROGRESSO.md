@@ -25,6 +25,7 @@ Fase 14 — conteúdo integral do curso e exercícios.
 - Deploy e CI passam a importar a fonte canônica versionada; nenhuma escrita foi feita na VPS até os gates serem aprovados.
 - PR #13 first run: quality and containers passed; database job exposed a package-relative content path.
 - Import CLI now resolves input from repository root; compiled dry-run passed from apps/api.
+- PR #13 CI run 29616080467 passed quality, database integration and container validation.
 - Sete arquivos de cursos/web/contratos aparecem modificados localmente sem diff de conteúdo; não incluí-los em commits.
 
 ## Concluído
