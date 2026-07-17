@@ -151,8 +151,8 @@ export class CoursesRepository {
           orientation, expected_actions, feedback, next_step_rules)
         VALUES (${lessonId}, ${step.stepKey}, ${index + 1}, ${step.stepType}, ${step.title ?? null},
           ${step.bodyMd}, ${step.initialFen ?? null}, ${step.orientation ?? null},
-          ${JSON.stringify(step.expectedActions)}::jsonb, ${JSON.stringify(step.feedback)}::jsonb,
-          ${JSON.stringify(step.nextStepRules)}::jsonb)
+          ${JSON.stringify(step.expectedActions)}::text::jsonb, ${JSON.stringify(step.feedback)}::text::jsonb,
+          ${JSON.stringify(step.nextStepRules)}::text::jsonb)
       `;
       for (const page of [...new Set(input.lesson.sourcePages)])
         await tx`
@@ -167,7 +167,7 @@ export class CoursesRepository {
         await tx`INSERT INTO lesson_prerequisites VALUES (${lessonId}, ${prerequisite.id})`;
       }
       await tx`INSERT INTO lesson_versions (lesson_id, version, content, created_by_user_id)
-        VALUES (${lessonId}, ${version}, ${JSON.stringify(input.lesson)}::jsonb, ${userId})`;
+        VALUES (${lessonId}, ${version}, ${JSON.stringify(input.lesson)}::text::jsonb, ${userId})`;
       const [saved] = await tx<{ createdAt: Date | string }[]>`
         SELECT created_at AS "createdAt" FROM lesson_versions WHERE lesson_id = ${lessonId} AND version = ${version}
       `;

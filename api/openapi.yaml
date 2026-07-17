@@ -137,6 +137,94 @@ paths:
                 $ref: '#/components/schemas/PublicUser'
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
+  /metrics:
+    get:
+      summary: Expor métricas agregadas no formato Prometheus
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Métricas agregadas sem dados pessoais
+          content:
+            text/plain:
+              schema: {type: string}
+        '401': {$ref: '#/components/responses/Problem'}
+  /me/privacy:
+    get:
+      summary: Consultar controles de privacidade
+      operationId: getPrivacy
+      responses:
+        '200':
+          description: Preferências atuais
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PrivacySettings'}
+        '401': {$ref: '#/components/responses/Problem'}
+    patch:
+      summary: Atualizar controles de privacidade
+      operationId: updatePrivacy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdatePrivacyInput'}
+      responses:
+        '200':
+          description: Preferências atualizadas
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PrivacySettings'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /me/blocks:
+    get:
+      summary: Listar usuários bloqueados
+      operationId: listBlocks
+      responses:
+        '200':
+          description: Bloqueios direcionais
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/BlockedUser'}}
+        '401': {$ref: '#/components/responses/Problem'}
+  /me/blocks/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    put:
+      summary: Bloquear usuário
+      operationId: blockUser
+      responses:
+        '204': {description: Usuário bloqueado}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+    delete:
+      summary: Remover bloqueio
+      operationId: unblockUser
+      responses:
+        '204': {description: Bloqueio removido ou já ausente}
+        '401': {$ref: '#/components/responses/Problem'}
+  /reports:
+    post:
+      summary: Criar denúncia para revisão manual
+      operationId: createReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateReportInput'}
+      responses:
+        '201':
+          description: Denúncia registrada
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ReportReceipt'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
   /matchmaking/queues:
     post:
       summary: Entrar ou renovar presença na fila
@@ -477,29 +565,170 @@ paths:
         '403': {$ref: '#/components/responses/Problem'}
   /lessons/{lessonId}:
     get:
-      summary: Obter aula e primeira etapa autorizada
+      summary: Obter metadados e primeira etapa sanitizada
+      operationId: getLessonOverview
+      parameters:
+        - {name: lessonId, in: path, required: true, schema: {type: string, format: uuid}}
       responses:
-        '200': {description: OK}
+        '200':
+          description: Aula disponível sem respostas futuras
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LessonOverview'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
   /lesson-attempts:
     post:
-      summary: Iniciar tentativa de aula
+      summary: Iniciar ou retomar tentativa
+      operationId: startLessonAttempt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/StartLessonAttemptInput'}
       responses:
-        '201': {description: Criada}
+        '201':
+          description: Estado atual da tentativa
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LessonAttemptView'}
+  /lesson-attempts/{attemptId}:
+    get:
+      summary: Retomar estado persistido da tentativa
+      operationId: getLessonAttempt
+      parameters:
+        - {name: attemptId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Estado atual
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LessonAttemptView'}
+        '404': {$ref: '#/components/responses/Problem'}
   /lesson-attempts/{attemptId}/actions:
     post:
-      summary: Submeter movimento ou resposta da etapa
+      summary: Submeter ação para avaliação autoritativa
+      operationId: submitLessonAction
+      parameters:
+        - {name: attemptId, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LessonActionInput'}
       responses:
-        '200': {description: Estado atualizado}
+        '201':
+          description: Estado atualizado e persistido
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LessonAttemptView'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
   /exercises:
     get:
-      summary: Pesquisar exercícios
+      summary: Search exercises
+      operationId: searchExercises
+      parameters:
+        - {name: q, in: query, schema: {type: string, maxLength: 120}}
+        - {name: category, in: query, schema: {type: string}}
+        - {name: difficulty, in: query, schema: {type: string}}
+        - {name: module, in: query, schema: {type: integer, minimum: 1, maximum: 10}}
+        - {name: chapter, in: query, schema: {type: integer, minimum: 1}}
+        - {name: lessonId, in: query, schema: {type: string, format: uuid}}
+        - {name: positionType, in: query, schema: {$ref: '#/components/schemas/ExercisePositionType'}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
+        - {name: offset, in: query, schema: {type: integer, minimum: 0, default: 0}}
       responses:
-        '200': {description: OK}
+        '200':
+          description: Filtered exercises
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseSearchResult'}
+        '400': {$ref: '#/components/responses/Problem'}
   /exercises/{exerciseId}/attempts:
     post:
-      summary: Submeter tentativa
+      summary: Submit a server-evaluated exercise attempt
+      operationId: submitExerciseAttempt
+      parameters:
+        - {name: exerciseId, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SubmitExerciseAttemptInput'}
       responses:
-        '201': {description: Avaliada}
+        '201':
+          description: Evaluated attempt
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseAttemptResult'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /exercise-training-sessions:
+    post:
+      summary: Start an exercise training session
+      operationId: startExerciseTraining
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/StartExerciseTrainingInput'}
+      responses:
+        '201':
+          description: Training session
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseTrainingView'}
+        '400': {$ref: '#/components/responses/Problem'}
+  /exercise-training-sessions/{sessionId}:
+    get:
+      summary: Resume an exercise training session
+      operationId: getExerciseTraining
+      parameters:
+        - {name: sessionId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Training session
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseTrainingView'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /exercise-training-sessions/{sessionId}/hints:
+    post:
+      summary: Reveal the next hint for the current exercise
+      operationId: revealExerciseHint
+      parameters:
+        - {name: sessionId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '201':
+          description: Next hint
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseHint'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /exercise-training-sessions/{sessionId}/solution:
+    post:
+      summary: Reveal the current exercise solution
+      operationId: revealExerciseSolution
+      parameters:
+        - {name: sessionId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '201':
+          description: Exercise solution
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseSolution'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /exercise-metrics:
+    get:
+      summary: Get exercise performance metrics for the authenticated user
+      operationId: getExerciseMetrics
+      responses:
+        '200':
+          description: Exercise metrics
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseMetrics'}
 components:
   parameters:
     GameId:
@@ -519,6 +748,155 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    ExercisePositionType:
+      type: string
+      enum: [legal_position, illustrative_diagram, text_only]
+    ExerciseSummary:
+      type: object
+      required: [id, answerFormat, sourceNumber, moduleNumber, chapterNumber, title, promptMd, difficulty, category, fen, sideToMove, tags, sourcePages, positionType]
+      properties:
+        id: {type: string, format: uuid}
+        answerFormat: {type: string, enum: [free_text, move_sequence]}
+        sourceNumber: {type: [integer, 'null'], minimum: 1}
+        moduleNumber: {type: [integer, 'null'], minimum: 1, maximum: 10}
+        chapterNumber: {type: [integer, 'null'], minimum: 1}
+        title: {type: [string, 'null']}
+        promptMd: {type: string}
+        difficulty: {type: [string, 'null']}
+        category: {type: [string, 'null']}
+        fen: {type: [string, 'null']}
+        sideToMove: {type: [string, 'null'], enum: [white, black, null]}
+        tags: {type: array, items: {type: string}}
+        sourcePages: {type: array, items: {type: integer, minimum: 1}}
+        positionType: {$ref: '#/components/schemas/ExercisePositionType'}
+    ExerciseSearchResult:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/ExerciseSummary'}}
+        total: {type: integer, minimum: 0}
+        limit: {type: integer, minimum: 1}
+        offset: {type: integer, minimum: 0}
+    ExerciseTrainingFilters:
+      type: object
+      properties:
+        q: {type: string}
+        category: {type: string}
+        difficulty: {type: string}
+        module: {type: integer, minimum: 1, maximum: 10}
+        chapter: {type: integer, minimum: 1}
+        lessonId: {type: string, format: uuid}
+        positionType: {$ref: '#/components/schemas/ExercisePositionType'}
+        limit: {type: integer, minimum: 1, maximum: 50, default: 10}
+    StartExerciseTrainingInput:
+      type: object
+      required: [filters]
+      properties:
+        filters: {$ref: '#/components/schemas/ExerciseTrainingFilters'}
+    ExerciseTrainingView:
+      type: object
+      required: [sessionId, status, position, total, completed, currentExercise]
+      properties:
+        sessionId: {type: string, format: uuid}
+        status: {type: string, enum: [started, completed, abandoned]}
+        position: {type: integer, minimum: 0}
+        total: {type: integer, minimum: 0}
+        completed: {type: integer, minimum: 0}
+        currentExercise:
+          oneOf:
+            - {$ref: '#/components/schemas/ExerciseSummary'}
+            - {type: 'null'}
+    SubmitExerciseAttemptInput:
+      type: object
+      required: [submittedLine, durationMs]
+      properties:
+        submittedLine: {type: array, minItems: 1, maxItems: 50, items: {type: string}}
+        durationMs: {type: integer, minimum: 0, maximum: 86400000}
+        trainingSessionId: {type: string, format: uuid}
+        lessonAttemptId: {type: string, format: uuid}
+    ExerciseAttemptResult:
+      type: object
+      required: [attemptId, correct, score, hintsUsed, training]
+      properties:
+        attemptId: {type: string, format: uuid}
+        correct: {type: boolean}
+        score: {type: number, minimum: 0, maximum: 100}
+        hintsUsed: {type: integer, minimum: 0}
+        training:
+          oneOf:
+            - {$ref: '#/components/schemas/ExerciseTrainingView'}
+            - {type: 'null'}
+    ExerciseHint:
+      type: object
+      required: [hint, hintNumber, remaining]
+      properties:
+        hint: {type: string}
+        hintNumber: {type: integer, minimum: 1}
+        remaining: {type: integer, minimum: 0}
+    ExerciseSolution:
+      type: object
+      required: [solutionMd, solutionLines]
+      properties:
+        solutionMd: {type: string}
+        solutionLines: {type: array, items: {type: array, items: {type: string}}}
+    ExerciseMetrics:
+      type: object
+      required: [attempted, correct, accuracyPercent, averageDurationMs, hintsUsed]
+      properties:
+        attempted: {type: integer, minimum: 0}
+        correct: {type: integer, minimum: 0}
+        accuracyPercent: {type: number, minimum: 0, maximum: 100}
+        averageDurationMs: {type: integer, minimum: 0}
+        hintsUsed: {type: integer, minimum: 0}
+    PublicLessonStep:
+      type: object
+      required: [stepKey, stepType, bodyMd, title, initialFen, orientation]
+      properties:
+        stepKey: {type: string}
+        stepType: {type: string, enum: [text, board_instruction, quiz, explanation, checkpoint, summary]}
+        title: {type: [string, 'null']}
+        bodyMd: {type: string}
+        initialFen: {type: [string, 'null']}
+        orientation: {type: [string, 'null'], enum: [white, black, null]}
+    LessonOverview:
+      type: object
+      required: [lessonId, title, module, estimatedMinutes, firstStep]
+      properties:
+        lessonId: {type: string, format: uuid}
+        title: {type: string}
+        module: {type: integer, minimum: 1, maximum: 10}
+        estimatedMinutes: {type: integer, minimum: 1}
+        firstStep: {$ref: '#/components/schemas/PublicLessonStep'}
+    StartLessonAttemptInput:
+      type: object
+      required: [lessonId]
+      properties:
+        lessonId: {type: string, format: uuid}
+    LessonActionInput:
+      oneOf:
+        - {type: object, required: [type], properties: {type: {const: continue}}}
+        - {type: object, required: [type, uci], properties: {type: {const: move}, uci: {type: string}}}
+        - {type: object, required: [type, value], properties: {type: {const: answer}, value: {type: [string, number, boolean]}}}
+    LessonAttemptView:
+      type: object
+      required: [attemptId, lessonId, status, currentStep, feedback, progress, score, updatedAt]
+      properties:
+        attemptId: {type: string, format: uuid}
+        lessonId: {type: string, format: uuid}
+        status: {type: string, enum: [started, completed, abandoned]}
+        currentStep:
+          oneOf:
+            - {$ref: '#/components/schemas/PublicLessonStep'}
+            - {type: 'null'}
+        feedback: {type: [string, 'null']}
+        progress:
+          type: object
+          required: [completedSteps, totalSteps]
+          properties:
+            completedSteps: {type: integer, minimum: 0}
+            totalSteps: {type: integer, minimum: 1}
+        score: {type: [number, 'null'], minimum: 0, maximum: 100}
+        updatedAt: {type: string, format: date-time}
     CourseSummary:
       type: object
       required: [id, slug, title, description, status, version, moduleCount]
@@ -628,6 +1006,55 @@ components:
       properties:
         refreshToken: {type: string, minLength: 20}
       additionalProperties: false
+    PrivacySettings:
+      type: object
+      required: [isProfilePublic, allowChallenges, allowFriendRequests]
+      properties:
+        isProfilePublic: {type: boolean}
+        allowChallenges: {type: boolean}
+        allowFriendRequests: {type: boolean}
+      additionalProperties: false
+    UpdatePrivacyInput:
+      type: object
+      minProperties: 1
+      properties:
+        isProfilePublic: {type: boolean}
+        allowChallenges: {type: boolean}
+        allowFriendRequests: {type: boolean}
+      additionalProperties: false
+    BlockedUser:
+      type: object
+      required: [id, username, displayName, blockedAt]
+      properties:
+        id: {type: string, format: uuid}
+        username: {type: string}
+        displayName: {type: string}
+        blockedAt: {type: string, format: date-time}
+      additionalProperties: false
+    ReportCategory:
+      type: string
+      enum: [cheating, harassment, spam, inappropriate_profile, other]
+    CreateReportInput:
+      type: object
+      required: [category]
+      anyOf:
+        - required: [reportedUserId]
+        - required: [gameId]
+      properties:
+        reportedUserId: {type: string, format: uuid}
+        gameId: {type: string, format: uuid}
+        category: {$ref: '#/components/schemas/ReportCategory'}
+        description: {type: string, minLength: 3, maxLength: 1000}
+      additionalProperties: false
+    ReportReceipt:
+      type: object
+      required: [id, category, status, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        category: {$ref: '#/components/schemas/ReportCategory'}
+        status: {type: string, enum: [open]}
+        createdAt: {type: string, format: date-time}
+      additionalProperties: false
     UpdateMeInput:
       type: object
       minProperties: 1
@@ -696,13 +1123,14 @@ components:
       additionalProperties: false
     ProblemDetails:
       type: object
-      required: [type, title, status, detail, instance]
+      required: [type, title, status, detail, instance, requestId]
       properties:
         type: {type: string, format: uri}
         title: {type: string}
         status: {type: integer, minimum: 400, maximum: 599}
         detail: {type: string}
         instance: {type: string}
+        requestId: {type: string}
         errors:
           type: array
           items:

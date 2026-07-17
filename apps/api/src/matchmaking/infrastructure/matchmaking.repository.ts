@@ -87,6 +87,11 @@ export class MatchmakingRepository {
               AND ((requester_id = ${userId} AND addressee_id = queue.user_id)
                 OR (requester_id = queue.user_id AND addressee_id = ${userId}))
           )
+          AND NOT EXISTS (
+            SELECT 1 FROM user_blocks
+            WHERE (blocker_user_id = ${userId} AND blocked_user_id = queue.user_id)
+               OR (blocker_user_id = queue.user_id AND blocked_user_id = ${userId})
+          )
         ORDER BY
           EXISTS (
             SELECT 1
@@ -158,10 +163,20 @@ export class MatchmakingRepository {
       if (!challenged) throw new NotFoundException('Active challenged user not found');
 
       const [blocked] = await transaction<{ present: boolean }[]>`
-        SELECT true AS present FROM friendships
-        WHERE status = 'blocked'
-          AND ((requester_id = ${userId} AND addressee_id = ${input.challengedUserId})
-            OR (requester_id = ${input.challengedUserId} AND addressee_id = ${userId}))
+        SELECT true AS present
+        WHERE EXISTS (
+          SELECT 1 FROM friendships
+          WHERE status = 'blocked'
+            AND ((requester_id = ${userId} AND addressee_id = ${input.challengedUserId})
+              OR (requester_id = ${input.challengedUserId} AND addressee_id = ${userId}))
+        ) OR EXISTS (
+          SELECT 1 FROM user_blocks
+          WHERE (blocker_user_id = ${userId} AND blocked_user_id = ${input.challengedUserId})
+             OR (blocker_user_id = ${input.challengedUserId} AND blocked_user_id = ${userId})
+        ) OR EXISTS (
+          SELECT 1 FROM user_profiles
+          WHERE user_id = ${input.challengedUserId} AND allow_challenges = false
+        )
       `;
       if (blocked) throw new ForbiddenException('Challenge is not allowed');
 

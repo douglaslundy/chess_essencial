@@ -1,0 +1,19 @@
+{
+  "exercicios": [
+    {
+      "categoria": "pawn",
+      "capitulo": 1,
+      "dicas": ["Use the pawn on the e-file."],
+      "dificuldade": "easy",
+      "fen": "8/8/8/8/8/8/4P3/4K2k w - - 0 1",
+      "modulo": 1,
+      "numero": 1298,
+      "paginas": [1],
+      "questao": "Find the legal pawn advance.",
+      "solutionLines": [["e2e4"]],
+      "solucao": "e2e4",
+      "tags": ["pawn", "legal-position"],
+      "titulo": "Pawn advance"
+    }
+  ]
+}

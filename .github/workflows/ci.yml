@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Validate Docker Compose
+      - name: Validate development Docker Compose
         run: docker compose config --quiet
 
       - name: Check formatting
@@ -49,6 +49,47 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  container-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      API_PORT: 4100
+      AUTH_ACCESS_SECRET: ci-access-secret-with-at-least-32-characters
+      AUTH_EXPOSE_VERIFICATION_TOKEN: 'false'
+      AUTH_IP_HASH_SECRET: ci-ip-hash-secret-with-at-least-32-characters
+      AUTH_REFRESH_SECRET: ci-refresh-secret-with-at-least-32-characters
+      AUTH_VERIFICATION_SECRET: ci-verification-secret-with-at-least-32-characters
+      IMAGE_TAG: ci
+      MAILPIT_SMTP_PORT: 1026
+      MAILPIT_UI_PORT: 8026
+      METRICS_TOKEN: ci-metrics-token-with-at-least-24-characters
+      POSTGRES_DB: chess
+      POSTGRES_PASSWORD: chess
+      POSTGRES_USER: chess
+      WEB_ORIGIN: http://127.0.0.1:3100
+      WEB_PORT: 3100
+      WORKER_PORT: 4101
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate production Docker Compose
+        run: docker compose --file deploy/docker-compose.vps.yml config --quiet
+
+      - name: Build release images
+        run: |
+          docker build --file deploy/Dockerfile --target api --tag xadrez-api:ci .
+          docker build --file deploy/Dockerfile --target worker --tag xadrez-worker:ci .
+          docker build --file deploy/Dockerfile --target web --tag xadrez-web:ci .
+
+      - name: Inspect release image users
+        run: |
+          test "$(docker image inspect xadrez-api:ci --format '{{.Config.User}}')" = "node"
+          test "$(docker image inspect xadrez-worker:ci --format '{{.Config.User}}')" = "node"
+          test "$(docker image inspect xadrez-web:ci --format '{{.Config.User}}')" = "node"
+
   database-integration:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -92,25 +133,53 @@ jobs:
       - name: Build API workspace dependencies
         run: pnpm --filter @xadrez/api... build
 
-      - name: Apply migrations and seed
+      - name: Apply clean migrations and seed
         run: |
           pnpm --filter @xadrez/api db:migrate
           pnpm --filter @xadrez/api db:seed
+          pnpm --filter @xadrez/api db:import-exercises src/exercises/fixtures/import-fixture.json
+          expected="$(find database/migrations -name '*.up.sql' | wc -l | tr -d ' ')"
+          actual="$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc 'SELECT count(*) FROM _xadrez_migrations;')"
+          test "$actual" = "$expected"
 
-      - name: Run database integration tests
+      - name: Run database integration and release journey
         env:
           RUN_DB_TESTS: true
         run: >-
           pnpm --filter @xadrez/api exec vitest run
           src/auth/auth.e2e.test.ts
           src/courses/courses.e2e.test.ts
+          src/lesson-runtime/lesson-runtime.e2e.test.ts
+          src/exercises/exercises.e2e.test.ts
           src/games/games.e2e.test.ts
           src/games/realtime.e2e.test.ts
           src/matchmaking/matchmaking-rating.e2e.test.ts
+          src/safety/safety.e2e.test.ts
+          src/release/release.e2e.test.ts
+
+      - name: Verify opt-in demo seed
+        run: |
+          DEMO_SEED_ENABLED=true DEMO_USER_PASSWORD="$(openssl rand -hex 16)" pnpm --filter @xadrez/api db:seed-demo
+          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT count(*) FROM users WHERE username IN ('demo_brancas', 'demo_pretas') AND status = 'active' AND email_verified_at IS NOT NULL;")" = "2"
+
+      - name: Run basic HTTP load gate
+        run: |
+          pnpm --filter @xadrez/api start >/tmp/xadrez-api.log 2>&1 &
+          api_pid=$!
+          trap 'kill "$api_pid"; cat /tmp/xadrez-api.log' EXIT
+          for attempt in $(seq 1 30); do
+            curl --fail --silent http://127.0.0.1:4000/v1/health >/dev/null && break
+            sleep 1
+          done
+          pnpm load:basic
+
+      - name: Verify backup and restore
+        run: |
+          PG_CONTAINER="$(docker ps --filter ancestor=postgres:17.10-alpine3.23 --format '{{.ID}}' | head -n 1)" bash scripts/verify-backup-restore.sh
 
       - name: Verify latest migration rollback and reapply
         run: |
           pnpm --filter @xadrez/api db:rollback
-          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.user_roles') IS NULL AND to_regclass('public.game_review_annotations') IS NOT NULL;")" = "t"
+          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.moderation_reports') IS NULL AND to_regclass('public.exercise_training_sessions') IS NOT NULL;")" = "t"
           pnpm --filter @xadrez/api db:migrate
-          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.user_roles') IS NOT NULL;")" = "t"
+          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.moderation_reports') IS NOT NULL AND to_regclass('public.exercise_training_sessions') IS NOT NULL;")" = "t"

@@ -1,0 +1,13 @@
+[Unit]
+Description=Xadrez Essencial Git pull deployment
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/lundy/xadrez-essencial
+ExecStart=/usr/bin/bash /home/lundy/xadrez-essencial/deploy/auto-deploy.sh
+TimeoutStartSec=30min
+
+[Install]
+WantedBy=default.target

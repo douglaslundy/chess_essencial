@@ -7,6 +7,7 @@ import type {
 import { Injectable } from '@nestjs/common';
 
 import { RatingsService } from '../../ratings/application/ratings.service.js';
+import { sanitizeUserText } from '../../common/security/sanitize-user-text.js';
 import { GamesRepository } from '../infrastructure/games.repository.js';
 
 @Injectable()
@@ -29,7 +30,10 @@ export class GamesService {
   }
 
   saveReviewAnnotation(gameId: string, userId: string, input: ReviewAnnotationInput) {
-    return this.games.saveReviewAnnotation(gameId, userId, input);
+    return this.games.saveReviewAnnotation(gameId, userId, {
+      ...input,
+      ...(input.comment ? { comment: sanitizeUserText(input.comment) } : {}),
+    });
   }
   getState(gameId: string, userId: string) {
     return this.games.getState(gameId, userId);

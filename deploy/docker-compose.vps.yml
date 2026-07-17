@@ -1,7 +1,6 @@
 name: xadrez-essencial
 
 x-app-defaults: &app-defaults
-  image: xadrez-essencial:phase5
   restart: unless-stopped
 
 services:
@@ -45,7 +44,7 @@ services:
 
   api:
     <<: *app-defaults
-    command: ['pnpm', '--filter', '@xadrez/api', 'start']
+    image: xadrez-api:${IMAGE_TAG:-local}
     depends_on:
       postgres:
         condition: service_healthy
@@ -59,6 +58,7 @@ services:
       AUTH_REFRESH_SECRET: ${AUTH_REFRESH_SECRET}
       AUTH_VERIFICATION_SECRET: ${AUTH_VERIFICATION_SECRET}
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      METRICS_TOKEN: ${METRICS_TOKEN}
       NODE_ENV: production
       REDIS_URL: redis://redis:6379
       WEB_ORIGIN: ${WEB_ORIGIN}
@@ -79,7 +79,7 @@ services:
 
   worker:
     <<: *app-defaults
-    command: ['pnpm', '--filter', '@xadrez/worker', 'start']
+    image: xadrez-worker:${IMAGE_TAG:-local}
     depends_on:
       redis:
         condition: service_healthy
@@ -104,7 +104,7 @@ services:
 
   web:
     <<: *app-defaults
-    command: ['pnpm', '--filter', '@xadrez/web', 'start']
+    image: xadrez-web:${IMAGE_TAG:-local}
     depends_on:
       api:
         condition: service_healthy

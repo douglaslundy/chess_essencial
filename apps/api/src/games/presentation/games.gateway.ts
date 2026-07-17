@@ -17,15 +17,19 @@ import {
 import type { WebSocket } from 'ws';
 
 import { AuthService } from '../../auth/auth.service.js';
+import { MetricsService } from '../../observability/metrics.service.js';
 import { GamesService } from '../application/games.service.js';
 
 interface ClientSession {
   authenticationTimer: NodeJS.Timeout;
   gameIds: Set<string>;
   userId: string | null;
+  commandCount: number;
+  commandWindowStartedAt: number;
+  rateLimitViolations: number;
 }
 
-@WebSocketGateway({ path: '/v1/ws' })
+@WebSocketGateway({ path: '/v1/ws', maxPayload: 16 * 1024 })
 export class GamesGateway implements OnGatewayConnection, OnGatewayDisconnect, OnModuleDestroy {
   private readonly clientsByGame = new Map<string, Set<WebSocket>>();
   private readonly sessions = new Map<WebSocket, ClientSession>();
@@ -34,9 +38,15 @@ export class GamesGateway implements OnGatewayConnection, OnGatewayDisconnect, O
   constructor(
     private readonly auth: AuthService,
     private readonly games: GamesService,
+    private readonly metrics: MetricsService,
   ) {}
 
   handleConnection(client: WebSocket) {
+    if (this.sessions.size >= 1_000) {
+      client.close(1013, 'Server connection limit reached');
+      this.metrics.increment('xadrez_ws_connection_rejections_total');
+      return;
+    }
     const authenticationTimer = setTimeout(() => {
       if (!this.sessions.get(client)?.userId) client.close(4401, 'Authentication required');
     }, 5_000);
@@ -45,6 +55,9 @@ export class GamesGateway implements OnGatewayConnection, OnGatewayDisconnect, O
       authenticationTimer,
       gameIds: new Set(),
       userId: null,
+      commandCount: 0,
+      commandWindowStartedAt: Date.now(),
+      rateLimitViolations: 0,
     });
   }
 
@@ -66,6 +79,7 @@ export class GamesGateway implements OnGatewayConnection, OnGatewayDisconnect, O
   @SubscribeMessage('auth.authenticate')
   async authenticate(@ConnectedSocket() client: WebSocket, @MessageBody() body: unknown) {
     try {
+      this.consumeCommand(client, 'auth.authenticate');
       const command = authenticateCommandSchema.parse(body);
       const session = this.session(client);
       const user = await this.auth.verifyAccessToken(command.accessToken);
@@ -82,6 +96,7 @@ export class GamesGateway implements OnGatewayConnection, OnGatewayDisconnect, O
   @SubscribeMessage('game.join')
   async join(@ConnectedSocket() client: WebSocket, @MessageBody() body: unknown) {
     try {
+      this.consumeCommand(client, 'game.join');
       const command = gameJoinCommandSchema.parse(body);
       const userId = this.authenticatedUserId(client);
       const snapshot = await this.games.realtimeSnapshot(
@@ -104,6 +119,7 @@ export class GamesGateway implements OnGatewayConnection, OnGatewayDisconnect, O
   @SubscribeMessage('move.submit')
   async submitMove(@ConnectedSocket() client: WebSocket, @MessageBody() body: unknown) {
     try {
+      this.consumeCommand(client, 'move.submit');
       const command = realtimeMoveSubmitSchema.parse(body);
       const userId = this.authenticatedUserId(client);
       if (!this.session(client).gameIds.has(command.gameId)) {
@@ -171,6 +187,9 @@ export class GamesGateway implements OnGatewayConnection, OnGatewayDisconnect, O
 
   private joinRoom(client: WebSocket, gameId: string) {
     const session = this.session(client);
+    if (!session.gameIds.has(gameId) && session.gameIds.size >= 16) {
+      throw new HttpException('WebSocket room limit exceeded', 429);
+    }
     session.gameIds.add(gameId);
     const room = this.clientsByGame.get(gameId) ?? new Set<WebSocket>();
     room.add(client);
@@ -203,6 +222,23 @@ export class GamesGateway implements OnGatewayConnection, OnGatewayDisconnect, O
     );
     timer.unref();
     this.timeoutTimers.set(gameId, timer);
+  }
+
+  private consumeCommand(client: WebSocket, event: string) {
+    const session = this.session(client);
+    const now = Date.now();
+    if (now - session.commandWindowStartedAt >= 10_000) {
+      session.commandWindowStartedAt = now;
+      session.commandCount = 0;
+      session.rateLimitViolations = 0;
+    }
+    session.commandCount += 1;
+    this.metrics.increment('xadrez_ws_commands_total', { event });
+    if (session.commandCount <= 30) return;
+    session.rateLimitViolations += 1;
+    this.metrics.increment('xadrez_ws_rate_limit_rejections_total', { event });
+    if (session.rateLimitViolations >= 3) client.close(4429, 'Rate limit exceeded');
+    throw new HttpException('WebSocket command rate limit exceeded', 429);
   }
 
   private send(client: WebSocket, event: string, data: unknown) {

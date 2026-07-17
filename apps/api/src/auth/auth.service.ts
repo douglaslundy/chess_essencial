@@ -11,12 +11,14 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Optional,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { argon2id, hash as argonHash, verify as argonVerify } from 'argon2';
 import { SignJWT, errors as joseErrors, jwtVerify, type JWTPayload } from 'jose';
 
+import { AuditService } from '../observability/audit.service.js';
 import { UsersRepository, type IdentityUser } from '../users/users.repository.js';
 
 const TOKEN_ISSUER = 'xadrez-essencial-api';
@@ -39,6 +41,7 @@ export class AuthService {
   constructor(
     private readonly config: ConfigService,
     private readonly users: UsersRepository,
+    @Optional() private readonly audit?: AuditService,
   ) {}
 
   async register(input: RegisterInput) {
@@ -68,6 +71,7 @@ export class AuthService {
       throw error;
     }
 
+    await this.audit?.record(user.id, 'user.registered', 'user', user.id);
     const verificationToken = await this.signVerificationToken(user.id);
     const exposeToken = this.config.get<boolean>('AUTH_EXPOSE_VERIFICATION_TOKEN', false);
     return { user: this.toPublicUser(user), ...(exposeToken ? { verificationToken } : {}) };
@@ -84,6 +88,7 @@ export class AuthService {
     if (!user || user.status !== 'active') {
       throw new UnauthorizedException('Token de verificação inválido');
     }
+    await this.audit?.record(user.id, 'user.email_verified', 'user', user.id);
     return { user: this.toPublicUser(user) };
   }
 
@@ -116,6 +121,7 @@ export class AuthService {
       userId: user.id,
     });
 
+    await this.audit?.record(user.id, 'session.created', 'user_session', sessionId);
     return {
       tokens: await this.tokenPair(user, sessionId, refreshToken),
       user: this.toPublicUser(user),
@@ -138,6 +144,12 @@ export class AuthService {
     }
     if (session.refreshTokenHash !== presentedHash) {
       await this.users.revokeSession(sessionId);
+      await this.audit?.record(
+        session.userId,
+        'session.refresh_reuse_detected',
+        'user_session',
+        sessionId,
+      );
       throw new UnauthorizedException('Reutilização de refresh token detectada');
     }
 
@@ -160,6 +172,7 @@ export class AuthService {
       throw new UnauthorizedException('Sessão já utilizada');
     }
 
+    await this.audit?.record(user.id, 'session.refreshed', 'user_session', sessionId);
     return this.tokenPair(user, sessionId, nextRefreshToken);
   }
 
@@ -171,7 +184,9 @@ export class AuthService {
         REFRESH_AUDIENCE,
         'refresh',
       );
-      await this.users.revokeSession(this.sessionId(payload));
+      const sessionId = this.sessionId(payload);
+      await this.users.revokeSession(sessionId);
+      await this.audit?.record(this.subject(payload), 'session.revoked', 'user_session', sessionId);
     } catch (error) {
       if (!(error instanceof UnauthorizedException)) {
         throw error;

@@ -3,9 +3,19 @@ import type {
   LessonVersion,
   SaveLessonInput,
   DrawOfferAction,
+  ExerciseAttemptResult,
+  ExerciseHint,
+  ExerciseMetrics,
+  ExerciseSearchResult,
+  ExerciseSolution,
+  ExerciseTrainingView,
+  StartExerciseTrainingInput,
+  SubmitExerciseAttemptInput,
   GameHistoryPage,
   GameMove,
   GameState,
+  LessonActionInput,
+  LessonAttemptView,
   ReviewAnnotation,
   ReviewAnnotationInput,
 } from '@xadrez/contracts';
@@ -59,6 +69,18 @@ async function requestText(path: string, token: string): Promise<string> {
   return response.text();
 }
 export const api = {
+  startLessonAttempt: (lessonId: string, token: string) =>
+    request<LessonAttemptView>('/lesson-attempts', token, {
+      method: 'POST',
+      body: JSON.stringify({ lessonId }),
+    }),
+  getLessonAttempt: (attemptId: string, token: string) =>
+    request<LessonAttemptView>(`/lesson-attempts/${attemptId}`, token),
+  submitLessonAction: (attemptId: string, input: LessonActionInput, token: string) =>
+    request<LessonAttemptView>(`/lesson-attempts/${attemptId}/actions`, token, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
   getCourseEditor: (courseId: string, token: string) =>
     request<CourseDetail>(`/courses/${courseId}/editor`, token),
   saveCourseLesson: (courseId: string, slug: string, input: SaveLessonInput, token: string) =>
@@ -68,6 +90,29 @@ export const api = {
     }),
   publishCourse: (courseId: string, token: string) =>
     request(`/courses/${courseId}/publish`, token, { method: 'POST' }),
+  searchExercises: (query: URLSearchParams, token: string) =>
+    request<ExerciseSearchResult>(`/exercises?${query.toString()}`, token),
+  startExerciseTraining: (input: StartExerciseTrainingInput, token: string) =>
+    request<ExerciseTrainingView>('/exercise-training-sessions', token, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  getExerciseTraining: (sessionId: string, token: string) =>
+    request<ExerciseTrainingView>(`/exercise-training-sessions/${sessionId}`, token),
+  revealExerciseHint: (sessionId: string, token: string) =>
+    request<ExerciseHint>(`/exercise-training-sessions/${sessionId}/hints`, token, {
+      method: 'POST',
+    }),
+  revealExerciseSolution: (sessionId: string, token: string) =>
+    request<ExerciseSolution>(`/exercise-training-sessions/${sessionId}/solution`, token, {
+      method: 'POST',
+    }),
+  submitExerciseAttempt: (exerciseId: string, input: SubmitExerciseAttemptInput, token: string) =>
+    request<ExerciseAttemptResult>(`/exercises/${exerciseId}/attempts`, token, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  getExerciseMetrics: (token: string) => request<ExerciseMetrics>('/exercise-metrics', token),
   getHistory: (query: URLSearchParams, token: string) =>
     request<GameHistoryPage>(`/games?${query.toString()}`, token),
   getPgn: (gameId: string, token: string) => requestText(`/games/${gameId}/pgn`, token),

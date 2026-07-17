@@ -67,6 +67,74 @@ try {
       ON CONFLICT (course_id, position) DO UPDATE SET title = EXCLUDED.title,
         source_volume = EXCLUDED.source_volume
     `;
+    const [fundamentals] = await transaction`
+      SELECT id FROM course_modules WHERE course_id = ${course!.id} AND position = 1
+    `;
+    const demoLessonId = '00000000-0000-4000-8000-000000000901';
+    await transaction`
+      INSERT INTO lessons (id, module_id, slug, position, title, summary, estimated_minutes, status, version)
+      VALUES (${demoLessonId}, ${fundamentals!.id}, 'primeiro-movimento-do-peao', 1,
+        'Primeiro movimento do peão', 'Aula demonstrativa interativa do módulo 1.', 8, 'published', 1)
+      ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, summary = EXCLUDED.summary,
+        estimated_minutes = EXCLUDED.estimated_minutes, status = EXCLUDED.status
+    `;
+    await transaction`DELETE FROM lesson_steps WHERE lesson_id = ${demoLessonId}`;
+    const demoSteps = [
+      {
+        key: 'boas-vindas',
+        type: 'text',
+        body: 'Nesta aula você aprenderá o primeiro movimento do peão.',
+        actions: [],
+        feedback: {},
+      },
+      {
+        key: 'mova-o-peao',
+        type: 'board_instruction',
+        body: 'Mova o peão de b2 para b3.',
+        fen: '4k3/8/8/8/8/8/1P6/4K3 w - - 0 1',
+        actions: [{ type: 'move', uci: 'b2b3' }],
+        feedback: {
+          correct: 'Correto. O peão avançou uma casa.',
+          incorrect: 'Tente mover o peão de b2 para b3.',
+        },
+      },
+      {
+        key: 'confirme-a-casa',
+        type: 'quiz',
+        body: 'Em qual casa o peão terminou?',
+        actions: [{ type: 'answer', value: 'b3' }],
+        feedback: {
+          correct: 'Isso mesmo: b3.',
+          incorrect: 'Observe novamente a coluna b e a terceira fileira.',
+        },
+      },
+      {
+        key: 'explicacao',
+        type: 'explanation',
+        body: 'Em seu primeiro lance, o peão poderia avançar uma ou duas casas quando o caminho está livre.',
+        actions: [],
+        feedback: {},
+      },
+      {
+        key: 'resumo',
+        type: 'summary',
+        body: 'Você moveu legalmente o peão e identificou sua casa final.',
+        actions: [],
+        feedback: {},
+      },
+    ] as const;
+    for (const [index, step] of demoSteps.entries())
+      await transaction`
+      INSERT INTO lesson_steps (lesson_id, step_key, position, step_type, body_md, initial_fen,
+        orientation, expected_actions, feedback, next_step_rules)
+      VALUES (${demoLessonId}, ${step.key}, ${index + 1}, ${step.type}, ${step.body},
+        ${'fen' in step ? step.fen : null}, 'white', ${JSON.stringify(step.actions)}::text::jsonb,
+        ${JSON.stringify(step.feedback)}::text::jsonb, '[]'::jsonb)
+    `;
+    await transaction`
+      INSERT INTO lesson_source_pages (lesson_id, page) VALUES (${demoLessonId}, 1)
+      ON CONFLICT DO NOTHING
+    `;
   });
   process.stdout.write(
     `seed.time_controls=${timeControls.length}\nseed.course_modules=${courseModules.length}\n`,

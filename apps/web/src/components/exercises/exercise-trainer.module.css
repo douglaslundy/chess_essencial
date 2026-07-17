@@ -1,0 +1,154 @@
+.page {
+  padding: 2rem;
+  display: grid;
+  gap: 1.5rem;
+}
+.heading span,
+.badge {
+  color: #b7791f;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.heading h1 {
+  margin: 0.35rem 0;
+}
+.heading p {
+  color: #64748b;
+}
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.metrics div,
+.training,
+.results {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 1rem;
+}
+.metrics strong,
+.metrics span {
+  display: block;
+}
+.metrics strong {
+  font-size: 1.4rem;
+}
+.metrics span {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+.filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr 0.7fr auto auto;
+  gap: 0.75rem;
+  align-items: end;
+}
+.filters label,
+.answer {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.filters input,
+.answer input {
+  border: 1px solid #cbd5e1;
+  border-radius: 0.6rem;
+  min-height: 2.6rem;
+  padding: 0.6rem 0.75rem;
+}
+.filters button,
+.actions button {
+  border: 0;
+  border-radius: 0.6rem;
+  min-height: 2.6rem;
+  padding: 0.6rem 1rem;
+  background: #172554;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.status {
+  min-height: 1.4rem;
+  color: #475569;
+  margin: 0;
+}
+.training {
+  display: grid;
+  gap: 0.8rem;
+  max-width: 58rem;
+}
+.training h2,
+.training p {
+  margin: 0;
+}
+.progress {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+.fen {
+  overflow-wrap: anywhere;
+  background: #f1f5f9;
+  border-radius: 0.5rem;
+  padding: 0.7rem;
+}
+.feedback {
+  border-left: 3px solid #d69e2e;
+  background: #fffbeb;
+  padding: 0.75rem;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.actions button:nth-child(n + 2) {
+  background: #e2e8f0;
+  color: #172554;
+}
+.results h2 {
+  margin-top: 0;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+.grid article {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 0.9rem;
+}
+.grid article > span,
+.grid small {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+.grid h3 {
+  margin: 0.35rem 0;
+}
+.grid p {
+  font-size: 0.9rem;
+}
+@media (max-width: 850px) {
+  .metrics,
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .filters {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 520px) {
+  .page {
+    padding: 1rem;
+  }
+  .metrics,
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

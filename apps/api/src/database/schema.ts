@@ -72,6 +72,8 @@ export const userProfiles = pgTable('user_profiles', {
   birthYear: smallint('birth_year'),
   bio: varchar('bio', { length: 500 }),
   isProfilePublic: boolean('is_profile_public').notNull().default(true),
+  allowChallenges: boolean('allow_challenges').notNull().default(true),
+  allowFriendRequests: boolean('allow_friend_requests').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -224,6 +226,46 @@ export const outboxEvents = pgTable('outbox_events', {
   attempts: integer('attempts').notNull().default(0),
 });
 
+export const userBlocks = pgTable(
+  'user_blocks',
+  {
+    blockerUserId: uuid('blocker_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    blockedUserId: uuid('blocked_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.blockerUserId, table.blockedUserId] })],
+);
+
+export const moderationReports = pgTable('moderation_reports', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  reporterUserId: uuid('reporter_user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  reportedUserId: uuid('reported_user_id').references(() => users.id, { onDelete: 'set null' }),
+  gameId: uuid('game_id').references(() => games.id, { onDelete: 'set null' }),
+  category: varchar('category', { length: 30 }).notNull(),
+  description: varchar('description', { length: 1000 }),
+  status: varchar('status', { length: 20 }).notNull().default('open'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const auditLogs = pgTable('audit_logs', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  actorUserId: uuid('actor_user_id').references(() => users.id),
+  action: varchar('action', { length: 100 }).notNull(),
+  entityType: varchar('entity_type', { length: 80 }).notNull(),
+  entityId: text('entity_id'),
+  metadata: jsonb('metadata').$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type UserRow = typeof users.$inferSelect;
 export type UserProfileRow = typeof userProfiles.$inferSelect;
 export type UserSessionRow = typeof userSessions.$inferSelect;
+export type UserBlockRow = typeof userBlocks.$inferSelect;
+export type ModerationReportRow = typeof moderationReports.$inferSelect;

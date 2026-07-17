@@ -1,26 +1,36 @@
 # Progresso do Projeto
 
 ## Última atualização
-2026-07-17 — Fase 8 aguardando gate PostgreSQL no CI
+2026-07-17 — integração atômica e bootstrap da VPS em andamento
 
 ## Tarefa em andamento
-Fase 8 — cursos e CMS. Implementação e gates locais concluídos. O primeiro CI aprovou qualidade, migration e e2e PostgreSQL, mas falhou apenas na asserção do rollback. A correção foi enviada no commit `c68b82b`; a nova execução aguarda confirmação porque a consulta externa atingiu o limite de uso do Codex.
+Integrar a release cumulativa das Fases 9–12 em `main` e executar o bootstrap autorizado da VPS nova.
 
 ## Contexto necessário
-- Especificação: `prompts/08_COURSE_CMS.md`.
-- Implementados contratos do schema de aula, API pública/editorial, papéis admin/editor, páginas-fonte, pré-requisitos, snapshots por versão, publicação transacional, seed dos 10 módulos e editor web com preview.
-- Gates locais aprovados: geração OpenAPI, format, lint, typecheck, testes e build.
-- Não há Docker local; usar o job `database-integration` do PR para migration `0005`, e2e do CMS, rollback e reaplicação.
-- O usuário determinou continuar sem deploy. Não acessar nem modificar a VPS.
+- Branch `codex/phase12-release`, empilhada sobre a Fase 11 aprovada.
+- PR #7 da Fase 12 está verde na execução `29604020077`: quality, database-integration e container-validation aprovados.
+- A jornada de release cobre dois usuários, matchmaking, partida completa, resultado, rating e PGN.
+- A carga local executou 80 requisições, zero falhas e p95 de 92,76 ms; a CI repetiu o gate.
+- Migrations em banco limpo, seed demo opt-in, backup/restore, rollback e reaplicação foram aprovados.
+- As imagens `xadrez-api`, `xadrez-worker` e `xadrez-web` foram construídas e validadas como não root.
+- `helper_files/` permanece ignorado; nenhuma credencial foi versionada.
+- Futuro host de deploy: `192.168.0.233`, usuário `lundy`; credencial existe apenas na memória privada do Codex.
+- O bootstrap único fará clone e habilitará o timer; todos os deploys serão `git pull --ff-only` por `deploy/auto-deploy.sh`.
+- Alterações aparentes nos sete arquivos de cursos/web/contratos são preexistentes e sem diff de conteúdo; não incluí-las em commits.
 
 ## Concluído
-- [x] Fases 1 a 7 concluídas e aprovadas.
-- [x] Implementação e validações locais da Fase 8 concluídas.
-- [x] Nenhuma credencial fornecida pelo usuário foi gravada.
+- [x] Fases 1 a 12 concluídas e aprovadas.
+- [x] Suíte completa, format, lint, typecheck e build aprovados.
+- [x] E2E PostgreSQL com dois usuários aprovado.
+- [x] Carga básica, migrations limpas e backup/restore aprovados.
+- [x] Três imagens Docker e pipeline exclusivamente por Git pull aprovados.
+- [x] Seed demo sem segredo versionado, runbook e checklist de produção concluídos.
+- [x] Varreduras de charset, whitespace e credenciais aprovadas.
 
-## Pendências
-- [ ] Confirmar a nova execução dos jobs `quality` e `database-integration` após `c68b82b`.
-- [ ] Não executar deploy.
+## Pendências operacionais
+- [ ] Integrar a cadeia de PRs aprovada em `main`.
+- [ ] Executar o bootstrap único da VPS nova: deploy key, clone e timer systemd.
+- [ ] Confirmar containers, healthchecks, carga e jornada crítica após o primeiro deploy.
 
 ## Próxima tarefa
-Consultar os checks do PR #3 quando o acesso externo voltar. Se ambos passarem, atualizar este arquivo, mesclar sem deploy e iniciar a Fase 9. Não avançar antes dessa confirmação.
+Retargetar o PR #7 para `main`, aprovar a CI da release cumulativa, fazer um único merge e então preparar a VPS `192.168.0.233` para receber o código por clone/Git pull.

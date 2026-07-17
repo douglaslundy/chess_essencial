@@ -1,0 +1,11 @@
+[Unit]
+Description=Check origin/main for Xadrez Essencial releases
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+Persistent=true
+Unit=xadrez-auto-deploy.service
+
+[Install]
+WantedBy=timers.target

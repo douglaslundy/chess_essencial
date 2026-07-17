@@ -15,9 +15,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             Jogar
           </Link>
           <Link href="/app/partidas">Partidas</Link>
+          <Link href="/app/exercicios">Exercícios</Link>
           <Link href="/ranking">Ranking</Link>
           <Link href="/cursos">Cursos</Link>
           <Link href="/app/admin/curso">CMS do curso</Link>
+          <Link href="/app/aula/00000000-0000-4000-8000-000000000901">Aula demonstrativa</Link>
         </nav>
         <div className="sidebarFooter">
           <span className="onlineDot" />

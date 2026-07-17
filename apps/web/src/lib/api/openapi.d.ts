@@ -124,6 +124,95 @@ export interface paths {
     patch: operations['updateMe'];
     trace?: never;
   };
+  '/metrics': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Expor métricas agregadas no formato Prometheus */
+    get: operations['getMetrics'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/me/privacy': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Consultar controles de privacidade */
+    get: operations['getPrivacy'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Atualizar controles de privacidade */
+    patch: operations['updatePrivacy'];
+    trace?: never;
+  };
+  '/me/blocks': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Listar usuários bloqueados */
+    get: operations['listBlocks'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/me/blocks/{userId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        userId: string;
+      };
+      cookie?: never;
+    };
+    get?: never;
+    /** Bloquear usuário */
+    put: operations['blockUser'];
+    post?: never;
+    /** Remover bloqueio */
+    delete: operations['unblockUser'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/reports': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Criar denúncia para revisão manual */
+    post: operations['createReport'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/matchmaking/queues': {
     parameters: {
       query?: never;
@@ -452,25 +541,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Obter aula e primeira etapa autorizada */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content?: never;
-        };
-      };
-    };
+    /** Obter metadados e primeira etapa sanitizada */
+    get: operations['getLessonOverview'];
     put?: never;
     post?: never;
     delete?: never;
@@ -488,25 +560,25 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Iniciar tentativa de aula */
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description Criada */
-        201: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content?: never;
-        };
-      };
+    /** Iniciar ou retomar tentativa */
+    post: operations['startLessonAttempt'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/lesson-attempts/{attemptId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
+    /** Retomar estado persistido da tentativa */
+    get: operations['getLessonAttempt'];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -522,25 +594,8 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Submeter movimento ou resposta da etapa */
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description Estado atualizado */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content?: never;
-        };
-      };
-    };
+    /** Submeter ação para avaliação autoritativa */
+    post: operations['submitLessonAction'];
     delete?: never;
     options?: never;
     head?: never;
@@ -554,25 +609,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Pesquisar exercícios */
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content?: never;
-        };
-      };
-    };
+    /** Search exercises */
+    get: operations['searchExercises'];
     put?: never;
     post?: never;
     delete?: never;
@@ -590,25 +628,93 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Submeter tentativa */
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description Avaliada */
-        201: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content?: never;
-        };
-      };
+    /** Submit a server-evaluated exercise attempt */
+    post: operations['submitExerciseAttempt'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/exercise-training-sessions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
+    get?: never;
+    put?: never;
+    /** Start an exercise training session */
+    post: operations['startExerciseTraining'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/exercise-training-sessions/{sessionId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Resume an exercise training session */
+    get: operations['getExerciseTraining'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/exercise-training-sessions/{sessionId}/hints': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Reveal the next hint for the current exercise */
+    post: operations['revealExerciseHint'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/exercise-training-sessions/{sessionId}/solution': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Reveal the current exercise solution */
+    post: operations['revealExerciseSolution'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/exercise-metrics': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get exercise performance metrics for the authenticated user */
+    get: operations['getExerciseMetrics'];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -619,6 +725,144 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /** @enum {string} */
+    ExercisePositionType: 'legal_position' | 'illustrative_diagram' | 'text_only';
+    ExerciseSummary: {
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      answerFormat: 'free_text' | 'move_sequence';
+      sourceNumber: number | null;
+      moduleNumber: number | null;
+      chapterNumber: number | null;
+      title: string | null;
+      promptMd: string;
+      difficulty: string | null;
+      category: string | null;
+      fen: string | null;
+      /** @enum {string|null} */
+      sideToMove: 'white' | 'black' | null;
+      tags: string[];
+      sourcePages: number[];
+      positionType: components['schemas']['ExercisePositionType'];
+    };
+    ExerciseSearchResult: {
+      items: components['schemas']['ExerciseSummary'][];
+      total: number;
+      limit: number;
+      offset: number;
+    };
+    ExerciseTrainingFilters: {
+      q?: string;
+      category?: string;
+      difficulty?: string;
+      module?: number;
+      chapter?: number;
+      /** Format: uuid */
+      lessonId?: string;
+      positionType?: components['schemas']['ExercisePositionType'];
+      /** @default 10 */
+      limit: number;
+    };
+    StartExerciseTrainingInput: {
+      filters: components['schemas']['ExerciseTrainingFilters'];
+    };
+    ExerciseTrainingView: {
+      /** Format: uuid */
+      sessionId: string;
+      /** @enum {string} */
+      status: 'started' | 'completed' | 'abandoned';
+      position: number;
+      total: number;
+      completed: number;
+      currentExercise: components['schemas']['ExerciseSummary'] | null;
+    };
+    SubmitExerciseAttemptInput: {
+      submittedLine: string[];
+      durationMs: number;
+      /** Format: uuid */
+      trainingSessionId?: string;
+      /** Format: uuid */
+      lessonAttemptId?: string;
+    };
+    ExerciseAttemptResult: {
+      /** Format: uuid */
+      attemptId: string;
+      correct: boolean;
+      score: number;
+      hintsUsed: number;
+      training: components['schemas']['ExerciseTrainingView'] | null;
+    };
+    ExerciseHint: {
+      hint: string;
+      hintNumber: number;
+      remaining: number;
+    };
+    ExerciseSolution: {
+      solutionMd: string;
+      solutionLines: string[][];
+    };
+    ExerciseMetrics: {
+      attempted: number;
+      correct: number;
+      accuracyPercent: number;
+      averageDurationMs: number;
+      hintsUsed: number;
+    };
+    PublicLessonStep: {
+      stepKey: string;
+      /** @enum {string} */
+      stepType: 'text' | 'board_instruction' | 'quiz' | 'explanation' | 'checkpoint' | 'summary';
+      title: string | null;
+      bodyMd: string;
+      initialFen: string | null;
+      /** @enum {string|null} */
+      orientation: 'white' | 'black' | null;
+    };
+    LessonOverview: {
+      /** Format: uuid */
+      lessonId: string;
+      title: string;
+      module: number;
+      estimatedMinutes: number;
+      firstStep: components['schemas']['PublicLessonStep'];
+    };
+    StartLessonAttemptInput: {
+      /** Format: uuid */
+      lessonId: string;
+    };
+    LessonActionInput:
+      | {
+          /** @constant */
+          type: 'continue';
+        }
+      | {
+          /** @constant */
+          type: 'move';
+          uci: string;
+        }
+      | {
+          /** @constant */
+          type: 'answer';
+          value: string | number | boolean;
+        };
+    LessonAttemptView: {
+      /** Format: uuid */
+      attemptId: string;
+      /** Format: uuid */
+      lessonId: string;
+      /** @enum {string} */
+      status: 'started' | 'completed' | 'abandoned';
+      currentStep: components['schemas']['PublicLessonStep'] | null;
+      feedback: string | null;
+      progress: {
+        completedSteps: number;
+        totalSteps: number;
+      };
+      score: number | null;
+      /** Format: date-time */
+      updatedAt: string;
+    };
     CourseSummary: {
       /** Format: uuid */
       id: string;
@@ -699,6 +943,46 @@ export interface components {
     RefreshInput: {
       refreshToken: string;
     };
+    PrivacySettings: {
+      isProfilePublic: boolean;
+      allowChallenges: boolean;
+      allowFriendRequests: boolean;
+    };
+    UpdatePrivacyInput: {
+      isProfilePublic?: boolean;
+      allowChallenges?: boolean;
+      allowFriendRequests?: boolean;
+    };
+    BlockedUser: {
+      /** Format: uuid */
+      id: string;
+      username: string;
+      displayName: string;
+      /** Format: date-time */
+      blockedAt: string;
+    };
+    /** @enum {string} */
+    ReportCategory: 'cheating' | 'harassment' | 'spam' | 'inappropriate_profile' | 'other';
+    CreateReportInput:
+      | {
+          /** Format: uuid */
+          reportedUserId?: string;
+          /** Format: uuid */
+          gameId?: string;
+          category: components['schemas']['ReportCategory'];
+          description?: string;
+        }
+      | unknown
+      | unknown;
+    ReportReceipt: {
+      /** Format: uuid */
+      id: string;
+      category: components['schemas']['ReportCategory'];
+      /** @enum {string} */
+      status: 'open';
+      /** Format: date-time */
+      createdAt: string;
+    };
     UpdateMeInput: {
       displayName?: string;
       /** Format: uri */
@@ -754,6 +1038,7 @@ export interface components {
       status: number;
       detail: string;
       instance: string;
+      requestId: string;
       errors?: {
         path?: string;
         message?: string;
@@ -1165,6 +1450,167 @@ export interface operations {
       };
       400: components['responses']['Problem'];
       401: components['responses']['Problem'];
+    };
+  };
+  getMetrics: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Métricas agregadas sem dados pessoais */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'text/plain': string;
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  getPrivacy: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Preferências atuais */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PrivacySettings'];
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  updatePrivacy: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdatePrivacyInput'];
+      };
+    };
+    responses: {
+      /** @description Preferências atualizadas */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PrivacySettings'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+    };
+  };
+  listBlocks: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Bloqueios direcionais */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BlockedUser'][];
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  blockUser: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Usuário bloqueado */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  unblockUser: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Bloqueio removido ou já ausente */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  createReport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateReportInput'];
+      };
+    };
+    responses: {
+      /** @description Denúncia registrada */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReportReceipt'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+      409: components['responses']['Problem'];
     };
   };
   joinMatchmakingQueue: {
@@ -1704,6 +2150,278 @@ export interface operations {
       };
       400: components['responses']['Problem'];
       403: components['responses']['Problem'];
+    };
+  };
+  getLessonOverview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        lessonId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Aula disponível sem respostas futuras */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LessonOverview'];
+        };
+      };
+      403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  startLessonAttempt: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['StartLessonAttemptInput'];
+      };
+    };
+    responses: {
+      /** @description Estado atual da tentativa */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LessonAttemptView'];
+        };
+      };
+    };
+  };
+  getLessonAttempt: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        attemptId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Estado atual */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LessonAttemptView'];
+        };
+      };
+      404: components['responses']['Problem'];
+    };
+  };
+  submitLessonAction: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        attemptId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LessonActionInput'];
+      };
+    };
+    responses: {
+      /** @description Estado atualizado e persistido */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LessonAttemptView'];
+        };
+      };
+      400: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  searchExercises: {
+    parameters: {
+      query?: {
+        q?: string;
+        category?: string;
+        difficulty?: string;
+        module?: number;
+        chapter?: number;
+        lessonId?: string;
+        positionType?: components['schemas']['ExercisePositionType'];
+        limit?: number;
+        offset?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Filtered exercises */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExerciseSearchResult'];
+        };
+      };
+      400: components['responses']['Problem'];
+    };
+  };
+  submitExerciseAttempt: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        exerciseId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SubmitExerciseAttemptInput'];
+      };
+    };
+    responses: {
+      /** @description Evaluated attempt */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExerciseAttemptResult'];
+        };
+      };
+      400: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  startExerciseTraining: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['StartExerciseTrainingInput'];
+      };
+    };
+    responses: {
+      /** @description Training session */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExerciseTrainingView'];
+        };
+      };
+      400: components['responses']['Problem'];
+    };
+  };
+  getExerciseTraining: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        sessionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Training session */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExerciseTrainingView'];
+        };
+      };
+      404: components['responses']['Problem'];
+    };
+  };
+  revealExerciseHint: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        sessionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Next hint */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExerciseHint'];
+        };
+      };
+      404: components['responses']['Problem'];
+    };
+  };
+  revealExerciseSolution: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        sessionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Exercise solution */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExerciseSolution'];
+        };
+      };
+      404: components['responses']['Problem'];
+    };
+  };
+  getExerciseMetrics: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Exercise metrics */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExerciseMetrics'];
+        };
+      };
     };
   };
 }

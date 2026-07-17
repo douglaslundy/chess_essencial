@@ -17,5 +17,11 @@ pnpm --filter @xadrez/api db:rollback
 
 `0005_course_cms.down.sql` remove papéis editoriais, snapshots, pré-requisitos e páginas-fonte do CMS. As tabelas base de cursos, módulos, aulas e etapas permanecem preservadas.
 
+`0006_lesson_runtime.down.sql` remove o ledger de ações e os campos de snapshot usados para retomar tentativas. Cursos, aulas, etapas, matrículas e tentativas preexistentes permanecem preservados.
+
+`0007_exercises_runtime.down.sql` removes import runs, lesson links and training sessions, then restores the base exercise tables. Existing exercises and attempts are preserved; only Phase 10 extension columns are removed.
+
+`0008_security_observability.down.sql` remove denúncias, bloqueios direcionais, índices de auditoria e preferências adicionais de privacidade. Usuários, perfis e o histórico base de auditoria são preservados.
+
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.
