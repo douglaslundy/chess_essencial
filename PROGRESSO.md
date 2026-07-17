@@ -4,7 +4,7 @@
 2026-07-17 — release integrada em main; correção do retry do timer em andamento
 
 ## Tarefa em andamento
-Corrigir o reagendamento do timer após falha e retomar o bootstrap autorizado da VPS nova.
+Aguardar explicitamente a prontidão das dependências no primeiro deploy e concluir o bootstrap da VPS.
 
 ## Contexto necessário
 - Branch `codex/phase12-release`, empilhada sobre a Fase 11 aprovada.
@@ -17,7 +17,8 @@ Corrigir o reagendamento do timer após falha e retomar o bootstrap autorizado d
 - Futuro host de deploy: `192.168.0.233`, usuário `lundy`; credencial existe apenas na memória privada do Codex.
 - A release cumulativa foi integrada em `main` no commit `5e26826`; a CI de main `29604911658` passou.
 - O primeiro ciclo do timer falhou sem alterar containers porque o gerenciador de usuário ainda não reconhecia o grupo Docker; o grupo foi corrigido.
-- O timer com `OnUnitActiveSec` não reagenda após falha precoce; a correção usa `OnCalendar` a cada minuto para garantir retry.
+- O timer com `OnUnitActiveSec` não reagendava após falha precoce; a correção com `OnCalendar` foi integrada em `main` no commit `e499bb4`.
+- A primeira execução criou PostgreSQL/Redis/Mailpit, mas consultou o banco antes de aceitar conexões; o deploy passará a usar `docker compose up --wait`.
 - O bootstrap único usa clone e timer; todos os deploys permanecem `git pull --ff-only` por `deploy/auto-deploy.sh`.
 - Alterações aparentes nos sete arquivos de cursos/web/contratos são preexistentes e sem diff de conteúdo; não incluí-las em commits.
 
@@ -36,4 +37,4 @@ Corrigir o reagendamento do timer após falha e retomar o bootstrap autorizado d
 - [ ] Confirmar containers, healthchecks, carga e jornada crítica após o primeiro deploy.
 
 ## Próxima tarefa
-Publicar e integrar a correção do timer, rearmar apenas o agendador no bootstrap e acompanhar o deploy automático até os healthchecks.
+Publicar a espera explícita de dependências, acompanhar o retry automático atual e validar containers, healthchecks e jornada crítica.

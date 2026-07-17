@@ -66,7 +66,7 @@ docker build --file "$ROOT_DIR/deploy/Dockerfile" --target worker \
 docker build --file "$ROOT_DIR/deploy/Dockerfile" --target web \
   --build-arg "NEXT_PUBLIC_API_URL=$PUBLIC_API_URL" --tag "xadrez-web:$IMAGE_TAG" "$ROOT_DIR"
 
-"${compose[@]}" up --detach postgres redis mailpit
+"${compose[@]}" up --detach --wait --wait-timeout 120 postgres redis mailpit
 
 schema_exists="$("${compose[@]}" exec --no-TTY postgres psql --username "$POSTGRES_USER" \
   --dbname "$POSTGRES_DB" --tuples-only --no-align \
