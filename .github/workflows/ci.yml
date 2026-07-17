@@ -96,6 +96,7 @@ jobs:
         run: |
           pnpm --filter @xadrez/api db:migrate
           pnpm --filter @xadrez/api db:seed
+          pnpm --filter @xadrez/api db:import-exercises src/exercises/fixtures/import-fixture.json
 
       - name: Run database integration tests
         env:
@@ -105,6 +106,7 @@ jobs:
           src/auth/auth.e2e.test.ts
           src/courses/courses.e2e.test.ts
           src/lesson-runtime/lesson-runtime.e2e.test.ts
+          src/exercises/exercises.e2e.test.ts
           src/games/games.e2e.test.ts
           src/games/realtime.e2e.test.ts
           src/matchmaking/matchmaking-rating.e2e.test.ts
@@ -112,6 +114,6 @@ jobs:
       - name: Verify latest migration rollback and reapply
         run: |
           pnpm --filter @xadrez/api db:rollback
-          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.lesson_attempt_actions') IS NULL AND to_regclass('public.user_roles') IS NOT NULL;")" = "t"
+          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.exercise_training_sessions') IS NULL AND to_regclass('public.lesson_attempt_actions') IS NOT NULL;")" = "t"
           pnpm --filter @xadrez/api db:migrate
-          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.lesson_attempt_actions') IS NOT NULL;")" = "t"
+          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.exercise_training_sessions') IS NOT NULL AND to_regclass('public.lesson_attempt_actions') IS NOT NULL;")" = "t"

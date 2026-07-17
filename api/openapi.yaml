@@ -538,14 +538,109 @@ paths:
         '404': {$ref: '#/components/responses/Problem'}
   /exercises:
     get:
-      summary: Pesquisar exercícios
+      summary: Search exercises
+      operationId: searchExercises
+      parameters:
+        - {name: q, in: query, schema: {type: string, maxLength: 120}}
+        - {name: category, in: query, schema: {type: string}}
+        - {name: difficulty, in: query, schema: {type: string}}
+        - {name: module, in: query, schema: {type: integer, minimum: 1, maximum: 10}}
+        - {name: chapter, in: query, schema: {type: integer, minimum: 1}}
+        - {name: lessonId, in: query, schema: {type: string, format: uuid}}
+        - {name: positionType, in: query, schema: {$ref: '#/components/schemas/ExercisePositionType'}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
+        - {name: offset, in: query, schema: {type: integer, minimum: 0, default: 0}}
       responses:
-        '200': {description: OK}
+        '200':
+          description: Filtered exercises
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseSearchResult'}
+        '400': {$ref: '#/components/responses/Problem'}
   /exercises/{exerciseId}/attempts:
     post:
-      summary: Submeter tentativa
+      summary: Submit a server-evaluated exercise attempt
+      operationId: submitExerciseAttempt
+      parameters:
+        - {name: exerciseId, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SubmitExerciseAttemptInput'}
       responses:
-        '201': {description: Avaliada}
+        '201':
+          description: Evaluated attempt
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseAttemptResult'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /exercise-training-sessions:
+    post:
+      summary: Start an exercise training session
+      operationId: startExerciseTraining
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/StartExerciseTrainingInput'}
+      responses:
+        '201':
+          description: Training session
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseTrainingView'}
+        '400': {$ref: '#/components/responses/Problem'}
+  /exercise-training-sessions/{sessionId}:
+    get:
+      summary: Resume an exercise training session
+      operationId: getExerciseTraining
+      parameters:
+        - {name: sessionId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Training session
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseTrainingView'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /exercise-training-sessions/{sessionId}/hints:
+    post:
+      summary: Reveal the next hint for the current exercise
+      operationId: revealExerciseHint
+      parameters:
+        - {name: sessionId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '201':
+          description: Next hint
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseHint'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /exercise-training-sessions/{sessionId}/solution:
+    post:
+      summary: Reveal the current exercise solution
+      operationId: revealExerciseSolution
+      parameters:
+        - {name: sessionId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '201':
+          description: Exercise solution
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseSolution'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /exercise-metrics:
+    get:
+      summary: Get exercise performance metrics for the authenticated user
+      operationId: getExerciseMetrics
+      responses:
+        '200':
+          description: Exercise metrics
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseMetrics'}
 components:
   parameters:
     GameId:
@@ -565,6 +660,105 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    ExercisePositionType:
+      type: string
+      enum: [legal_position, illustrative_diagram]
+    ExerciseSummary:
+      type: object
+      required: [id, sourceNumber, moduleNumber, chapterNumber, title, promptMd, difficulty, category, fen, sideToMove, tags, sourcePages, positionType]
+      properties:
+        id: {type: string, format: uuid}
+        sourceNumber: {type: [integer, 'null'], minimum: 1}
+        moduleNumber: {type: [integer, 'null'], minimum: 1, maximum: 10}
+        chapterNumber: {type: [integer, 'null'], minimum: 1}
+        title: {type: [string, 'null']}
+        promptMd: {type: string}
+        difficulty: {type: [string, 'null']}
+        category: {type: [string, 'null']}
+        fen: {type: [string, 'null']}
+        sideToMove: {type: [string, 'null'], enum: [white, black, null]}
+        tags: {type: array, items: {type: string}}
+        sourcePages: {type: array, items: {type: integer, minimum: 1}}
+        positionType: {$ref: '#/components/schemas/ExercisePositionType'}
+    ExerciseSearchResult:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/ExerciseSummary'}}
+        total: {type: integer, minimum: 0}
+        limit: {type: integer, minimum: 1}
+        offset: {type: integer, minimum: 0}
+    ExerciseTrainingFilters:
+      type: object
+      properties:
+        q: {type: string}
+        category: {type: string}
+        difficulty: {type: string}
+        module: {type: integer, minimum: 1, maximum: 10}
+        chapter: {type: integer, minimum: 1}
+        lessonId: {type: string, format: uuid}
+        positionType: {$ref: '#/components/schemas/ExercisePositionType'}
+        limit: {type: integer, minimum: 1, maximum: 50, default: 10}
+    StartExerciseTrainingInput:
+      type: object
+      required: [filters]
+      properties:
+        filters: {$ref: '#/components/schemas/ExerciseTrainingFilters'}
+    ExerciseTrainingView:
+      type: object
+      required: [sessionId, status, position, total, completed, currentExercise]
+      properties:
+        sessionId: {type: string, format: uuid}
+        status: {type: string, enum: [started, completed, abandoned]}
+        position: {type: integer, minimum: 0}
+        total: {type: integer, minimum: 0}
+        completed: {type: integer, minimum: 0}
+        currentExercise:
+          oneOf:
+            - {$ref: '#/components/schemas/ExerciseSummary'}
+            - {type: 'null'}
+    SubmitExerciseAttemptInput:
+      type: object
+      required: [submittedLine, durationMs]
+      properties:
+        submittedLine: {type: array, minItems: 1, maxItems: 50, items: {type: string}}
+        durationMs: {type: integer, minimum: 0, maximum: 86400000}
+        trainingSessionId: {type: string, format: uuid}
+        lessonAttemptId: {type: string, format: uuid}
+    ExerciseAttemptResult:
+      type: object
+      required: [attemptId, correct, score, hintsUsed, training]
+      properties:
+        attemptId: {type: string, format: uuid}
+        correct: {type: boolean}
+        score: {type: number, minimum: 0, maximum: 100}
+        hintsUsed: {type: integer, minimum: 0}
+        training:
+          oneOf:
+            - {$ref: '#/components/schemas/ExerciseTrainingView'}
+            - {type: 'null'}
+    ExerciseHint:
+      type: object
+      required: [hint, hintNumber, remaining]
+      properties:
+        hint: {type: string}
+        hintNumber: {type: integer, minimum: 1}
+        remaining: {type: integer, minimum: 0}
+    ExerciseSolution:
+      type: object
+      required: [solutionMd, solutionLines]
+      properties:
+        solutionMd: {type: string}
+        solutionLines: {type: array, items: {type: array, items: {type: string}}}
+    ExerciseMetrics:
+      type: object
+      required: [attempted, correct, accuracyPercent, averageDurationMs, hintsUsed]
+      properties:
+        attempted: {type: integer, minimum: 0}
+        correct: {type: integer, minimum: 0}
+        accuracyPercent: {type: number, minimum: 0, maximum: 100}
+        averageDurationMs: {type: integer, minimum: 0}
+        hintsUsed: {type: integer, minimum: 0}
     PublicLessonStep:
       type: object
       required: [stepKey, stepType, bodyMd, title, initialFen, orientation]
