@@ -2,7 +2,7 @@
 
 ## Última atualização
 
-2026-07-17 — Fase 13 implementada localmente; integração, CI e deploy ainda pendentes.
+2026-07-17 — Fase 13 publicada na branch; CI, integração e deploy ainda pendentes.
 
 ## Tarefa em andamento
 
@@ -11,7 +11,7 @@ Fase 13 — auditoria pós-release e saneamento documental.
 ## Contexto necessário
 
 - `main` no commit `d3a6803`, com `quality`, `database-integration` e `container-validation` aprovados na CI `29607483626`.
-- Branch atual: `codex/phase13-audit`; correções no commit `90949db`.
+- Branch atual publicada: `codex/phase13-audit`; commits `90949db` e `0568ba9`.
 - VPS de teste: `192.168.0.233`; repositório em `/home/lundy/xadrez-essencial`.
 - Deploy exclusivamente por `git pull --ff-only` via `deploy/auto-deploy.sh` e timer systemd.
 - API, worker, web, PostgreSQL, Redis e Mailpit estavam saudáveis na baseline; revalidar somente após merge em `main`.
@@ -32,12 +32,13 @@ Fase 13 — auditoria pós-release e saneamento documental.
 - [x] Contratos: 9 arquivos/24 testes; API direcionada: 3 arquivos/8 testes; web refresh: 1 arquivo/2 testes.
 - [x] OpenAPI e cliente TypeScript regenerados.
 - [x] Correções e testes versionados no commit `90949db`.
+- [x] Auditoria e backlog versionados no commit `0568ba9`; branch publicada no GitHub.
 - [x] `git diff --check`, varredura de charset e varredura de segredos aprovados.
 
 ## Próxima tarefa
 
-1. Versionar a documentação da auditoria sem incluir os sete arquivos fantasma.
-2. Fazer push da branch e aguardar os três jobs da CI.
-3. Corrigir qualquer falha, integrar em `main` e aguardar o deploy automático.
+1. Abrir o PR da Fase 13 e aguardar os três jobs da CI.
+2. Corrigir qualquer falha antes de integrar.
+3. Integrar em `main` e aguardar o deploy automático.
 4. Validar commit, healthchecks, SMTP/Mailpit e jornada crítica na VPS.
 5. Somente então marcar a Fase 13 concluída e iniciar a Fase 14.
