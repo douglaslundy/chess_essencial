@@ -80,7 +80,7 @@ describeDatabase('exercise runtime database integration', () => {
     const started = await app.inject({
       headers: auth(),
       method: 'POST',
-      payload: { filters: { category: 'pawn', limit: 1 } },
+      payload: { filters: { category: 'pawn', limit: 1, q: 'correto' } },
       url: '/v1/exercise-training-sessions',
     });
     expect(started.statusCode, started.body).toBe(201);
