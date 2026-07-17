@@ -1,5 +1,7 @@
 import postgres from 'postgres';
 
+import { jsonValue } from './json-value.js';
+
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error('DATABASE_URL is required');
 const sql = postgres(databaseUrl, { max: 1, prepare: false });
@@ -128,8 +130,8 @@ try {
       INSERT INTO lesson_steps (lesson_id, step_key, position, step_type, body_md, initial_fen,
         orientation, expected_actions, feedback, next_step_rules)
       VALUES (${demoLessonId}, ${step.key}, ${index + 1}, ${step.type}, ${step.body},
-        ${'fen' in step ? step.fen : null}, 'white', ${JSON.stringify(step.actions)}::jsonb,
-        ${JSON.stringify(step.feedback)}::jsonb, '[]'::jsonb)
+        ${'fen' in step ? step.fen : null}, 'white', ${transaction.json(jsonValue(step.actions))},
+        ${transaction.json(jsonValue(step.feedback))}, '[]'::jsonb)
     `;
     await transaction`
       INSERT INTO lesson_source_pages (lesson_id, page) VALUES (${demoLessonId}, 1)

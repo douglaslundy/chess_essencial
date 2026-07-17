@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import type { TransactionSql } from 'postgres';
 import { DatabaseService } from '../database/database.service.js';
+import { jsonValue } from '../database/json-value.js';
 
 interface CourseRow {
   description: string;
@@ -151,8 +152,8 @@ export class CoursesRepository {
           orientation, expected_actions, feedback, next_step_rules)
         VALUES (${lessonId}, ${step.stepKey}, ${index + 1}, ${step.stepType}, ${step.title ?? null},
           ${step.bodyMd}, ${step.initialFen ?? null}, ${step.orientation ?? null},
-          ${JSON.stringify(step.expectedActions)}::jsonb, ${JSON.stringify(step.feedback)}::jsonb,
-          ${JSON.stringify(step.nextStepRules)}::jsonb)
+          ${tx.json(jsonValue(step.expectedActions))}, ${tx.json(jsonValue(step.feedback))},
+          ${tx.json(jsonValue(step.nextStepRules))})
       `;
       for (const page of [...new Set(input.lesson.sourcePages)])
         await tx`
@@ -167,7 +168,7 @@ export class CoursesRepository {
         await tx`INSERT INTO lesson_prerequisites VALUES (${lessonId}, ${prerequisite.id})`;
       }
       await tx`INSERT INTO lesson_versions (lesson_id, version, content, created_by_user_id)
-        VALUES (${lessonId}, ${version}, ${JSON.stringify(input.lesson)}::jsonb, ${userId})`;
+        VALUES (${lessonId}, ${version}, ${tx.json(jsonValue(input.lesson))}, ${userId})`;
       const [saved] = await tx<{ createdAt: Date | string }[]>`
         SELECT created_at AS "createdAt" FROM lesson_versions WHERE lesson_id = ${lessonId} AND version = ${version}
       `;

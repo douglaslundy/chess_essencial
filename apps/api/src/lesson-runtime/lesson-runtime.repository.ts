@@ -16,6 +16,7 @@ import {
 import type { TransactionSql } from 'postgres';
 
 import { DatabaseService } from '../database/database.service.js';
+import { jsonValue } from '../database/json-value.js';
 
 interface AttemptRow {
   contentSnapshot: unknown;
@@ -95,7 +96,7 @@ export class LessonRuntimeRepository {
     const [attempt] = await this.database.client<AttemptRow[]>`
       INSERT INTO lesson_attempts (user_id, lesson_id, current_step_key, status, state, lesson_version, content_snapshot)
       VALUES (${userId}, ${lessonId}, ${snapshot.steps[0]!.stepKey}, 'started',
-        ${JSON.stringify(state)}::jsonb, ${lessonVersion!.version}, ${JSON.stringify(snapshot)}::jsonb)
+        ${this.database.client.json(jsonValue(state))}, ${lessonVersion!.version}, ${this.database.client.json(jsonValue(snapshot))})
       RETURNING id, user_id AS "userId", lesson_id AS "lessonId", current_step_key AS "currentStepKey",
         status, score, state, lesson_version AS "lessonVersion", content_snapshot AS "contentSnapshot",
         updated_at AS "updatedAt"
@@ -112,7 +113,7 @@ export class LessonRuntimeRepository {
     return this.database.client.begin(async (tx) => {
       const attempt = await this.findAttempt(tx, userId, attemptId, true);
       if (attempt.status !== 'started') throw new BadRequestException('Tentativa já encerrada');
-      const lesson = interactiveLessonSchema.parse(attempt.contentSnapshot);
+      const lesson = interactiveLessonSchema.parse(this.jsonValue(attempt.contentSnapshot));
       const state = this.runtimeState(attempt.state);
       const step = lesson.steps[state.index];
       if (!step) throw new BadRequestException('Etapa atual inválida');
@@ -140,12 +141,12 @@ export class LessonRuntimeRepository {
       await tx`
         INSERT INTO lesson_attempt_actions (attempt_id, sequence, step_key, action, outcome, state_after)
         VALUES (${attempt.id}, ${sequence!.next}, ${step.stepKey},
-          ${JSON.stringify(action)}::jsonb, ${outcome}, ${JSON.stringify(nextState)}::jsonb)
+          ${tx.json(jsonValue(action))}, ${outcome}, ${tx.json(jsonValue(nextState))})
       `;
       const [updated] = await tx<AttemptRow[]>`
         UPDATE lesson_attempts SET current_step_key = ${completed ? null : lesson.steps[nextIndex]!.stepKey},
           status = ${completed ? 'completed' : 'started'}, score = ${score},
-          state = ${JSON.stringify(nextState)}::jsonb, updated_at = now(),
+          state = ${tx.json(jsonValue(nextState))}, updated_at = now(),
           completed_at = ${completed ? new Date() : null}
         WHERE id = ${attempt.id}
         RETURNING id, user_id AS "userId", lesson_id AS "lessonId", current_step_key AS "currentStepKey",
@@ -249,6 +250,9 @@ export class LessonRuntimeRepository {
       sourcePages: pages.map((item) => item.page),
       steps: steps.map((step) => ({
         ...step,
+        expectedActions: this.jsonValue(step.expectedActions),
+        feedback: this.jsonValue(step.feedback),
+        nextStepRules: this.jsonValue(step.nextStepRules),
         orientation: step.orientation ?? undefined,
         title: step.title ?? undefined,
       })),
@@ -286,7 +290,7 @@ export class LessonRuntimeRepository {
   }
 
   private view(attempt: AttemptRow): LessonAttemptView {
-    const lesson = interactiveLessonSchema.parse(attempt.contentSnapshot);
+    const lesson = interactiveLessonSchema.parse(this.jsonValue(attempt.contentSnapshot));
     const state = this.runtimeState(attempt.state);
     const step = attempt.status === 'started' ? lesson.steps[state.index] : undefined;
     const currentStep: PublicLessonStep | null = step
@@ -311,8 +315,12 @@ export class LessonRuntimeRepository {
     };
   }
 
+  private jsonValue<T>(value: unknown): T {
+    return (typeof value === 'string' ? JSON.parse(value) : value) as T;
+  }
+
   private runtimeState(value: unknown): RuntimeState {
-    return value as RuntimeState;
+    return this.jsonValue<RuntimeState>(value);
   }
 
   private async updateEnrollment(
