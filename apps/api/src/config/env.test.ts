@@ -15,4 +15,16 @@ describe('validateApiEnv', () => {
       'Production authentication secrets are required',
     );
   });
+
+  it('requires SMTP in production after authentication secrets are present', () => {
+    expect(() =>
+      validateApiEnv({
+        AUTH_ACCESS_SECRET: 'a'.repeat(32),
+        AUTH_IP_HASH_SECRET: 'b'.repeat(32),
+        AUTH_REFRESH_SECRET: 'c'.repeat(32),
+        AUTH_VERIFICATION_SECRET: 'd'.repeat(32),
+        NODE_ENV: 'production',
+      }),
+    ).toThrow('Production SMTP_URL is required');
+  });
 });

@@ -10,6 +10,7 @@ import type {
   UsersRepository,
 } from '../users/users.repository.js';
 import { AuthService } from './auth.service.js';
+import type { VerificationEmailService } from './verification-email.service.js';
 
 class FakeUsersRepository {
   user: IdentityUser | null = null;
@@ -105,13 +106,17 @@ const config = new ConfigService({
   AUTH_VERIFICATION_TTL_SECONDS: 3_600,
 });
 
+const noopEmailService = {
+  send: async () => undefined,
+} as unknown as VerificationEmailService;
+
 describe('AuthService security', () => {
   let repository: FakeUsersRepository;
   let service: AuthService;
 
   beforeEach(() => {
     repository = new FakeUsersRepository();
-    service = new AuthService(config, repository as unknown as UsersRepository);
+    service = new AuthService(config, repository as unknown as UsersRepository, noopEmailService);
   });
 
   it('hashes password with Argon2id and completes local verification', async () => {
@@ -160,6 +165,31 @@ describe('AuthService security', () => {
     expect(rotated.refreshToken).not.toBe(firstRefresh);
     await expect(service.refresh(firstRefresh)).rejects.toThrow('Reutilização');
     expect(repository.revoked).toBe(true);
+  });
+
+  it('resends verification only for pending accounts without revealing existence', async () => {
+    await service.register({
+      displayName: 'Jogador Teste',
+      email: 'player@example.com',
+      password: 'correct horse battery staple',
+      username: 'player_test',
+    });
+    const sent: string[] = [];
+    const capturingEmailService = {
+      send: async (message: { email: string }) => {
+        sent.push(message.email);
+      },
+    } as unknown as VerificationEmailService;
+    const resendService = new AuthService(
+      config,
+      repository as unknown as UsersRepository,
+      capturingEmailService,
+    );
+
+    await resendService.resendVerification({ email: 'PLAYER@example.com' });
+    await resendService.resendVerification({ email: 'missing@example.com' });
+
+    expect(sent).toEqual(['player@example.com']);
   });
 
   it('returns the same generic error for an unknown account', async () => {

@@ -22,6 +22,7 @@ export const apiEnvSchema = z.object({
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().optional(),
   OTEL_SERVICE_NAME: z.string().min(1).max(100).default('xadrez-api'),
   REDIS_URL: z.string().url().default('redis://localhost:6379'),
+  SMTP_URL: z.string().url().optional(),
   WEB_ORIGIN: z.string().url().default('http://localhost:3000'),
 });
 
@@ -41,6 +42,7 @@ export function validateApiEnv(config: Record<string, unknown>) {
     if (missing.length > 0) {
       throw new Error('Production authentication secrets are required');
     }
+    if (!parsed.SMTP_URL) throw new Error('Production SMTP_URL is required');
   }
 
   return {

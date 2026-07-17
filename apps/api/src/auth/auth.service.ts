@@ -4,6 +4,7 @@ import type {
   LoginInput,
   PublicUser,
   RegisterInput,
+  ResendVerificationInput,
   TokenPair,
   VerifyEmailInput,
 } from '@xadrez/contracts';
@@ -20,6 +21,7 @@ import { SignJWT, errors as joseErrors, jwtVerify, type JWTPayload } from 'jose'
 
 import { AuditService } from '../observability/audit.service.js';
 import { UsersRepository, type IdentityUser } from '../users/users.repository.js';
+import { VerificationEmailService } from './verification-email.service.js';
 
 const TOKEN_ISSUER = 'xadrez-essencial-api';
 const ACCESS_AUDIENCE = 'xadrez-essencial-web';
@@ -41,6 +43,7 @@ export class AuthService {
   constructor(
     private readonly config: ConfigService,
     private readonly users: UsersRepository,
+    private readonly verificationEmail: VerificationEmailService,
     @Optional() private readonly audit?: AuditService,
   ) {}
 
@@ -73,8 +76,18 @@ export class AuthService {
 
     await this.audit?.record(user.id, 'user.registered', 'user', user.id);
     const verificationToken = await this.signVerificationToken(user.id);
+    await this.verificationEmail.send({ email: user.email, token: verificationToken });
     const exposeToken = this.config.get<boolean>('AUTH_EXPOSE_VERIFICATION_TOKEN', false);
     return { user: this.toPublicUser(user), ...(exposeToken ? { verificationToken } : {}) };
+  }
+
+  async resendVerification(input: ResendVerificationInput) {
+    const user = await this.users.findByIdentifier(input.email.toLowerCase());
+    if (!user || user.status !== 'pending') return;
+
+    const verificationToken = await this.signVerificationToken(user.id);
+    await this.verificationEmail.send({ email: user.email, token: verificationToken });
+    await this.audit?.record(user.id, 'user.verification_resent', 'user', user.id);
   }
 
   async verifyEmail(input: VerifyEmailInput) {

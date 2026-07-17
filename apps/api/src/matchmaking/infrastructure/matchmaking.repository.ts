@@ -6,6 +6,7 @@ import type {
   JoinQueueInput,
   QueueStatus,
   RespondChallengeInput,
+  TimeControlCode,
 } from '@xadrez/contracts';
 import {
   BadRequestException,
@@ -19,7 +20,7 @@ import type { TransactionSql } from 'postgres';
 import { DatabaseService } from '../../database/database.service.js';
 
 interface TimeControlRow {
-  code: string;
+  code: TimeControlCode;
   id: string;
   initialMs: number;
   pool: QueueStatus['pool'];
