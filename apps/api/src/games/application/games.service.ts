@@ -41,6 +41,18 @@ export class GamesService {
     return this.games.getPgn(gameId, userId);
   }
 
+  async resign(gameId: string, userId: string) {
+    const state = await this.games.resign(gameId, userId);
+    await this.ratings.processFinishedGame(gameId);
+    return state;
+  }
+
+  async offerDraw(gameId: string, userId: string) {
+    const result = await this.games.offerDraw(gameId, userId);
+    if (result.accepted) await this.ratings.processFinishedGame(gameId);
+    return result;
+  }
+
   async commitMove(gameId: string, userId: string, input: SubmitMoveInput) {
     try {
       const result = await this.games.commitMove(gameId, userId, input);

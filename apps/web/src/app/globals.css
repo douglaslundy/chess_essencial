@@ -112,3 +112,897 @@ code {
     align-items: end;
   }
 }
+
+/* Application shell and Phase 6 game interface */
+:root {
+  --bg-elevated: #101014;
+  --surface-2: #19191f;
+  --red-bright: #ff2a2f;
+  --red-dark: #75060b;
+  --gold: #d8b66c;
+  --warning: #f59e0b;
+  --danger: #dc2626;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  color: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+
+.appShell {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: 16.5rem minmax(0, 1fr);
+  background:
+    radial-gradient(circle at 65% 0%, rgba(209, 14, 23, 0.1), transparent 32rem), var(--bg);
+}
+
+.appSidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  height: 100vh;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: rgba(10, 10, 13, 0.96);
+  padding: 1.5rem 1rem;
+}
+
+.sidebarBrand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 0.5rem 2rem;
+}
+
+.sidebarBrand span,
+.brandMark,
+.mobileBrand {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border-radius: 0.75rem;
+  background: linear-gradient(145deg, var(--red-bright), var(--red-dark));
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  box-shadow: 0 0.75rem 2rem rgba(209, 14, 23, 0.22);
+}
+
+.appSidebar nav {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.appSidebar nav a {
+  border-radius: 0.75rem;
+  color: var(--muted);
+  padding: 0.8rem 0.9rem;
+  font-weight: 650;
+}
+
+.appSidebar nav a:hover,
+.appSidebar nav .activeNav {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.appSidebar nav .activeNav {
+  box-shadow: inset 3px 0 var(--red-bright);
+}
+
+.sidebarFooter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: auto;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.onlineDot,
+.idleDot {
+  width: 0.55rem;
+  height: 0.55rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--success);
+  box-shadow: 0 0 0 0.2rem rgba(22, 163, 74, 0.12);
+}
+
+.idleDot {
+  background: var(--warning);
+  box-shadow: none;
+}
+
+.appContent {
+  min-width: 0;
+}
+
+.appTopbar {
+  display: flex;
+  height: 4.5rem;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  color: var(--muted);
+}
+
+.mobileBrand {
+  display: none;
+}
+
+.userPill {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--text);
+}
+
+.userPill > span {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 0.7rem;
+}
+
+.dashboardPage,
+.playPage {
+  width: min(100%, 90rem);
+  margin: 0 auto;
+  padding: clamp(2rem, 5vw, 5rem);
+}
+
+.dashboardPage h1,
+.pageHeader h1 {
+  max-width: 55rem;
+  font-size: clamp(2.6rem, 6vw, 5.5rem);
+}
+
+.dashboardCards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 3rem;
+}
+
+.primaryCard,
+.secondaryCard {
+  display: grid;
+  min-height: 14rem;
+  align-content: end;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 1.2rem;
+  padding: 1.5rem;
+}
+
+.primaryCard {
+  background: linear-gradient(145deg, rgba(209, 14, 23, 0.4), var(--surface));
+}
+
+.secondaryCard {
+  background: var(--surface);
+}
+
+.primaryCard span,
+.secondaryCard span,
+.timeCard span {
+  color: var(--gold);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.primaryCard strong,
+.secondaryCard strong {
+  font-family: Georgia, serif;
+  font-size: 2rem;
+}
+
+.primaryCard small,
+.secondaryCard small {
+  color: var(--muted);
+}
+
+.pageHeader {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+}
+
+.pageHeader h1 {
+  margin-bottom: 0;
+}
+
+.pageHeader > p {
+  max-width: 25rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.playGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: 1.5rem;
+}
+
+.timeControls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.timeCard {
+  display: grid;
+  min-height: 10rem;
+  align-content: end;
+  gap: 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  padding: 1.1rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.timeCard:hover,
+.selectedTime {
+  border-color: rgba(255, 42, 47, 0.7);
+  background: linear-gradient(145deg, rgba(209, 14, 23, 0.24), var(--surface));
+}
+
+.timeCard strong {
+  font-family: Georgia, serif;
+  font-size: 2rem;
+}
+
+.timeCard small {
+  color: var(--muted);
+}
+
+.queueCard {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 1.1rem;
+  background: var(--surface);
+  padding: 1.5rem;
+}
+
+.queueCard h2 {
+  font-family: Georgia, serif;
+  font-size: 1.75rem;
+}
+
+.queueCard p {
+  min-height: 4.5rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.queueIcon {
+  font-size: 3rem;
+  color: var(--red-bright);
+}
+
+.ratedToggle {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  margin: 1.5rem 0;
+}
+
+.ratedToggle input {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--red);
+}
+
+.primaryButton,
+.secondaryButton {
+  width: 100%;
+  border: 0;
+  border-radius: 0.75rem;
+  padding: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.primaryButton {
+  background: var(--red);
+}
+
+.secondaryButton {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.searchPulse {
+  position: absolute;
+  inset: auto -2rem -2rem auto;
+  width: 7rem;
+  height: 7rem;
+  border: 1rem solid rgba(209, 14, 23, 0.14);
+  border-radius: 999px;
+  animation: pulse 1.8s infinite;
+}
+
+.gamePage {
+  position: relative;
+  display: grid;
+  width: min(100%, 94rem);
+  min-height: calc(100vh - 4.5rem);
+  margin: 0 auto;
+  grid-template:
+    'identity identity identity' auto
+    'players board moves' 1fr / minmax(15rem, 0.75fr) minmax(20rem, 1.65fr) minmax(17rem, 0.85fr);
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.gameIdentity {
+  grid-area: identity;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.gameIdentity > div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.gameIdentity span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.gameIdentity .brandMark {
+  color: var(--text);
+}
+
+.iconButton {
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-left: auto;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.playersColumn {
+  grid-area: players;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.playerCard {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  padding: 0.9rem;
+}
+
+.activePlayer {
+  border-color: rgba(216, 182, 108, 0.55);
+  box-shadow: 0 0 0 1px rgba(216, 182, 108, 0.12);
+}
+
+.playerAvatar {
+  display: grid;
+  width: 2.6rem;
+  height: 2.6rem;
+  grid-row: span 2;
+  place-items: center;
+  border-radius: 0.75rem;
+  background: var(--surface-2);
+  font-family: Georgia, serif;
+  font-weight: 900;
+}
+
+.playerMeta {
+  display: grid;
+}
+
+.playerMeta span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.chessClock {
+  grid-column: 1 / -1;
+  border-radius: 0.65rem;
+  background: #09090b;
+  padding: 0.55rem 0.7rem;
+  font-family: 'Geist Mono', Consolas, monospace;
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.08em;
+  text-align: right;
+}
+
+.activePlayer .chessClock {
+  background: var(--text);
+  color: #101014;
+}
+
+.gameActions {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.gameActions button,
+.mobileActions button {
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+  background: var(--surface);
+  padding: 0.75rem;
+  cursor: pointer;
+}
+
+.gameActions .dangerAction,
+.mobileActions .dangerAction {
+  color: #ffb3b5;
+}
+
+.boardColumn {
+  grid-area: board;
+  min-width: 0;
+  align-self: center;
+}
+
+.chessBoard {
+  display: grid;
+  width: min(100%, 45rem);
+  aspect-ratio: 1;
+  grid-template-columns: repeat(8, 1fr);
+  overflow: hidden;
+  margin: 0 auto;
+  border: 0.35rem solid #28231f;
+  border-radius: 0.4rem;
+  box-shadow: 0 1.5rem 5rem rgba(0, 0, 0, 0.42);
+}
+
+.boardSquare {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  aspect-ratio: 1;
+  place-items: center;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.lightSquare {
+  background: #d2bea1;
+}
+
+.darkSquare {
+  background: #70514a;
+}
+
+.boardSquare:hover {
+  filter: brightness(1.08);
+}
+
+.boardSquare > span:first-child {
+  position: relative;
+  z-index: 2;
+  font-size: clamp(1.6rem, 5.5vw, 4.4rem);
+  line-height: 1;
+  filter: drop-shadow(0 0.12rem 0.08rem rgba(0, 0, 0, 0.35));
+}
+
+.whitePiece {
+  color: #fff9e9;
+  -webkit-text-stroke: 1px #4d453b;
+}
+
+.blackPiece {
+  color: #181717;
+  -webkit-text-stroke: 1px #d8c7ab;
+}
+
+.selectedSquare {
+  box-shadow: inset 0 0 0 0.3rem rgba(255, 221, 87, 0.85);
+}
+
+.lastMoveSquare::before {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: rgba(255, 205, 58, 0.38);
+  content: '';
+}
+
+.moveTarget {
+  position: absolute;
+  z-index: 3;
+  width: 24%;
+  height: 24%;
+  border-radius: 999px;
+  background: rgba(20, 20, 25, 0.48);
+}
+
+.targetSquare:has(.whitePiece, .blackPiece) .moveTarget {
+  width: 82%;
+  height: 82%;
+  border: 0.28rem solid rgba(20, 20, 25, 0.42);
+  background: transparent;
+}
+
+.coordinate {
+  position: absolute !important;
+  z-index: 4 !important;
+  inset: 0.15rem auto auto 0.18rem;
+  color: rgba(20, 20, 25, 0.62) !important;
+  font-family: monospace;
+  font-size: 0.55rem !important;
+  font-weight: 800;
+}
+
+.movesPanel {
+  grid-area: moves;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.panelTabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+}
+
+.panelTabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  padding: 0.9rem;
+  color: var(--muted);
+}
+
+.panelTabs button[aria-selected='true'] {
+  border-bottom-color: var(--red-bright);
+  color: var(--text);
+}
+
+.moveList {
+  flex: 1;
+  overflow: auto;
+  padding: 0.75rem;
+  font-family: 'Geist Mono', Consolas, monospace;
+}
+
+.moveRow {
+  display: grid;
+  grid-template-columns: 2rem 1fr 1fr;
+  gap: 0.5rem;
+  border-radius: 0.45rem;
+  padding: 0.45rem;
+}
+
+.moveRow:nth-child(odd) {
+  background: var(--surface-2);
+}
+
+.moveRow span {
+  color: var(--muted);
+}
+
+.emptyMoves {
+  display: grid;
+  height: 100%;
+  place-content: center;
+  color: var(--muted);
+  text-align: center;
+}
+
+.emptyMoves span {
+  color: rgba(244, 241, 235, 0.12);
+  font-size: 4rem;
+}
+
+.connectionState {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border);
+  padding: 0.75rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.connectionBanner {
+  position: fixed;
+  z-index: 10;
+  top: 5rem;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  transform: translateX(-50%);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  border-radius: 999px;
+  background: #291c08;
+  padding: 0.65rem 1rem;
+  color: #fde3ad;
+  font-size: 0.85rem;
+}
+
+.gameMessage {
+  min-height: 1.2rem;
+  margin: 0.7rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.mobilePlayer,
+.mobileActions {
+  display: none;
+}
+
+.dialogBackdrop {
+  position: fixed;
+  z-index: 30;
+  display: grid;
+  inset: 0;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.74);
+  padding: 1rem;
+}
+
+.promotionDialog {
+  width: min(100%, 28rem);
+  border: 1px solid var(--border);
+  border-radius: 1.1rem;
+  background: var(--surface);
+  padding: 1.4rem;
+  box-shadow: 0 2rem 6rem #000;
+}
+
+.promotionChoices {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.promotionChoices button {
+  display: grid;
+  gap: 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface-2);
+  padding: 0.65rem;
+  cursor: pointer;
+}
+
+.promotionChoices span {
+  font-size: 2.5rem;
+}
+
+.textButton {
+  margin-top: 1rem;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+@keyframes pulse {
+  50% {
+    transform: scale(1.16);
+    opacity: 0.45;
+  }
+}
+
+@media (max-width: 1100px) {
+  .appShell {
+    grid-template-columns: 5rem minmax(0, 1fr);
+  }
+
+  .sidebarBrand strong,
+  .appSidebar nav a,
+  .sidebarFooter {
+    font-size: 0;
+  }
+
+  .appSidebar nav a::first-letter {
+    font-size: 1rem;
+  }
+
+  .gamePage {
+    grid-template:
+      'identity identity' auto
+      'board moves' 1fr / minmax(20rem, 1.5fr) minmax(16rem, 0.75fr);
+  }
+
+  .playersColumn {
+    display: none;
+  }
+
+  .mobilePlayer {
+    display: block;
+    width: min(100%, 45rem);
+    margin: 0 auto 0.5rem;
+  }
+
+  .mobilePlayer + .chessBoard + .mobilePlayer {
+    margin: 0.5rem auto 0;
+  }
+
+  .mobilePlayer .playerCard {
+    grid-template-columns: auto 1fr auto;
+    padding: 0.55rem;
+  }
+
+  .mobilePlayer .chessClock {
+    grid-column: auto;
+    min-width: 7rem;
+    font-size: 1.55rem;
+  }
+
+  .mobileActions {
+    display: flex;
+    grid-column: 1 / -1;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .appShell {
+    display: block;
+  }
+
+  .appSidebar {
+    display: none;
+  }
+
+  .appTopbar {
+    height: 3.75rem;
+    padding: 0 0.75rem;
+  }
+
+  .appTopbar > span,
+  .userPill strong {
+    display: none;
+  }
+
+  .mobileBrand {
+    display: grid;
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+
+  .dashboardPage,
+  .playPage {
+    padding: 1.25rem;
+  }
+
+  .dashboardCards,
+  .playGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .pageHeader {
+    display: block;
+  }
+
+  .timeControls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .timeCard {
+    min-height: 7.5rem;
+  }
+
+  .queueCard {
+    min-height: 19rem;
+  }
+
+  .gamePage {
+    display: block;
+    min-height: calc(100vh - 3.75rem);
+    padding: 0.65rem;
+  }
+
+  .gameIdentity {
+    margin-bottom: 0.6rem;
+  }
+
+  .gameIdentity .brandMark {
+    display: none;
+  }
+
+  .chessBoard {
+    width: 100%;
+    border-width: 0.2rem;
+  }
+
+  .boardSquare > span:first-child {
+    font-size: clamp(2.2rem, 11vw, 4rem);
+  }
+
+  .movesPanel {
+    min-height: 15rem;
+    margin-top: 0.75rem;
+  }
+
+  .mobileActions {
+    position: sticky;
+    z-index: 8;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 0.6rem 0;
+    background: linear-gradient(transparent, var(--bg) 30%);
+  }
+
+  .connectionBanner {
+    top: 4.2rem;
+    width: calc(100% - 1rem);
+    border-radius: 0.75rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .timeControls {
+    grid-template-columns: 1fr;
+  }
+
+  .playerMeta strong {
+    max-width: 8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobilePlayer .chessClock {
+    min-width: 5.8rem;
+    font-size: 1.3rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

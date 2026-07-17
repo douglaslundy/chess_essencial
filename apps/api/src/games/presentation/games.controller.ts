@@ -1,5 +1,5 @@
 import { createGameInputSchema, submitMoveInputSchema } from '@xadrez/contracts';
-import { Body, Controller, Get, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
 import type { FastifyReply } from 'fastify';
 import { z } from 'zod';
 
@@ -7,12 +7,17 @@ import { AccessTokenGuard, type AuthenticatedRequest } from '../../auth/access-t
 import { parseInput } from '../../common/http/parse-input.js';
 import { GamesService } from '../application/games.service.js';
 
+import { GamesGateway } from './games.gateway.js';
+
 const gameIdSchema = z.string().uuid();
 
 @Controller('games')
 @UseGuards(AccessTokenGuard)
 export class GamesController {
-  constructor(private readonly gamesService: GamesService) {}
+  constructor(
+    private readonly gamesService: GamesService,
+    private readonly gamesGateway: GamesGateway,
+  ) {}
 
   @Post()
   create(@Req() request: AuthenticatedRequest, @Body() body: unknown) {
@@ -40,6 +45,30 @@ export class GamesController {
       request.auth.userId,
       parseInput(submitMoveInputSchema, body),
     );
+  }
+
+  @Post(':gameId/resign')
+  @HttpCode(200)
+  async resign(@Req() request: AuthenticatedRequest, @Param('gameId') gameId: string) {
+    const parsedGameId = parseInput(gameIdSchema, gameId);
+    const state = await this.gamesService.resign(parsedGameId, request.auth.userId);
+    this.gamesGateway.notifyFinished(parsedGameId, state);
+    return state;
+  }
+
+  @Post(':gameId/draw-offers')
+  async offerDraw(@Req() request: AuthenticatedRequest, @Param('gameId') gameId: string) {
+    const parsedGameId = parseInput(gameIdSchema, gameId);
+    const result = await this.gamesService.offerDraw(parsedGameId, request.auth.userId);
+    if (result.accepted) this.gamesGateway.notifyFinished(parsedGameId, result.state);
+    else
+      this.gamesGateway.notifyDrawOffered(
+        parsedGameId,
+        result.offerId,
+        request.auth.userId,
+        result.state,
+      );
+    return result;
   }
 
   @Get(':gameId/pgn')

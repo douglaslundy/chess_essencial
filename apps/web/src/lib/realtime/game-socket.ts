@@ -1,0 +1,144 @@
+import {
+  drawOfferedEventSchema,
+  gameSnapshotEventSchema,
+  moveCommittedEventSchema,
+  realtimeProblemSchema,
+  REALTIME_PROTOCOL_VERSION,
+  type GameMove,
+  type GameState,
+  type RealtimeClock,
+} from '@xadrez/contracts';
+
+import { webEnv } from '@/env';
+
+type ConnectionState = 'connecting' | 'online' | 'reconnecting' | 'offline';
+
+export interface GameSocketHandlers {
+  connection: (state: ConnectionState) => void;
+  drawOffered: (offerId: string, offeredByUserId: string, state: GameState) => void;
+  snapshot: (state: GameState, moves: GameMove[], clock: RealtimeClock) => void;
+  move: (state: GameState, move: GameMove, clock: RealtimeClock) => void;
+  finished: (state: GameState, clock: RealtimeClock) => void;
+  error: (message: string) => void;
+}
+
+export function realtimeUrl(apiUrl = webEnv.NEXT_PUBLIC_API_URL) {
+  return `${apiUrl.replace(/^http/, 'ws').replace(/\/$/, '')}/ws`;
+}
+
+export class GameSocket {
+  private socket?: WebSocket;
+  private reconnectTimer?: ReturnType<typeof setTimeout>;
+  private stopped = false;
+  private attempts = 0;
+  private version: number;
+
+  constructor(
+    private readonly gameId: string,
+    private readonly token: string,
+    lastKnownVersion: number,
+    private readonly handlers: GameSocketHandlers,
+  ) {
+    this.version = lastKnownVersion;
+  }
+
+  connect() {
+    this.stopped = false;
+    this.handlers.connection(this.attempts ? 'reconnecting' : 'connecting');
+    const socket = new WebSocket(realtimeUrl());
+    this.socket = socket;
+    socket.addEventListener('open', () => {
+      this.attempts = 0;
+      this.send('auth.authenticate', {
+        protocolVersion: REALTIME_PROTOCOL_VERSION,
+        accessToken: this.token,
+      });
+      this.send('game.join', { gameId: this.gameId, lastKnownVersion: this.version });
+      this.handlers.connection('online');
+    });
+    socket.addEventListener('message', (event) => this.receive(String(event.data)));
+    socket.addEventListener('close', () => this.retry());
+    socket.addEventListener('error', () => socket.close());
+  }
+
+  submitMove(uci: string) {
+    this.send('move.submit', {
+      gameId: this.gameId,
+      clientMoveId: crypto.randomUUID(),
+      expectedVersion: this.version,
+      uci,
+    });
+  }
+
+  stop() {
+    this.stopped = true;
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    this.socket?.close();
+    this.handlers.connection('offline');
+  }
+
+  private send(event: string, data: unknown) {
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify({ event, data }));
+    }
+  }
+
+  private receive(raw: string) {
+    let envelope: { event?: string; data?: unknown };
+    try {
+      envelope = JSON.parse(raw) as { event?: string; data?: unknown };
+    } catch {
+      this.handlers.error('O servidor enviou uma mensagem inválida.');
+      return;
+    }
+    if (envelope.event === 'game.snapshot') {
+      const parsed = gameSnapshotEventSchema.safeParse(envelope.data);
+      if (parsed.success) {
+        this.version = parsed.data.state.version;
+        this.handlers.snapshot(parsed.data.state, parsed.data.moves, parsed.data.clock);
+      }
+      return;
+    }
+    if (envelope.event === 'game.move_committed') {
+      const parsed = moveCommittedEventSchema.safeParse(envelope.data);
+      if (parsed.success) {
+        this.version = parsed.data.state.version;
+        this.handlers.move(parsed.data.state, parsed.data.move, parsed.data.clock);
+      }
+      return;
+    }
+    if (envelope.event === 'game.draw_offered') {
+      const parsed = drawOfferedEventSchema.safeParse(envelope.data);
+      if (parsed.success) {
+        this.version = parsed.data.state.version;
+        this.handlers.drawOffered(
+          parsed.data.offerId,
+          parsed.data.offeredByUserId,
+          parsed.data.state,
+        );
+      }
+      return;
+    }
+    if (envelope.event === 'game.finished') {
+      const parsed = gameSnapshotEventSchema
+        .pick({ state: true, clock: true })
+        .safeParse(envelope.data);
+      if (parsed.success) {
+        this.version = parsed.data.state.version;
+        this.handlers.finished(parsed.data.state, parsed.data.clock);
+      }
+      return;
+    }
+    if (envelope.event === 'game.error') {
+      const parsed = realtimeProblemSchema.safeParse(envelope.data);
+      this.handlers.error(parsed.success ? parsed.data.detail : 'O servidor recusou a operação.');
+    }
+  }
+
+  private retry() {
+    if (this.stopped) return;
+    this.handlers.connection('reconnecting');
+    const delay = Math.min(1000 * 2 ** this.attempts++, 15000);
+    this.reconnectTimer = setTimeout(() => this.connect(), delay);
+  }
+}

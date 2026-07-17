@@ -148,6 +148,90 @@ describeDatabase('games database integration', () => {
     expect(pgn.body).toContain('Qh4#');
   });
 
+  it('persists and accepts a draw offer from the opponent', async () => {
+    const created = await app.inject({
+      headers: auth(white),
+      method: 'POST',
+      payload: {
+        opponentUserId: black.userId,
+        timeControlCode: 'blitz-3-0',
+      },
+      url: '/v1/games',
+    });
+    expect(created.statusCode, created.body).toBe(201);
+    const drawGameId = created.json().id;
+
+    const offered = await app.inject({
+      headers: auth(white),
+      method: 'POST',
+      url: `/v1/games/${drawGameId}/draw-offers`,
+    });
+    expect(offered.statusCode, offered.body).toBe(201);
+    expect(offered.json()).toMatchObject({
+      accepted: false,
+      state: { status: 'active' },
+    });
+
+    const repeated = await app.inject({
+      headers: auth(white),
+      method: 'POST',
+      url: `/v1/games/${drawGameId}/draw-offers`,
+    });
+    expect(repeated.statusCode).toBe(201);
+    expect(repeated.json().offerId).toBe(offered.json().offerId);
+
+    const accepted = await app.inject({
+      headers: auth(black),
+      method: 'POST',
+      url: `/v1/games/${drawGameId}/draw-offers`,
+    });
+    expect(accepted.statusCode, accepted.body).toBe(201);
+    expect(accepted.json()).toMatchObject({
+      accepted: true,
+      offerId: offered.json().offerId,
+      state: {
+        result: 'draw',
+        status: 'finished',
+        termination: 'agreement',
+        version: 1,
+      },
+    });
+  });
+
+  it('finishes a game by resignation with the opponent as winner', async () => {
+    const created = await app.inject({
+      headers: auth(white),
+      method: 'POST',
+      payload: {
+        opponentUserId: black.userId,
+        timeControlCode: 'blitz-3-0',
+      },
+      url: '/v1/games',
+    });
+    expect(created.statusCode, created.body).toBe(201);
+    const resignGameId = created.json().id;
+
+    const resigned = await app.inject({
+      headers: auth(white),
+      method: 'POST',
+      url: `/v1/games/${resignGameId}/resign`,
+    });
+    expect(resigned.statusCode, resigned.body).toBe(200);
+    expect(resigned.json()).toMatchObject({
+      result: 'black_win',
+      status: 'finished',
+      termination: 'resignation',
+      version: 1,
+    });
+
+    const repeated = await app.inject({
+      headers: auth(white),
+      method: 'POST',
+      url: `/v1/games/${resignGameId}/resign`,
+    });
+    expect(repeated.statusCode).toBe(409);
+  });
+
   it('rejects moves after game end', async () => {
     const response = await move(white, '018f47f4-7b2f-4d90-8a66-a00000000006', 4, 'e2e4');
     expect(response.statusCode).toBe(409);

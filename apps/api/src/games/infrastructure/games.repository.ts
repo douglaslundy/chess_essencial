@@ -1,7 +1,13 @@
 import { createHash, randomUUID } from 'node:crypto';
 
 import { ChessJsRules, IllegalMoveError } from '@xadrez/chess-domain';
-import type { CreateGameInput, GameMove, GameState, SubmitMoveInput } from '@xadrez/contracts';
+import type {
+  CreateGameInput,
+  DrawOfferAction,
+  GameMove,
+  GameState,
+  SubmitMoveInput,
+} from '@xadrez/contracts';
 import {
   BadRequestException,
   ConflictException,
@@ -330,6 +336,201 @@ export class GamesRepository {
           generated_at = now()
       `;
       return this.getStateInTransaction(transaction, gameId, game.userId);
+    });
+  }
+
+  async resign(gameId: string, userId: string): Promise<GameState> {
+    return this.database.client.begin(async (transaction) => {
+      await transaction`SELECT pg_advisory_xact_lock(hashtextextended(${gameId}, 0))`;
+      const [player] = await transaction<PlayerRow[]>`
+        SELECT user_id AS "userId", color, rating_before AS "ratingBefore"
+        FROM game_players
+        WHERE game_id = ${gameId} AND user_id = ${userId}
+      `;
+      if (!player) throw new ForbiddenException('Usuário não participa da partida');
+
+      const [game] = await transaction<GameRow[]>`
+        SELECT
+          id, status, result, termination, initial_fen AS "initialFen",
+          current_fen AS "currentFen", side_to_move AS "sideToMove",
+          version::integer AS version, white_clock_ms::integer AS "whiteClockMs",
+          black_clock_ms::integer AS "blackClockMs",
+          active_clock_started_at AS "activeClockStartedAt",
+          started_at AS "startedAt", finished_at AS "finishedAt"
+        FROM games
+        WHERE id = ${gameId}
+      `;
+      if (!game) throw new NotFoundException('Partida não encontrada');
+      if (game.status !== 'active') throw new ConflictException('Partida não está ativa');
+
+      const [databaseClock] = await transaction<{ now: Date | string }[]>`
+        SELECT clock_timestamp() AS now
+      `;
+      if (!databaseClock) throw new InternalServerErrorException('Database clock unavailable');
+      const receivedAt = new Date(databaseClock.now);
+      const result = player.color === 'white' ? 'black_win' : 'white_win';
+      const history = await transaction<{ uci: string }[]>`
+        SELECT uci FROM game_moves WHERE game_id = ${gameId} ORDER BY ply
+      `;
+      const rules = new ChessJsRules(
+        game.initialFen,
+        history.map((move) => move.uci),
+      );
+      if (rules.fen() !== game.currentFen) {
+        throw new InternalServerErrorException('Estado persistido não pode ser reconstruído');
+      }
+
+      await transaction`
+        UPDATE games
+        SET
+          status = 'finished',
+          result = ${result}::game_result,
+          termination = 'resignation',
+          active_clock_started_at = NULL,
+          version = version + 1,
+          finished_at = ${receivedAt.toISOString()},
+          updated_at = now()
+        WHERE id = ${gameId} AND status = 'active'
+      `;
+      await transaction`
+        INSERT INTO outbox_events (aggregate_type, aggregate_id, event_type, payload)
+        VALUES (
+          'game',
+          ${gameId},
+          'game.finished',
+          ${JSON.stringify({ gameId, result, termination: 'resignation' })}::jsonb
+        )
+      `;
+      const pgn = rules.pgn();
+      const digest = createHash('sha256').update(pgn).digest('hex');
+      await transaction`
+        INSERT INTO game_pgn (game_id, pgn, checksum_sha256)
+        VALUES (${gameId}, ${pgn}, ${digest})
+        ON CONFLICT (game_id) DO UPDATE SET
+          pgn = EXCLUDED.pgn,
+          checksum_sha256 = EXCLUDED.checksum_sha256,
+          generated_at = now()
+      `;
+      return this.getStateInTransaction(transaction, gameId, userId);
+    });
+  }
+
+  async offerDraw(gameId: string, userId: string): Promise<DrawOfferAction> {
+    return this.database.client.begin(async (transaction) => {
+      await transaction`SELECT pg_advisory_xact_lock(hashtextextended(${gameId}, 0))`;
+      const [player] = await transaction<PlayerRow[]>`
+        SELECT user_id AS "userId", color, rating_before AS "ratingBefore"
+        FROM game_players
+        WHERE game_id = ${gameId} AND user_id = ${userId}
+      `;
+      if (!player) throw new ForbiddenException('Usuário não participa da partida');
+
+      const [game] = await transaction<GameRow[]>`
+        SELECT
+          id, status, result, termination, initial_fen AS "initialFen",
+          current_fen AS "currentFen", side_to_move AS "sideToMove",
+          version::integer AS version, white_clock_ms::integer AS "whiteClockMs",
+          black_clock_ms::integer AS "blackClockMs",
+          active_clock_started_at AS "activeClockStartedAt",
+          started_at AS "startedAt", finished_at AS "finishedAt"
+        FROM games
+        WHERE id = ${gameId}
+      `;
+      if (!game) throw new NotFoundException('Partida não encontrada');
+      if (game.status !== 'active') throw new ConflictException('Partida não está ativa');
+
+      const [pending] = await transaction<{ id: string; offeredByUserId: string }[]>`
+        SELECT id, offered_by_user_id AS "offeredByUserId"
+        FROM game_draw_offers
+        WHERE game_id = ${gameId} AND status = 'pending'
+      `;
+      if (pending?.offeredByUserId === userId) {
+        return {
+          accepted: false,
+          offerId: pending.id,
+          state: await this.getStateInTransaction(transaction, gameId, userId),
+        };
+      }
+
+      if (pending) {
+        const [databaseClock] = await transaction<{ now: Date | string }[]>`
+          SELECT clock_timestamp() AS now
+        `;
+        if (!databaseClock) throw new InternalServerErrorException('Database clock unavailable');
+        const receivedAt = new Date(databaseClock.now);
+        await transaction`
+          UPDATE game_draw_offers
+          SET status = 'accepted', resolved_at = ${receivedAt.toISOString()}
+          WHERE id = ${pending.id} AND status = 'pending'
+        `;
+        await transaction`
+          UPDATE games
+          SET
+            status = 'finished',
+            result = 'draw',
+            termination = 'agreement',
+            active_clock_started_at = NULL,
+            version = version + 1,
+            finished_at = ${receivedAt.toISOString()},
+            updated_at = now()
+          WHERE id = ${gameId} AND status = 'active'
+        `;
+        await transaction`
+          INSERT INTO outbox_events (aggregate_type, aggregate_id, event_type, payload)
+          VALUES (
+            'game',
+            ${gameId},
+            'game.finished',
+            ${JSON.stringify({ gameId, result: 'draw', termination: 'agreement' })}::jsonb
+          )
+        `;
+        const history = await transaction<{ uci: string }[]>`
+          SELECT uci FROM game_moves WHERE game_id = ${gameId} ORDER BY ply
+        `;
+        const rules = new ChessJsRules(
+          game.initialFen,
+          history.map((move) => move.uci),
+        );
+        if (rules.fen() !== game.currentFen) {
+          throw new InternalServerErrorException('Estado persistido não pode ser reconstruído');
+        }
+        const pgn = rules.pgn();
+        const digest = createHash('sha256').update(pgn).digest('hex');
+        await transaction`
+          INSERT INTO game_pgn (game_id, pgn, checksum_sha256)
+          VALUES (${gameId}, ${pgn}, ${digest})
+          ON CONFLICT (game_id) DO UPDATE SET
+            pgn = EXCLUDED.pgn,
+            checksum_sha256 = EXCLUDED.checksum_sha256,
+            generated_at = now()
+        `;
+        return {
+          accepted: true,
+          offerId: pending.id,
+          state: await this.getStateInTransaction(transaction, gameId, userId),
+        };
+      }
+
+      const [offer] = await transaction<{ id: string }[]>`
+        INSERT INTO game_draw_offers (game_id, offered_by_user_id)
+        VALUES (${gameId}, ${userId})
+        RETURNING id
+      `;
+      if (!offer) throw new InternalServerErrorException('Draw offer was not persisted');
+      await transaction`
+        INSERT INTO outbox_events (aggregate_type, aggregate_id, event_type, payload)
+        VALUES (
+          'game',
+          ${gameId},
+          'game.draw_offered',
+          ${JSON.stringify({ gameId, offerId: offer.id, offeredByUserId: userId })}::jsonb
+        )
+      `;
+      return {
+        accepted: false,
+        offerId: offer.id,
+        state: await this.getStateInTransaction(transaction, gameId, userId),
+      };
     });
   }
 

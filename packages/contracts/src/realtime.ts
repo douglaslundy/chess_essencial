@@ -42,6 +42,13 @@ export const moveCommittedEventSchema = z.object({
   state: gameStateSchema,
 });
 
+export const drawOfferedEventSchema = z.object({
+  clock: realtimeClockSchema,
+  offerId: z.string().uuid(),
+  offeredByUserId: z.string().uuid(),
+  state: gameStateSchema,
+});
+
 export const realtimeProblemSchema = z.object({
   detail: z.string(),
   event: z.string(),
@@ -49,6 +56,7 @@ export const realtimeProblemSchema = z.object({
 });
 
 export type AuthenticateCommand = z.infer<typeof authenticateCommandSchema>;
+export type DrawOfferedEvent = z.infer<typeof drawOfferedEventSchema>;
 export type GameJoinCommand = z.infer<typeof gameJoinCommandSchema>;
 export type RealtimeClock = z.infer<typeof realtimeClockSchema>;
 export type RealtimeMoveSubmit = z.infer<typeof realtimeMoveSubmitSchema>;

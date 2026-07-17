@@ -18,10 +18,12 @@ export {
 } from './auth.js';
 export {
   createGameInputSchema,
+  drawOfferActionSchema,
   gameMoveSchema,
   gameStateSchema,
   submitMoveInputSchema,
   type CreateGameInput,
+  type DrawOfferAction,
   type GameMove,
   type GameState,
   type SubmitMoveInput,
@@ -52,6 +54,7 @@ export {
 export {
   REALTIME_PROTOCOL_VERSION,
   authenticateCommandSchema,
+  drawOfferedEventSchema,
   gameJoinCommandSchema,
   gameSnapshotEventSchema,
   moveCommittedEventSchema,
@@ -60,6 +63,7 @@ export {
   realtimeMoveSubmitSchema,
   realtimeProblemSchema,
   type AuthenticateCommand,
+  type DrawOfferedEvent,
   type GameJoinCommand,
   type RealtimeClock,
   type RealtimeMoveSubmit,

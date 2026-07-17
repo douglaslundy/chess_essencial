@@ -284,13 +284,29 @@ paths:
   /games/{gameId}/resign:
     post:
       summary: Abandonar partida
+      operationId: resignGame
+      parameters:
+        - $ref: '#/components/parameters/GameId'
       responses:
-        '200': {description: Finalizada}
+        '200':
+          description: Partida finalizada
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GameState'}
+        '409': {$ref: '#/components/responses/Problem'}
   /games/{gameId}/draw-offers:
     post:
-      summary: Oferecer empate
+      summary: Oferecer empate ou aceitar a oferta pendente do adversário
+      operationId: offerOrAcceptDraw
+      parameters:
+        - $ref: '#/components/parameters/GameId'
       responses:
-        '201': {description: Oferta criada}
+        '201':
+          description: Oferta criada ou aceita
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DrawOfferAction'}
+        '409': {$ref: '#/components/responses/Problem'}
   /ratings/me:
     get:
       summary: Ratings Xadrez Essencial do usuário por pool
@@ -382,6 +398,18 @@ paths:
       responses:
         '201': {description: Avaliada}
 components:
+  parameters:
+    GameId:
+      name: gameId
+      in: path
+      required: true
+      schema: {type: string, format: uuid}
+  responses:
+    Problem:
+      description: Problem Details
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/ProblemDetails'}
   securitySchemes:
     bearerAuth:
       type: http
@@ -638,6 +666,13 @@ components:
           maxItems: 2
           items: {$ref: '#/components/schemas/GamePlayer'}
       additionalProperties: false
+    DrawOfferAction:
+      type: object
+      required: [accepted, offerId, state]
+      properties:
+        accepted: {type: boolean}
+        offerId: {type: string, format: uuid}
+        state: {$ref: '#/components/schemas/GameState'}
     GameMove:
       type: object
       required: [id, ply, color, clientMoveId, uci, san, from, to, promotion, fenBefore, fenAfter, flags, committedAt]
