@@ -146,7 +146,7 @@ export class LessonRuntimeRepository {
         UPDATE lesson_attempts SET current_step_key = ${completed ? null : lesson.steps[nextIndex]!.stepKey},
           status = ${completed ? 'completed' : 'started'}, score = ${score},
           state = ${JSON.stringify(nextState)}::text::jsonb, updated_at = now(),
-          completed_at = ${completed ? new Date() : null}
+          completed_at = CASE WHEN ${completed} THEN now() ELSE NULL END
         WHERE id = ${attempt.id}
         RETURNING id, user_id AS "userId", lesson_id AS "lessonId", current_step_key AS "currentStepKey",
           status, score, state, lesson_version AS "lessonVersion", content_snapshot AS "contentSnapshot",
