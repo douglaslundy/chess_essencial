@@ -39,10 +39,27 @@ paths:
                 $ref: '#/components/schemas/RegistrationResponse'
         '400': {$ref: '#/components/responses/Problem'}
         '409': {$ref: '#/components/responses/Problem'}
+        '503': {$ref: '#/components/responses/Problem'}
+  /auth/resend-verification:
+    post:
+      security: []
+      summary: Reenviar e-mail de verificação sem revelar a existência da conta
+      operationId: resendVerification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendVerificationInput'
+      responses:
+        '204':
+          description: Solicitação processada
+        '400': {$ref: '#/components/responses/Problem'}
+        '503': {$ref: '#/components/responses/Problem'}
   /auth/verify:
     post:
       security: []
-      summary: Confirmar verificação simulada de e-mail
+      summary: Confirmar e-mail pelo token enviado ao usuário
       operationId: verifyEmail
       requestBody:
         required: true
@@ -987,6 +1004,12 @@ components:
         username: {type: string, minLength: 3, maxLength: 30}
         password: {type: string, minLength: 12}
         displayName: {type: string, minLength: 2, maxLength: 80}
+    ResendVerificationInput:
+      type: object
+      required: [email]
+      properties:
+        email: {type: string, format: email, maxLength: 254}
+      additionalProperties: false
     TokenInput:
       type: object
       required: [token]
@@ -1146,7 +1169,7 @@ components:
       type: object
       required: [timeControlCode]
       properties:
-        timeControlCode: {type: string, minLength: 1, maxLength: 40}
+        timeControlCode: {type: string, enum: [bullet-1-0, bullet-2-1, blitz-3-0, blitz-3-2, rapid-10-0, rapid-15-10, classical-30-0]}
       additionalProperties: false
     QueueStatus:
       type: object
@@ -1154,7 +1177,7 @@ components:
       properties:
         status: {type: string, enum: [queued, matched]}
         pool: {$ref: '#/components/schemas/RatingPool'}
-        timeControlCode: {type: string}
+        timeControlCode: {type: string, enum: [bullet-1-0, bullet-2-1, blitz-3-0, blitz-3-2, rapid-10-0, rapid-15-10, classical-30-0]}
         minRating: {type: integer}
         maxRating: {type: integer}
         enqueuedAt: {type: string, format: date-time}
@@ -1165,7 +1188,7 @@ components:
       required: [challengedUserId, timeControlCode]
       properties:
         challengedUserId: {type: string, format: uuid}
-        timeControlCode: {type: string, minLength: 1, maxLength: 40}
+        timeControlCode: {type: string, enum: [bullet-1-0, bullet-2-1, blitz-3-0, blitz-3-2, rapid-10-0, rapid-15-10, classical-30-0]}
         challengerColor: {type: [string, 'null'], enum: [white, black, null], default: null}
       additionalProperties: false
     RespondChallengeInput:
@@ -1222,7 +1245,7 @@ components:
       required: [opponentUserId, timeControlCode]
       properties:
         opponentUserId: {type: string, format: uuid}
-        timeControlCode: {type: string, minLength: 1, maxLength: 40}
+        timeControlCode: {type: string, enum: [bullet-1-0, bullet-2-1, blitz-3-0, blitz-3-2, rapid-10-0, rapid-15-10, classical-30-0]}
         creatorColor: {type: string, enum: [white, black], default: white}
       additionalProperties: false
     SubmitMoveInput:

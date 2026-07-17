@@ -3,20 +3,23 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { api, type TimeControl } from '@/lib/api/client';
+import type { TimeControlCode } from '@xadrez/contracts';
 
-const controls: Array<{ code: TimeControl; label: string; detail: string; pool: string }> = [
-  { code: 'bullet_1_0', label: '1 + 0', detail: 'Um minuto', pool: 'Bullet' },
-  { code: 'blitz_3_0', label: '3 + 0', detail: 'Três minutos', pool: 'Blitz' },
-  { code: 'blitz_3_2', label: '3 + 2', detail: 'Incremento de 2s', pool: 'Blitz' },
-  { code: 'rapid_10_0', label: '10 + 0', detail: 'Dez minutos', pool: 'Rápida' },
-  { code: 'rapid_15_10', label: '15 + 10', detail: 'Incremento de 10s', pool: 'Rápida' },
+import { api } from '@/lib/api/client';
+
+const controls: Array<{ code: TimeControlCode; label: string; detail: string; pool: string }> = [
+  { code: 'bullet-1-0', label: '1 + 0', detail: 'Um minuto', pool: 'Bullet' },
+  { code: 'bullet-2-1', label: '2 + 1', detail: 'Incremento de 1s', pool: 'Bullet' },
+  { code: 'blitz-3-0', label: '3 + 0', detail: 'Três minutos', pool: 'Blitz' },
+  { code: 'blitz-3-2', label: '3 + 2', detail: 'Incremento de 2s', pool: 'Blitz' },
+  { code: 'rapid-10-0', label: '10 + 0', detail: 'Dez minutos', pool: 'Rápida' },
+  { code: 'rapid-15-10', label: '15 + 10', detail: 'Incremento de 10s', pool: 'Rápida' },
+  { code: 'classical-30-0', label: '30 + 0', detail: 'Trinta minutos', pool: 'Clássica' },
 ];
 
 export default function PlayPage() {
   const router = useRouter();
-  const [selected, setSelected] = useState<TimeControl>('rapid_10_0');
-  const [rated, setRated] = useState(true);
+  const [selected, setSelected] = useState<TimeControlCode>('rapid-10-0');
   const [status, setStatus] = useState<'idle' | 'searching' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
@@ -30,7 +33,7 @@ export default function PlayPage() {
     setStatus('searching');
     setMessage('Procurando um adversário compatível…');
     try {
-      const result = await api.joinQueue(selected, rated, token);
+      const result = await api.joinQueue(selected, token);
       if (result.gameId) router.push(`/app/partida/${result.gameId}`);
     } catch (error) {
       setStatus('error');
@@ -78,16 +81,8 @@ export default function PlayPage() {
           <h2>{status === 'searching' ? 'Buscando partida' : 'Pronto para jogar?'}</h2>
           <p>
             {message ||
-              'Selecione um ritmo e entre na fila. O servidor cria a partida quando encontrar um par.'}
+              'Selecione um ritmo ranqueado e entre na fila. O servidor cria a partida quando encontrar um par.'}
           </p>
-          <label className="ratedToggle">
-            <input
-              checked={rated}
-              onChange={(event) => setRated(event.target.checked)}
-              type="checkbox"
-            />
-            <span>Partida valendo rating</span>
-          </label>
           {status === 'searching' ? (
             <button className="secondaryButton" onClick={cancel} type="button">
               Sair da fila

@@ -36,7 +36,7 @@
 
 ### Achados aceitos ou adiados
 
-- Recuperação de senha e entrega real de e-mail não fazem parte do escopo atual.
+- A verificação de cadastro usa SMTP e reenvio anti-enumeração. Recuperação de senha permanece pendente para a Fase 15; relay com TLS/autenticação é gate da Fase 17 antes de produção pública.
 - Detecção avançada de fair play será posterior; nenhuma punição automática pode depender de um único sinal.
 - Métricas não devem incluir `userId`, e-mail, token, FEN ou texto submetido para evitar cardinalidade e exposição.
 

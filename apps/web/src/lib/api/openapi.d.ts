@@ -38,6 +38,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/auth/resend-verification': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Reenviar e-mail de verificação sem revelar a existência da conta */
+    post: operations['resendVerification'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/auth/verify': {
     parameters: {
       query?: never;
@@ -47,7 +64,7 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** Confirmar verificação simulada de e-mail */
+    /** Confirmar e-mail pelo token enviado ao usuário */
     post: operations['verifyEmail'];
     delete?: never;
     options?: never;
@@ -933,6 +950,10 @@ export interface components {
       password: string;
       displayName: string;
     };
+    ResendVerificationInput: {
+      /** Format: email */
+      email: string;
+    };
     TokenInput: {
       token: string;
     };
@@ -1047,13 +1068,29 @@ export interface components {
     /** @enum {string} */
     RatingPool: 'bullet' | 'blitz' | 'rapid' | 'classical' | 'correspondence';
     JoinQueueInput: {
-      timeControlCode: string;
+      /** @enum {string} */
+      timeControlCode:
+        | 'bullet-1-0'
+        | 'bullet-2-1'
+        | 'blitz-3-0'
+        | 'blitz-3-2'
+        | 'rapid-10-0'
+        | 'rapid-15-10'
+        | 'classical-30-0';
     };
     QueueStatus: {
       /** @enum {string} */
       status: 'queued' | 'matched';
       pool: components['schemas']['RatingPool'];
-      timeControlCode: string;
+      /** @enum {string} */
+      timeControlCode:
+        | 'bullet-1-0'
+        | 'bullet-2-1'
+        | 'blitz-3-0'
+        | 'blitz-3-2'
+        | 'rapid-10-0'
+        | 'rapid-15-10'
+        | 'classical-30-0';
       minRating: number;
       maxRating: number;
       /** Format: date-time */
@@ -1064,7 +1101,15 @@ export interface components {
     CreateChallengeInput: {
       /** Format: uuid */
       challengedUserId: string;
-      timeControlCode: string;
+      /** @enum {string} */
+      timeControlCode:
+        | 'bullet-1-0'
+        | 'bullet-2-1'
+        | 'blitz-3-0'
+        | 'blitz-3-2'
+        | 'rapid-10-0'
+        | 'rapid-15-10'
+        | 'classical-30-0';
       /**
        * @default null
        * @enum {string|null}
@@ -1117,7 +1162,15 @@ export interface components {
     CreateGameInput: {
       /** Format: uuid */
       opponentUserId: string;
-      timeControlCode: string;
+      /** @enum {string} */
+      timeControlCode:
+        | 'bullet-1-0'
+        | 'bullet-2-1'
+        | 'blitz-3-0'
+        | 'blitz-3-2'
+        | 'rapid-10-0'
+        | 'rapid-15-10'
+        | 'classical-30-0';
       /**
        * @default white
        * @enum {string}
@@ -1307,6 +1360,31 @@ export interface operations {
       };
       400: components['responses']['Problem'];
       409: components['responses']['Problem'];
+      503: components['responses']['Problem'];
+    };
+  };
+  resendVerification: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ResendVerificationInput'];
+      };
+    };
+    responses: {
+      /** @description Solicitação processada */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      400: components['responses']['Problem'];
+      503: components['responses']['Problem'];
     };
   };
   verifyEmail: {

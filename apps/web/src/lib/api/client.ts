@@ -16,8 +16,14 @@ import type {
   GameState,
   LessonActionInput,
   LessonAttemptView,
+  LoginInput,
+  PublicUser,
+  RegisterInput,
+  ResendVerificationInput,
   ReviewAnnotation,
   ReviewAnnotationInput,
+  TokenPair,
+  TimeControlCode,
 } from '@xadrez/contracts';
 
 import type { components } from './openapi';
@@ -25,7 +31,6 @@ import { webEnv } from '@/env';
 
 export type OpenApiGameState = components['schemas']['GameState'];
 export type OpenApiGameMove = components['schemas']['GameMove'];
-export type TimeControl = 'bullet_1_0' | 'blitz_3_0' | 'blitz_3_2' | 'rapid_10_0' | 'rapid_15_10';
 
 export class ApiProblem extends Error {
   constructor(
@@ -40,8 +45,57 @@ function authHeaders(token?: string): HeadersInit {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-async function request<T>(path: string, token: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${webEnv.NEXT_PUBLIC_API_URL}${path}`, {
+const sessionKeys = [
+  'xadrez.access_token',
+  'xadrez.refresh_token',
+  'xadrez.user_id',
+  'xadrez.username',
+] as const;
+
+export function clearStoredSession() {
+  if (typeof window === 'undefined') return;
+  for (const key of sessionKeys) window.localStorage.removeItem(key);
+  window.dispatchEvent(new Event('xadrez-auth'));
+}
+
+let refreshInFlight: Promise<string | null> | null = null;
+
+async function refreshStoredSession(): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
+  if (refreshInFlight) return refreshInFlight;
+
+  refreshInFlight = (async () => {
+    const refreshToken = window.localStorage.getItem('xadrez.refresh_token');
+    if (!refreshToken) return null;
+    try {
+      const response = await fetch(webEnv.NEXT_PUBLIC_API_URL + '/auth/refresh', {
+        method: 'POST',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+      if (!response.ok) {
+        clearStoredSession();
+        return null;
+      }
+      const tokens = (await response.json()) as TokenPair;
+      window.localStorage.setItem('xadrez.access_token', tokens.accessToken);
+      window.localStorage.setItem('xadrez.refresh_token', tokens.refreshToken);
+      return tokens.accessToken;
+    } catch {
+      clearStoredSession();
+      return null;
+    }
+  })();
+
+  try {
+    return await refreshInFlight;
+  } finally {
+    refreshInFlight = null;
+  }
+}
+
+function fetchApi(path: string, token?: string, init?: RequestInit) {
+  return fetch(webEnv.NEXT_PUBLIC_API_URL + path, {
     ...init,
     headers: {
       Accept: 'application/json',
@@ -50,6 +104,24 @@ async function request<T>(path: string, token: string, init?: RequestInit): Prom
       ...init?.headers,
     },
   });
+}
+
+async function responseWithRefresh(path: string, token?: string, init?: RequestInit) {
+  const isStoredAccessToken =
+    typeof window !== 'undefined' &&
+    Boolean(token) &&
+    token === window.localStorage.getItem('xadrez.access_token');
+  let response = await fetchApi(path, token, init);
+
+  if (response.status === 401 && isStoredAccessToken) {
+    const refreshedToken = await refreshStoredSession();
+    if (refreshedToken) response = await fetchApi(path, refreshedToken, init);
+  }
+  return response;
+}
+
+async function request<T>(path: string, token?: string, init?: RequestInit): Promise<T> {
+  const response = await responseWithRefresh(path, token, init);
   if (!response.ok) {
     const problem = (await response.json().catch(() => null)) as { detail?: string } | null;
     throw new ApiProblem(
@@ -62,13 +134,43 @@ async function request<T>(path: string, token: string, init?: RequestInit): Prom
 }
 
 async function requestText(path: string, token: string): Promise<string> {
-  const response = await fetch(`${webEnv.NEXT_PUBLIC_API_URL}${path}`, {
-    headers: { Accept: 'application/x-chess-pgn', ...authHeaders(token) },
+  const response = await responseWithRefresh(path, token, {
+    headers: { Accept: 'application/x-chess-pgn' },
   });
   if (!response.ok) throw new ApiProblem(response.status, 'Não foi possível exportar o PGN.');
   return response.text();
 }
 export const api = {
+  register: (input: RegisterInput) =>
+    request<{ user: PublicUser; verificationToken?: string }>('/auth/register', undefined, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  resendVerification: (input: ResendVerificationInput) =>
+    request<void>('/auth/resend-verification', undefined, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  verifyEmail: (token: string) =>
+    request<{ user: PublicUser }>('/auth/verify', undefined, {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    }),
+  login: (input: LoginInput) =>
+    request<{ tokens: TokenPair; user: PublicUser }>('/auth/login', undefined, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  refresh: (refreshToken: string) =>
+    request<TokenPair>('/auth/refresh', undefined, {
+      method: 'POST',
+      body: JSON.stringify({ refreshToken }),
+    }),
+  logout: (refreshToken: string) =>
+    request<void>('/auth/logout', undefined, {
+      method: 'POST',
+      body: JSON.stringify({ refreshToken }),
+    }),
   startLessonAttempt: (lessonId: string, token: string) =>
     request<LessonAttemptView>('/lesson-attempts', token, {
       method: 'POST',
@@ -125,10 +227,10 @@ export const api = {
     }),
   getGame: (gameId: string, token: string) => request<GameState>(`/games/${gameId}`, token),
   getMoves: (gameId: string, token: string) => request<GameMove[]>(`/games/${gameId}/moves`, token),
-  joinQueue: (timeControlCode: TimeControl, rated: boolean, token: string) =>
+  joinQueue: (timeControlCode: TimeControlCode, token: string) =>
     request<{ status: string; gameId?: string }>('/matchmaking/queues', token, {
       method: 'POST',
-      body: JSON.stringify({ timeControlCode, rated }),
+      body: JSON.stringify({ timeControlCode }),
     }),
   leaveQueue: (token: string) => request<void>('/matchmaking/queues', token, { method: 'DELETE' }),
   resign: (gameId: string, token: string) =>

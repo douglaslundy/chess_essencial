@@ -14,6 +14,12 @@ describe('game contracts', () => {
       timeControlCode: 'blitz-3-0',
     });
     expect(parsed.creatorColor).toBe('white');
+    expect(() =>
+      createGameInputSchema.parse({
+        opponentUserId: '018f47f4-7b2f-4d90-8a66-9abcdef01234',
+        timeControlCode: 'blitz_3_0',
+      }),
+    ).toThrow();
   });
 
   it('normalizes UCI and rejects client-supplied state', () => {

@@ -3,6 +3,7 @@ import {
   logoutInputSchema,
   refreshInputSchema,
   registerInputSchema,
+  resendVerificationInputSchema,
   verifyEmailInputSchema,
 } from '@xadrez/contracts';
 import { Body, Controller, HttpCode, HttpStatus, Post, Req } from '@nestjs/common';
@@ -18,6 +19,12 @@ export class AuthController {
   @Post('register')
   async register(@Body() body: unknown) {
     return this.authService.register(parseInput(registerInputSchema, body));
+  }
+
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async resendVerification(@Body() body: unknown) {
+    await this.authService.resendVerification(parseInput(resendVerificationInputSchema, body));
   }
 
   @Post('verify')

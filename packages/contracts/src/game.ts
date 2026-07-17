@@ -1,8 +1,10 @@
 import { z } from 'zod';
 
+import { timeControlCodeSchema } from './matchmaking.js';
+
 export const createGameInputSchema = z.object({
   opponentUserId: z.string().uuid(),
-  timeControlCode: z.string().trim().min(1).max(40),
+  timeControlCode: timeControlCodeSchema,
   creatorColor: z.enum(['white', 'black']).default('white'),
 });
 

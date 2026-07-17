@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
+import { AuthStatus } from '@/components/auth/auth-status';
+
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="appShell">
@@ -32,10 +34,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             XE
           </Link>
           <span>Plataforma de jogo</span>
-          <div className="userPill">
-            <span aria-hidden="true">DL</span>
-            <strong>Minha conta</strong>
-          </div>
+          <AuthStatus />
         </header>
         {children}
       </div>

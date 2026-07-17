@@ -14,6 +14,10 @@ export const registerInputSchema = z.object({
   displayName: z.string().trim().min(2).max(80),
 });
 
+export const resendVerificationInputSchema = z.object({
+  email: z.string().trim().email().max(254),
+});
+
 export const verifyEmailInputSchema = z.object({
   token: z.string().min(20).max(2_048),
 });
@@ -67,6 +71,7 @@ export const tokenPairSchema = z.object({
   refreshTokenExpiresIn: z.number().int().positive(),
 });
 
+export type ResendVerificationInput = z.infer<typeof resendVerificationInputSchema>;
 export type RegisterInput = z.infer<typeof registerInputSchema>;
 export type VerifyEmailInput = z.infer<typeof verifyEmailInputSchema>;
 export type LoginInput = z.infer<typeof loginInputSchema>;

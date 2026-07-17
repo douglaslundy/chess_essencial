@@ -51,6 +51,17 @@ describeDatabase('authentication database integration', () => {
     verificationToken = body.verificationToken;
   });
 
+  it('resends verification without revealing whether an account exists', async () => {
+    for (const email of ['integration@example.com', 'missing@example.com']) {
+      const response = await app.inject({
+        method: 'POST',
+        payload: { email },
+        url: '/v1/auth/resend-verification',
+      });
+      expect(response.statusCode).toBe(204);
+    }
+  });
+
   it('rejects duplicate identity with Problem Details', async () => {
     const response = await app.inject({
       method: 'POST',

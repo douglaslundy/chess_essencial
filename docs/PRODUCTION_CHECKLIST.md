@@ -1,35 +1,38 @@
 # Checklist de produção
 
-## Antes de publicar
+Atualização: 2026-07-17. Evidências detalhadas em `docs/PHASE13_AUDIT.md`.
 
-- [ ] PR da fase aprovado; `quality`, `database-integration` e `container-validation` verdes.
-- [ ] `git diff --check`, formatação, lint, typecheck, testes e build aprovados.
-- [ ] Varreduras de charset, segredos e arquivos auxiliares sem achados.
-- [ ] Migration aplicada em banco limpo, rollback mais recente e reaplicação aprovados.
-- [ ] E2E de dois usuários conclui cadastro, matchmaking, partida, rating e PGN.
-- [ ] Carga básica possui zero falhas e p95 dentro do limite.
-- [ ] Backup/restore reproduz contagens de migrations, controles de tempo e cursos.
-- [ ] Imagens `api`, `worker` e `web` executam como usuário não root.
-- [ ] OpenAPI e documentação atualizados quando houver mudança de contrato.
+## Baseline implantada em main
 
-## Infraestrutura
+- [x] `quality`, `database-integration` e `container-validation` aprovados na release anterior.
+- [x] Formatação, lint, typecheck, testes, build e varreduras aprovados antes da integração.
+- [x] Oito migrations aplicadas; banco limpo, rollback mais recente e reaplicação cobertos pela CI.
+- [x] E2E de dois usuários cobre cadastro, matchmaking, partida, rating e PGN com fixtures controladas.
+- [x] Carga básica aprovada sem falhas.
+- [x] Backup/restore reproduz contagens e checksum.
+- [x] Imagens api, worker e web executam como usuário `node`.
+- [x] Deploy key somente leitura, Compose v2, timer com linger e volumes persistentes verificados.
+- [x] `.env.vps` restrito e fora do Git; seed demo desabilitado por padrão.
+- [x] Commit implantado, migrations, healthchecks, carga, métricas protegidas e backups validados na VPS.
+- [x] Rollback ocorre por novo commit aprovado em `main`, nunca por edição direta na VPS.
 
-- [ ] Host, DNS/URLs e portas conferidos sem credenciais em arquivos versionados.
-- [ ] Deploy key somente leitura instalada e `origin/main` acessível.
-- [ ] Docker Compose v2, espaço em disco e relógio UTC verificados.
-- [ ] Timer systemd habilitado com linger para `lundy`.
-- [ ] `.env.vps` com permissão restrita e segredos aleatórios.
-- [ ] Volumes persistentes de PostgreSQL e Redis existentes.
-- [ ] Diretório de backup restrito, checksum e retenção verificados.
-- [ ] Seed demo desabilitado em produção; senha demo fornecida fora do Git em homologação.
+## Gate da Fase 13
 
-## Depois de publicar
+- [x] Contratos, API e web passam no typecheck local.
+- [x] Testes de contratos: 9 arquivos e 24 testes.
+- [x] Testes direcionados de autenticação/API: 3 arquivos e 8 testes.
+- [x] OpenAPI e cliente TypeScript regenerados.
+- [x] Cadastro/login web, SMTP, reenvio de verificação e refresh automático implementados.
+- [x] Códigos de matchmaking alinhados ao seed.
+- [x] Teste web de refresh aprovado: 1 arquivo e 2 testes com config local mínima.
+- [ ] Formatação completa, lint, testes completos e build aprovados.
+- [ ] Três jobs da CI aprovados para a branch.
+- [ ] Merge em `main` e deploy automático por `git pull --ff-only` concluídos.
+- [ ] Healthchecks, commit implantado, SMTP/Mailpit e jornada crítica revalidados na VPS.
 
-- [ ] Commit implantado coincide com `.deploy/last-successful-commit`.
-- [ ] API, worker e web estão healthy.
-- [ ] Migration esperada consta em `_xadrez_migrations`.
-- [ ] Carga HTTP automática do deploy passou.
-- [ ] Login, matchmaking de dois usuários, partida e histórico validados.
-- [ ] Métricas acessíveis somente com token e logs sem dados sensíveis.
-- [ ] Backup anterior à migration existe e o checksum é válido.
-- [ ] Plano de rollback por novo commit em `main` está disponível.
+## Pendências que bloqueiam declarações futuras
+
+- [ ] Conteúdo integral: VPS ainda possui 1 aula e 0/1.298 exercícios; gate da F14.
+- [ ] Produção pública: substituir relay SMTP simples por TLS/autenticação; gate da F17.
+- [ ] Acessibilidade formal em teclado, leitor de tela, contraste e viewports; gate da F16.
+- [ ] Restore drill operacional periódico e teste de expiração da retenção; gate da F17.
