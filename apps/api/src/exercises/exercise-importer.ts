@@ -28,6 +28,7 @@ export type NormalizedExercise = {
 export type ExerciseRejection = { index: number; reason: string; sourceNumber: number | null };
 export type NormalizedExerciseDataset = {
   exercises: NormalizedExercise[];
+  modules: { number: number; title: string }[];
   rejections: ExerciseRejection[];
   report: ExerciseImportReport;
 };
@@ -188,6 +189,19 @@ export function normalizeExerciseDataset(
 ): NormalizedExerciseDataset {
   const items = extractItems(input);
   const diagrams = extractDiagrams(input);
+  const modules =
+    isObject(input) && Array.isArray(input.modules)
+      ? input.modules
+          .filter(isObject)
+          .map((module) => ({
+            number: asPositiveInteger(module.number),
+            title: asString(module.title),
+          }))
+          .filter(
+            (module): module is { number: number; title: string } =>
+              module.number !== null && module.title !== null,
+          )
+      : [];
   const schemaVersion = isObject(input) ? asString(input.schema_version) : null;
   const exercises: NormalizedExercise[] = [];
   const rejections: ExerciseRejection[] = [];
@@ -257,6 +271,7 @@ export function normalizeExerciseDataset(
     reasons[rejection.reason] = (reasons[rejection.reason] ?? 0) + 1;
   return {
     exercises,
+    modules,
     rejections,
     report: {
       importRunId: null,
@@ -300,6 +315,7 @@ export async function persistExerciseDataset(
   dataset: NormalizedExerciseDataset,
 ): Promise<ExerciseImportReport> {
   return sql.begin(async (transaction) => {
+    await transaction`SELECT pg_advisory_xact_lock(hashtext('exercise_content_import'))`;
     const [run] = await transaction<{ id: string }[]>`
       INSERT INTO exercise_import_runs (
         source_name, total_count, imported_count, rejected_count, rejection_report
@@ -310,6 +326,18 @@ export async function persistExerciseDataset(
     `;
     if (!run) throw new Error('Exercise import run was not created');
 
+    for (const module of dataset.modules) {
+      await transaction`
+        UPDATE course_modules cm
+           SET title = ${module.title}
+          FROM courses c
+         WHERE c.id = cm.course_id
+           AND c.slug = 'xadrez-essencial'
+           AND cm.source_volume = ${module.number}
+      `;
+    }
+
+    const persistedExercises: { exercise: NormalizedExercise; id: string }[] = [];
     for (const exercise of dataset.exercises) {
       const firstPage = exercise.sourcePages.at(0) ?? null;
       const lastPage = exercise.sourcePages.at(-1) ?? null;
@@ -342,7 +370,21 @@ export async function persistExerciseDataset(
         RETURNING id
       `;
       if (!row) throw new Error(`Exercise ${exercise.sourceNumber} was not persisted`);
-      await associateExerciseWithLessons(transaction, row.id, exercise);
+      persistedExercises.push({ exercise, id: row.id });
+    }
+
+    if (persistedExercises.length > 0) {
+      const exerciseIds = transaction.array(
+        persistedExercises.map(({ id }) => id),
+        2950,
+      );
+      await transaction`
+        DELETE FROM lesson_exercises
+         WHERE exercise_id = ANY(${exerciseIds}::uuid[])
+      `;
+      for (const persisted of persistedExercises) {
+        await associateExerciseWithLessons(transaction, persisted.id, persisted.exercise);
+      }
     }
 
     return { ...dataset.report, importRunId: run.id };

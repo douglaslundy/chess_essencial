@@ -10,12 +10,17 @@ import {
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
+const strict = args.includes('--strict');
 const sourcePath = resolve(
   args.find((argument) => !argument.startsWith('--')) ??
     'Xadrez_Essencial_Exercicios_1_a_1298.json',
 );
 const raw = await readFile(sourcePath, 'utf8');
 const dataset = normalizeExerciseDataset(JSON.parse(raw) as unknown, basename(sourcePath));
+
+if (strict && dataset.report.rejected > 0) {
+  throw new Error('Strict import rejected one or more exercises');
+}
 
 if (dryRun) {
   process.stdout.write(`${JSON.stringify(dataset.report, null, 2)}\n`);

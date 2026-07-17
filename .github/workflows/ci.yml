@@ -135,9 +135,10 @@ jobs:
 
       - name: Apply clean migrations and seed
         run: |
+          pnpm content:validate
           pnpm --filter @xadrez/api db:migrate
           pnpm --filter @xadrez/api db:seed
-          pnpm --filter @xadrez/api db:import-exercises src/exercises/fixtures/import-fixture.json
+          pnpm --filter @xadrez/api db:import-exercises database/content/Xadrez_Essencial_Exercicios_1_a_1298.json --strict
           expected="$(find database/migrations -name '*.up.sql' | wc -l | tr -d ' ')"
           actual="$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc 'SELECT count(*) FROM _xadrez_migrations;')"
           test "$actual" = "$expected"
@@ -150,6 +151,7 @@ jobs:
           src/auth/auth.e2e.test.ts
           src/courses/courses.e2e.test.ts
           src/lesson-runtime/lesson-runtime.e2e.test.ts
+          src/exercises/exercise-importer.e2e.test.ts
           src/exercises/exercises.e2e.test.ts
           src/games/games.e2e.test.ts
           src/games/realtime.e2e.test.ts
