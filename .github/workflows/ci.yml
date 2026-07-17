@@ -139,7 +139,7 @@ jobs:
           pnpm --filter @xadrez/api db:seed
           pnpm --filter @xadrez/api db:import-exercises src/exercises/fixtures/import-fixture.json
           expected="$(find database/migrations -name '*.up.sql' | wc -l | tr -d ' ')"
-          actual="$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc 'SELECT count(*) FROM schema_migrations;')"
+          actual="$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc 'SELECT count(*) FROM _xadrez_migrations;')"
           test "$actual" = "$expected"
 
       - name: Run database integration and release journey

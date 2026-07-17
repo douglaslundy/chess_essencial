@@ -27,7 +27,7 @@
 
 - [ ] Commit implantado coincide com `.deploy/last-successful-commit`.
 - [ ] API, worker e web estão healthy.
-- [ ] Migration esperada consta em `schema_migrations`.
+- [ ] Migration esperada consta em `_xadrez_migrations`.
 - [ ] Carga HTTP automática do deploy passou.
 - [ ] Login, matchmaking de dois usuários, partida e histórico validados.
 - [ ] Métricas acessíveis somente com token e logs sem dados sensíveis.

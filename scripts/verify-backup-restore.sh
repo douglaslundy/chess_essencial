@@ -26,15 +26,15 @@ if [[ -n "$pg_container" ]]; then
   docker exec --interactive "$pg_container" pg_restore --username "$pg_user" \
     --dbname "$restore_database" --no-owner --no-acl <"$backup_file"
   source_counts="$(docker exec "$pg_container" psql --username "$pg_user" --dbname "$pg_database" \
-    --tuples-only --no-align --command="SELECT (SELECT count(*) FROM schema_migrations) || ':' || (SELECT count(*) FROM game_time_controls) || ':' || (SELECT count(*) FROM courses);")"
+    --tuples-only --no-align --command="SELECT (SELECT count(*) FROM _xadrez_migrations) || ':' || (SELECT count(*) FROM game_time_controls) || ':' || (SELECT count(*) FROM courses);")"
   restore_counts="$(docker exec "$pg_container" psql --username "$pg_user" --dbname "$restore_database" \
-    --tuples-only --no-align --command="SELECT (SELECT count(*) FROM schema_migrations) || ':' || (SELECT count(*) FROM game_time_controls) || ':' || (SELECT count(*) FROM courses);")"
+    --tuples-only --no-align --command="SELECT (SELECT count(*) FROM _xadrez_migrations) || ':' || (SELECT count(*) FROM game_time_controls) || ':' || (SELECT count(*) FROM courses);")"
 else
   pg_dump --format=custom --no-owner --no-acl --file="$backup_file" "$DATABASE_URL"
   createdb --maintenance-db="$DATABASE_URL" "$restore_database"
   pg_restore --no-owner --no-acl --dbname="${DATABASE_URL%/*}/$restore_database" "$backup_file"
-  source_counts="$(psql "$DATABASE_URL" --tuples-only --no-align --command="SELECT (SELECT count(*) FROM schema_migrations) || ':' || (SELECT count(*) FROM game_time_controls) || ':' || (SELECT count(*) FROM courses);")"
-  restore_counts="$(psql "${DATABASE_URL%/*}/$restore_database" --tuples-only --no-align --command="SELECT (SELECT count(*) FROM schema_migrations) || ':' || (SELECT count(*) FROM game_time_controls) || ':' || (SELECT count(*) FROM courses);")"
+  source_counts="$(psql "$DATABASE_URL" --tuples-only --no-align --command="SELECT (SELECT count(*) FROM _xadrez_migrations) || ':' || (SELECT count(*) FROM game_time_controls) || ':' || (SELECT count(*) FROM courses);")"
+  restore_counts="$(psql "${DATABASE_URL%/*}/$restore_database" --tuples-only --no-align --command="SELECT (SELECT count(*) FROM _xadrez_migrations) || ':' || (SELECT count(*) FROM game_time_controls) || ':' || (SELECT count(*) FROM courses);")"
 fi
 
 test "$source_counts" = "$restore_counts"

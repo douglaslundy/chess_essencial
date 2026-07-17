@@ -70,7 +70,7 @@ docker build --file "$ROOT_DIR/deploy/Dockerfile" --target web \
 
 schema_exists="$("${compose[@]}" exec --no-TTY postgres psql --username "$POSTGRES_USER" \
   --dbname "$POSTGRES_DB" --tuples-only --no-align \
-  --command "SELECT to_regclass('public.schema_migrations') IS NOT NULL;")"
+  --command "SELECT to_regclass('public._xadrez_migrations') IS NOT NULL;")"
 if [[ "$schema_exists" == "t" ]]; then
   bash deploy/backup-database.sh
 fi
