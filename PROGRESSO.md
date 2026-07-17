@@ -1,10 +1,10 @@
 # Progresso do Projeto
 
 ## Última atualização
-2026-07-17 — integração atômica e bootstrap da VPS em andamento
+2026-07-17 — release integrada em main; correção do retry do timer em andamento
 
 ## Tarefa em andamento
-Integrar a release cumulativa das Fases 9–12 em `main` e executar o bootstrap autorizado da VPS nova.
+Corrigir o reagendamento do timer após falha e retomar o bootstrap autorizado da VPS nova.
 
 ## Contexto necessário
 - Branch `codex/phase12-release`, empilhada sobre a Fase 11 aprovada.
@@ -15,7 +15,10 @@ Integrar a release cumulativa das Fases 9–12 em `main` e executar o bootstrap 
 - As imagens `xadrez-api`, `xadrez-worker` e `xadrez-web` foram construídas e validadas como não root.
 - `helper_files/` permanece ignorado; nenhuma credencial foi versionada.
 - Futuro host de deploy: `192.168.0.233`, usuário `lundy`; credencial existe apenas na memória privada do Codex.
-- O bootstrap único fará clone e habilitará o timer; todos os deploys serão `git pull --ff-only` por `deploy/auto-deploy.sh`.
+- A release cumulativa foi integrada em `main` no commit `5e26826`; a CI de main `29604911658` passou.
+- O primeiro ciclo do timer falhou sem alterar containers porque o gerenciador de usuário ainda não reconhecia o grupo Docker; o grupo foi corrigido.
+- O timer com `OnUnitActiveSec` não reagenda após falha precoce; a correção usa `OnCalendar` a cada minuto para garantir retry.
+- O bootstrap único usa clone e timer; todos os deploys permanecem `git pull --ff-only` por `deploy/auto-deploy.sh`.
 - Alterações aparentes nos sete arquivos de cursos/web/contratos são preexistentes e sem diff de conteúdo; não incluí-las em commits.
 
 ## Concluído
@@ -28,9 +31,9 @@ Integrar a release cumulativa das Fases 9–12 em `main` e executar o bootstrap 
 - [x] Varreduras de charset, whitespace e credenciais aprovadas.
 
 ## Pendências operacionais
-- [ ] Integrar a cadeia de PRs aprovada em `main`.
+- [x] Integrar a cadeia de PRs aprovada em `main`.
 - [ ] Executar o bootstrap único da VPS nova: deploy key, clone e timer systemd.
 - [ ] Confirmar containers, healthchecks, carga e jornada crítica após o primeiro deploy.
 
 ## Próxima tarefa
-Retargetar o PR #7 para `main`, aprovar a CI da release cumulativa, fazer um único merge e então preparar a VPS `192.168.0.233` para receber o código por clone/Git pull.
+Publicar e integrar a correção do timer, rearmar apenas o agendador no bootstrap e acompanhar o deploy automático até os healthchecks.
