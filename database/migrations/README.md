@@ -19,5 +19,7 @@ pnpm --filter @xadrez/api db:rollback
 
 `0006_lesson_runtime.down.sql` remove o ledger de ações e os campos de snapshot usados para retomar tentativas. Cursos, aulas, etapas, matrículas e tentativas preexistentes permanecem preservados.
 
+`0007_exercises_runtime.down.sql` removes import runs, lesson links and training sessions, then restores the base exercise tables. Existing exercises and attempts are preserved; only Phase 10 extension columns are removed.
+
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.

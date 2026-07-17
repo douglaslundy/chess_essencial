@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "db:migrate": "tsx src/database/migrate.ts",
+    "db:import-exercises": "tsx src/database/import-exercises.ts",
     "db:rollback": "tsx src/database/migrate.ts down",
     "db:seed": "tsx src/database/seed.ts",
     "dev": "tsx watch src/main.ts",
