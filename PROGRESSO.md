@@ -4,7 +4,7 @@
 2026-07-17 — Fase 8 aguardando gate PostgreSQL no CI
 
 ## Tarefa em andamento
-Fase 8 — cursos e CMS. Implementação e gates locais concluídos; migration limpa, e2e PostgreSQL, rollback e reaplicação aguardam o CI.
+Fase 8 — cursos e CMS. Implementação e gates locais concluídos. O primeiro CI aprovou qualidade, migration e e2e PostgreSQL, mas falhou apenas na asserção do rollback. A correção foi enviada no commit `c68b82b`; a nova execução aguarda confirmação porque a consulta externa atingiu o limite de uso do Codex.
 
 ## Contexto necessário
 - Especificação: `prompts/08_COURSE_CMS.md`.
@@ -19,8 +19,8 @@ Fase 8 — cursos e CMS. Implementação e gates locais concluídos; migration l
 - [x] Nenhuma credencial fornecida pelo usuário foi gravada.
 
 ## Pendências
-- [ ] Aprovar jobs `quality` e `database-integration` da Fase 8.
+- [ ] Confirmar a nova execução dos jobs `quality` e `database-integration` após `c68b82b`.
 - [ ] Não executar deploy.
 
 ## Próxima tarefa
-Publicar o PR da Fase 8, corrigir eventuais falhas do CI e mesclar somente após ambos os jobs passarem. Depois ler `prompts/09_LESSON_RUNTIME.md` e iniciar a Fase 9.
+Consultar os checks do PR #3 quando o acesso externo voltar. Se ambos passarem, atualizar este arquivo, mesclar sem deploy e iniciar a Fase 9. Não avançar antes dessa confirmação.
