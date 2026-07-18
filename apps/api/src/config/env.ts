@@ -12,6 +12,7 @@ export const apiEnvSchema = z.object({
   AUTH_ACCESS_TTL_SECONDS: z.coerce.number().int().min(60).max(3_600).default(900),
   AUTH_EXPOSE_VERIFICATION_TOKEN: booleanString,
   AUTH_IP_HASH_SECRET: optionalSecret,
+  AUTH_PASSWORD_RESET_TTL_SECONDS: z.coerce.number().int().min(300).max(86_400).default(1_800),
   AUTH_REFRESH_SECRET: optionalSecret,
   AUTH_REFRESH_TTL_SECONDS: z.coerce.number().int().min(3_600).max(7_776_000).default(2_592_000),
   AUTH_VERIFICATION_SECRET: optionalSecret,

@@ -168,6 +168,23 @@ export class UsersRepository {
     return session ?? null;
   }
 
+  async resetPassword(userId: string, currentPasswordHash: string, nextPasswordHash: string) {
+    return this.database.db.transaction(async (transaction) => {
+      const [updated] = await transaction
+        .update(users)
+        .set({ passwordHash: nextPasswordHash, updatedAt: new Date() })
+        .where(and(eq(users.id, userId), eq(users.passwordHash, currentPasswordHash)))
+        .returning({ id: users.id });
+      if (!updated) return false;
+
+      await transaction
+        .update(userSessions)
+        .set({ revokedAt: new Date() })
+        .where(and(eq(userSessions.userId, userId), isNull(userSessions.revokedAt)));
+      return true;
+    });
+  }
+
   async revokeSession(sessionId: string) {
     await this.database.db
       .update(userSessions)

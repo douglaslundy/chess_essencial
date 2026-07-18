@@ -87,6 +87,18 @@ class FakeUsersRepository {
     return this.session;
   }
 
+  async resetPassword(userId: string, currentPasswordHash: string, nextPasswordHash: string) {
+    if (!this.user || this.user.id !== userId || this.user.passwordHash !== currentPasswordHash) {
+      return false;
+    }
+    this.lastPasswordHash = nextPasswordHash;
+    this.user = { ...this.user, passwordHash: nextPasswordHash, updatedAt: new Date() };
+    if (this.session && !this.session.revokedAt) {
+      this.revoked = true;
+      this.session = { ...this.session, revokedAt: new Date() };
+    }
+    return true;
+  }
   async revokeSession(id: string) {
     if (this.session?.id === id && !this.session.revokedAt) {
       this.revoked = true;
@@ -100,6 +112,7 @@ const config = new ConfigService({
   AUTH_ACCESS_TTL_SECONDS: 900,
   AUTH_EXPOSE_VERIFICATION_TOKEN: true,
   AUTH_IP_HASH_SECRET: 'test-ip-hash-secret-with-at-least-32-chars',
+  AUTH_PASSWORD_RESET_TTL_SECONDS: 1_800,
   AUTH_REFRESH_SECRET: 'test-refresh-secret-with-at-least-32-characters',
   AUTH_REFRESH_TTL_SECONDS: 86_400,
   AUTH_VERIFICATION_SECRET: 'test-verification-secret-at-least-32-characters',
@@ -108,6 +121,7 @@ const config = new ConfigService({
 
 const noopEmailService = {
   send: async () => undefined,
+  sendPasswordReset: async () => undefined,
 } as unknown as VerificationEmailService;
 
 describe('AuthService security', () => {

@@ -1,9 +1,11 @@
 import { createHash, createHmac, randomUUID } from 'node:crypto';
 
 import type {
+  ForgotPasswordInput,
   LoginInput,
   PublicUser,
   RegisterInput,
+  ResetPasswordInput,
   ResendVerificationInput,
   TokenPair,
   VerifyEmailInput,
@@ -27,6 +29,7 @@ const TOKEN_ISSUER = 'xadrez-essencial-api';
 const ACCESS_AUDIENCE = 'xadrez-essencial-web';
 const REFRESH_AUDIENCE = 'xadrez-essencial-refresh';
 const VERIFY_AUDIENCE = 'xadrez-essencial-email-verification';
+const PASSWORD_RESET_AUDIENCE = 'xadrez-essencial-password-reset';
 
 export interface ClientMetadata {
   ip: string | null;
@@ -88,6 +91,37 @@ export class AuthService {
     const verificationToken = await this.signVerificationToken(user.id);
     await this.verificationEmail.send({ email: user.email, token: verificationToken });
     await this.audit?.record(user.id, 'user.verification_resent', 'user', user.id);
+  }
+
+  async forgotPassword(input: ForgotPasswordInput) {
+    const user = await this.users.findByIdentifier(input.email.toLowerCase());
+    if (!user || user.status !== 'active') return;
+
+    const token = await this.signPasswordResetToken(user);
+    await this.verificationEmail.sendPasswordReset({ email: user.email, token });
+    await this.audit?.record(user.id, 'user.password_reset_requested', 'user', user.id);
+  }
+
+  async resetPassword(input: ResetPasswordInput) {
+    const payload = await this.verifyToken(
+      input.token,
+      this.secret('AUTH_VERIFICATION_SECRET'),
+      PASSWORD_RESET_AUDIENCE,
+      'reset_password',
+    );
+    const user = await this.users.findById(this.subject(payload));
+    if (
+      !user ||
+      user.status !== 'active' ||
+      payload.passwordHash !== this.passwordFingerprint(user.passwordHash)
+    ) {
+      throw new UnauthorizedException('Invalid or already used password reset token');
+    }
+
+    const nextHash = await this.hashPassword(input.newPassword);
+    const changed = await this.users.resetPassword(user.id, user.passwordHash, nextHash);
+    if (!changed) throw new UnauthorizedException('Invalid or already used password reset token');
+    await this.audit?.record(user.id, 'user.password_reset', 'user', user.id);
   }
 
   async verifyEmail(input: VerifyEmailInput) {
@@ -272,6 +306,21 @@ export class AuthService {
       .sign(this.secret('AUTH_VERIFICATION_SECRET'));
   }
 
+  private async signPasswordResetToken(user: IdentityUser) {
+    const ttl = this.config.get<number>('AUTH_PASSWORD_RESET_TTL_SECONDS', 1_800);
+    return new SignJWT({
+      passwordHash: this.passwordFingerprint(user.passwordHash),
+      scope: 'reset_password',
+    })
+      .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+      .setSubject(user.id)
+      .setIssuer(TOKEN_ISSUER)
+      .setAudience(PASSWORD_RESET_AUDIENCE)
+      .setIssuedAt()
+      .setJti(randomUUID())
+      .setExpirationTime(`${ttl}s`)
+      .sign(this.secret('AUTH_VERIFICATION_SECRET'));
+  }
   private async verifyToken(token: string, secret: Uint8Array, audience: string, scope: string) {
     try {
       const { payload } = await jwtVerify(token, secret, {
@@ -311,6 +360,9 @@ export class AuthService {
     return new Date(Date.now() + ttl * 1_000);
   }
 
+  private passwordFingerprint(passwordHash: string) {
+    return createHash('sha256').update(passwordHash).digest('hex');
+  }
   private hashRefreshToken(token: string) {
     return createHash('sha256').update(token).digest('hex');
   }

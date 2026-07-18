@@ -112,11 +112,6 @@ idempotent, archives non-canonical lessons without deleting them and can publish
 canonical set of ten modules and 119 lessons. The release sequence imports exercises first,
 then imports lessons, rebuilds the explicit 2-12 exercise links and publishes atomically.
 
-## Remaining acceptance gate
+## Acceptance completed
 
-Phase 14 is not complete yet. Local schema validation, API typecheck and unit tests pass, but
-this Windows host has no Docker or PostgreSQL runtime. The database integration job must
-apply migration `0009`, run the lesson importer E2E tests, import the full dataset twice and
-prove publication before merge. After merge, the automatic Git-pull deploy must verify 119
-published lessons, 1,282 links, the public course endpoint and rollback/reimport behavior.
-Phase 15 remains blocked until those gates pass.
+Phase 14 passed every gate. PR #14 and main CI applied migration 0009, imported the full dataset twice, proved idempotency, restored the database backup and rolled the latest migration back and forward. The automatic Git-pull release created backup chess-20260718T030556Z.dump, published 119 lessons and 1,282 links, and passed API, worker, web, course and load health checks. Production reports 10 modules, 119 published lessons, 714 steps and one successful published lesson import run. Phase 15 is unblocked.

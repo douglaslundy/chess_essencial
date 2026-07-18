@@ -60,5 +60,14 @@ describe('sendVerificationEmail', () => {
 
     expect(transcript).toContain('RCPT TO:<jogador@example.com>');
     expect(transcript).toContain('https://xadrez.example/entrar?verify=verification-token');
+
+    transcript = '';
+    await sendVerificationEmail(
+      new URL(`smtp://127.0.0.1:${address.port}`),
+      'https://xadrez.example',
+      { email: 'jogador@example.com', token: 'reset-token' },
+      'reset',
+    );
+    expect(transcript).toContain('https://xadrez.example/entrar?reset=reset-token');
   });
 });

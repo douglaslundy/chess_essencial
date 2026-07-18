@@ -1,8 +1,10 @@
 import {
+  forgotPasswordInputSchema,
   loginInputSchema,
   logoutInputSchema,
   refreshInputSchema,
   registerInputSchema,
+  resetPasswordInputSchema,
   resendVerificationInputSchema,
   verifyEmailInputSchema,
 } from '@xadrez/contracts';
@@ -55,5 +57,16 @@ export class AuthController {
   async logout(@Body() body: unknown) {
     const input = parseInput(logoutInputSchema, body);
     await this.authService.logout(input.refreshToken);
+  }
+  @Post('password/forgot')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async forgotPassword(@Body() body: unknown) {
+    await this.authService.forgotPassword(parseInput(forgotPasswordInputSchema, body));
+  }
+
+  @Post('password/reset')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async resetPassword(@Body() body: unknown) {
+    await this.authService.resetPassword(parseInput(resetPasswordInputSchema, body));
   }
 }
