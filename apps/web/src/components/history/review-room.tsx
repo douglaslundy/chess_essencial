@@ -1,8 +1,10 @@
 'use client';
 
 import type { GameMove, GameState, ReviewAnnotation } from '@xadrez/contracts';
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
+import { reviewEligibility, type ReviewEligibility } from './review-eligibility';
 import { ChessBoard } from '@/components/game/chess-board';
 import { api } from '@/lib/api/client';
 
@@ -24,6 +26,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
   const [arrowFrom, setArrowFrom] = useState('');
   const [arrowTo, setArrowTo] = useState('');
   const [message, setMessage] = useState('Carregando revisão…');
+  const [eligibility, setEligibility] = useState<ReviewEligibility | null>(null);
 
   useEffect(() => {
     const token = window.localStorage.getItem('xadrez.access_token');
@@ -31,13 +34,20 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
       queueMicrotask(() => setMessage('Entre na sua conta para revisar a partida.'));
       return;
     }
-    Promise.all([
-      api.getGame(gameId, token),
-      api.getMoves(gameId, token),
-      api.getReviewAnnotations(gameId, token),
-    ])
-      .then(([nextState, nextMoves, nextAnnotations]) => {
+    api
+      .getGame(gameId, token)
+      .then(async (nextState) => {
+        const nextEligibility = reviewEligibility(nextState);
         setState(nextState);
+        setEligibility(nextEligibility);
+        if (!nextEligibility.available) {
+          setMessage(nextEligibility.reason);
+          return;
+        }
+        const [nextMoves, nextAnnotations] = await Promise.all([
+          api.getMoves(gameId, token),
+          api.getReviewAnnotations(gameId, token),
+        ]);
         setMoves(nextMoves);
         setAnnotations(nextAnnotations);
         setPly(nextMoves.length);
@@ -95,6 +105,19 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
     anchor.download = gameId + '.pgn';
     anchor.click();
     URL.revokeObjectURL(url);
+  }
+
+  if (eligibility && !eligibility.available) {
+    return (
+      <main className="reviewUnavailablePage">
+        <section className="reviewUnavailableCard" aria-labelledby="review-unavailable-title">
+          <span className="eyebrow">Histórico da partida</span>
+          <h1 id="review-unavailable-title">Revisão indisponível</h1>
+          <p>{eligibility.reason}</p>
+          <Link href="/app/partidas">Voltar ao histórico</Link>
+        </section>
+      </main>
+    );
   }
 
   return (

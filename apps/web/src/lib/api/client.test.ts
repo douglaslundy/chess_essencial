@@ -121,3 +121,24 @@ describe('API session refresh', () => {
     expect(localStorage.getItem('xadrez.user_id')).toBe('player-id');
   });
 });
+
+describe('API request headers', () => {
+  it('does not advertise a JSON body for an empty resignation request', async () => {
+    const localStorage = localStorageWith({ 'xadrez.access_token': 'access-token' });
+    vi.stubGlobal('window', { dispatchEvent: vi.fn(), localStorage });
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ id: 'game-id', status: 'completed' }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await api.resign('game-id', 'access-token');
+
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(init.method).toBe('POST');
+    expect(init.body).toBeUndefined();
+    expect(init.headers).not.toHaveProperty('Content-Type');
+  });
+});

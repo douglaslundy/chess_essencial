@@ -4,6 +4,7 @@ import type { GameHistoryPage } from '@xadrez/contracts';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
+import { reviewEligibility } from './review-eligibility';
 import { api } from '@/lib/api/client';
 
 export function HistoryList() {
@@ -89,33 +90,40 @@ export function HistoryList() {
         </p>
       ) : null}
       <section className="historyGrid" aria-label="Partidas">
-        {history.items.map((game) => (
-          <article className="historyCard" key={game.id}>
-            <div>
-              <strong>{game.opponent.displayName}</strong>
-              <span>
-                @{game.opponent.username} · {game.opponent.rating} XE
-              </span>
-            </div>
-            <dl>
+        {history.items.map((game) => {
+          const review = reviewEligibility(game);
+          return (
+            <article className="historyCard" key={game.id}>
               <div>
-                <dt>Ritmo</dt>
-                <dd>{game.timeControl}</dd>
+                <strong>{game.opponent.displayName}</strong>
+                <span>
+                  @{game.opponent.username} · {game.opponent.rating} XE
+                </span>
               </div>
-              <div>
-                <dt>Resultado</dt>
-                <dd>
-                  {game.result === 'draw'
-                    ? 'Empate'
-                    : game.result === game.color + '_win'
-                      ? 'Vitória'
-                      : 'Derrota'}
-                </dd>
-              </div>
-            </dl>
-            <Link href={'/app/partidas/' + game.id + '/revisao'}>Revisar partida</Link>
-          </article>
-        ))}
+              <dl>
+                <div>
+                  <dt>Ritmo</dt>
+                  <dd>{game.timeControl}</dd>
+                </div>
+                <div>
+                  <dt>Resultado</dt>
+                  <dd>
+                    {game.result === 'draw'
+                      ? 'Empate'
+                      : game.result === game.color + '_win'
+                        ? 'Vitória'
+                        : 'Derrota'}
+                  </dd>
+                </div>
+              </dl>
+              {review.available ? (
+                <Link href={'/app/partidas/' + game.id + '/revisao'}>Revisar partida</Link>
+              ) : (
+                <span className="historyReviewUnavailable">{review.shortLabel}</span>
+              )}
+            </article>
+          );
+        })}
       </section>
       <nav className="pagination" aria-label="Paginação">
         <button disabled={page <= 1} onClick={() => setPage((value) => value - 1)} type="button">

@@ -144,7 +144,9 @@ function fetchApi(path: string, token?: string, init?: RequestInit) {
     ...init,
     headers: {
       Accept: 'application/json',
-      'Content-Type': 'application/json',
+      ...(init?.body === undefined || init.body === null
+        ? {}
+        : { 'Content-Type': 'application/json' }),
       ...authHeaders(token),
       ...init?.headers,
     },
