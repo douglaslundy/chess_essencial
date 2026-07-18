@@ -171,6 +171,11 @@ describeDatabase('exercise runtime database integration', () => {
       url: '/v1/exercise-metrics',
     });
     expect(metrics.statusCode, metrics.body).toBe(200);
-    expect(metrics.json()).toMatchObject({ attempted: 3, correct: 2, hintsUsed: 1 });
+    expect(metrics.json()).toMatchObject({
+      accuracyPercent: 75,
+      attempted: 4,
+      correct: 3,
+      hintsUsed: 1,
+    });
   });
 });
