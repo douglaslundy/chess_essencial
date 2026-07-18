@@ -18,6 +18,15 @@ export function formatClock(milliseconds: number) {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
+export function formatMove(move: GameMove) {
+  const piece = move.san.match(/^[KQRBN]/)?.[0];
+  const name =
+    ({ K: 'rei', Q: 'dama', R: 'torre', B: 'bispo', N: 'cavalo' } as Record<string, string>)[
+      piece ?? ''
+    ] ?? 'peão';
+  return `${move.san} · ${name} ${move.from}→${move.to}`;
+}
+
 function displayedClock(state: GameState, color: BoardOrientation, serverOffset: number) {
   const base = color === 'white' ? state.whiteClockMs : state.blackClockMs;
   if (state.status !== 'active' || state.sideToMove !== color || !state.activeClockStartedAt)
@@ -55,6 +64,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
   >('demo');
   const [message, setMessage] = useState('Entre na sua conta para sincronizar esta partida.');
   const [orientation, setOrientation] = useState<BoardOrientation>('white');
+  const [myColor, setMyColor] = useState<BoardOrientation | null>(null);
   const [serverOffset, setServerOffset] = useState(0);
   const [, tick] = useState(0);
   const socketRef = useRef<GameSocket | undefined>(undefined);
@@ -85,7 +95,10 @@ export function GameRoom({ gameId }: { gameId: string }) {
         setMoves(nextMoves);
         const me = window.localStorage.getItem('xadrez.user_id');
         const player = nextState.players.find((item) => item.userId === me);
-        if (player) setOrientation(player.color);
+        if (player) {
+          setOrientation(player.color);
+          setMyColor(player.color);
+        }
         const socket = new GameSocket(gameId, token, nextState.version, {
           connection: setConnection,
           drawOffered: (_offerId, offeredByUserId, snapshot) => {
@@ -101,6 +114,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
               ...snapshotMoves.filter((move) => !current.some((item) => item.id === move.id)),
             ]);
             setServerOffset(Date.parse(clock.serverNow) - Date.now());
+            setMessage('Partida sincronizada. Jogue quando for a sua vez.');
           },
           move: (snapshot, move, clock) => {
             setState(snapshot);
@@ -108,6 +122,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
               current.some((item) => item.id === move.id) ? current : [...current, move],
             );
             setServerOffset(Date.parse(clock.serverNow) - Date.now());
+            setMessage('Lance confirmado pelo servidor.');
           },
           finished: (snapshot, clock) => {
             setState(snapshot);
@@ -131,7 +146,9 @@ export function GameRoom({ gameId }: { gameId: string }) {
   const lastMove = moves.at(-1);
   const white = state.players.find((player) => player.color === 'white');
   const black = state.players.find((player) => player.color === 'black');
-  const canMove = (isDemo || connection === 'online') && state.status === 'active';
+  const canMove =
+    state.status === 'active' &&
+    (isDemo || (connection === 'online' && myColor !== null && state.sideToMove === myColor));
   const groupedMoves = useMemo(() => {
     const rows: Array<{ number: number; white?: GameMove; black?: GameMove }> = [];
     for (const move of moves) {
@@ -285,7 +302,24 @@ export function GameRoom({ gameId }: { gameId: string }) {
           disabled={!canMove}
           fen={state.currentFen}
           lastMove={lastMove ? { from: lastMove.from, to: lastMove.to } : undefined}
-          onMove={(uci) => (isDemo ? playDemoMove(uci) : socketRef.current?.submitMove(uci))}
+          movableColor={
+            isDemo
+              ? state.sideToMove === 'white'
+                ? 'w'
+                : 'b'
+              : myColor === 'white'
+                ? 'w'
+                : myColor === 'black'
+                  ? 'b'
+                  : undefined
+          }
+          onMove={(uci) => {
+            if (isDemo) playDemoMove(uci);
+            else {
+              socketRef.current?.submitMove(uci);
+              setMessage('Lance enviado. Aguardando confirmação do servidor…');
+            }
+          }}
           orientation={orientation}
         />
         <div className="mobilePlayer">
@@ -315,8 +349,8 @@ export function GameRoom({ gameId }: { gameId: string }) {
             groupedMoves.map((row) => (
               <div className="moveRow" key={row.number}>
                 <span>{row.number}.</span>
-                <strong>{row.white?.san}</strong>
-                <strong>{row.black?.san}</strong>
+                <strong>{row.white ? formatMove(row.white) : ''}</strong>
+                <strong>{row.black ? formatMove(row.black) : ''}</strong>
               </div>
             ))
           ) : (
@@ -328,7 +362,15 @@ export function GameRoom({ gameId }: { gameId: string }) {
         </div>
         <div className="connectionState">
           <span className={connection === 'online' ? 'onlineDot' : 'idleDot'} />
-          {connection === 'online' ? 'Sincronizado com o servidor' : 'Modo de demonstração'}
+          {connection === 'online'
+            ? 'Sincronizado com o servidor'
+            : connection === 'demo'
+              ? 'Modo de demonstração'
+              : connection === 'connecting'
+                ? 'Autenticando e entrando na partida…'
+                : connection === 'reconnecting'
+                  ? 'Reconectando ao servidor…'
+                  : 'Partida desconectada'}
         </div>
       </aside>
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   authenticateCommandSchema,
+  authenticatedEventSchema,
   drawOfferedEventSchema,
   gameJoinCommandSchema,
   REALTIME_PROTOCOL_VERSION,
@@ -19,6 +20,13 @@ describe('realtime contracts', () => {
     expect(() =>
       authenticateCommandSchema.parse({ accessToken: 'token', protocolVersion: 2 }),
     ).toThrow();
+  });
+
+  it('validates the server authentication acknowledgement', () => {
+    expect(authenticatedEventSchema.parse({ protocolVersion: REALTIME_PROTOCOL_VERSION })).toEqual({
+      protocolVersion: 1,
+    });
+    expect(() => authenticatedEventSchema.parse({ protocolVersion: 2 })).toThrow();
   });
 
   it('validates a typed draw offer event', () => {

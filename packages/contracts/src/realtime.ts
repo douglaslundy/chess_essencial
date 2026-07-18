@@ -14,6 +14,10 @@ export const authenticateCommandSchema = z.object({
   accessToken: z.string().min(1),
 });
 
+export const authenticatedEventSchema = z.object({
+  protocolVersion: z.literal(REALTIME_PROTOCOL_VERSION),
+});
+
 export const gameJoinCommandSchema = z.object({
   gameId: z.string().uuid(),
   lastKnownVersion: z.number().int().nonnegative(),
@@ -56,6 +60,7 @@ export const realtimeProblemSchema = z.object({
 });
 
 export type AuthenticateCommand = z.infer<typeof authenticateCommandSchema>;
+export type AuthenticatedEvent = z.infer<typeof authenticatedEventSchema>;
 export type DrawOfferedEvent = z.infer<typeof drawOfferedEventSchema>;
 export type GameJoinCommand = z.infer<typeof gameJoinCommandSchema>;
 export type RealtimeClock = z.infer<typeof realtimeClockSchema>;

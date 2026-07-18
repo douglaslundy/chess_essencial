@@ -24,6 +24,7 @@ import type {
   PublicUser,
   QueueStatus,
   RatingPool,
+  RatingProfile,
   RegisterInput,
   ResendVerificationInput,
   ReviewAnnotation,
@@ -182,6 +183,7 @@ export const api = {
     request<PublicUser>('/me', token, { method: 'PATCH', body: JSON.stringify(input) }),
   getLeaderboard: (pool: RatingPool, token: string) =>
     request<LeaderboardEntry[]>(`/ratings/${pool}/leaderboard?limit=100`, token),
+  getRatings: (token: string) => request<RatingProfile[]>('/ratings/me', token),
   listCourses: () => request<CourseSummary[]>('/courses'),
   getCourse: (slug: string) => request<CourseDetail>(`/courses/${encodeURIComponent(slug)}`),
   startLessonAttempt: (lessonId: string, token: string) =>

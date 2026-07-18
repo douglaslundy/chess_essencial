@@ -78,6 +78,7 @@ export {
 export {
   REALTIME_PROTOCOL_VERSION,
   authenticateCommandSchema,
+  authenticatedEventSchema,
   drawOfferedEventSchema,
   gameJoinCommandSchema,
   gameSnapshotEventSchema,
@@ -87,6 +88,7 @@ export {
   realtimeMoveSubmitSchema,
   realtimeProblemSchema,
   type AuthenticateCommand,
+  type AuthenticatedEvent,
   type DrawOfferedEvent,
   type GameJoinCommand,
   type RealtimeClock,

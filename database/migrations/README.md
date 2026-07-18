@@ -27,5 +27,7 @@ pnpm --filter @xadrez/api db:rollback
 
 `0010_bot_games.down.sql` removes bot metadata while preserving completed and active games. The internal bot identity is removed only when it has no `game_players` references, so historical games remain reconstructable after rollback.
 
+`0011_playable_challenges.down.sql` removes only the curated playable challenge catalog introduced by the matching up migration. User attempts are removed by the exercise foreign key cascade; imported book exercises remain untouched.
+
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.
