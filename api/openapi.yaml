@@ -299,6 +299,24 @@ paths:
       responses:
         '204': {description: Removido}
         '401': {$ref: '#/components/responses/Problem'}
+  /matchmaking/bot-games:
+    post:
+      summary: Criar partida não ranqueada contra o bot autoritativo
+      operationId: createBotGame
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateBotGameInput'}
+      responses:
+        '201':
+          description: Partida contra bot criada; inclui o primeiro lance quando o bot joga de brancas
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GameState'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
   /matchmaking/challenges:
     post:
       summary: Criar desafio direto
@@ -1215,6 +1233,25 @@ components:
       required: [timeControlCode]
       properties:
         timeControlCode: {type: string, enum: [bullet-1-0, bullet-2-1, blitz-3-0, blitz-3-2, rapid-10-0, rapid-15-10, classical-30-0]}
+        fallbackToBot: {type: boolean, default: false}
+        botDifficulty: {$ref: '#/components/schemas/BotDifficulty'}
+        playerColor: {$ref: '#/components/schemas/PlayerColorPreference'}
+      additionalProperties: false
+    BotDifficulty:
+      type: string
+      enum: [matched, beginner, intermediate, advanced, expert]
+      default: matched
+    PlayerColorPreference:
+      type: string
+      enum: [white, black, random]
+      default: random
+    CreateBotGameInput:
+      type: object
+      required: [timeControlCode]
+      properties:
+        timeControlCode: {type: string, enum: [bullet-1-0, bullet-2-1, blitz-3-0, blitz-3-2, rapid-10-0, rapid-15-10, classical-30-0]}
+        botDifficulty: {$ref: '#/components/schemas/BotDifficulty'}
+        playerColor: {$ref: '#/components/schemas/PlayerColorPreference'}
       additionalProperties: false
     QueueStatus:
       type: object

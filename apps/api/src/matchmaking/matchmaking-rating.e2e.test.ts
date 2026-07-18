@@ -86,6 +86,84 @@ describeDatabase('matchmaking and rating database integration', () => {
     expect(counts).toEqual({ games: 1, queued: 0 });
   });
 
+  it('creates an unrated authoritative bot game with chosen color and difficulty', async () => {
+    const created = await app.inject({
+      headers: auth(first),
+      method: 'POST',
+      payload: {
+        botDifficulty: 'expert',
+        playerColor: 'black',
+        timeControlCode: 'blitz-3-0',
+      },
+      url: '/v1/matchmaking/bot-games',
+    });
+    expect(created.statusCode, created.body).toBe(201);
+    const game = created.json();
+    expect(game).toMatchObject({ sideToMove: 'black', status: 'active', version: 1 });
+    expect(game.players).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ color: 'black', userId: first.userId }),
+        expect.objectContaining({ color: 'white', ratingBefore: 2000 }),
+      ]),
+    );
+
+    const humanMove = await app.inject({
+      headers: auth(first),
+      method: 'POST',
+      payload: {
+        clientMoveId: '018f47f4-7b2f-4d90-8a66-b00000000001',
+        expectedVersion: 1,
+        uci: 'e7e5',
+      },
+      url: `/v1/games/${game.id}/moves`,
+    });
+    expect(humanMove.statusCode, humanMove.body).toBe(201);
+    expect(humanMove.json().state.version).toBe(3);
+
+    const [persisted] = await database.client<
+      { difficulty: string; moves: number; rated: boolean; targetRating: number }[]
+    >`
+      SELECT games.rated, game_bots.difficulty,
+        game_bots.target_rating AS "targetRating",
+        (SELECT count(*) FROM game_moves WHERE game_id = games.id)::integer AS moves
+      FROM games
+      JOIN game_bots ON game_bots.game_id = games.id
+      WHERE games.id = ${game.id}
+    `;
+    expect(persisted).toEqual({
+      difficulty: 'expert',
+      moves: 3,
+      rated: false,
+      targetRating: 2000,
+    });
+  });
+
+  it('falls back to a same-rating bot when the human queue has no opponent', async () => {
+    const response = await app.inject({
+      headers: auth(first),
+      method: 'POST',
+      payload: {
+        botDifficulty: 'matched',
+        fallbackToBot: true,
+        playerColor: 'white',
+        timeControlCode: 'rapid-10-0',
+      },
+      url: '/v1/matchmaking/queues',
+    });
+    expect(response.statusCode, response.body).toBe(201);
+    expect(response.json()).toMatchObject({ status: 'matched' });
+
+    const [bot] = await database.client<{ color: string; targetRating: number }[]>`
+      SELECT player.color, game_bots.target_rating AS "targetRating"
+      FROM game_bots
+      JOIN game_players player
+        ON player.game_id = game_bots.game_id
+       AND player.user_id = ${first.userId}
+      WHERE game_bots.game_id = ${response.json().gameId}
+    `;
+    expect(bot).toEqual({ color: 'white', targetRating: 1200 });
+  });
+
   it('finishes a matched game and writes an idempotent immutable rating ledger', async () => {
     const stateResponse = await app.inject({
       headers: auth(first),

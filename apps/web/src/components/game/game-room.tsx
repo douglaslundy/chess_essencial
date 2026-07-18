@@ -1,6 +1,7 @@
 'use client';
 
 import type { GameMove, GameState } from '@xadrez/contracts';
+import { Chess } from 'chess.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { ChessBoard, type BoardOrientation } from './chess-board';
@@ -46,6 +47,7 @@ function demoState(gameId: string): GameState {
 }
 
 export function GameRoom({ gameId }: { gameId: string }) {
+  const isDemo = gameId === 'demo';
   const [state, setState] = useState<GameState>(() => demoState(gameId));
   const [moves, setMoves] = useState<GameMove[]>([]);
   const [connection, setConnection] = useState<
@@ -63,6 +65,13 @@ export function GameRoom({ gameId }: { gameId: string }) {
   }, []);
 
   useEffect(() => {
+    if (isDemo) {
+      queueMicrotask(() => {
+        setConnection('demo');
+        setMessage('Demonstração local: mova as peças livremente no tabuleiro.');
+      });
+      return;
+    }
     const token = window.localStorage.getItem('xadrez.access_token');
     if (!token) return;
     let active = true;
@@ -117,12 +126,12 @@ export function GameRoom({ gameId }: { gameId: string }) {
       active = false;
       socketRef.current?.stop();
     };
-  }, [gameId]);
+  }, [gameId, isDemo]);
 
   const lastMove = moves.at(-1);
   const white = state.players.find((player) => player.color === 'white');
   const black = state.players.find((player) => player.color === 'black');
-  const canMove = connection === 'online' && state.status === 'active';
+  const canMove = (isDemo || connection === 'online') && state.status === 'active';
   const groupedMoves = useMemo(() => {
     const rows: Array<{ number: number; white?: GameMove; black?: GameMove }> = [];
     for (const move of moves) {
@@ -158,6 +167,52 @@ export function GameRoom({ gameId }: { gameId: string }) {
     }
   }
 
+  function playDemoMove(uci: string) {
+    try {
+      const chess = new Chess(state.currentFen);
+      const fenBefore = chess.fen();
+      const move = chess.move({
+        from: uci.slice(0, 2),
+        to: uci.slice(2, 4),
+        ...(uci[4] ? { promotion: uci[4] } : {}),
+      });
+      const nextMove: GameMove = {
+        clientMoveId: crypto.randomUUID(),
+        color: move.color === 'w' ? 'white' : 'black',
+        committedAt: new Date().toISOString(),
+        fenAfter: chess.fen(),
+        fenBefore,
+        flags: {
+          capture: move.isCapture() || move.isEnPassant(),
+          castling: move.isKingsideCastle()
+            ? 'king_side'
+            : move.isQueensideCastle()
+              ? 'queen_side'
+              : null,
+          enPassant: move.isEnPassant(),
+          promotion: move.isPromotion(),
+        },
+        from: move.from,
+        id: moves.length + 1,
+        ply: moves.length + 1,
+        promotion: move.promotion ?? null,
+        san: move.san,
+        to: move.to,
+        uci: `${move.from}${move.to}${move.promotion ?? ''}`,
+      };
+      setMoves((current) => [...current, nextMove]);
+      setState((current) => ({
+        ...current,
+        currentFen: chess.fen(),
+        sideToMove: chess.turn() === 'w' ? 'white' : 'black',
+        version: current.version + 1,
+      }));
+      setMessage('Lance aplicado somente nesta demonstração.');
+    } catch {
+      setMessage('Esse lance não é permitido nesta posição.');
+    }
+  }
+
   return (
     <main className="gamePage">
       {connection === 'reconnecting' || connection === 'offline' ? (
@@ -173,8 +228,14 @@ export function GameRoom({ gameId }: { gameId: string }) {
           XE
         </span>
         <div>
-          <strong>Partida ao vivo</strong>
-          <span>{state.status === 'active' ? 'Rápida · 10 min' : 'Partida encerrada'}</span>
+          <strong>{isDemo ? 'Tabuleiro demonstrativo' : 'Partida ao vivo'}</strong>
+          <span>
+            {isDemo
+              ? 'Modo local, sem conexão realtime'
+              : state.status === 'active'
+                ? 'Rápida · 10 min'
+                : 'Partida encerrada'}
+          </span>
         </div>
         <button
           className="iconButton"
@@ -193,14 +254,16 @@ export function GameRoom({ gameId }: { gameId: string }) {
           active={state.sideToMove === 'black'}
           clock={displayedClock(state, 'black', serverOffset)}
         />
-        <div className="gameActions">
-          <button onClick={() => action('draw')} type="button">
-            ½ Oferecer empate
-          </button>
-          <button className="dangerAction" onClick={() => action('resign')} type="button">
-            ⚑ Desistir
-          </button>
-        </div>
+        {!isDemo ? (
+          <div className="gameActions">
+            <button onClick={() => action('draw')} type="button">
+              ½ Oferecer empate
+            </button>
+            <button className="dangerAction" onClick={() => action('resign')} type="button">
+              ⚑ Desistir
+            </button>
+          </div>
+        ) : null}
         <Player
           color="white"
           rating={white?.ratingBefore ?? 0}
@@ -222,7 +285,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
           disabled={!canMove}
           fen={state.currentFen}
           lastMove={lastMove ? { from: lastMove.from, to: lastMove.to } : undefined}
-          onMove={(uci) => socketRef.current?.submitMove(uci)}
+          onMove={(uci) => (isDemo ? playDemoMove(uci) : socketRef.current?.submitMove(uci))}
           orientation={orientation}
         />
         <div className="mobilePlayer">
@@ -269,14 +332,16 @@ export function GameRoom({ gameId }: { gameId: string }) {
         </div>
       </aside>
 
-      <div className="mobileActions">
-        <button onClick={() => action('draw')} type="button">
-          ½ Empate
-        </button>
-        <button className="dangerAction" onClick={() => action('resign')} type="button">
-          ⚑ Desistir
-        </button>
-      </div>
+      {!isDemo ? (
+        <div className="mobileActions">
+          <button onClick={() => action('draw')} type="button">
+            ½ Empate
+          </button>
+          <button className="dangerAction" onClick={() => action('resign')} type="button">
+            ⚑ Desistir
+          </button>
+        </div>
+      ) : null}
     </main>
   );
 }

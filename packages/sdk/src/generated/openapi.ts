@@ -282,6 +282,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/matchmaking/bot-games': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Criar partida não ranqueada contra o bot autoritativo */
+    post: operations['createBotGame'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/matchmaking/challenges': {
     parameters: {
       query?: never;
@@ -1119,6 +1136,33 @@ export interface components {
         | 'rapid-10-0'
         | 'rapid-15-10'
         | 'classical-30-0';
+      /** @default false */
+      fallbackToBot: boolean;
+      botDifficulty?: components['schemas']['BotDifficulty'];
+      playerColor?: components['schemas']['PlayerColorPreference'];
+    };
+    /**
+     * @default matched
+     * @enum {string}
+     */
+    BotDifficulty: 'matched' | 'beginner' | 'intermediate' | 'advanced' | 'expert';
+    /**
+     * @default random
+     * @enum {string}
+     */
+    PlayerColorPreference: 'white' | 'black' | 'random';
+    CreateBotGameInput: {
+      /** @enum {string} */
+      timeControlCode:
+        | 'bullet-1-0'
+        | 'bullet-2-1'
+        | 'blitz-3-0'
+        | 'blitz-3-2'
+        | 'rapid-10-0'
+        | 'rapid-15-10'
+        | 'classical-30-0';
+      botDifficulty?: components['schemas']['BotDifficulty'];
+      playerColor?: components['schemas']['PlayerColorPreference'];
     };
     QueueStatus: {
       /** @enum {string} */
@@ -1826,6 +1870,33 @@ export interface operations {
         content?: never;
       };
       401: components['responses']['Problem'];
+    };
+  };
+  createBotGame: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateBotGameInput'];
+      };
+    };
+    responses: {
+      /** @description Partida contra bot criada; inclui o primeiro lance quando o bot joga de brancas */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GameState'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
     };
   };
   createDirectChallenge: {

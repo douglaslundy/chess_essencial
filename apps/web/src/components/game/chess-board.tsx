@@ -17,6 +17,30 @@ const pieceNames: Record<PieceSymbol, string> = {
 };
 
 export type BoardOrientation = 'white' | 'black';
+type BoardPiece = { color: Color; type: PieceSymbol };
+
+function diagramPieces(fen: string) {
+  const pieces = new Map<Square, BoardPiece>();
+  const ranks = (fen.split(' ')[0] ?? '').split('/');
+  if (ranks.length !== 8) return pieces;
+  ranks.forEach((rank, rankIndex) => {
+    let fileIndex = 0;
+    for (const value of rank) {
+      if (/\d/.test(value)) {
+        fileIndex += Number(value);
+        continue;
+      }
+      if (fileIndex > 7 || !/[prnbqk]/i.test(value)) continue;
+      const square = `${'abcdefgh'[fileIndex]}${8 - rankIndex}` as Square;
+      pieces.set(square, {
+        color: value === value.toUpperCase() ? 'w' : 'b',
+        type: value.toLowerCase() as PieceSymbol,
+      });
+      fileIndex += 1;
+    }
+  });
+  return pieces;
+}
 
 export function boardSquares(orientation: BoardOrientation): Square[] {
   const files = orientation === 'white' ? 'abcdefgh' : 'hgfedcba';
@@ -33,20 +57,28 @@ interface ChessBoardProps {
 }
 
 export function ChessBoard({ fen, orientation, disabled, lastMove, onMove }: ChessBoardProps) {
-  const chess = useMemo(() => new Chess(fen), [fen]);
+  const chess = useMemo(() => {
+    try {
+      return new Chess(fen);
+    } catch {
+      return null;
+    }
+  }, [fen]);
+  const fallbackPieces = useMemo(() => diagramPieces(fen), [fen]);
   const squares = useMemo(() => boardSquares(orientation), [orientation]);
   const [selected, setSelected] = useState<Square | null>(null);
   const [focused, setFocused] = useState<Square>(orientation === 'white' ? 'e2' : 'e7');
   const [promotion, setPromotion] = useState<{ from: Square; to: Square } | null>(null);
   const destinations = useMemo(
     () =>
-      selected
+      selected && chess
         ? new Set(chess.moves({ square: selected, verbose: true }).map((move) => move.to))
         : new Set<string>(),
     [chess, selected],
   );
 
   function attempt(from: Square, to: Square) {
+    if (!chess) return;
     const legal = chess.moves({ square: from, verbose: true }).find((move) => move.to === to);
     if (!legal) {
       setSelected(chess.get(to) ? to : null);
@@ -61,7 +93,7 @@ export function ChessBoard({ fen, orientation, disabled, lastMove, onMove }: Che
   }
 
   function activate(square: Square) {
-    if (disabled) return;
+    if (disabled || !chess) return;
     if (selected && selected !== square) attempt(selected, square);
     else setSelected(selected === square ? null : square);
   }
@@ -93,7 +125,7 @@ export function ChessBoard({ fen, orientation, disabled, lastMove, onMove }: Che
     <>
       <div className="chessBoard" role="grid" aria-label="Tabuleiro de xadrez">
         {squares.map((square, index) => {
-          const piece = chess.get(square);
+          const piece = chess?.get(square) ?? fallbackPieces.get(square);
           const isLight = (square.charCodeAt(0) + Number(square[1])) % 2 === 1;
           const isLast = lastMove?.from === square || lastMove?.to === square;
           return (
@@ -110,7 +142,7 @@ export function ChessBoard({ fen, orientation, disabled, lastMove, onMove }: Che
                 destinations.has(square) ? 'targetSquare' : '',
                 isLast ? 'lastMoveSquare' : '',
               ].join(' ')}
-              draggable={Boolean(piece) && !disabled}
+              draggable={Boolean(piece) && Boolean(chess) && !disabled}
               id={`square-${square}`}
               key={square}
               onClick={() => activate(square)}

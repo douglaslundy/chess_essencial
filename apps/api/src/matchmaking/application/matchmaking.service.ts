@@ -1,18 +1,33 @@
 import type {
+  CreateBotGameInput,
   CreateChallengeInput,
   JoinQueueInput,
   RespondChallengeInput,
 } from '@xadrez/contracts';
 import { Injectable } from '@nestjs/common';
+import { GamesService } from '../../games/application/games.service.js';
 
 import { MatchmakingRepository } from '../infrastructure/matchmaking.repository.js';
 
 @Injectable()
 export class MatchmakingService {
-  constructor(private readonly matchmaking: MatchmakingRepository) {}
+  constructor(
+    private readonly matchmaking: MatchmakingRepository,
+    private readonly games: GamesService,
+  ) {}
 
-  join(userId: string, input: JoinQueueInput) {
-    return this.matchmaking.join(userId, input);
+  async join(userId: string, input: JoinQueueInput) {
+    const result = await this.matchmaking.join(userId, input);
+    if (result.status === 'queued' && input.fallbackToBot) {
+      await this.matchmaking.leave(userId);
+      const game = await this.games.createBotGame(userId, input);
+      return { ...result, gameId: game.id, status: 'matched' as const };
+    }
+    return result;
+  }
+
+  createBotGame(userId: string, input: CreateBotGameInput) {
+    return this.games.createBotGame(userId, input);
   }
 
   leave(userId: string) {

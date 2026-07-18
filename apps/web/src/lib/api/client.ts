@@ -1,5 +1,8 @@
 import type {
+  CreateBotGameInput,
   CourseDetail,
+  CourseSummary,
+  LeaderboardEntry,
   LessonVersion,
   SaveLessonInput,
   DrawOfferAction,
@@ -16,14 +19,17 @@ import type {
   GameState,
   LessonActionInput,
   LessonAttemptView,
+  JoinQueueInput,
   LoginInput,
   PublicUser,
+  QueueStatus,
+  RatingPool,
   RegisterInput,
   ResendVerificationInput,
   ReviewAnnotation,
   ReviewAnnotationInput,
   TokenPair,
-  TimeControlCode,
+  UpdateMeInput,
 } from '@xadrez/contracts';
 
 import type { components } from './openapi';
@@ -171,6 +177,13 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ refreshToken }),
     }),
+  getMe: (token: string) => request<PublicUser>('/me', token),
+  updateMe: (input: UpdateMeInput, token: string) =>
+    request<PublicUser>('/me', token, { method: 'PATCH', body: JSON.stringify(input) }),
+  getLeaderboard: (pool: RatingPool, token: string) =>
+    request<LeaderboardEntry[]>(`/ratings/${pool}/leaderboard?limit=100`, token),
+  listCourses: () => request<CourseSummary[]>('/courses'),
+  getCourse: (slug: string) => request<CourseDetail>(`/courses/${encodeURIComponent(slug)}`),
   startLessonAttempt: (lessonId: string, token: string) =>
     request<LessonAttemptView>('/lesson-attempts', token, {
       method: 'POST',
@@ -227,10 +240,15 @@ export const api = {
     }),
   getGame: (gameId: string, token: string) => request<GameState>(`/games/${gameId}`, token),
   getMoves: (gameId: string, token: string) => request<GameMove[]>(`/games/${gameId}/moves`, token),
-  joinQueue: (timeControlCode: TimeControlCode, token: string) =>
-    request<{ status: string; gameId?: string }>('/matchmaking/queues', token, {
+  joinQueue: (input: JoinQueueInput, token: string) =>
+    request<QueueStatus>('/matchmaking/queues', token, {
       method: 'POST',
-      body: JSON.stringify({ timeControlCode }),
+      body: JSON.stringify(input),
+    }),
+  createBotGame: (input: CreateBotGameInput, token: string) =>
+    request<GameState>('/matchmaking/bot-games', token, {
+      method: 'POST',
+      body: JSON.stringify(input),
     }),
   leaveQueue: (token: string) => request<void>('/matchmaking/queues', token, { method: 'DELETE' }),
   resign: (gameId: string, token: string) =>

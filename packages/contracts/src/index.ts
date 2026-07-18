@@ -47,14 +47,20 @@ export {
 export { healthStatusSchema, type HealthStatus } from './health.js';
 
 export {
+  botDifficultySchema,
+  createBotGameInputSchema,
   createChallengeInputSchema,
   joinQueueInputSchema,
+  playerColorPreferenceSchema,
   queueStatusSchema,
   ratingPoolSchema,
   respondChallengeInputSchema,
   timeControlCodeSchema,
+  type BotDifficulty,
+  type CreateBotGameInput,
   type CreateChallengeInput,
   type JoinQueueInput,
+  type PlayerColorPreference,
   type QueueStatus,
   type RatingPool,
   type RespondChallengeInput,

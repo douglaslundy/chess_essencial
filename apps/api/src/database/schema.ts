@@ -146,6 +146,18 @@ export const gamePlayers = pgTable(
   (table) => [primaryKey({ columns: [table.gameId, table.color] })],
 );
 
+export const gameBots = pgTable('game_bots', {
+  gameId: uuid('game_id')
+    .primaryKey()
+    .references(() => games.id, { onDelete: 'cascade' }),
+  botUserId: uuid('bot_user_id')
+    .notNull()
+    .references(() => users.id),
+  difficulty: varchar('difficulty', { length: 20 }).notNull(),
+  targetRating: integer('target_rating').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const gameMoves = pgTable('game_moves', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
   gameId: uuid('game_id')
