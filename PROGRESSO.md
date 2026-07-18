@@ -2,47 +2,31 @@
 
 ## Última atualização
 
-2026-07-17 - Phase 14 source book received; PDF validation and lesson generation started.
-
+2026-07-18 - Phase 14 completed, merged and deployed with all acceptance gates passing.
 ## Tarefa em andamento
 
-Phase 14 - validate the ten-volume source PDF and generate schema-compliant lesson content.
-
+Phase 15 - build a reproducible standalone TypeScript SDK and document mobile authentication/realtime.
 ## Contexto necessário
 
-- Main commit a3e6ae8 passed CI run 29616343005 and automatic Git-pull deploy.
-- VPS target remains 192.168.0.233; code delivery remains main plus deploy/auto-deploy.sh with git pull --ff-only.
-- VPS has 1,298 exercises with 1,298 unique source numbers and external IDs; latest run rejected zero.
-- Canonical titles for all ten modules are deployed.
-- Source contains 300 diagrams; 229 exercises reference 225 distinct diagrams.
-- Pre-release backup chess-20260717T220753Z.dump passed checksum, isolated restore and two reimports at a stable 1,298 count.
-- Exercise API samples passed for modules 1, 5 and 10; exercise web route returned HTTP 200.
-- Public course endpoint returns 404 because the course remains draft with only one demo lesson.
-- Publishing requires lessons in every module and real lesson source pages.
-- The lesson schema is available separately at course/lesson.schema.json.
-- helper_files contains only the exercise JSON and the exercise schema; no book volumes or lesson-content JSONs were found.
-- Source PDF validated: 476 pages, 10 volume boundaries, extractable text and SHA-256 5c04386a52193fb6f89b969731f307ac30c3ef08dd7ea9ebfec7a400e4c9662b.
-- Canonical lesson dataset generated at database/content/Xadrez_Essencial_Aulas_1_a_119.json: 119 lessons, 714 steps, 1,282 selected exercise links and 8 engine-validated board lessons.
-- Lesson schema now requires real source pages, prerequisites, 3-10 steps and explicit interaction fields; combined exercise/lesson content validation passes.
-- Transactional/idempotent lesson importer, migration 0009, import audit, automated version attribution and exact exercise-link rebuild are implemented.
-- Local content validation, targeted formatting, lint, typecheck, all local tests and the full monorepo build pass.
-- Lesson importer database E2E is ready but cannot run locally because this Windows host has no Docker/PostgreSQL; PostgreSQL execution is required in CI.
-- CI and automatic Git-pull release now import exercises, import/publish lessons and verify the public course endpoint. Phase 15 remains blocked until database CI and VPS acceptance pass.
-- PR #14 first CI: quality and containers passed; database exposed three test-fixture assumptions (old source page and two FK-safe cleanup gaps). Production import itself completed before the E2E failures.
-- The three CI fixture assumptions were corrected locally; API lint/typecheck, focused unit tests, content validation, formatting and diff checks pass before the retry.
+- Phase 14 merged through PR #14 at commit 9d8830a; PR and main CI quality, database integration and container validation passed.
+- Automatic Git-pull deploy succeeded on VPS 192.168.0.233 with backup chess-20260718T030556Z.dump and image tag 9d8830ac2def.
+- Production course is published with 10 modules, 119 lessons, 714 steps, 1,282 exercise links and zero unpublished lessons.
+- Phase 15 acceptance: reproducible TypeScript client, non-web auth/realtime documentation, auth/reconnection contract tests and no Next.js domain dependency.
+- Standalone @xadrez/sdk now provides generated OpenAPI types, REST auth/recovery methods and bounded WebSocket reconnect with canonical-version rejoin.
+- Password recovery is single-use, anti-enumeration, SMTP-delivered and revokes every active session after reset.
+- Local targeted formatting, SDK generation check, lint, typecheck, all tests and full monorepo build pass; database CI and deployment remain pending.
+- Start from api/openapi.yaml, apps/web/package.json, apps/web/src/lib/api/openapi.d.ts, apps/api/src/auth, apps/api/src/games/presentation/games.gateway.ts, apps/api/src/games/realtime.e2e.test.ts and docs/REALTIME_PROTOCOL.md.
 - Seven course/web/contract files appear modified locally without content diff; never stage them.
-
 ## Concluído
 
 - [x] Phases 1-13 implemented, tested and deployed.
-- [x] PR #13 merged at a3e6ae8; main CI quality, database integration and containers passed.
-- [x] Automatic deploy, backup, canonical validation, strict import and health/load gates passed.
-- [x] Database counts, module titles, API samples and isolated restore/reimport drill passed.
-- [x] Exercise import is serialized, transactional, idempotent and audit-tracked.
-
+- [x] Phase 14 source PDF and canonical dataset validated: 476 pages, 119 lessons, 714 steps and 1,282 links.
+- [x] Transactional/idempotent lesson import, audit, migration 0009, rollback/restore and publication gates passed.
+- [x] PR #14 and main CI passed; automatic Git-pull deploy and external API/web/worker checks passed.
+- [x] Production database and public course counts match the canonical dataset.
 ## Próxima tarefa
 
-1. Validate the PDF checksum, page count, text extraction and boundaries for volumes 1 through 10.
-2. Generate and validate lesson-content JSON against course/lesson.schema.json with real source pages.
-3. Import, publish and test all modules before approving Phase 14.
-4. Do not start Phase 15 until the full-course acceptance gate is met.
+1. Run final diff, charset and secret scans; commit and open the Phase 15 PR.
+2. Require quality, database integration and container validation to pass.
+3. Merge only after CI, then verify the automatic Git-pull deploy and public recovery contract.
+4. Do not start Phase 16 until Phase 15 deployment acceptance passes.

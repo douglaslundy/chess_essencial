@@ -19,6 +19,7 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "load:basic": "node scripts/basic-load.mjs",
+    "sdk:generate": "pnpm --filter @xadrez/sdk generate:api",
     "db:verify-backup-restore": "bash scripts/verify-backup-restore.sh",
     "content:validate:exercises": "node scripts/validate-exercise-content.mjs",
     "content:validate:lessons": "node scripts/validate-lesson-content.mjs"

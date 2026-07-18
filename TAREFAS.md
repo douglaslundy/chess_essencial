@@ -29,7 +29,7 @@ Comparar a release implantada com todo o blueprint, identificar defeitos e risco
 - Healthchecks e commit implantado validados na VPS.
 - Matriz, checklist e `PROGRESSO.md` refletem o estado real.
 
-## Fase 14 - in progress: canonical lessons generated; database gate pending (P0)
+## Fase 14 - completed, tested and deployed (P0)
 
 ### Objetivo
 
@@ -37,11 +37,11 @@ Homologar os dez módulos e importar os 1.298 exercícios reais preservando IDs 
 
 ### Critérios de aceite
 
-- Fonte de conteúdo inventariada e validada antes da importação.
-- Importação idempotente, transacional e auditável.
-- Contagens, IDs, referências e amostras conferidos no banco e na interface.
-- Backup anterior, rollback e reimportação aprovados.
-- Testes unitários, integração e E2E do fluxo de exercícios aprovados.
+- [x] Fonte de conteúdo inventariada e validada antes da importação.
+- [x] Importação idempotente, transacional e auditável.
+- [x] Contagens, IDs, referências e amostras conferidos no banco e na interface.
+- [x] Backup anterior, rollback e reimportação aprovados.
+- [x] Testes unitários, integração e E2E do fluxo de exercícios aprovados.
 
 ## Fase 15 — Contrato e SDK preparados para mobile (P1)
 
