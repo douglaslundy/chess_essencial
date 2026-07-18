@@ -23,10 +23,25 @@ const emptyMetrics: ExerciseMetrics = {
   hintsUsed: 0,
 };
 
-export function ExerciseTrainer() {
+interface ExerciseTrainerProps {
+  description?: string;
+  initialDifficulty?: string;
+  initialQuery?: string;
+  positionType?: 'legal_position' | 'illustrative_diagram' | 'text_only';
+  title?: string;
+}
+
+export function ExerciseTrainer({
+  description = 'Busque por tema e módulo; as respostas são avaliadas e persistidas pelo servidor.',
+  initialDifficulty = '',
+  initialQuery = '',
+  positionType,
+  title = 'Exercícios de Xadrez Essencial',
+}: ExerciseTrainerProps = {}) {
   const [category, setCategory] = useState('');
+  const [difficulty, setDifficulty] = useState(initialDifficulty);
   const [moduleNumber, setModuleNumber] = useState('');
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialQuery);
   const [result, setResult] = useState(emptySearch);
   const [metrics, setMetrics] = useState(emptyMetrics);
   const [training, setTraining] = useState<ExerciseTrainingView | null>(null);
@@ -35,9 +50,11 @@ export function ExerciseTrainer() {
   const [solution, setSolution] = useState<ExerciseSolution | null>(null);
   const [message, setMessage] = useState('Carregando exercícios…');
   const [startedAt, setStartedAt] = useState(0);
-  const [boardPosition, setBoardPosition] = useState<{
+  const [boardHistory, setBoardHistory] = useState<{
     exerciseId: string;
-    fen: string;
+    index: number;
+    moves: string[];
+    positions: string[];
   } | null>(null);
 
   function token() {
@@ -48,9 +65,11 @@ export function ExerciseTrainer() {
     const value = new URLSearchParams();
     if (query.trim()) value.set('q', query.trim());
     if (category.trim()) value.set('category', category.trim());
+    if (difficulty) value.set('difficulty', difficulty);
     if (moduleNumber) value.set('module', moduleNumber);
+    if (positionType) value.set('positionType', positionType);
     return value;
-  }, [category, moduleNumber, query]);
+  }, [category, difficulty, moduleNumber, positionType, query]);
 
   const load = useCallback(async () => {
     const accessToken = token();
@@ -82,14 +101,22 @@ export function ExerciseTrainer() {
         {
           filters: {
             ...(search.get('category') ? { category: search.get('category')! } : {}),
+            ...(search.get('difficulty') ? { difficulty: search.get('difficulty')! } : {}),
             limit: 10,
             ...(parsedModule ? { module: Number(parsedModule) } : {}),
             ...(search.get('q') ? { q: search.get('q')! } : {}),
+            ...(search.get('positionType')
+              ? {
+                  positionType: search.get('positionType') as
+                    'legal_position' | 'illustrative_diagram' | 'text_only',
+                }
+              : {}),
           },
         },
         accessToken,
       );
       setTraining(value);
+      setBoardHistory(null);
       setHint('');
       setSolution(null);
       setStartedAt(Date.now());
@@ -143,6 +170,7 @@ export function ExerciseTrainer() {
         accessToken,
       );
       setTraining(attempt.training);
+      setBoardHistory(null);
       setLine('');
       setHint('');
       setSolution(null);
@@ -156,12 +184,12 @@ export function ExerciseTrainer() {
 
   const current = training?.currentExercise;
   const boardFen =
-    current && boardPosition?.exerciseId === current.id
-      ? boardPosition.fen
+    current && boardHistory?.exerciseId === current.id
+      ? boardHistory.positions[boardHistory.index]!
       : (current?.fen ?? null);
 
   function playBoardMove(uci: string) {
-    if (!boardFen || !current || current.answerFormat === 'free_text') return;
+    if (!boardFen || !current || current.positionType !== 'legal_position') return;
     try {
       const chess = new Chess(boardFen);
       const move = chess.move({
@@ -170,18 +198,37 @@ export function ExerciseTrainer() {
         ...(uci[4] ? { promotion: uci[4] } : {}),
       });
       const canonical = `${move.from}${move.to}${move.promotion ?? ''}`;
-      setBoardPosition({ exerciseId: current.id, fen: chess.fen() });
-      setLine((value) => `${value} ${canonical}`.trim());
+      const previous =
+        boardHistory?.exerciseId === current.id
+          ? boardHistory
+          : { exerciseId: current.id, index: 0, moves: [], positions: [current.fen!] };
+      const moves = [...previous.moves.slice(0, previous.index), canonical];
+      const positions = [...previous.positions.slice(0, previous.index + 1), chess.fen()];
+      setBoardHistory({ exerciseId: current.id, index: previous.index + 1, moves, positions });
+      if (current.answerFormat === 'move_sequence') setLine(moves.join(' '));
+      else setMessage('Movimento reproduzido no tabuleiro; responda à pergunta no campo de texto.');
     } catch {
       setMessage('Esse lance não é permitido nesta posição.');
     }
+  }
+
+  function moveBoardHistory(offset: -1 | 1) {
+    if (!boardHistory || !current || boardHistory.exerciseId !== current.id) return;
+    const index = Math.max(0, Math.min(boardHistory.moves.length, boardHistory.index + offset));
+    setBoardHistory({ ...boardHistory, index });
+    if (current.answerFormat === 'move_sequence') {
+      setLine(boardHistory.moves.slice(0, index).join(' '));
+    }
+    setMessage(
+      offset < 0 ? 'Lance desfeito. Você pode repeti-lo.' : 'Lance repetido no tabuleiro.',
+    );
   }
   return (
     <main className={styles.page}>
       <header className={styles.heading}>
         <span>Treino autoritativo</span>
-        <h1>Exercícios de Xadrez Essencial</h1>
-        <p>Busque por tema e módulo; as respostas são avaliadas e persistidas pelo servidor.</p>
+        <h1>{title}</h1>
+        <p>{description}</p>
       </header>
 
       <section className={styles.metrics} aria-label="Métricas de exercícios">
@@ -211,6 +258,16 @@ export function ExerciseTrainer() {
         <label>
           Categoria
           <input onChange={(event) => setCategory(event.target.value)} value={category} />
+        </label>
+        <label>
+          Dificuldade
+          <select onChange={(event) => setDifficulty(event.target.value)} value={difficulty}>
+            <option value="">Todas</option>
+            <option value="beginner">Iniciante · até 999</option>
+            <option value="intermediate">Intermediário · 1000–1399</option>
+            <option value="advanced">Avançado · 1400–1799</option>
+            <option value="expert">Especialista · 1800+</option>
+          </select>
         </label>
         <label>
           Módulo
@@ -251,11 +308,32 @@ export function ExerciseTrainer() {
           {boardFen ? (
             <div className={styles.boardArea}>
               <ChessBoard
-                disabled={current.answerFormat === 'free_text'}
+                disabled={current.positionType !== 'legal_position'}
                 fen={boardFen}
                 onMove={playBoardMove}
                 orientation="white"
               />
+              {current.positionType === 'legal_position' ? (
+                <div
+                  className={styles.boardControls}
+                  aria-label="Controles do histórico do exercício"
+                >
+                  <button
+                    disabled={!boardHistory || boardHistory.index === 0}
+                    onClick={() => moveBoardHistory(-1)}
+                    type="button"
+                  >
+                    ← Voltar lance
+                  </button>
+                  <button
+                    disabled={!boardHistory || boardHistory.index >= boardHistory.moves.length}
+                    onClick={() => moveBoardHistory(1)}
+                    type="button"
+                  >
+                    ↻ Repetir lance
+                  </button>
+                </div>
+              ) : null}
               <details>
                 <summary>Ver posição FEN</summary>
                 <code className={styles.fen}>{current.fen}</code>

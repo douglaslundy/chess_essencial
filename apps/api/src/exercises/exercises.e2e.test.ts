@@ -90,6 +90,29 @@ describeDatabase('exercise runtime database integration', () => {
     expect(response.body).not.toContain('hints');
   });
 
+  it('serves and authoritatively scores the curated mate-in-one challenge', async () => {
+    const search = await app.inject({
+      headers: auth(),
+      method: 'GET',
+      url: '/v1/exercises?difficulty=beginner&positionType=legal_position&q=mate_em_um',
+    });
+    expect(search.statusCode, search.body).toBe(200);
+    expect(search.json().total).toBeGreaterThanOrEqual(1);
+    const challenge = search
+      .json()
+      .items.find((item: { title?: string }) => item.title === 'Mate em um: corredor');
+    expect(challenge).toBeTruthy();
+
+    const attempt = await app.inject({
+      headers: auth(),
+      method: 'POST',
+      payload: { durationMs: 900, submittedLine: ['e1e8'] },
+      url: `/v1/exercises/${challenge.id}/attempts`,
+    });
+    expect(attempt.statusCode, attempt.body).toBe(201);
+    expect(attempt.json()).toMatchObject({ correct: true, score: 100 });
+  });
+
   it('runs training, reveals one hint and scores the server-validated answer', async () => {
     const started = await app.inject({
       headers: auth(),

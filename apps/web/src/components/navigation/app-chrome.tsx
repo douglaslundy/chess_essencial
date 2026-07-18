@@ -11,6 +11,7 @@ const navigation = [
   { href: '/app/jogar', label: 'Jogar' },
   { href: '/app/partidas', label: 'Partidas' },
   { href: '/app/exercicios', label: 'Exercícios' },
+  { href: '/app/desafios', label: 'Desafios' },
   { href: '/app/ranking', label: 'Ranking' },
   { href: '/app/cursos', label: 'Cursos e aulas' },
   { href: '/app/meus-dados', label: 'Meus dados' },

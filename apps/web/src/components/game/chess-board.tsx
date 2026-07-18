@@ -4,7 +4,7 @@ import { Chess, type Color, type PieceSymbol, type Square } from 'chess.js';
 import { useMemo, useState, type DragEvent, type KeyboardEvent } from 'react';
 
 const glyphs: Record<Color, Record<PieceSymbol, string>> = {
-  w: { k: '♔', q: '♕', r: '♖', b: '♗', n: '♘', p: '♙' },
+  w: { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' },
   b: { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' },
 };
 const pieceNames: Record<PieceSymbol, string> = {
@@ -53,10 +53,18 @@ interface ChessBoardProps {
   orientation: BoardOrientation;
   disabled?: boolean;
   lastMove?: { from: string; to: string } | undefined;
+  movableColor?: Color | undefined;
   onMove: (uci: string) => void;
 }
 
-export function ChessBoard({ fen, orientation, disabled, lastMove, onMove }: ChessBoardProps) {
+export function ChessBoard({
+  fen,
+  orientation,
+  disabled,
+  lastMove,
+  movableColor,
+  onMove,
+}: ChessBoardProps) {
   const chess = useMemo(() => {
     try {
       return new Chess(fen);
@@ -95,7 +103,14 @@ export function ChessBoard({ fen, orientation, disabled, lastMove, onMove }: Che
   function activate(square: Square) {
     if (disabled || !chess) return;
     if (selected && selected !== square) attempt(selected, square);
-    else setSelected(selected === square ? null : square);
+    else {
+      const piece = chess.get(square);
+      setSelected(
+        selected === square || !piece || (movableColor && piece.color !== movableColor)
+          ? null
+          : square,
+      );
+    }
   }
 
   function drop(event: DragEvent<HTMLButtonElement>, to: Square) {
@@ -123,55 +138,74 @@ export function ChessBoard({ fen, orientation, disabled, lastMove, onMove }: Che
 
   return (
     <>
-      <div className="chessBoard" role="grid" aria-label="Tabuleiro de xadrez">
-        {squares.map((square, index) => {
-          const piece = chess?.get(square) ?? fallbackPieces.get(square);
-          const isLight = (square.charCodeAt(0) + Number(square[1])) % 2 === 1;
-          const isLast = lastMove?.from === square || lastMove?.to === square;
-          return (
-            <button
-              aria-label={
-                piece
-                  ? `${square}, ${piece.color === 'w' ? 'branco' : 'preto'} ${pieceNames[piece.type]}`
-                  : `${square}, vazia`
-              }
-              className={[
-                'boardSquare',
-                isLight ? 'lightSquare' : 'darkSquare',
-                selected === square ? 'selectedSquare' : '',
-                destinations.has(square) ? 'targetSquare' : '',
-                isLast ? 'lastMoveSquare' : '',
-              ].join(' ')}
-              draggable={Boolean(piece) && Boolean(chess) && !disabled}
-              id={`square-${square}`}
-              key={square}
-              onClick={() => activate(square)}
-              onDragOver={(event) => event.preventDefault()}
-              onDragStart={(event) => event.dataTransfer.setData('text/plain', square)}
-              onDrop={(event) => drop(event, square)}
-              onFocus={() => setFocused(square)}
-              onKeyDown={(event) => navigate(event, index)}
-              role="gridcell"
-              tabIndex={focused === square ? 0 : -1}
-              type="button"
-            >
-              {piece ? (
-                <span
-                  className={piece.color === 'w' ? 'whitePiece' : 'blackPiece'}
-                  aria-hidden="true"
-                >
-                  {glyphs[piece.color][piece.type]}
-                </span>
-              ) : null}
-              {destinations.has(square) ? <span className="moveTarget" aria-hidden="true" /> : null}
-              {(index % 8 === 0 || index >= 56) && (
-                <span className="coordinate" aria-hidden="true">
-                  {index % 8 === 0 ? square[1] : square[0]}
-                </span>
-              )}
-            </button>
-          );
-        })}
+      <div className="boardWithCoordinates">
+        <div className="boardFiles boardFilesTop" aria-hidden="true">
+          {[...(orientation === 'white' ? 'abcdefgh' : 'hgfedcba')].map((file) => (
+            <span key={file}>{file}</span>
+          ))}
+        </div>
+        <div className="boardRanks boardRanksLeft" aria-hidden="true">
+          {[...(orientation === 'white' ? '87654321' : '12345678')].map((rank) => (
+            <span key={rank}>{rank}</span>
+          ))}
+        </div>
+        <div className="chessBoard" role="grid" aria-label="Tabuleiro de xadrez">
+          {squares.map((square, index) => {
+            const piece = chess?.get(square) ?? fallbackPieces.get(square);
+            const isLight = (square.charCodeAt(0) + Number(square[1])) % 2 === 1;
+            const isLast = lastMove?.from === square || lastMove?.to === square;
+            return (
+              <button
+                aria-label={
+                  piece
+                    ? `${square}, ${piece.color === 'w' ? 'branco' : 'preto'} ${pieceNames[piece.type]}`
+                    : `${square}, vazia`
+                }
+                className={[
+                  'boardSquare',
+                  isLight ? 'lightSquare' : 'darkSquare',
+                  selected === square ? 'selectedSquare' : '',
+                  destinations.has(square) ? 'targetSquare' : '',
+                  isLast ? 'lastMoveSquare' : '',
+                ].join(' ')}
+                draggable={Boolean(piece) && Boolean(chess) && !disabled}
+                id={`square-${square}`}
+                key={square}
+                onClick={() => activate(square)}
+                onDragOver={(event) => event.preventDefault()}
+                onDragStart={(event) => event.dataTransfer.setData('text/plain', square)}
+                onDrop={(event) => drop(event, square)}
+                onFocus={() => setFocused(square)}
+                onKeyDown={(event) => navigate(event, index)}
+                role="gridcell"
+                tabIndex={focused === square ? 0 : -1}
+                type="button"
+              >
+                {piece ? (
+                  <span
+                    className={piece.color === 'w' ? 'whitePiece' : 'blackPiece'}
+                    aria-hidden="true"
+                  >
+                    {glyphs[piece.color][piece.type]}
+                  </span>
+                ) : null}
+                {destinations.has(square) ? (
+                  <span className="moveTarget" aria-hidden="true" />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+        <div className="boardRanks boardRanksRight" aria-hidden="true">
+          {[...(orientation === 'white' ? '87654321' : '12345678')].map((rank) => (
+            <span key={rank}>{rank}</span>
+          ))}
+        </div>
+        <div className="boardFiles boardFilesBottom" aria-hidden="true">
+          {[...(orientation === 'white' ? 'abcdefgh' : 'hgfedcba')].map((file) => (
+            <span key={file}>{file}</span>
+          ))}
+        </div>
       </div>
       {promotion ? (
         <div className="dialogBackdrop" role="presentation">

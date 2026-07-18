@@ -6,12 +6,32 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api/client';
 import styles from '@/components/portal/portal-pages.module.css';
 
-const pools: Array<{ label: string; value: RatingPool }> = [
-  { label: 'Bullet', value: 'bullet' },
-  { label: 'Blitz', value: 'blitz' },
-  { label: 'Rápida', value: 'rapid' },
-  { label: 'Clássica', value: 'classical' },
-  { label: 'Correspondência', value: 'correspondence' },
+const pools: Array<{ description: string; label: string; value: RatingPool }> = [
+  {
+    description: 'Partidas ultrarrápidas, normalmente de 1 a 2 minutos.',
+    label: 'Bullet',
+    value: 'bullet',
+  },
+  {
+    description: 'Partidas muito rápidas, normalmente de 3 a 5 minutos.',
+    label: 'Blitz',
+    value: 'blitz',
+  },
+  {
+    description: 'Partidas de 10 a 15 minutos, com mais tempo para pensar.',
+    label: 'Rápida',
+    value: 'rapid',
+  },
+  {
+    description: 'Partidas longas, a partir de 30 minutos.',
+    label: 'Clássica',
+    value: 'classical',
+  },
+  {
+    description: 'Partidas assíncronas, com bastante tempo para cada lance.',
+    label: 'Correspondência',
+    value: 'correspondence',
+  },
 ];
 
 export default function RankingPage() {
@@ -58,6 +78,9 @@ export default function RankingPage() {
           ))}
         </select>
       </label>
+      <small className={styles.helpText}>
+        {pools.find((item) => item.value === pool)!.description}
+      </small>
       <p className={styles.status} role="status">
         {message}
       </p>

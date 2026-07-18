@@ -1,4 +1,5 @@
 import {
+  authenticatedEventSchema,
   drawOfferedEventSchema,
   gameSnapshotEventSchema,
   moveCommittedEventSchema,
@@ -53,8 +54,6 @@ export class GameSocket {
         protocolVersion: REALTIME_PROTOCOL_VERSION,
         accessToken: this.token,
       });
-      this.send('game.join', { gameId: this.gameId, lastKnownVersion: this.version });
-      this.handlers.connection('online');
     });
     socket.addEventListener('message', (event) => this.receive(String(event.data)));
     socket.addEventListener('close', () => this.retry());
@@ -91,10 +90,21 @@ export class GameSocket {
       this.handlers.error('O servidor enviou uma mensagem inválida.');
       return;
     }
+    if (envelope.event === 'auth.authenticated') {
+      const parsed = authenticatedEventSchema.safeParse(envelope.data);
+      if (!parsed.success) {
+        this.handlers.error('O servidor não confirmou a autenticação em tempo real.');
+        this.socket?.close();
+        return;
+      }
+      this.send('game.join', { gameId: this.gameId, lastKnownVersion: this.version });
+      return;
+    }
     if (envelope.event === 'game.snapshot') {
       const parsed = gameSnapshotEventSchema.safeParse(envelope.data);
       if (parsed.success) {
         this.version = parsed.data.state.version;
+        this.handlers.connection('online');
         this.handlers.snapshot(parsed.data.state, parsed.data.moves, parsed.data.clock);
       }
       return;

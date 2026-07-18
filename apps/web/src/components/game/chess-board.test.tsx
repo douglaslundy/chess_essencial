@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
+import type { GameMove } from '@xadrez/contracts';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { createElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { boardSquares, ChessBoard } from './chess-board';
-import { formatClock } from './game-room';
+import { formatClock, formatMove } from './game-room';
 
 describe('ChessBoard', () => {
   it('keeps the expected orientation on desktop and mobile layouts', () => {
@@ -24,6 +25,33 @@ describe('ChessBoard', () => {
     fireEvent.click(screen.getByRole('gridcell', { name: /e2, branco peão/i }));
     fireEvent.click(screen.getByRole('gridcell', { name: /e4, vazia/i }));
     expect(onMove).toHaveBeenCalledWith('e2e4');
+  });
+
+  it('renders visible coordinate gutters and uses the same glyph design for both colors', () => {
+    const view = render(
+      createElement(ChessBoard, {
+        fen: '8/8/8/3p4/4P3/8/8/8 w - - 0 1',
+        onMove: vi.fn(),
+        orientation: 'white',
+      }),
+    );
+    expect(view.container.querySelectorAll('.boardFiles').length).toBe(2);
+    expect(view.container.querySelectorAll('.boardRanks').length).toBe(2);
+    expect(view.container.querySelector('.whitePiece')?.textContent).toBe('♟');
+    expect(view.container.querySelector('.blackPiece')?.textContent).toBe('♟');
+  });
+
+  it('does not select a piece outside the allowed player color', () => {
+    const view = render(
+      createElement(ChessBoard, {
+        fen: '8/8/8/3p4/4P3/8/8/8 w - - 0 1',
+        movableColor: 'w',
+        onMove: vi.fn(),
+        orientation: 'white',
+      }),
+    );
+    fireEvent.click(view.container.querySelector('[aria-label="d5, preto peão"]')!);
+    expect(view.container.querySelector('.selectedSquare')).toBeNull();
   });
 
   it('renders an illustrative diagram even when the FEN is not a legal game state', () => {
@@ -49,5 +77,9 @@ describe('ChessBoard', () => {
   it('formats clocks without displaying negative time', () => {
     expect(formatClock(61000)).toBe('1:01');
     expect(formatClock(-10)).toBe('0:00');
+  });
+
+  it('makes SAN notation explicit for beginners', () => {
+    expect(formatMove({ san: 'Nh3', from: 'f2', to: 'h3' } as GameMove)).toBe('Nh3 · cavalo f2→h3');
   });
 });
