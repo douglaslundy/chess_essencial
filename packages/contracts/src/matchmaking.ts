@@ -12,7 +12,25 @@ export const timeControlCodeSchema = z.enum([
   'classical-30-0',
 ]);
 
+export const botDifficultySchema = z.enum([
+  'matched',
+  'beginner',
+  'intermediate',
+  'advanced',
+  'expert',
+]);
+export const playerColorPreferenceSchema = z.enum(['white', 'black', 'random']);
+
+export const createBotGameInputSchema = z.object({
+  botDifficulty: botDifficultySchema.default('matched'),
+  playerColor: playerColorPreferenceSchema.default('random'),
+  timeControlCode: timeControlCodeSchema,
+});
+
 export const joinQueueInputSchema = z.object({
+  botDifficulty: botDifficultySchema.default('matched'),
+  fallbackToBot: z.boolean().default(false),
+  playerColor: playerColorPreferenceSchema.default('random'),
   timeControlCode: timeControlCodeSchema,
 });
 
@@ -36,7 +54,10 @@ export const queueStatusSchema = z.object({
   gameId: z.string().uuid().optional(),
 });
 
+export type BotDifficulty = z.infer<typeof botDifficultySchema>;
+export type CreateBotGameInput = z.infer<typeof createBotGameInputSchema>;
 export type TimeControlCode = z.infer<typeof timeControlCodeSchema>;
+export type PlayerColorPreference = z.infer<typeof playerColorPreferenceSchema>;
 export type CreateChallengeInput = z.infer<typeof createChallengeInputSchema>;
 export type JoinQueueInput = z.infer<typeof joinQueueInputSchema>;
 export type QueueStatus = z.infer<typeof queueStatusSchema>;

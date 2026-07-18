@@ -1,4 +1,8 @@
+import { randomUUID } from 'node:crypto';
+
+import { selectBotMove } from '@xadrez/chess-domain';
 import type {
+  CreateBotGameInput,
   CreateGameInput,
   GameHistoryQuery,
   ReviewAnnotationInput,
@@ -19,6 +23,12 @@ export class GamesService {
 
   create(userId: string, input: CreateGameInput) {
     return this.games.create(userId, input);
+  }
+
+  async createBotGame(userId: string, input: CreateBotGameInput) {
+    const state = await this.games.createBotGame(userId, input);
+    const opening = await this.commitBotMoveIfNeeded(state.id);
+    return opening?.state ?? state;
   }
 
   history(userId: string, input: GameHistoryQuery) {
@@ -74,13 +84,34 @@ export class GamesService {
   }
 
   async commitMove(gameId: string, userId: string, input: SubmitMoveInput) {
+    const results = await this.commitMoveSequence(gameId, userId, input);
+    const player = results[0]!;
+    const latest = results.at(-1)!;
+    return { move: player.move, state: latest.state };
+  }
+
+  async commitMoveSequence(gameId: string, userId: string, input: SubmitMoveInput) {
     try {
       const result = await this.games.commitMove(gameId, userId, input);
       if (result.state.status === 'finished') await this.ratings.processFinishedGame(gameId);
-      return result;
+      const bot = await this.commitBotMoveIfNeeded(gameId);
+      return bot ? [result, bot] : [result];
     } catch (error) {
       await this.ratings.processFinishedGame(gameId);
       throw error;
     }
+  }
+
+  private async commitBotMoveIfNeeded(gameId: string) {
+    const turn = await this.games.botTurn(gameId);
+    if (!turn) return null;
+    const uci = selectBotMove(turn.currentFen, turn.targetRating);
+    const result = await this.games.commitMove(gameId, turn.botUserId, {
+      clientMoveId: randomUUID(),
+      expectedVersion: turn.version,
+      uci,
+    });
+    if (result.state.status === 'finished') await this.ratings.processFinishedGame(gameId);
+    return result;
   }
 }

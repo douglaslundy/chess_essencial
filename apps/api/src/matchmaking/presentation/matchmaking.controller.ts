@@ -1,4 +1,5 @@
 import {
+  createBotGameInputSchema,
   createChallengeInputSchema,
   joinQueueInputSchema,
   respondChallengeInputSchema,
@@ -18,6 +19,14 @@ export class MatchmakingController {
   @Post('queues')
   join(@Req() request: AuthenticatedRequest, @Body() body: unknown) {
     return this.matchmaking.join(request.auth.userId, parseInput(joinQueueInputSchema, body));
+  }
+
+  @Post('bot-games')
+  createBotGame(@Req() request: AuthenticatedRequest, @Body() body: unknown) {
+    return this.matchmaking.createBotGame(
+      request.auth.userId,
+      parseInput(createBotGameInputSchema, body),
+    );
   }
 
   @Delete('queues')

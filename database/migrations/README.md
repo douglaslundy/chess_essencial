@@ -25,5 +25,7 @@ pnpm --filter @xadrez/api db:rollback
 
 `0009_lesson_content_import.down.sql` removes lesson-import audit metadata and imported version snapshots, while preserving lessons, steps, source pages and user-authored lesson versions. Restore the pre-release backup for a full content rollback.
 
+`0010_bot_games.down.sql` removes bot metadata while preserving completed and active games. The internal bot identity is removed only when it has no `game_players` references, so historical games remain reconstructable after rollback.
+
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.

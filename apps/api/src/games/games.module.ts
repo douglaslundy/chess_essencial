@@ -12,5 +12,6 @@ import { GamesGateway } from './presentation/games.gateway.js';
   imports: [AuthModule, RatingsModule],
   controllers: [GamesController],
   providers: [GamesGateway, GamesRepository, GamesService],
+  exports: [GamesService],
 })
 export class GamesModule {}

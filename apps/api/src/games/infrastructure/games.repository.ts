@@ -1,8 +1,10 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomInt, randomUUID } from 'node:crypto';
 
 import { ChessJsRules, IllegalMoveError } from '@xadrez/chess-domain';
 import type {
   CreateGameInput,
+  CreateBotGameInput,
+  BotDifficulty,
   DrawOfferAction,
   GameHistoryPage,
   GameHistoryQuery,
@@ -48,6 +50,22 @@ interface PlayerRow {
   ratingBefore: number;
   userId: string;
 }
+
+export interface BotTurn {
+  botUserId: string;
+  currentFen: string;
+  difficulty: BotDifficulty;
+  targetRating: number;
+  version: number;
+}
+
+const BOT_USER_ID = '00000000-0000-4000-8000-000000000b07';
+const difficultyRatings: Record<Exclude<BotDifficulty, 'matched'>, number> = {
+  beginner: 800,
+  intermediate: 1200,
+  advanced: 1600,
+  expert: 2000,
+};
 
 interface MoveRow {
   clientMoveId: string;
@@ -189,6 +207,94 @@ export class GamesRepository {
 
       return this.getStateInTransaction(transaction, gameId, creatorUserId);
     });
+  }
+
+  async createBotGame(userId: string, input: CreateBotGameInput): Promise<GameState> {
+    const gameId = randomUUID();
+    const initialFen = new ChessJsRules().fen();
+
+    return this.database.client.begin(async (transaction) => {
+      const [user] = await transaction<{ id: string }[]>`
+        SELECT id FROM users WHERE id = ${userId} AND status = 'active'
+      `;
+      if (!user) throw new NotFoundException('Usuário ativo não encontrado');
+
+      const [timeControl] = await transaction<{ id: string; initialMs: number; pool: string }[]>`
+        SELECT id, initial_ms AS "initialMs", pool
+        FROM game_time_controls
+        WHERE code = ${input.timeControlCode} AND active = true
+      `;
+      if (!timeControl) throw new NotFoundException('Controle de tempo não encontrado');
+
+      const [profile] = await transaction<{ rating: number }[]>`
+        SELECT rating FROM rating_profiles
+        WHERE user_id = ${userId} AND pool = ${timeControl.pool}::rating_pool
+      `;
+      const userRating = profile?.rating ?? 1200;
+      const targetRating =
+        input.botDifficulty === 'matched' ? userRating : difficultyRatings[input.botDifficulty];
+      const playerColor =
+        input.playerColor === 'random'
+          ? randomInt(2) === 0
+            ? 'white'
+            : 'black'
+          : input.playerColor;
+      const botColor = playerColor === 'white' ? 'black' : 'white';
+
+      await transaction`
+        INSERT INTO games (
+          id, status, result, termination, time_control_id, rated,
+          initial_fen, current_fen, side_to_move, white_clock_ms,
+          black_clock_ms, active_clock_started_at, started_at
+        ) VALUES (
+          ${gameId}, 'active', 'none', 'none', ${timeControl.id}, false,
+          'startpos', ${initialFen}, 'white', ${timeControl.initialMs},
+          ${timeControl.initialMs}, now(), now()
+        )
+      `;
+      await transaction`
+        INSERT INTO game_players (game_id, user_id, color, rating_before)
+        VALUES
+          (${gameId}, ${userId}, ${playerColor}, ${userRating}),
+          (${gameId}, ${BOT_USER_ID}, ${botColor}, ${targetRating})
+      `;
+      await transaction`
+        INSERT INTO game_bots (game_id, bot_user_id, difficulty, target_rating)
+        VALUES (${gameId}, ${BOT_USER_ID}, ${input.botDifficulty}, ${targetRating})
+      `;
+      await transaction`
+        INSERT INTO outbox_events (aggregate_type, aggregate_id, event_type, payload)
+        VALUES (
+          'game', ${gameId}, 'game.bot_created',
+          ${JSON.stringify({
+            botDifficulty: input.botDifficulty,
+            gameId,
+            playerColor,
+            targetRating,
+          })}::jsonb
+        )
+      `;
+      return this.getStateInTransaction(transaction, gameId, userId);
+    });
+  }
+
+  async botTurn(gameId: string): Promise<BotTurn | null> {
+    const [turn] = await this.database.client<BotTurn[]>`
+      SELECT
+        game_bots.bot_user_id AS "botUserId",
+        games.current_fen AS "currentFen",
+        game_bots.difficulty,
+        game_bots.target_rating AS "targetRating",
+        games.version::integer AS version
+      FROM game_bots
+      JOIN games ON games.id = game_bots.game_id
+      JOIN game_players bot
+        ON bot.game_id = games.id AND bot.user_id = game_bots.bot_user_id
+      WHERE game_bots.game_id = ${gameId}
+        AND games.status = 'active'
+        AND games.side_to_move = bot.color
+    `;
+    return turn ?? null;
   }
 
   async history(userId: string, input: GameHistoryQuery): Promise<GameHistoryPage> {

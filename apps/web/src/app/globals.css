@@ -244,6 +244,11 @@ input:focus-visible {
   display: none;
 }
 
+.mobileMenuButton,
+.mobileMenuBackdrop {
+  display: none;
+}
+
 .userPill {
   display: flex;
   align-items: center;
@@ -343,6 +348,54 @@ input:focus-visible {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 22rem;
   gap: 1.5rem;
+}
+
+.botPreferences {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: 1rem;
+  padding: 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.botPreferences fieldset {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.botPreferences label {
+  display: grid;
+  gap: 0.4rem;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.botPreferences fieldset label {
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  font-weight: 500;
+}
+
+.botPreferences select {
+  width: 100%;
+  padding: 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.botPreferences p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
 }
 
 .timeControls {
@@ -562,6 +615,7 @@ input:focus-visible {
   grid-area: board;
   min-width: 0;
   align-self: center;
+  overflow: hidden;
 }
 
 .chessBoard {
@@ -574,6 +628,8 @@ input:focus-visible {
   border: 0.35rem solid #28231f;
   border-radius: 0.4rem;
   box-shadow: 0 1.5rem 5rem rgba(0, 0, 0, 0.42);
+  max-width: 100%;
+  touch-action: manipulation;
 }
 
 .boardSquare {
@@ -876,7 +932,44 @@ input:focus-visible {
   }
 
   .appSidebar {
-    display: none;
+    position: fixed;
+    z-index: 40;
+    inset: 0 auto 0 0;
+    display: flex;
+    width: min(19rem, 86vw);
+    height: 100dvh;
+    transform: translateX(-105%);
+    transition: transform 0.2s ease;
+    box-shadow: 1.5rem 0 4rem rgba(0, 0, 0, 0.55);
+  }
+
+  .appSidebar.mobileSidebarOpen {
+    transform: translateX(0);
+  }
+
+  .mobileMenuBackdrop {
+    position: fixed;
+    z-index: 35;
+    inset: 0;
+    display: block;
+    border: 0;
+    background: rgba(0, 0, 0, 0.65);
+  }
+
+  .mobileMenuButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid var(--border);
+    border-radius: 0.65rem;
+    background: var(--surface);
+    padding: 0.55rem 0.7rem;
+    color: var(--text);
+    font-weight: 800;
+  }
+
+  .appSidebar nav a {
+    font-size: 1rem;
   }
 
   .appTopbar {
@@ -890,7 +983,7 @@ input:focus-visible {
   }
 
   .mobileBrand {
-    display: grid;
+    display: none;
     width: 2.2rem;
     height: 2.2rem;
   }
@@ -936,7 +1029,7 @@ input:focus-visible {
   }
 
   .chessBoard {
-    width: 100%;
+    width: min(100%, calc(100dvh - 12.5rem));
     border-width: 0.2rem;
   }
 

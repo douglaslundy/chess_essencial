@@ -7,7 +7,9 @@ import type {
   ExerciseTrainingView,
 } from '@xadrez/contracts';
 import { useCallback, useEffect, useState } from 'react';
+import { Chess } from 'chess.js';
 
+import { ChessBoard } from '@/components/game/chess-board';
 import { api } from '@/lib/api/client';
 
 import styles from './exercise-trainer.module.css';
@@ -33,6 +35,10 @@ export function ExerciseTrainer() {
   const [solution, setSolution] = useState<ExerciseSolution | null>(null);
   const [message, setMessage] = useState('Carregando exercícios…');
   const [startedAt, setStartedAt] = useState(0);
+  const [boardPosition, setBoardPosition] = useState<{
+    exerciseId: string;
+    fen: string;
+  } | null>(null);
 
   function token() {
     return window.localStorage.getItem('xadrez.access_token');
@@ -149,6 +155,27 @@ export function ExerciseTrainer() {
   }
 
   const current = training?.currentExercise;
+  const boardFen =
+    current && boardPosition?.exerciseId === current.id
+      ? boardPosition.fen
+      : (current?.fen ?? null);
+
+  function playBoardMove(uci: string) {
+    if (!boardFen || !current || current.answerFormat === 'free_text') return;
+    try {
+      const chess = new Chess(boardFen);
+      const move = chess.move({
+        from: uci.slice(0, 2),
+        to: uci.slice(2, 4),
+        ...(uci[4] ? { promotion: uci[4] } : {}),
+      });
+      const canonical = `${move.from}${move.to}${move.promotion ?? ''}`;
+      setBoardPosition({ exerciseId: current.id, fen: chess.fen() });
+      setLine((value) => `${value} ${canonical}`.trim());
+    } catch {
+      setMessage('Esse lance não é permitido nesta posição.');
+    }
+  }
   return (
     <main className={styles.page}>
       <header className={styles.heading}>
@@ -221,7 +248,24 @@ export function ExerciseTrainer() {
           </span>
           <h2>{current.title ?? `Exercício ${current.sourceNumber ?? ''}`}</h2>
           <p>{current.promptMd}</p>
-          {current.fen ? <code className={styles.fen}>{current.fen}</code> : null}
+          {boardFen ? (
+            <div className={styles.boardArea}>
+              <ChessBoard
+                disabled={current.answerFormat === 'free_text'}
+                fen={boardFen}
+                onMove={playBoardMove}
+                orientation="white"
+              />
+              <details>
+                <summary>Ver posição FEN</summary>
+                <code className={styles.fen}>{current.fen}</code>
+              </details>
+            </div>
+          ) : (
+            <p className={styles.textOnlyNotice}>
+              Este exercício do livro não contém uma posição de tabuleiro associada.
+            </p>
+          )}
           {hint ? (
             <aside className={styles.feedback}>
               <strong>Dica:</strong> {hint}

@@ -186,6 +186,6 @@ jobs:
       - name: Verify latest migration rollback and reapply
         run: |
           pnpm --filter @xadrez/api db:rollback
-          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.lesson_import_runs') IS NULL AND to_regclass('public.moderation_reports') IS NOT NULL;")" = "t"
+          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.game_bots') IS NULL AND to_regclass('public.lesson_import_runs') IS NOT NULL;")" = "t"
           pnpm --filter @xadrez/api db:migrate
-          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.lesson_import_runs') IS NOT NULL AND to_regclass('public.moderation_reports') IS NOT NULL;")" = "t"
+          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.game_bots') IS NOT NULL AND to_regclass('public.lesson_import_runs') IS NOT NULL;")" = "t"

@@ -26,6 +26,26 @@ describe('ChessBoard', () => {
     expect(onMove).toHaveBeenCalledWith('e2e4');
   });
 
+  it('renders an illustrative diagram even when the FEN is not a legal game state', () => {
+    const onMove = vi.fn();
+    const view = render(
+      createElement(ChessBoard, {
+        fen: '8/8/8/3q4/4P3/8/8/8 w - - 0 1',
+        onMove,
+        orientation: 'white',
+      }),
+    );
+
+    const queen = view.container.querySelector('[aria-label="d5, preto dama"]');
+    const pawn = view.container.querySelector('[aria-label="e4, branco peão"]');
+    const destination = view.container.querySelector('[aria-label="e5, vazia"]');
+    expect(queen).toBeTruthy();
+    expect(pawn).toBeTruthy();
+    fireEvent.click(pawn!);
+    fireEvent.click(destination!);
+    expect(onMove).not.toHaveBeenCalled();
+  });
+
   it('formats clocks without displaying negative time', () => {
     expect(formatClock(61000)).toBe('1:01');
     expect(formatClock(-10)).toBe('0:00');

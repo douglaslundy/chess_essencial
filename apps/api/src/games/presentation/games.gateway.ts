@@ -125,12 +125,14 @@ export class GamesGateway implements OnGatewayConnection, OnGatewayDisconnect, O
       if (!this.session(client).gameIds.has(command.gameId)) {
         throw new UnauthorizedException('Join the game before submitting a move');
       }
-      const result = await this.games.commitMove(command.gameId, userId, command);
-      this.broadcast(command.gameId, 'game.move_committed', {
-        clock: this.clock(result.state),
-        ...result,
-      });
-      this.scheduleTimeout(command.gameId, result.state);
+      const results = await this.games.commitMoveSequence(command.gameId, userId, command);
+      for (const result of results) {
+        this.broadcast(command.gameId, 'game.move_committed', {
+          clock: this.clock(result.state),
+          ...result,
+        });
+      }
+      this.scheduleTimeout(command.gameId, results.at(-1)!.state);
     } catch (error) {
       this.fail(client, 'move.submit', error);
     }
