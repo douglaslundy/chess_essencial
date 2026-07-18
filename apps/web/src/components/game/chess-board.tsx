@@ -3,10 +3,6 @@
 import { Chess, type Color, type PieceSymbol, type Square } from 'chess.js';
 import { useMemo, useState, type DragEvent, type KeyboardEvent } from 'react';
 
-const glyphs: Record<Color, Record<PieceSymbol, string>> = {
-  w: { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' },
-  b: { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' },
-};
 const pieceNames: Record<PieceSymbol, string> = {
   k: 'rei',
   q: 'dama',
@@ -18,6 +14,69 @@ const pieceNames: Record<PieceSymbol, string> = {
 
 export type BoardOrientation = 'white' | 'black';
 type BoardPiece = { color: Color; type: PieceSymbol };
+
+function ChessPiece({ color, type }: BoardPiece) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={`chessPiece ${color === 'w' ? 'whitePiece' : 'blackPiece'}`}
+      data-color={color}
+      data-piece={type}
+      focusable="false"
+      viewBox="0 0 64 64"
+    >
+      <g strokeLinecap="round" strokeLinejoin="round">
+        {type === 'p' ? (
+          <>
+            <circle cx="32" cy="17" r="8" />
+            <path d="M25 28h14l5 20H20l5-20Z" />
+            <path d="M17 48h30l3 8H14l3-8Z" />
+          </>
+        ) : null}
+        {type === 'r' ? (
+          <>
+            <path d="M16 10h8v7h8v-7h8v7h8v10H16V10Z" />
+            <path d="M21 27h22l3 22H18l3-22Z" />
+            <path d="M15 49h34l3 7H12l3-7Z" />
+          </>
+        ) : null}
+        {type === 'n' ? (
+          <>
+            <path d="M19 49c2-14 7-24 18-31l-2-7c12 4 17 13 15 24l-5 14H19Z" />
+            <path d="M24 34c6-2 10-6 12-12" fill="none" />
+            <circle cx="40" cy="22" r="1.7" className="pieceDetail" stroke="none" />
+            <path d="M15 49h34l3 7H12l3-7Z" />
+          </>
+        ) : null}
+        {type === 'b' ? (
+          <>
+            <path d="M32 9c8 7 11 14 6 22l-6 8-6-8c-5-8-2-15 6-22Z" />
+            <path d="m35 15-8 12" fill="none" />
+            <path d="M23 39h18l5 10H18l5-10Z" />
+            <path d="M15 49h34l3 7H12l3-7Z" />
+          </>
+        ) : null}
+        {type === 'q' ? (
+          <>
+            <circle cx="14" cy="14" r="3" />
+            <circle cx="32" cy="9" r="3" />
+            <circle cx="50" cy="14" r="3" />
+            <path d="m14 18 8 23h20l8-23-12 11-6-15-6 15-12-11Z" />
+            <path d="M19 41h26l4 8H15l4-8Z" />
+            <path d="M13 49h38l2 7H11l2-7Z" />
+          </>
+        ) : null}
+        {type === 'k' ? (
+          <>
+            <path d="M32 7v14M25 14h14" fill="none" />
+            <path d="M23 27c0-6 4-9 9-9s9 3 9 9c0 4-2 7-5 10l8 12H20l8-12c-3-3-5-6-5-10Z" />
+            <path d="M14 49h36l3 7H11l3-7Z" />
+          </>
+        ) : null}
+      </g>
+    </svg>
+  );
+}
 
 function diagramPieces(fen: string) {
   const pieces = new Map<Square, BoardPiece>();
@@ -168,7 +227,12 @@ export function ChessBoard({
                   destinations.has(square) ? 'targetSquare' : '',
                   isLast ? 'lastMoveSquare' : '',
                 ].join(' ')}
-                draggable={Boolean(piece) && Boolean(chess) && !disabled}
+                draggable={
+                  Boolean(piece) &&
+                  Boolean(chess) &&
+                  !disabled &&
+                  (!movableColor || piece?.color === movableColor)
+                }
                 id={`square-${square}`}
                 key={square}
                 onClick={() => activate(square)}
@@ -181,14 +245,7 @@ export function ChessBoard({
                 tabIndex={focused === square ? 0 : -1}
                 type="button"
               >
-                {piece ? (
-                  <span
-                    className={piece.color === 'w' ? 'whitePiece' : 'blackPiece'}
-                    aria-hidden="true"
-                  >
-                    {glyphs[piece.color][piece.type]}
-                  </span>
-                ) : null}
+                {piece ? <ChessPiece color={piece.color} type={piece.type} /> : null}
                 {destinations.has(square) ? (
                   <span className="moveTarget" aria-hidden="true" />
                 ) : null}
@@ -227,7 +284,7 @@ export function ChessBoard({
                   }}
                   type="button"
                 >
-                  <span aria-hidden="true">{glyphs.w[piece]}</span>
+                  <ChessPiece color="w" type={piece} />
                   {pieceNames[piece]}
                 </button>
               ))}

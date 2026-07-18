@@ -27,7 +27,7 @@ describe('ChessBoard', () => {
     expect(onMove).toHaveBeenCalledWith('e2e4');
   });
 
-  it('renders visible coordinate gutters and uses the same glyph design for both colors', () => {
+  it('renders visible coordinates and vector pieces with explicit colors', () => {
     const view = render(
       createElement(ChessBoard, {
         fen: '8/8/8/3p4/4P3/8/8/8 w - - 0 1',
@@ -37,8 +37,16 @@ describe('ChessBoard', () => {
     );
     expect(view.container.querySelectorAll('.boardFiles').length).toBe(2);
     expect(view.container.querySelectorAll('.boardRanks').length).toBe(2);
-    expect(view.container.querySelector('.whitePiece')?.textContent).toBe('♟');
-    expect(view.container.querySelector('.blackPiece')?.textContent).toBe('♟');
+    const whitePawn = view.container.querySelector('.whitePiece');
+    const blackPawn = view.container.querySelector('.blackPiece');
+    expect(whitePawn?.tagName).toBe('svg');
+    expect(whitePawn?.getAttribute('data-color')).toBe('w');
+    expect(blackPawn?.getAttribute('data-color')).toBe('b');
+    expect(whitePawn?.getAttribute('data-piece')).toBe('p');
+    expect(blackPawn?.getAttribute('data-piece')).toBe('p');
+    expect(whitePawn?.querySelectorAll('path').length).toBe(
+      blackPawn?.querySelectorAll('path').length,
+    );
   });
 
   it('does not select a piece outside the allowed player color', () => {

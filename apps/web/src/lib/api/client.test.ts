@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiProblem, api } from './client';
+import { ApiProblem, api, getRealtimeAccessToken, getStoredUserId } from './client';
 
 function localStorageWith(values: Record<string, string>) {
   const storage = new Map(Object.entries(values));
@@ -85,5 +85,39 @@ describe('API session refresh', () => {
     expect(localStorage.getItem('xadrez.access_token')).toBeNull();
     expect(localStorage.getItem('xadrez.refresh_token')).toBeNull();
     expect(localStorage.getItem('xadrez.username')).toBeNull();
+  });
+
+  it('provides a refreshed token to realtime after HTTP rotated the session', async () => {
+    const localStorage = localStorageWith({
+      'xadrez.access_token': 'stale-access',
+      'xadrez.refresh_token': 'current-refresh',
+    });
+    vi.stubGlobal('window', { atob, dispatchEvent: vi.fn(), localStorage });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            accessToken: 'fresh-realtime-access',
+            accessTokenExpiresIn: 900,
+            refreshToken: 'fresh-refresh',
+            refreshTokenExpiresIn: 86400,
+          }),
+          { headers: { 'Content-Type': 'application/json' }, status: 200 },
+        ),
+      ),
+    );
+
+    await expect(getRealtimeAccessToken(true)).resolves.toBe('fresh-realtime-access');
+    expect(localStorage.getItem('xadrez.access_token')).toBe('fresh-realtime-access');
+  });
+
+  it('recovers the player id from the access token when older storage lacks it', () => {
+    const payload = Buffer.from(JSON.stringify({ sub: 'player-id' })).toString('base64url');
+    const localStorage = localStorageWith({ 'xadrez.access_token': `header.${payload}.signature` });
+    vi.stubGlobal('window', { atob, dispatchEvent: vi.fn(), localStorage });
+
+    expect(getStoredUserId()).toBe('player-id');
+    expect(localStorage.getItem('xadrez.user_id')).toBe('player-id');
   });
 });

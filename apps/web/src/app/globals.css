@@ -717,23 +717,33 @@ input:focus-visible {
   filter: brightness(1.08);
 }
 
-.boardSquare > span:first-child {
+.boardSquare > .chessPiece {
   position: relative;
   z-index: 2;
-  font-family: 'DejaVu Sans', 'Segoe UI Symbol', 'Noto Sans Symbols 2', sans-serif;
-  font-size: clamp(1.6rem, 5.5vw, 4.4rem);
-  line-height: 1;
+  width: 80%;
+  height: 80%;
   filter: drop-shadow(0 0.12rem 0.08rem rgba(0, 0, 0, 0.35));
 }
 
+.chessPiece g {
+  fill: currentColor;
+  stroke: var(--piece-outline);
+  stroke-width: 2;
+  paint-order: stroke fill;
+}
+
+.chessPiece .pieceDetail {
+  fill: var(--piece-outline);
+}
+
 .whitePiece {
-  color: #fff9e9;
-  -webkit-text-stroke: 1px #4d453b;
+  --piece-outline: #453d34;
+  color: #fffaf0;
 }
 
 .blackPiece {
+  --piece-outline: #eadcc5;
   color: #181717;
-  -webkit-text-stroke: 1px #d8c7ab;
 }
 
 .selectedSquare {
@@ -896,6 +906,85 @@ input:focus-visible {
   box-shadow: 0 2rem 6rem #000;
 }
 
+.confirmationDialog {
+  width: min(100%, 30rem);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 1.1rem;
+  background: var(--surface);
+  padding: 1.4rem;
+  box-shadow: 0 2rem 6rem #000;
+}
+
+.dialogHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dialogHeader h2 {
+  margin: 0.25rem 0 0;
+  color: var(--text);
+  font-size: 1.35rem;
+}
+
+.dialogEyebrow {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dialogClose {
+  flex: 0 0 auto;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1.35rem;
+}
+
+.confirmationDialog > p {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 1.4rem;
+}
+
+.dialogActions button {
+  min-height: 2.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface-2);
+  padding: 0.65rem 1rem;
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.dialogActions .dialogConfirm.dangerAction {
+  border-color: rgba(239, 68, 68, 0.55);
+  background: rgba(127, 29, 29, 0.78);
+  color: #fee2e2;
+}
+
+.dialogActions button:disabled,
+.dialogClose:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .promotionChoices {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -912,8 +1001,9 @@ input:focus-visible {
   cursor: pointer;
 }
 
-.promotionChoices span {
-  font-size: 2.5rem;
+.promotionChoices .chessPiece {
+  width: 3rem;
+  height: 3rem;
 }
 
 .textButton {
@@ -1095,8 +1185,9 @@ input:focus-visible {
     width: min(100%, calc(100dvh - 12.5rem));
   }
 
-  .boardSquare > span:first-child {
-    font-size: clamp(2.2rem, 11vw, 4rem);
+  .boardSquare > .chessPiece {
+    width: 82%;
+    height: 82%;
   }
 
   .movesPanel {

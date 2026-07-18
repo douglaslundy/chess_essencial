@@ -87,6 +87,8 @@ async function refreshStoredSession(): Promise<string | null> {
       const tokens = (await response.json()) as TokenPair;
       window.localStorage.setItem('xadrez.access_token', tokens.accessToken);
       window.localStorage.setItem('xadrez.refresh_token', tokens.refreshToken);
+      const userId = accessTokenPayload(tokens.accessToken)?.sub;
+      if (typeof userId === 'string') window.localStorage.setItem('xadrez.user_id', userId);
       return tokens.accessToken;
     } catch {
       clearStoredSession();
@@ -99,6 +101,42 @@ async function refreshStoredSession(): Promise<string | null> {
   } finally {
     refreshInFlight = null;
   }
+}
+
+function accessTokenPayload(token: string) {
+  const encodedPayload = token.split('.')[1];
+  if (!encodedPayload) return null;
+  try {
+    const base64 = encodedPayload.replace(/-/g, '+').replace(/_/g, '/');
+    const normalized = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+    return JSON.parse(window.atob(normalized)) as { exp?: unknown; sub?: unknown };
+  } catch {
+    return null;
+  }
+}
+
+function accessTokenExpiresSoon(token: string) {
+  const payload = accessTokenPayload(token);
+  return typeof payload?.exp === 'number' && payload.exp * 1000 <= Date.now() + 30_000;
+}
+
+export function getStoredUserId() {
+  if (typeof window === 'undefined') return null;
+  const stored = window.localStorage.getItem('xadrez.user_id');
+  if (stored) return stored;
+  const token = window.localStorage.getItem('xadrez.access_token');
+  const userId = token ? accessTokenPayload(token)?.sub : null;
+  if (typeof userId !== 'string') return null;
+  window.localStorage.setItem('xadrez.user_id', userId);
+  return userId;
+}
+
+export async function getRealtimeAccessToken(forceRefresh = false): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
+  const token = window.localStorage.getItem('xadrez.access_token');
+  if (!token) return null;
+  if (!forceRefresh && !accessTokenExpiresSoon(token)) return token;
+  return refreshStoredSession();
 }
 
 function fetchApi(path: string, token?: string, init?: RequestInit) {

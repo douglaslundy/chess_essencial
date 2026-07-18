@@ -43,7 +43,7 @@ describe('realtimeUrl', () => {
 });
 
 describe('GameSocket authentication handshake', () => {
-  it('joins only after the server confirms authentication', () => {
+  it('joins only after the server confirms authentication', async () => {
     vi.stubGlobal('WebSocket', FakeWebSocket);
     const connection = vi.fn();
     const socket = new GameSocket('00000000-0000-4000-8000-000000000001', 'access-token', 3, {
@@ -58,6 +58,7 @@ describe('GameSocket authentication handshake', () => {
     socket.connect();
     const transport = FakeWebSocket.instances[0]!;
     transport.emit('open');
+    await vi.waitFor(() => expect(transport.sent).toHaveLength(1));
     expect(transport.sent.map((item) => JSON.parse(item).event)).toEqual(['auth.authenticate']);
     expect(connection).not.toHaveBeenCalledWith('online');
 
@@ -70,5 +71,25 @@ describe('GameSocket authentication handshake', () => {
       'game.join',
     ]);
     expect(connection).not.toHaveBeenCalledWith('online');
+  });
+
+  it('requests the latest stored token before authenticating a reconnectable socket', async () => {
+    vi.stubGlobal('WebSocket', FakeWebSocket);
+    const tokenProvider = vi.fn().mockResolvedValue('fresh-access-token');
+    const socket = new GameSocket('00000000-0000-4000-8000-000000000001', tokenProvider, 0, {
+      connection: vi.fn(),
+      drawOffered: vi.fn(),
+      snapshot: vi.fn(),
+      move: vi.fn(),
+      finished: vi.fn(),
+      error: vi.fn(),
+    });
+
+    socket.connect();
+    const transport = FakeWebSocket.instances[0]!;
+    transport.emit('open');
+    await vi.waitFor(() => expect(transport.sent).toHaveLength(1));
+    expect(tokenProvider).toHaveBeenCalledWith(false);
+    expect(JSON.parse(transport.sent[0]!).data.accessToken).toBe('fresh-access-token');
   });
 });

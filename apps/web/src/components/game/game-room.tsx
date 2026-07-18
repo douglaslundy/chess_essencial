@@ -5,7 +5,8 @@ import { Chess } from 'chess.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { ChessBoard, type BoardOrientation } from './chess-board';
-import { api } from '@/lib/api/client';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { api, getRealtimeAccessToken, getStoredUserId } from '@/lib/api/client';
 import { GameSocket } from '@/lib/realtime/game-socket';
 
 const initialFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -66,6 +67,8 @@ export function GameRoom({ gameId }: { gameId: string }) {
   const [orientation, setOrientation] = useState<BoardOrientation>('white');
   const [myColor, setMyColor] = useState<BoardOrientation | null>(null);
   const [serverOffset, setServerOffset] = useState(0);
+  const [resignDialogOpen, setResignDialogOpen] = useState(false);
+  const [resigning, setResigning] = useState(false);
   const [, tick] = useState(0);
   const socketRef = useRef<GameSocket | undefined>(undefined);
 
@@ -93,13 +96,13 @@ export function GameRoom({ gameId }: { gameId: string }) {
         if (!active) return;
         setState(nextState);
         setMoves(nextMoves);
-        const me = window.localStorage.getItem('xadrez.user_id');
+        const me = getStoredUserId();
         const player = nextState.players.find((item) => item.userId === me);
         if (player) {
           setOrientation(player.color);
           setMyColor(player.color);
         }
-        const socket = new GameSocket(gameId, token, nextState.version, {
+        const socket = new GameSocket(gameId, getRealtimeAccessToken, nextState.version, {
           connection: setConnection,
           drawOffered: (_offerId, offeredByUserId, snapshot) => {
             setState(snapshot);
@@ -175,12 +178,29 @@ export function GameRoom({ gameId }: { gameId: string }) {
           result.accepted ? 'Empate aceito. A partida foi encerrada.' : 'Oferta de empate enviada.',
         );
       } else {
-        if (!window.confirm('Confirmar desistência?')) return;
-        setState(await api.resign(gameId, token));
-        setMessage('Partida encerrada por desistência.');
+        setResignDialogOpen(true);
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Não foi possível concluir a ação.');
+    }
+  }
+
+  async function confirmResignation() {
+    const token = window.localStorage.getItem('xadrez.access_token');
+    if (!token) {
+      setResignDialogOpen(false);
+      setMessage('Faça login para desistir da partida.');
+      return;
+    }
+    setResigning(true);
+    try {
+      setState(await api.resign(gameId, token));
+      setResignDialogOpen(false);
+      setMessage('Partida encerrada por desistência.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Não foi possível desistir da partida.');
+    } finally {
+      setResigning(false);
     }
   }
 
@@ -384,6 +404,17 @@ export function GameRoom({ gameId }: { gameId: string }) {
           </button>
         </div>
       ) : null}
+      <ConfirmDialog
+        busy={resigning}
+        confirmLabel="Sim, desistir"
+        danger
+        description="A partida será encerrada imediatamente e seu adversário será declarado vencedor. Essa ação não pode ser desfeita."
+        eyebrow="Ação da partida"
+        onCancel={() => setResignDialogOpen(false)}
+        onConfirm={confirmResignation}
+        open={resignDialogOpen}
+        title="Desistir da partida?"
+      />
     </main>
   );
 }
