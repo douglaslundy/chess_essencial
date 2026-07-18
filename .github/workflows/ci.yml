@@ -139,6 +139,9 @@ jobs:
           pnpm --filter @xadrez/api db:migrate
           pnpm --filter @xadrez/api db:seed
           pnpm --filter @xadrez/api db:import-exercises database/content/Xadrez_Essencial_Exercicios_1_a_1298.json --strict
+          pnpm --filter @xadrez/api db:import-lessons database/content/Xadrez_Essencial_Aulas_1_a_119.json --strict --publish
+          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT count(*) FROM lessons l JOIN course_modules cm ON cm.id = l.module_id JOIN courses c ON c.id = cm.course_id WHERE c.slug = 'xadrez-essencial' AND l.status = 'published';")" = "119"
+          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT count(*) FROM lesson_exercises le JOIN lessons l ON l.id = le.lesson_id JOIN course_modules cm ON cm.id = l.module_id JOIN courses c ON c.id = cm.course_id WHERE c.slug = 'xadrez-essencial';")" = "1282"
           expected="$(find database/migrations -name '*.up.sql' | wc -l | tr -d ' ')"
           actual="$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc 'SELECT count(*) FROM _xadrez_migrations;')"
           test "$actual" = "$expected"
@@ -150,6 +153,7 @@ jobs:
           pnpm --filter @xadrez/api exec vitest run
           src/auth/auth.e2e.test.ts
           src/courses/courses.e2e.test.ts
+          src/courses/lesson-importer.e2e.test.ts
           src/lesson-runtime/lesson-runtime.e2e.test.ts
           src/exercises/exercise-importer.e2e.test.ts
           src/exercises/exercises.e2e.test.ts
@@ -182,6 +186,6 @@ jobs:
       - name: Verify latest migration rollback and reapply
         run: |
           pnpm --filter @xadrez/api db:rollback
-          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.moderation_reports') IS NULL AND to_regclass('public.exercise_training_sessions') IS NOT NULL;")" = "t"
+          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.lesson_import_runs') IS NULL AND to_regclass('public.moderation_reports') IS NOT NULL;")" = "t"
           pnpm --filter @xadrez/api db:migrate
-          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.moderation_reports') IS NOT NULL AND to_regclass('public.exercise_training_sessions') IS NOT NULL;")" = "t"
+          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.lesson_import_runs') IS NOT NULL AND to_regclass('public.moderation_reports') IS NOT NULL;")" = "t"

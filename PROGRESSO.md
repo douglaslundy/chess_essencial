@@ -2,48 +2,45 @@
 
 ## Última atualização
 
-2026-07-17 — Fase 13 concluída, integrada e validada na VPS; Fase 14 iniciada.
+2026-07-17 - Phase 14 source book received; PDF validation and lesson generation started.
 
 ## Tarefa em andamento
 
-Fase 14 — conteúdo integral do curso e exercícios.
+Phase 14 - validate the ten-volume source PDF and generate schema-compliant lesson content.
 
 ## Contexto necessário
 
-- Baseline: `main` no commit `aa982db`; CI `29613488363` com os três jobs aprovados.
-- Deploy automático confirmado por `deploy/auto-deploy.sh`; API, worker e web healthy na VPS `192.168.0.233`.
-- Jornada F13 aprovada: cadastro, Mailpit UTF-8, verificação, login, refresh, logout e reenvio anti-enumeração.
-- Matchmaking aprovou os sete códigos com hífen e rejeitou o formato antigo; fila de teste removida.
-- Fonte ignorada: `helper_files/Xadrez_Essencial_Exercicios_1_a_1298.json`.
-- Validação estática da fonte: 10 módulos, 300 diagramas, 1.298 exercícios, IDs/números únicos, zero referências ausentes e zero checksums inválidos.
-- Estado atual do banco: 10 módulos, 1 aula demo, 0 exercícios e 0 vínculos aula-exercício.
-- Contexto de código inicial: `apps/api/src/database/import-exercises.ts`, `apps/api/src/exercises/exercise-importer.ts`, contratos de exercícios e migrations.
-- Não escrever no banco da VPS antes de aprovar dry-run, testes, backup e rollback.
-- Dry-run real aprovado: 1.298 importados, zero rejeitados.
-- Dataset canônico copiado para database/content; helper_files continua ignorado.
-- Importer integration test now covers idempotency, remapping and transactional rollback.
-- Deploy e CI passam a importar a fonte canônica versionada; nenhuma escrita foi feita na VPS até os gates serem aprovados.
-- PR #13 first run: quality and containers passed; database job exposed a package-relative content path.
-- Import CLI now resolves input from repository root; compiled dry-run passed from apps/api.
-- PR #13 CI run 29616080467 passed quality, database integration and container validation.
-- Sete arquivos de cursos/web/contratos aparecem modificados localmente sem diff de conteúdo; não incluí-los em commits.
+- Main commit a3e6ae8 passed CI run 29616343005 and automatic Git-pull deploy.
+- VPS target remains 192.168.0.233; code delivery remains main plus deploy/auto-deploy.sh with git pull --ff-only.
+- VPS has 1,298 exercises with 1,298 unique source numbers and external IDs; latest run rejected zero.
+- Canonical titles for all ten modules are deployed.
+- Source contains 300 diagrams; 229 exercises reference 225 distinct diagrams.
+- Pre-release backup chess-20260717T220753Z.dump passed checksum, isolated restore and two reimports at a stable 1,298 count.
+- Exercise API samples passed for modules 1, 5 and 10; exercise web route returned HTTP 200.
+- Public course endpoint returns 404 because the course remains draft with only one demo lesson.
+- Publishing requires lessons in every module and real lesson source pages.
+- The lesson schema is available separately at course/lesson.schema.json.
+- helper_files contains only the exercise JSON and the exercise schema; no book volumes or lesson-content JSONs were found.
+- Source PDF validated: 476 pages, 10 volume boundaries, extractable text and SHA-256 5c04386a52193fb6f89b969731f307ac30c3ef08dd7ea9ebfec7a400e4c9662b.
+- Canonical lesson dataset generated at database/content/Xadrez_Essencial_Aulas_1_a_119.json: 119 lessons, 714 steps, 1,282 selected exercise links and 8 engine-validated board lessons.
+- Lesson schema now requires real source pages, prerequisites, 3-10 steps and explicit interaction fields; combined exercise/lesson content validation passes.
+- Transactional/idempotent lesson importer, migration 0009, import audit, automated version attribution and exact exercise-link rebuild are implemented.
+- Local content validation, targeted formatting, lint, typecheck, all local tests and the full monorepo build pass.
+- Lesson importer database E2E is ready but cannot run locally because this Windows host has no Docker/PostgreSQL; PostgreSQL execution is required in CI.
+- CI and automatic Git-pull release now import exercises, import/publish lessons and verify the public course endpoint. Phase 15 remains blocked until database CI and VPS acceptance pass.
+- Seven course/web/contract files appear modified locally without content diff; never stage them.
 
 ## Concluído
 
-- [x] Fases 1–12 implementadas, testadas e implantadas.
-- [x] Fase 13 auditada; matriz, checklist e backlog V2 atualizados.
-- [x] P1 de autenticação, sessão e controles de tempo corrigidos.
-- [x] PR #12 integrado em `aa982db`; CI de PR e de `main` aprovadas.
-- [x] Deploy por Git pull, backup, migrations, seed, healthchecks e carga aprovados.
-- [x] Jornada funcional F13 e SMTP/Mailpit validados externamente.
-- [x] Canonical validator and strict dry-run approved for all 1,298 exercises.
-- [x] Local lint, typecheck, API build and API tests approved (6 files, 19 tests).
-- [x] Full web build compiled and typechecked; final worker spawn remains blocked by Windows sandbox EPERM.
+- [x] Phases 1-13 implemented, tested and deployed.
+- [x] PR #13 merged at a3e6ae8; main CI quality, database integration and containers passed.
+- [x] Automatic deploy, backup, canonical validation, strict import and health/load gates passed.
+- [x] Database counts, module titles, API samples and isolated restore/reimport drill passed.
+- [x] Exercise import is serialized, transactional, idempotent and audit-tracked.
 
 ## Próxima tarefa
 
-1. Commit and publish the Phase 14 branch, then require all three CI jobs.
-2. Fix any CI failure before merge; database integration is the PostgreSQL gate.
-3. Merge only after approval and wait for the automatic Git-pull deploy.
-4. Validate VPS counts, source IDs, module titles, API/UI samples and a second import.
-5. Prove restore/reimport and only then close Phase 14.
+1. Validate the PDF checksum, page count, text extraction and boundaries for volumes 1 through 10.
+2. Generate and validate lesson-content JSON against course/lesson.schema.json with real source pages.
+3. Import, publish and test all modules before approving Phase 14.
+4. Do not start Phase 15 until the full-course acceptance gate is met.

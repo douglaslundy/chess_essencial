@@ -32,7 +32,8 @@ Atualização: 2026-07-17. Evidências detalhadas em `docs/PHASE13_AUDIT.md`.
 
 ## Pendências que bloqueiam declarações futuras
 
-- [ ] Conteúdo integral: VPS ainda possui 1 aula e 0/1.298 exercícios; gate da F14.
+- [x] Exercise collection: 1,298 canonical exercises deployed and verified.
+- [ ] Full course: the validated 476-page source and 119-lesson canonical dataset are ready; database CI, publication and VPS verification remain required.
 - [ ] Produção pública: substituir relay SMTP simples por TLS/autenticação; gate da F17.
 - [ ] Acessibilidade formal em teclado, leitor de tela, contraste e viewports; gate da F16.
 - [ ] Restore drill operacional periódico e teste de expiração da retenção; gate da F17.

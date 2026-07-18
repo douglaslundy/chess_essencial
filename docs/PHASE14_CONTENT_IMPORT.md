@@ -72,11 +72,51 @@ After restore, reimport is performed by deploying an approved commit through the
 Git-pull timer. Direct database edits, SCP and SSH-triggered deploys are not part of the
 procedure.
 
-## Evidence still required before phase approval
+## Deployment evidence
 
-- Automatic deploy marker and backup path for the approved `main` commit.
-- VPS counts: 10 modules, 1,298 exercises, 300 referenced diagrams represented in metadata,
-  unique source IDs/numbers, zero rejected records.
-- API/UI samples from the first, middle and last modules.
-- Second import with stable exercise and lesson-link counts.
-- Restore/reimport drill and final health/load gates.
+- PR #13 merged at `a3e6ae8`; main CI run `29616343005` passed all three jobs.
+- Automatic Git-pull deploy created backup `chess-20260717T220753Z.dump` and finished healthy.
+- Database: 1,298 exercises, 1,298 unique source numbers, 1,298 unique external IDs,
+  source range 1-1298 and zero rejected records.
+- Positions: 229 positioned exercises reference 225 distinct diagrams. The canonical source
+  contains and validates all 300 diagrams; 75 are not referenced by an exercise.
+- Canonical titles for all ten modules were synchronized.
+- API samples: module 1 has 110 exercises; modules 5 and 10 have 132 each.
+- Exercise web route returned HTTP 200.
+- Isolated rollback drill restored the pre-release backup with zero exercises, then two strict
+  imports both produced exactly 1,298 exercises and two audit runs. The temporary database
+  was discarded; the active database was not interrupted.
+
+## Lesson source and canonical dataset
+
+The provided `Xadrez_Essencial_Volumes_1_a_10.pdf` has 476 pages and SHA-256
+`5c04386a52193fb6f89b969731f307ac30c3ef08dd7ea9ebfec7a400e4c9662b`. Text extraction
+and volume boundaries were verified for all ten volumes. The deployable lesson dataset lives
+at `database/content/Xadrez_Essencial_Aulas_1_a_119.json` and contains:
+
+- 119 lessons matching the 119 canonical chapters;
+- 714 lesson steps, each lesson containing six steps;
+- real printed source pages scoped by source volume;
+- 1,282 selected exercise links, respecting the maximum of 12 per lesson;
+- eight board interactions whose FEN and expected UCI move pass the chess rules engine.
+
+Run the combined gate with `pnpm content:validate`. The lesson importer dry-run is:
+
+```bash
+pnpm --filter @xadrez/api db:import-lessons database/content/Xadrez_Essencial_Aulas_1_a_119.json --strict --dry-run
+```
+
+Migration `0009_lesson_content_import` records import runs and attributes automated lesson
+versions to the import run instead of a human editor. The importer is transactional,
+idempotent, archives non-canonical lessons without deleting them and can publish only the
+canonical set of ten modules and 119 lessons. The release sequence imports exercises first,
+then imports lessons, rebuilds the explicit 2-12 exercise links and publishes atomically.
+
+## Remaining acceptance gate
+
+Phase 14 is not complete yet. Local schema validation, API typecheck and unit tests pass, but
+this Windows host has no Docker or PostgreSQL runtime. The database integration job must
+apply migration `0009`, run the lesson importer E2E tests, import the full dataset twice and
+prove publication before merge. After merge, the automatic Git-pull deploy must verify 119
+published lessons, 1,282 links, the public course endpoint and rollback/reimport behavior.
+Phase 15 remains blocked until those gates pass.

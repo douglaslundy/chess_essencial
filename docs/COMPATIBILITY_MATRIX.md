@@ -63,7 +63,7 @@ Atualização de 2026-07-17. O estado detalhado e os achados estão em `docs/PHA
 
 ## Lacunas atuais e gates
 
-- A VPS possui 10 módulos, 1 aula e nenhum dos 1.298 exercícios; a Fase 14 é o gate de conteúdo.
+- The VPS has ten canonical modules and 1,298 exercises. The 476-page source PDF and 119-lesson dataset are validated locally; database CI, publication and VPS verification are the remaining Phase 14 gates.
 - O relay SMTP incluído atende a VPS local com Mailpit. Produção pública exige TLS/autenticação na Fase 17.
 - A homologação completa de acessibilidade e responsividade pertence à Fase 16.
 - A Fase 13 repetiu CI, deploy automático e healthchecks e foi encerrada em `aa982db`.

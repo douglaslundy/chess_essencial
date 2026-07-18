@@ -79,6 +79,7 @@ fi
 "${compose[@]}" run --rm api pnpm --filter @xadrez/api db:migrate
 "${compose[@]}" run --rm api pnpm --filter @xadrez/api db:seed
 "${compose[@]}" run --rm api pnpm --filter @xadrez/api db:import-exercises database/content/Xadrez_Essencial_Exercicios_1_a_1298.json --strict
+"${compose[@]}" run --rm api pnpm --filter @xadrez/api db:import-lessons database/content/Xadrez_Essencial_Aulas_1_a_119.json --strict --publish
 
 if [[ "${DEMO_SEED_ENABLED:-false}" == "true" ]]; then
   : "${DEMO_USER_PASSWORD:?DEMO_USER_PASSWORD is required when demo seed is enabled}"
@@ -108,6 +109,7 @@ wait_for_url() {
 wait_for_url api "http://127.0.0.1:$API_PORT/v1/health"
 wait_for_url worker "http://127.0.0.1:$WORKER_PORT/health"
 wait_for_url web "http://127.0.0.1:$WEB_PORT/api/health"
+wait_for_url course "http://127.0.0.1:$API_PORT/v1/courses/xadrez-essencial"
 
 "${compose[@]}" exec --no-TTY \
   --env LOAD_TEST_URL=http://127.0.0.1:4000/v1/health \
