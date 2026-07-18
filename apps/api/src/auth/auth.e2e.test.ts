@@ -112,6 +112,27 @@ describeDatabase('authentication database integration', () => {
     });
   });
 
+  it('does not enumerate password recovery and rejects an invalid reset token', async () => {
+    for (const email of ['integration@example.com', 'missing@example.com']) {
+      const response = await app.inject({
+        method: 'POST',
+        payload: { email },
+        url: '/v1/auth/password/forgot',
+      });
+      expect(response.statusCode).toBe(204);
+    }
+
+    const reset = await app.inject({
+      method: 'POST',
+      payload: {
+        newPassword: 'replacement integration password 2026',
+        token: 'not-a-valid-password-reset-token-but-long-enough',
+      },
+      url: '/v1/auth/password/reset',
+    });
+    expect(reset.statusCode).toBe(401);
+    expect(reset.headers['content-type']).toContain('application/problem+json');
+  });
   it('updates settings, rotates refresh and detects reuse', async () => {
     const updateResponse = await app.inject({
       headers: { authorization: `Bearer ${accessToken}` },

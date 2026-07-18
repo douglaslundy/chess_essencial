@@ -41,11 +41,12 @@ export async function sendVerificationEmail(
   smtpUrl: URL,
   webOrigin: string,
   message: VerificationEmail,
+  mode: 'verify' | 'reset' = 'verify',
 ) {
   if (smtpUrl.protocol !== 'smtp:') throw new Error('Only smtp:// URLs are supported');
   const email = message.email.replace(/[\r\n]/g, '');
-  const verificationUrl = new URL('/entrar', webOrigin);
-  verificationUrl.searchParams.set('verify', message.token);
+  const actionUrl = new URL('/entrar', webOrigin);
+  actionUrl.searchParams.set(mode === 'verify' ? 'verify' : 'reset', message.token);
   const socket = createConnection({ host: smtpUrl.hostname, port: Number(smtpUrl.port || 25) });
   socket.setTimeout(5_000, () => socket.destroy(new Error('SMTP connection timeout')));
   await new Promise<void>((resolve, reject) => {
@@ -63,11 +64,15 @@ export async function sendVerificationEmail(
     const body = [
       'From: Xadrez Essencial <nao-responda@xadrez-essencial.local>',
       `To: ${email}`,
-      'Subject: Confirme seu cadastro no Xadrez Essencial',
+      mode === 'verify'
+        ? 'Subject: Confirme seu cadastro no Xadrez Essencial'
+        : 'Subject: Redefina sua senha no Xadrez Essencial',
       'Content-Type: text/plain; charset=utf-8',
       '',
-      'Confirme seu cadastro acessando o link:',
-      verificationUrl.toString(),
+      mode === 'verify'
+        ? 'Confirme seu cadastro acessando o link:'
+        : 'Redefina sua senha acessando o link:',
+      actionUrl.toString(),
       '',
       'Se você não solicitou esta conta, ignore esta mensagem.',
       '.',
@@ -83,7 +88,11 @@ export async function sendVerificationEmail(
 export class VerificationEmailService {
   constructor(private readonly config: ConfigService) {}
 
-  async send(message: VerificationEmail) {
+  async sendPasswordReset(message: VerificationEmail) {
+    await this.send(message, 'reset');
+  }
+
+  async send(message: VerificationEmail, mode: 'verify' | 'reset' = 'verify') {
     const smtpUrl = this.config.get<string>('SMTP_URL');
     if (!smtpUrl) {
       if (this.config.get<string>('NODE_ENV') === 'production') {
@@ -96,6 +105,7 @@ export class VerificationEmailService {
         new URL(smtpUrl),
         this.config.get<string>('WEB_ORIGIN', 'http://localhost:3000'),
         message,
+        mode,
       );
     } catch {
       throw new ServiceUnavailableException('Não foi possível enviar o e-mail de verificação');

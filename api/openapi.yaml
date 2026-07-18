@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Xadrez Essencial API
-  version: 1.0.0
+  version: 1.1.0
 servers:
   - url: https://api.example.com/v1
 security:
@@ -70,6 +70,38 @@ paths:
       responses:
         '200':
           description: Usuário ativado
+        '401': {$ref: '#/components/responses/Problem'}
+  /auth/password/forgot:
+    post:
+      security: []
+      summary: Request a password reset without revealing account existence
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordInput'
+      responses:
+        '204':
+          description: Request processed
+        '400': {$ref: '#/components/responses/Problem'}
+        '503': {$ref: '#/components/responses/Problem'}
+  /auth/password/reset:
+    post:
+      security: []
+      summary: Replace the password with a single-use reset token
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordInput'
+      responses:
+        '204':
+          description: Password replaced and sessions revoked
+        '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
   /auth/login:
     post:
@@ -1015,6 +1047,19 @@ components:
       required: [token]
       properties:
         token: {type: string, minLength: 20}
+      additionalProperties: false
+    ForgotPasswordInput:
+      type: object
+      required: [email]
+      properties:
+        email: {type: string, format: email, maxLength: 254}
+      additionalProperties: false
+    ResetPasswordInput:
+      type: object
+      required: [token, newPassword]
+      properties:
+        token: {type: string, minLength: 20, maxLength: 2048}
+        newPassword: {type: string, minLength: 12, maxLength: 128}
       additionalProperties: false
     LoginInput:
       type: object
