@@ -28,6 +28,8 @@ Phase 14 - validate the ten-volume source PDF and generate schema-compliant less
 - Local content validation, targeted formatting, lint, typecheck, all local tests and the full monorepo build pass.
 - Lesson importer database E2E is ready but cannot run locally because this Windows host has no Docker/PostgreSQL; PostgreSQL execution is required in CI.
 - CI and automatic Git-pull release now import exercises, import/publish lessons and verify the public course endpoint. Phase 15 remains blocked until database CI and VPS acceptance pass.
+- PR #14 first CI: quality and containers passed; database exposed three test-fixture assumptions (old source page and two FK-safe cleanup gaps). Production import itself completed before the E2E failures.
+- The three CI fixture assumptions were corrected locally; API lint/typecheck, focused unit tests, content validation, formatting and diff checks pass before the retry.
 - Seven course/web/contract files appear modified locally without content diff; never stage them.
 
 ## Concluído

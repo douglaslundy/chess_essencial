@@ -68,9 +68,23 @@ function raw(secondTitle = 'Second lesson', secondSlug = 'second-lesson') {
 describeDatabase('lesson importer database integration', () => {
   let sql: ReturnType<typeof postgres>;
 
+  async function deleteTestCourse() {
+    await sql`
+      DELETE FROM lesson_prerequisites
+      WHERE lesson_id IN (
+        SELECT l.id FROM lessons l JOIN course_modules cm ON cm.id = l.module_id
+        JOIN courses c ON c.id = cm.course_id WHERE c.slug = ${courseSlug}
+      ) OR prerequisite_lesson_id IN (
+        SELECT l.id FROM lessons l JOIN course_modules cm ON cm.id = l.module_id
+        JOIN courses c ON c.id = cm.course_id WHERE c.slug = ${courseSlug}
+      )
+    `;
+    await sql`DELETE FROM courses WHERE slug = ${courseSlug}`;
+  }
+
   beforeAll(async () => {
     sql = postgres(process.env.DATABASE_URL!, { max: 1, prepare: false });
-    await sql`DELETE FROM courses WHERE slug = ${courseSlug}`;
+    await deleteTestCourse();
     const [course] = await sql<{ id: string }[]>`
       INSERT INTO courses (slug, title, description) VALUES (${courseSlug}, 'Importer test', 'Temporary') RETURNING id
     `;
@@ -82,7 +96,7 @@ describeDatabase('lesson importer database integration', () => {
   });
 
   afterAll(async () => {
-    await sql`DELETE FROM courses WHERE slug = ${courseSlug}`;
+    await deleteTestCourse();
     await sql`DELETE FROM lesson_import_runs WHERE source_name LIKE 'lesson-importer-%'`;
     await sql.end({ timeout: 5 });
   });

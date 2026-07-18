@@ -75,6 +75,7 @@ describeDatabase('lesson runtime database integration', () => {
   });
 
   afterAll(async () => {
+    await sql`UPDATE user_course_enrollments SET last_lesson_id = NULL WHERE last_lesson_id = ${lessonId}`;
     await sql`DELETE FROM lessons WHERE id = ${lessonId}`;
     await sql.end({ timeout: 5 });
     await app.close();
