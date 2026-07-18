@@ -26,7 +26,7 @@ describeDatabase('exercise importer database integration', () => {
           module: 1,
           chapter: 1,
           number: 50000,
-          pages: [1],
+          pages: [4],
           prompt: 'Explain the mapped concept.',
           solution: 'Mapped answer.',
         },

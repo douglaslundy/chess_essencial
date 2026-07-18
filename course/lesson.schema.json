@@ -6,7 +6,9 @@
     "slug",
     "title",
     "module",
+    "sourcePages",
     "estimatedMinutes",
+    "prerequisites",
     "steps"
   ],
   "properties": {
@@ -15,7 +17,9 @@
       "pattern": "^[a-z0-9-]+$"
     },
     "title": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
     },
     "module": {
       "type": "integer",
@@ -25,8 +29,10 @@
     "sourcePages": {
       "type": "array",
       "items": {
-        "type": "integer"
-      }
+        "type": "integer",
+        "minimum": 1
+      },
+      "minItems": 1
     },
     "estimatedMinutes": {
       "type": "integer",
@@ -35,22 +41,28 @@
     "prerequisites": {
       "type": "array",
       "items": {
-        "type": "string"
-      }
+        "type": "string",
+        "pattern": "^[a-z0-9-]+$"
+      },
+      "minItems": 0
     },
     "steps": {
       "type": "array",
-      "minItems": 1,
+      "minItems": 3,
       "items": {
         "type": "object",
         "required": [
           "stepKey",
           "stepType",
-          "bodyMd"
+          "bodyMd",
+          "expectedActions",
+          "feedback",
+          "nextStepRules"
         ],
         "properties": {
           "stepKey": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$"
           },
           "stepType": {
             "enum": [
@@ -91,9 +103,16 @@
             "items": {
               "type": "object"
             }
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200
           }
-        }
-      }
+        },
+        "additionalProperties": false
+      },
+      "maxItems": 10
     }
-  }
+  },
+  "additionalProperties": false
 }

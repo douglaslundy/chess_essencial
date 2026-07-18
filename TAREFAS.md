@@ -29,7 +29,7 @@ Comparar a release implantada com todo o blueprint, identificar defeitos e risco
 - Healthchecks e commit implantado validados na VPS.
 - Matriz, checklist e `PROGRESSO.md` refletem o estado real.
 
-## Fase 14 — Conteúdo integral do curso e exercícios (P0)
+## Fase 14 - in progress: canonical lessons generated; database gate pending (P0)
 
 ### Objetivo
 

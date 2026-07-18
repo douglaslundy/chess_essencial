@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "turbo run build",
-    "content:validate": "node scripts/validate-exercise-content.mjs",
+    "content:validate": "pnpm run content:validate:exercises && pnpm run content:validate:lessons",
     "dev": "turbo run dev",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -19,7 +19,9 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "load:basic": "node scripts/basic-load.mjs",
-    "db:verify-backup-restore": "bash scripts/verify-backup-restore.sh"
+    "db:verify-backup-restore": "bash scripts/verify-backup-restore.sh",
+    "content:validate:exercises": "node scripts/validate-exercise-content.mjs",
+    "content:validate:lessons": "node scripts/validate-lesson-content.mjs"
   },
   "devDependencies": {
     "@types/node": "26.1.1",

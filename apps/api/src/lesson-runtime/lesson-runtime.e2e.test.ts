@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../bootstrap.js';
 
 const describeDatabase = process.env.RUN_DB_TESTS === 'true' ? describe : describe.skip;
-const lessonId = '00000000-0000-4000-8000-000000000901';
+const lessonId = '00000000-0000-4000-8000-000000000999';
 
 describeDatabase('lesson runtime database integration', () => {
   let app: Awaited<ReturnType<typeof createApp>>;
@@ -17,11 +17,66 @@ describeDatabase('lesson runtime database integration', () => {
     app = await createApp();
     await app.init();
     sql = postgres(process.env.DATABASE_URL!, { max: 1, prepare: false });
+    const [module] = await sql<{ id: string }[]>`
+      SELECT cm.id FROM course_modules cm JOIN courses c ON c.id = cm.course_id
+      WHERE c.slug = 'xadrez-essencial' AND cm.source_volume = 1
+    `;
+    await sql`
+      INSERT INTO lessons (id, module_id, slug, position, title, estimated_minutes, status, version)
+      VALUES (${lessonId}, ${module!.id}, 'runtime-integration-fixture', 999,
+        'Runtime integration fixture', 8, 'published', 1)
+      ON CONFLICT (id) DO UPDATE SET status = 'published'
+    `;
+    await sql`DELETE FROM lesson_steps WHERE lesson_id = ${lessonId}`;
+    await sql`DELETE FROM lesson_source_pages WHERE lesson_id = ${lessonId}`;
+    const steps = [
+      {
+        key: 'boas-vindas',
+        type: 'text',
+        body: 'Start the runtime test.',
+        actions: [],
+        feedback: {},
+      },
+      {
+        key: 'mova-o-peao',
+        type: 'board_instruction',
+        body: 'Move b2 to b3.',
+        fen: '4k3/8/8/8/8/8/1P6/4K3 w - - 0 1',
+        actions: [{ type: 'move', uci: 'b2b3' }],
+        feedback: { correct: 'Correct.', incorrect: 'Tente mover o pe\u00e3o de b2 para b3.' },
+      },
+      {
+        key: 'confirme-a-casa',
+        type: 'quiz',
+        body: 'Where did the pawn finish?',
+        actions: [{ type: 'answer', value: 'b3' }],
+        feedback: { correct: 'Correct.', incorrect: 'Try b3.' },
+      },
+      {
+        key: 'explicacao',
+        type: 'explanation',
+        body: 'The pawn advanced one square.',
+        actions: [],
+        feedback: {},
+      },
+      { key: 'resumo', type: 'summary', body: 'Runtime test complete.', actions: [], feedback: {} },
+    ];
+    for (const [index, step] of steps.entries())
+      await sql`
+        INSERT INTO lesson_steps (lesson_id, step_key, position, step_type, body_md, initial_fen,
+          orientation, expected_actions, feedback, next_step_rules)
+        VALUES (${lessonId}, ${step.key}, ${index + 1}, ${step.type}, ${step.body},
+          ${'fen' in step ? step.fen : null}, 'white', ${JSON.stringify(step.actions)}::text::jsonb,
+          ${JSON.stringify(step.feedback)}::text::jsonb, '[]'::jsonb)
+      `;
+    await sql`INSERT INTO lesson_source_pages (lesson_id, page) VALUES (${lessonId}, 1)`;
     token = await identity('lesson-student@example.com', 'lesson_student');
     otherToken = await identity('other-student@example.com', 'other_student');
   });
 
   afterAll(async () => {
+    await sql`UPDATE user_course_enrollments SET last_lesson_id = NULL WHERE last_lesson_id = ${lessonId}`;
+    await sql`DELETE FROM lessons WHERE id = ${lessonId}`;
     await sql.end({ timeout: 5 });
     await app.close();
   });

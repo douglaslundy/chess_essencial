@@ -13,6 +13,7 @@ export type NormalizedExercise = {
   fen: string | null;
   hints: string[];
   metadata: JsonObject;
+  lessonLinkPosition: number | null;
   moduleNumber: number | null;
   positionType: 'legal_position' | 'illustrative_diagram' | 'text_only';
   promptMd: string;
@@ -251,6 +252,7 @@ export function normalizeExerciseDataset(
         source: isObject(rawItem.source) ? rawItem.source : null,
         sourceName,
       },
+      lessonLinkPosition: null,
       moduleNumber: asPositiveInteger(getValue(rawItem, ALIASES.module)),
       positionType: context.positionType,
       promptMd: asString(getValue(rawItem, ALIASES.prompt))!,
@@ -265,6 +267,21 @@ export function normalizeExerciseDataset(
       title: asString(getValue(rawItem, ALIASES.title)),
     });
   });
+
+  const chapterGroups = new Map<string, NormalizedExercise[]>();
+  for (const exercise of exercises) {
+    if (exercise.moduleNumber === null || exercise.chapterNumber === null) continue;
+    const key = String(exercise.moduleNumber) + ':' + String(exercise.chapterNumber);
+    const group = chapterGroups.get(key) ?? [];
+    group.push(exercise);
+    chapterGroups.set(key, group);
+  }
+  for (const group of chapterGroups.values())
+    group
+      .sort((left, right) => left.sourceNumber - right.sourceNumber)
+      .forEach((exercise, index) => {
+        exercise.lessonLinkPosition = index + 1;
+      });
 
   const reasons: Record<string, number> = {};
   for (const rejection of rejections)
@@ -289,6 +306,7 @@ async function associateExerciseWithLessons(
   exerciseId: string,
   exercise: NormalizedExercise,
 ) {
+  if (exercise.lessonLinkPosition === null || exercise.lessonLinkPosition > 12) return;
   const pages = transaction.array(exercise.sourcePages, 23);
   const lessonRows = await transaction<{ id: string }[]>`
     SELECT DISTINCT l.id
@@ -305,6 +323,7 @@ async function associateExerciseWithLessons(
       SELECT ${lesson.id}, ${exerciseId}, COALESCE(MAX(position), 0) + 1
         FROM lesson_exercises
        WHERE lesson_id = ${lesson.id}
+      HAVING count(*) < 12
       ON CONFLICT (lesson_id, exercise_id) DO NOTHING
     `;
   }
