@@ -6,13 +6,14 @@ import type {
   ExerciseSolution,
   ExerciseTrainingView,
 } from '@xadrez/contracts';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Chess } from 'chess.js';
 
 import { ChessBoard } from '@/components/game/chess-board';
 import { api } from '@/lib/api/client';
 
 import styles from './exercise-trainer.module.css';
+import { guidedChallengeLine } from './guided-challenge-lines';
 
 const emptySearch: ExerciseSearchResult = { items: [], limit: 20, offset: 0, total: 0 };
 const emptyMetrics: ExerciseMetrics = {
@@ -25,6 +26,7 @@ const emptyMetrics: ExerciseMetrics = {
 
 interface ExerciseTrainerProps {
   description?: string;
+  guided?: boolean;
   initialDifficulty?: string;
   initialQuery?: string;
   positionType?: 'legal_position' | 'illustrative_diagram' | 'text_only';
@@ -33,6 +35,7 @@ interface ExerciseTrainerProps {
 
 export function ExerciseTrainer({
   description = 'Busque por tema e módulo; as respostas são avaliadas e persistidas pelo servidor.',
+  guided = false,
   initialDifficulty = '',
   initialQuery = '',
   positionType,
@@ -50,6 +53,9 @@ export function ExerciseTrainer({
   const [solution, setSolution] = useState<ExerciseSolution | null>(null);
   const [message, setMessage] = useState('Carregando exercícios…');
   const [startedAt, setStartedAt] = useState(0);
+  const [boardLocked, setBoardLocked] = useState(false);
+  const autoStarted = useRef(false);
+  const opponentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [boardHistory, setBoardHistory] = useState<{
     exerciseId: string;
     index: number;
@@ -72,6 +78,7 @@ export function ExerciseTrainer({
   }, [category, difficulty, moduleNumber, positionType, query]);
 
   const load = useCallback(async () => {
+    if (guided) return;
     const accessToken = token();
     if (!accessToken) return setMessage('Entre na sua conta para acessar os exercícios.');
     try {
@@ -85,13 +92,13 @@ export function ExerciseTrainer({
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Falha ao carregar exercícios.');
     }
-  }, [filters]);
+  }, [filters, guided]);
 
   useEffect(() => {
-    queueMicrotask(load);
-  }, [load]);
+    if (!guided) queueMicrotask(load);
+  }, [guided, load]);
 
-  async function startTraining() {
+  const startTraining = useCallback(async () => {
     const accessToken = token();
     if (!accessToken) return;
     const search = filters();
@@ -116,17 +123,55 @@ export function ExerciseTrainer({
         accessToken,
       );
       setTraining(value);
+      if (guided) {
+        window.localStorage.setItem('xadrez.challenge_training_session', value.sessionId);
+      }
       setBoardHistory(null);
       setHint('');
       setSolution(null);
       setStartedAt(Date.now());
+      setBoardLocked(false);
       setMessage(
         value.total ? 'Treino iniciado.' : 'Nenhum exercício disponível para este treino.',
       );
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Falha ao iniciar treino.');
     }
-  }
+  }, [filters, guided]);
+
+  useEffect(() => {
+    if (!guided || autoStarted.current) return;
+    autoStarted.current = true;
+    queueMicrotask(() => {
+      void (async () => {
+        const accessToken = token();
+        const savedSession = window.localStorage.getItem('xadrez.challenge_training_session');
+        if (accessToken && savedSession) {
+          try {
+            const saved = await api.getExerciseTraining(savedSession, accessToken);
+            setTraining(saved);
+            setStartedAt(Date.now());
+            setMessage(
+              saved.status === 'completed'
+                ? 'Parabéns! Você concluiu todos os desafios.'
+                : 'Continuando do último desafio liberado.',
+            );
+            return;
+          } catch {
+            window.localStorage.removeItem('xadrez.challenge_training_session');
+          }
+        }
+        await startTraining();
+      })();
+    });
+  }, [guided, startTraining]);
+
+  useEffect(
+    () => () => {
+      if (opponentTimer.current) clearTimeout(opponentTimer.current);
+    },
+    [],
+  );
 
   async function revealHint() {
     const accessToken = token();
@@ -151,13 +196,14 @@ export function ExerciseTrainer({
     }
   }
 
-  async function submit() {
+  async function submit(submittedMoves?: string[]) {
     const accessToken = token();
     const exercise = training?.currentExercise;
     const submittedLine =
-      exercise?.answerFormat === 'free_text'
+      submittedMoves ??
+      (exercise?.answerFormat === 'free_text'
         ? [line.trim()].filter(Boolean)
-        : line.trim().split(/\s+/).filter(Boolean);
+        : line.trim().split(/\s+/).filter(Boolean));
     if (!accessToken || !training || !exercise || submittedLine.length === 0) return;
     try {
       const attempt = await api.submitExerciseAttempt(
@@ -175,8 +221,15 @@ export function ExerciseTrainer({
       setHint('');
       setSolution(null);
       setStartedAt(Date.now());
-      setMessage(attempt.correct ? `Correto. Pontuação: ${attempt.score}.` : 'Resposta incorreta.');
-      setMetrics(await api.getExerciseMetrics(accessToken));
+      setBoardLocked(false);
+      setMessage(
+        attempt.correct
+          ? attempt.training?.status === 'completed'
+            ? 'Parabéns! Você concluiu todos os desafios.'
+            : `Correto. Próximo desafio liberado. Pontuação: ${attempt.score}.`
+          : 'Ainda não. O desafio continua disponível para você tentar novamente.',
+      );
+      if (!guided) setMetrics(await api.getExerciseMetrics(accessToken));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Falha ao avaliar tentativa.');
     }
@@ -189,7 +242,14 @@ export function ExerciseTrainer({
       : (current?.fen ?? null);
 
   function playBoardMove(uci: string) {
-    if (!boardFen || !current || current.positionType !== 'legal_position') return;
+    if (
+      !boardFen ||
+      !current ||
+      boardLocked ||
+      current.positionType !== 'legal_position' ||
+      (boardHistory && boardHistory.index < boardHistory.moves.length)
+    )
+      return;
     try {
       const chess = new Chess(boardFen);
       const move = chess.move({
@@ -207,6 +267,53 @@ export function ExerciseTrainer({
       setBoardHistory({ exerciseId: current.id, index: previous.index + 1, moves, positions });
       if (current.answerFormat === 'move_sequence') setLine(moves.join(' '));
       else setMessage('Movimento reproduzido no tabuleiro; responda à pergunta no campo de texto.');
+
+      if (guided) {
+        const expected = guidedChallengeLine(current.id);
+        if (!expected || canonical !== expected[moves.length - 1]) {
+          setBoardLocked(true);
+          setMessage('Esse não é o lance esperado. Avaliando para você tentar novamente…');
+          void submit(moves);
+          return;
+        }
+        const opponentMove = expected[moves.length];
+        if (!opponentMove) {
+          setBoardLocked(true);
+          setMessage('Lance correto. Liberando o próximo desafio…');
+          void submit(moves);
+          return;
+        }
+
+        setBoardLocked(true);
+        setMessage('Boa jogada. O adversário está respondendo…');
+        opponentTimer.current = setTimeout(() => {
+          try {
+            const replyPosition = new Chess(chess.fen());
+            const reply = replyPosition.move({
+              from: opponentMove.slice(0, 2),
+              to: opponentMove.slice(2, 4),
+              ...(opponentMove[4] ? { promotion: opponentMove[4] } : {}),
+            });
+            const replyUci = `${reply.from}${reply.to}${reply.promotion ?? ''}`;
+            const repliedMoves = [...moves, replyUci];
+            setBoardHistory({
+              exerciseId: current.id,
+              index: repliedMoves.length,
+              moves: repliedMoves,
+              positions: [...positions, replyPosition.fen()],
+            });
+            setLine(repliedMoves.join(' '));
+            if (repliedMoves.length === expected.length) void submit(repliedMoves);
+            else {
+              setBoardLocked(false);
+              setMessage('O adversário respondeu. Agora é sua vez.');
+            }
+          } catch {
+            setBoardLocked(false);
+            setMessage('Não foi possível reproduzir a resposta automática.');
+          }
+        }, 450);
+      }
     } catch {
       setMessage('Esse lance não é permitido nesta posição.');
     }
@@ -224,75 +331,82 @@ export function ExerciseTrainer({
     );
   }
   return (
-    <main className={styles.page}>
+    <main className={`${styles.page} ${guided ? styles.guidedPage : ''}`}>
       <header className={styles.heading}>
         <span>Treino autoritativo</span>
         <h1>{title}</h1>
         <p>{description}</p>
       </header>
 
-      <section className={styles.metrics} aria-label="Métricas de exercícios">
-        <div>
-          <strong>{metrics.attempted}</strong>
-          <span>Tentativas</span>
-        </div>
-        <div>
-          <strong>{metrics.correct}</strong>
-          <span>Corretas</span>
-        </div>
-        <div>
-          <strong>{metrics.accuracyPercent}%</strong>
-          <span>Precisão</span>
-        </div>
-        <div>
-          <strong>{metrics.averageDurationMs} ms</strong>
-          <span>Tempo médio</span>
-        </div>
-      </section>
+      {!guided ? (
+        <section className={styles.metrics} aria-label="Métricas de exercícios">
+          <div>
+            <strong>{metrics.attempted}</strong>
+            <span>Tentativas</span>
+          </div>
+          <div>
+            <strong>{metrics.correct}</strong>
+            <span>Corretas</span>
+          </div>
+          <div>
+            <strong>{metrics.accuracyPercent}%</strong>
+            <span>Precisão</span>
+          </div>
+          <div>
+            <strong>{metrics.averageDurationMs} ms</strong>
+            <span>Tempo médio</span>
+          </div>
+        </section>
+      ) : null}
 
-      <section className={styles.filters} aria-label="Filtros de exercícios">
-        <label>
-          Busca
-          <input onChange={(event) => setQuery(event.target.value)} value={query} />
-        </label>
-        <label>
-          Categoria
-          <input onChange={(event) => setCategory(event.target.value)} value={category} />
-        </label>
-        <label>
-          Dificuldade
-          <select onChange={(event) => setDifficulty(event.target.value)} value={difficulty}>
-            <option value="">Todas</option>
-            <option value="beginner">Iniciante · até 999</option>
-            <option value="intermediate">Intermediário · 1000–1399</option>
-            <option value="advanced">Avançado · 1400–1799</option>
-            <option value="expert">Especialista · 1800+</option>
-          </select>
-        </label>
-        <label>
-          Módulo
-          <input
-            min="1"
-            max="10"
-            onChange={(event) => setModuleNumber(event.target.value)}
-            type="number"
-            value={moduleNumber}
-          />
-        </label>
-        <button onClick={load} type="button">
-          Buscar
-        </button>
-        <button onClick={startTraining} type="button">
-          Treinar resultados
-        </button>
-      </section>
+      {!guided ? (
+        <section className={styles.filters} aria-label="Filtros de exercícios">
+          <label>
+            Busca
+            <input onChange={(event) => setQuery(event.target.value)} value={query} />
+          </label>
+          <label>
+            Categoria
+            <input onChange={(event) => setCategory(event.target.value)} value={category} />
+          </label>
+          <label>
+            Dificuldade
+            <select onChange={(event) => setDifficulty(event.target.value)} value={difficulty}>
+              <option value="">Todas</option>
+              <option value="beginner">Iniciante · até 999</option>
+              <option value="intermediate">Intermediário · 1000–1399</option>
+              <option value="advanced">Avançado · 1400–1799</option>
+              <option value="expert">Especialista · 1800+</option>
+            </select>
+          </label>
+          <label>
+            Módulo
+            <input
+              min="1"
+              max="10"
+              onChange={(event) => setModuleNumber(event.target.value)}
+              type="number"
+              value={moduleNumber}
+            />
+          </label>
+          <button onClick={load} type="button">
+            Buscar
+          </button>
+          <button onClick={startTraining} type="button">
+            Treinar resultados
+          </button>
+        </section>
+      ) : null}
 
       <p className={styles.status} role="status">
         {message}
       </p>
 
       {current ? (
-        <section className={styles.training} aria-label="Exercício atual">
+        <section
+          className={`${styles.training} ${guided ? styles.guidedTraining : ''}`}
+          aria-label="Exercício atual"
+        >
           <div className={styles.progress}>
             Exercício {training.position} de {training.total}
           </div>
@@ -308,7 +422,11 @@ export function ExerciseTrainer({
           {boardFen ? (
             <div className={styles.boardArea}>
               <ChessBoard
-                disabled={current.positionType !== 'legal_position'}
+                disabled={
+                  current.positionType !== 'legal_position' ||
+                  boardLocked ||
+                  Boolean(boardHistory && boardHistory.index < boardHistory.moves.length)
+                }
                 fen={boardFen}
                 onMove={playBoardMove}
                 orientation="white"
@@ -334,10 +452,12 @@ export function ExerciseTrainer({
                   </button>
                 </div>
               ) : null}
-              <details>
-                <summary>Ver posição FEN</summary>
-                <code className={styles.fen}>{current.fen}</code>
-              </details>
+              {!guided ? (
+                <details>
+                  <summary>Ver posição FEN</summary>
+                  <code className={styles.fen}>{current.fen}</code>
+                </details>
+              ) : null}
             </div>
           ) : (
             <p className={styles.textOnlyNotice}>
@@ -354,28 +474,34 @@ export function ExerciseTrainer({
               <strong>Solução:</strong> {solution.solutionMd}
             </aside>
           ) : null}
-          <label className={styles.answer}>
-            {current.answerFormat === 'free_text'
-              ? 'Resposta'
-              : 'Linha em UCI, separada por espaços'}
-            <input
-              placeholder={
-                current.answerFormat === 'free_text' ? 'Digite sua resposta' : 'e2e4 e7e5'
-              }
-              onChange={(event) => setLine(event.target.value)}
-              value={line}
-            />
-          </label>
+          {!guided ? (
+            <label className={styles.answer}>
+              {current.answerFormat === 'free_text'
+                ? 'Resposta'
+                : 'Linha em UCI, separada por espaços'}
+              <input
+                placeholder={
+                  current.answerFormat === 'free_text' ? 'Digite sua resposta' : 'e2e4 e7e5'
+                }
+                onChange={(event) => setLine(event.target.value)}
+                value={line}
+              />
+            </label>
+          ) : null}
           <div className={styles.actions}>
-            <button onClick={submit} type="button">
-              Enviar tentativa
-            </button>
+            {!guided ? (
+              <button onClick={() => void submit()} type="button">
+                Enviar tentativa
+              </button>
+            ) : null}
             <button onClick={revealHint} type="button">
               Pedir dica
             </button>
-            <button onClick={revealSolution} type="button">
-              Ver solução
-            </button>
+            {!guided ? (
+              <button onClick={revealSolution} type="button">
+                Ver solução
+              </button>
+            ) : null}
           </div>
         </section>
       ) : training?.status === 'completed' ? (
@@ -385,26 +511,28 @@ export function ExerciseTrainer({
         </section>
       ) : null}
 
-      <section className={styles.results} aria-label="Resultados da busca">
-        <h2>{result.total} exercício(s) encontrado(s)</h2>
-        <div className={styles.grid}>
-          {result.items.map((exercise) => (
-            <article key={exercise.id}>
-              <span>{exercise.category ?? 'Sem categoria'}</span>
-              <h3>{exercise.title ?? `Exercício ${exercise.sourceNumber ?? ''}`}</h3>
-              <p>{exercise.promptMd}</p>
-              <small>
-                Módulo {exercise.moduleNumber ?? '—'} ·{' '}
-                {exercise.positionType === 'legal_position'
-                  ? 'posição legal'
-                  : exercise.positionType === 'text_only'
-                    ? 'texto'
-                    : 'diagrama'}
-              </small>
-            </article>
-          ))}
-        </div>
-      </section>
+      {!guided ? (
+        <section className={styles.results} aria-label="Resultados da busca">
+          <h2>{result.total} exercício(s) encontrado(s)</h2>
+          <div className={styles.grid}>
+            {result.items.map((exercise) => (
+              <article key={exercise.id}>
+                <span>{exercise.category ?? 'Sem categoria'}</span>
+                <h3>{exercise.title ?? `Exercício ${exercise.sourceNumber ?? ''}`}</h3>
+                <p>{exercise.promptMd}</p>
+                <small>
+                  Módulo {exercise.moduleNumber ?? '—'} ·{' '}
+                  {exercise.positionType === 'legal_position'
+                    ? 'posição legal'
+                    : exercise.positionType === 'text_only'
+                      ? 'texto'
+                      : 'diagrama'}
+                </small>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }

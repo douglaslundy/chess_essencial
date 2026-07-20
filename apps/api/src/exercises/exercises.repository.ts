@@ -161,9 +161,17 @@ export class ExercisesRepository {
       if (!session) throw new Error('Training session was not created');
       await transaction`
         INSERT INTO exercise_training_items (session_id, exercise_id, position)
-        SELECT ${session.id}, selected.id, row_number() OVER (ORDER BY selected.source_number NULLS LAST, selected.id)
+        SELECT ${session.id}, selected.id, row_number() OVER (ORDER BY selected.difficulty_rank, selected.source_number NULLS LAST, selected.id)
           FROM (
-            SELECT e.id, e.source_number FROM exercises e
+            SELECT e.id, e.source_number,
+              CASE e.difficulty
+                WHEN 'beginner' THEN 1
+                WHEN 'intermediate' THEN 2
+                WHEN 'advanced' THEN 3
+                WHEN 'expert' THEN 4
+                ELSE 5
+              END AS difficulty_rank
+              FROM exercises e
              WHERE e.status = 'published'
                AND (${filter.category}::text IS NULL OR e.category = ${filter.category})
                AND (${filter.chapter}::integer IS NULL OR e.chapter_number = ${filter.chapter})
@@ -174,7 +182,7 @@ export class ExercisesRepository {
                AND (${filter.lessonId}::uuid IS NULL OR EXISTS (
                  SELECT 1 FROM lesson_exercises le WHERE le.exercise_id = e.id AND le.lesson_id = ${filter.lessonId}
                ))
-             ORDER BY e.source_number NULLS LAST, e.id LIMIT ${filters.limit}
+             ORDER BY difficulty_rank, e.source_number NULLS LAST, e.id LIMIT ${filters.limit}
           ) selected
       `;
       await transaction`
@@ -278,7 +286,7 @@ export class ExercisesRepository {
 
     const result = await sql.begin(async (transaction) => {
       let hintsUsed = 0;
-      if (input.trainingSessionId) {
+      if (input.trainingSessionId && correct) {
         const [item] = await transaction<{ hints_used: number }[]>`
           SELECT i.hints_used FROM exercise_training_items i
           JOIN exercise_training_sessions s ON s.id = i.session_id
@@ -301,7 +309,7 @@ export class ExercisesRepository {
         ) RETURNING id
       `;
       if (!attempt) throw new Error('Exercise attempt was not created');
-      if (input.trainingSessionId) {
+      if (input.trainingSessionId && correct) {
         await transaction`
           UPDATE exercise_training_items SET completed_at = now()
            WHERE session_id = ${input.trainingSessionId} AND exercise_id = ${exerciseId}

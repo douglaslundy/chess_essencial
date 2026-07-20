@@ -131,6 +131,19 @@ describeDatabase('exercise runtime database integration', () => {
     });
     expect(hint.json()).toMatchObject({ hintNumber: 1, remaining: 0 });
 
+    const incorrect = await app.inject({
+      headers: auth(),
+      method: 'POST',
+      payload: { durationMs: 700, submittedLine: ['e2e3'], trainingSessionId: sessionId },
+      url: `/v1/exercises/${exerciseId}/attempts`,
+    });
+    expect(incorrect.statusCode, incorrect.body).toBe(201);
+    expect(incorrect.json()).toMatchObject({
+      correct: false,
+      training: { completed: 0, position: 1, status: 'started', total: 1 },
+    });
+    expect(incorrect.json().training.currentExercise.id).toBe(exerciseId);
+
     const attempt = await app.inject({
       headers: auth(),
       method: 'POST',
@@ -172,8 +185,8 @@ describeDatabase('exercise runtime database integration', () => {
     });
     expect(metrics.statusCode, metrics.body).toBe(200);
     expect(metrics.json()).toMatchObject({
-      accuracyPercent: 75,
-      attempted: 4,
+      accuracyPercent: 60,
+      attempted: 5,
       correct: 3,
       hintsUsed: 1,
     });

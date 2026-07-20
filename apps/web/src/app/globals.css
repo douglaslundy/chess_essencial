@@ -6,6 +6,10 @@
   --muted: #b8b4ad;
   --red: #d10e17;
   --success: #16a34a;
+  --font-page-title: clamp(1.9rem, 4vw, 3rem);
+  --font-section-title: clamp(1.25rem, 2.2vw, 1.65rem);
+  --font-card-title: clamp(1.1rem, 1.8vw, 1.4rem);
+  --page-padding: clamp(1rem, 3vw, 2.5rem);
   color-scheme: dark;
   font-family: Inter, Geist, Arial, sans-serif;
 }
@@ -68,8 +72,14 @@ a {
 h1 {
   margin: 0.5rem 0;
   font-family: Georgia, serif;
-  font-size: clamp(3rem, 10vw, 6rem);
-  line-height: 0.95;
+  font-size: var(--font-page-title);
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+h2 {
+  line-height: 1.2;
+  text-wrap: balance;
 }
 
 .lead {
@@ -285,20 +295,20 @@ input:focus-visible {
 .playPage {
   width: min(100%, 90rem);
   margin: 0 auto;
-  padding: clamp(2rem, 5vw, 5rem);
+  padding: var(--page-padding);
 }
 
 .dashboardPage h1,
 .pageHeader h1 {
   max-width: 55rem;
-  font-size: clamp(2.6rem, 6vw, 5.5rem);
+  font-size: var(--font-page-title);
 }
 
 .dashboardCards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
-  margin-top: 3rem;
+  margin-top: 1.5rem;
 }
 
 .primaryCard,
@@ -333,7 +343,7 @@ input:focus-visible {
 .primaryCard strong,
 .secondaryCard strong {
   font-family: Georgia, serif;
-  font-size: 2rem;
+  font-size: var(--font-card-title);
 }
 
 .primaryCard small,
@@ -346,7 +356,7 @@ input:focus-visible {
   align-items: end;
   justify-content: space-between;
   gap: 2rem;
-  margin-bottom: 2.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .pageHeader h1 {
@@ -440,7 +450,7 @@ input:focus-visible {
 
 .timeCard strong {
   font-family: Georgia, serif;
-  font-size: 2rem;
+  font-size: var(--font-card-title);
 }
 
 .timeCard small {
@@ -458,7 +468,7 @@ input:focus-visible {
 
 .queueCard h2 {
   font-family: Georgia, serif;
-  font-size: 1.75rem;
+  font-size: var(--font-section-title);
 }
 
 .queueCard p {
@@ -628,8 +638,10 @@ input:focus-visible {
 
 .boardColumn {
   grid-area: board;
+  display: grid;
   min-width: 0;
   align-self: center;
+  justify-items: center;
   overflow: hidden;
 }
 
@@ -644,6 +656,10 @@ input:focus-visible {
     '. files-bottom .';
   gap: 0.2rem;
   margin: 0 auto;
+}
+
+.gamePage .boardWithCoordinates {
+  width: min(100%, calc(100dvh - 9rem), 46.5rem);
 }
 
 .boardFiles,
@@ -1243,12 +1259,12 @@ input:focus-visible {
 /* Phase 7: history and review */
 .historyPage,
 .reviewPage {
-  padding: clamp(24px, 4vw, 56px);
+  padding: var(--page-padding);
 }
 .pageHeading h1,
 .reviewHeader h1 {
   font-family: Georgia, serif;
-  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-size: var(--font-page-title);
   margin: 8px 0;
 }
 .historyFilters,
@@ -1383,7 +1399,12 @@ input:focus-visible {
   justify-content: space-between;
 }
 .reviewBoard {
+  display: grid;
   min-width: 0;
+  justify-items: center;
+}
+.reviewBoard .boardWithCoordinates {
+  width: min(100%, calc(100dvh - 11rem), 46.5rem);
 }
 .annotationPreview {
   background: rgba(216, 182, 108, 0.12);
@@ -1552,6 +1573,10 @@ input:focus-visible {
   grid-template-columns: minmax(18rem, 1fr) minmax(18rem, 0.75fr);
   gap: 1.5rem;
   align-items: start;
+}
+.lessonRuntimeGrid > .boardWithCoordinates {
+  width: min(100%, calc(100dvh - 11rem), 46.5rem);
+  justify-self: center;
 }
 .lessonStepCard,
 .lessonComplete {

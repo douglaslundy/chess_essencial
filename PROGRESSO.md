@@ -2,14 +2,14 @@
 
 ## Última atualização
 
-2026-07-18 - Realtime handshake, board UX, human/bot separation and playable challenge catalog implemented on branch codex/realtime-board-challenges; full validation is in progress.
+2026-07-20 - Correção transacional do treino guiado aplicada e validada localmente; pronta para commit/push.
 ## Tarefa em andamento
 
-Validate and deliver realtime/board fixes plus the dedicated playable Challenges area.
+Reformular Desafios como trilha progressiva automática e centralizar todas as telas com tabuleiro.
 ## Contexto necessário
 
 - Phase 15 merged through PR #15 at commit 8d9bb94; PR/main CI and automatic Git-pull deploy passed.
-- Current branch: codex/realtime-board-challenges, based on merged main f7bf942.
+- Current branch: main at commit aae9c80; CI final passou nos três jobs e deploy automático está em andamento.
 - Confirmed defects: menu links point to nonexistent /ranking and /cursos; no Meus dados page; sidebar has no mobile mode; exercises render FEN/text instead of ChessBoard; demo game attempts realtime lookup for id demo.
 - Required bot behavior: automatic fallback when no compatible human is queued, optional difficulty/color, server-authoritative legal moves, bot games unrated.
 - Mobile/portal acceptance passed locally: web TypeScript passed and 8 web tests passed, including legal moves and incomplete illustrative FEN rendering.
@@ -31,9 +31,29 @@ Validate and deliver realtime/board fixes plus the dedicated playable Challenges
 - Horizontal page overflow is clipped at the shell while wide ranking tables scroll only inside their card.
 - All local gates passed after final formatting: lint, typecheck, all non-database tests, SDK/OpenAPI generation check and production build; /app/desafios is included in the Next production route manifest.
 - Charset scan checked 27 changed/untracked files as strict UTF-8 with no BOM/mojibake; secret candidate scan and git diff --check passed.
-- Docker is not installed locally. Clean migration 0011, challenge database e2e, rollback and reapply must pass GitHub database-integration before merge.
-- Current validation context: package scripts, database/migrations/0011_playable_challenges.*, apps/api/src/exercises/exercises.e2e.test.ts, and files changed on this branch.
+- GitHub database-integration passed clean migration 0011, challenge scoring, rollback and reapply.
+- Future validation context: authenticated mobile acceptance for live games, exercises/challenges, play and ranking after the VPS returns.
 - Seven course/web/contract files appear modified locally without content diff; never stage them.
+- A única chamada nativa encontrada foi window.confirm na desistência; ConfirmDialog reutilizável já foi adicionado e integrado.
+- Causa visual confirmada: ambos os lados usam o glifo Unicode preto e dependem de recoloração do navegador; substituir por SVG com fill explícito.
+- Causa provável do realtime: as chamadas HTTP renovam o access token, mas GameSocket conserva o token expirado anterior; o access token vence em 15 minutos.
+- GameSocket agora obtém/renova o token a cada autenticação; sessões antigas recuperam userId do JWT para liberar a cor correta do jogador.
+- Peças agora usam SVG com preenchimento explícito, sem depender da recoloração de glifo Unicode no celular.
+- Varredura global não encontrou alert/confirm/prompt executável; somente strings intencionais no teste de sanitização da API.
+- Gates locais passaram: 18 testes web, lint, typecheck, build de produção, Prettier e git diff --check.
+- Erro Body cannot be empty corrigido: Content-Type JSON só é enviado quando a requisição possui corpo.
+- Histórico mantém partidas por desistência/abandono, mas remove Revisar partida; URL direta exibe Revisão indisponível e não carrega dados de revisão.
+- Gates do complemento passaram: 21 testes direcionados, lint, typecheck e build de produção.
+- Tipografia unificada por tokens CSS: títulos de página entre 1.9rem e 3rem, títulos de seção/cartão menores e espaçamentos verticais reduzidos.
+- Varredura cobriu home, dashboard, jogar, cursos, ranking, dados, desafios, exercícios, aulas, histórico e revisão.
+- Gates após tipografia passaram: 23 testes web, lint, typecheck e build de produção.
+- Desafios agora usam um modo guiado sem filtros/listagem: a sessão inicia ou retoma automaticamente e persiste no navegador.
+- Tentativas incorretas não avançam mais a sessão; desafios são ordenados por dificuldade e a resposta adversária é reproduzida automaticamente.
+- Tabuleiros de partida, desafio, aula e revisão receberam centralização e limite baseado na altura da viewport.
+- Bug transacional corrigido: `attempt()` avançava `current_position` e marcava o item concluído mesmo em tentativa incorreta; agora só avança quando `correct` é verdadeiro, alinhado ao teste e2e já existente.
+- challenge-level.ts/challenge-level.test.ts removidos por código morto: challenge-hub.tsx não seleciona mais dificuldade por rating no cliente.
+- Gates locais revalidados após a correção: 24 testes web, 22 testes api (45 e2e de banco seguem pulados por falta de Docker local), lint, typecheck e build de produção (web) passaram.
+- Correção do treino guiado ainda não foi validada contra Postgres real; depende do database-integration do CI.
 ## Concluído
 
 - [x] Phases 1-13 implemented, tested and deployed.
@@ -52,8 +72,10 @@ Validate and deliver realtime/board fixes plus the dedicated playable Challenges
 - [x] Added visible coordinates, symmetric piece designs and explicit beginner-readable notation.
 - [x] Added exercise undo/repeat controls and separated human search from explicit bot play.
 - [x] Added rhythm explanations, overflow containment and the playable Challenges area.
+- [x] PR #17 merged; all required PR and main CI jobs passed.
+- [x] Deploy de a0c54ac concluído exclusivamente por Git pull automático; timer ativo e health da API retornando 200.
 ## Próxima tarefa
 
-1. Commit and push only intended files, then wait for quality, container-validation and database-integration.
-2. Merge only after CI validates migration 0011, challenge scoring, rollback and reapply.
-3. Do not deploy while the VPS is unavailable; when it returns, deployment remains Git pull only.
+1. Commit e push apenas dos arquivos pretendidos.
+2. Aguardar quality, container-validation e database-integration; confirmar que a correção transacional passa no database-integration.
+3. Merge e deploy automático por Git pull somente após CI aprovar.
