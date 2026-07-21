@@ -8,6 +8,7 @@ import { ChessBoard, type BoardOrientation } from './chess-board';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { api, getRealtimeAccessToken, getStoredUserId } from '@/lib/api/client';
 import { GameSocket } from '@/lib/realtime/game-socket';
+import { randomUUID } from '@/lib/uuid';
 
 const initialFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
@@ -214,7 +215,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
         ...(uci[4] ? { promotion: uci[4] } : {}),
       });
       const nextMove: GameMove = {
-        clientMoveId: crypto.randomUUID(),
+        clientMoveId: randomUUID(),
         color: move.color === 'w' ? 'white' : 'black',
         committedAt: new Date().toISOString(),
         fenAfter: chess.fen(),

@@ -11,6 +11,7 @@ import {
 } from '@xadrez/contracts';
 
 import { webEnv } from '@/env';
+import { randomUUID } from '@/lib/uuid';
 
 type ConnectionState = 'connecting' | 'online' | 'reconnecting' | 'offline';
 
@@ -62,7 +63,7 @@ export class GameSocket {
   submitMove(uci: string) {
     this.send('move.submit', {
       gameId: this.gameId,
-      clientMoveId: crypto.randomUUID(),
+      clientMoveId: randomUUID(),
       expectedVersion: this.version,
       uci,
     });
