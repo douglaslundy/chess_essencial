@@ -5,10 +5,18 @@ import { Chess } from 'chess.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { ChessBoard, type BoardOrientation } from './chess-board';
+import { MoveAnnouncement, describeImportantMove, type Announcement } from './move-announcement';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { api, getRealtimeAccessToken, getStoredUserId } from '@/lib/api/client';
 import { usePieceTheme } from '@/lib/piece-theme';
 import { GameSocket } from '@/lib/realtime/game-socket';
+import {
+  isSoundMuted,
+  playCaptureSound,
+  playMoveSound,
+  primeAudio,
+  setSoundMuted,
+} from '@/lib/sound';
 import { randomUUID } from '@/lib/uuid';
 
 const initialFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -87,6 +95,13 @@ export function GameRoom({ gameId }: { gameId: string }) {
   const [resignDialogOpen, setResignDialogOpen] = useState(false);
   const [resigning, setResigning] = useState(false);
   const [viewIndex, setViewIndex] = useState<number | null>(null);
+  const [announcement, setAnnouncement] = useState<Announcement | null>(null);
+  const [muted, setMuted] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMuted(isSoundMuted());
+  }, []);
   const previousMoveCount = useRef(0);
   const [, tick] = useState(0);
   const socketRef = useRef<GameSocket | undefined>(undefined);
@@ -145,6 +160,10 @@ export function GameRoom({ gameId }: { gameId: string }) {
             );
             setServerOffset(Date.parse(clock.serverNow) - Date.now());
             setMessage('Lance confirmado pelo servidor.');
+            if (move.flags.capture) playCaptureSound();
+            else playMoveSound();
+            const described = describeImportantMove(move);
+            if (described) setAnnouncement({ ...described, key: `move-${move.id}` });
           },
           finished: (snapshot, clock) => {
             setState(snapshot);
@@ -348,6 +367,16 @@ export function GameRoom({ gameId }: { gameId: string }) {
             <button className="dangerAction" onClick={() => action('resign')} type="button">
               ⚑ Desistir
             </button>
+            <button
+              onClick={() => {
+                const next = !muted;
+                setMuted(next);
+                setSoundMuted(next);
+              }}
+              type="button"
+            >
+              {muted ? '🔇 Som' : '🔊 Som'}
+            </button>
           </div>
         ) : null}
         <Player
@@ -383,6 +412,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
                   : undefined
           }
           onMove={(uci) => {
+            primeAudio();
             if (isDemo) playDemoMove(uci);
             else {
               socketRef.current?.submitMove(uci);
@@ -422,6 +452,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
             clock={displayedClock(state, orientation, serverOffset)}
           />
         </div>
+        <MoveAnnouncement announcement={announcement} />
         <p className="gameMessage" role="status">
           {message}
         </p>
