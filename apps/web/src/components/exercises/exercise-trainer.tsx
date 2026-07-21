@@ -24,6 +24,18 @@ const emptyMetrics: ExerciseMetrics = {
   hintsUsed: 0,
 };
 
+function uciToChessMove(uci: string) {
+  return {
+    from: uci.slice(0, 2),
+    to: uci.slice(2, 4),
+    ...(uci[4] ? { promotion: uci[4] } : {}),
+  };
+}
+
+function moveToUci(move: { from: string; promotion?: string | undefined; to: string }) {
+  return `${move.from}${move.to}${move.promotion ?? ''}`;
+}
+
 type ExerciseSource = 'all' | 'classic' | 'book';
 
 interface ExerciseTrainerProps {
@@ -61,7 +73,7 @@ export function ExerciseTrainer({
   const [message, setMessage] = useState('Carregando exercícios…');
   const [startedAt, setStartedAt] = useState(0);
   const [boardLocked, setBoardLocked] = useState(false);
-  const [attemptOutcome, setAttemptOutcome] = useState<'idle' | 'correct' | 'incorrect'>('idle');
+  const [showRetryBanner, setShowRetryBanner] = useState(false);
   const autoStarted = useRef(false);
   const opponentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [boardHistory, setBoardHistory] = useState<{
@@ -75,16 +87,28 @@ export function ExerciseTrainer({
     return window.localStorage.getItem('xadrez.access_token');
   }
 
-  const filters = useCallback(() => {
-    const value = new URLSearchParams();
-    if (query.trim()) value.set('q', query.trim());
-    if (category.trim()) value.set('category', category.trim());
-    if (difficulty) value.set('difficulty', difficulty);
-    if (moduleNumber) value.set('module', moduleNumber);
-    if (positionType) value.set('positionType', positionType);
-    if (source !== 'all') value.set('source', source);
-    return value;
-  }, [category, difficulty, moduleNumber, positionType, query, source]);
+  const filters = useCallback(
+    (overrides?: { source?: ExerciseSource }) => {
+      const value = new URLSearchParams();
+      if (query.trim()) value.set('q', query.trim());
+      if (category.trim()) value.set('category', category.trim());
+      if (difficulty) value.set('difficulty', difficulty);
+      if (moduleNumber) value.set('module', moduleNumber);
+      if (positionType) value.set('positionType', positionType);
+      const effectiveSource = overrides?.source ?? source;
+      if (effectiveSource !== 'all') value.set('source', effectiveSource);
+      return value;
+    },
+    [category, difficulty, moduleNumber, positionType, query, source],
+  );
+
+  function resetAttemptUi() {
+    setBoardHistory(null);
+    setHint('');
+    setSolution(null);
+    setStartedAt(Date.now());
+    setBoardLocked(false);
+  }
 
   const load = useCallback(async () => {
     if (guided) return;
@@ -107,48 +131,49 @@ export function ExerciseTrainer({
     if (!guided) queueMicrotask(load);
   }, [guided, load]);
 
-  const startTraining = useCallback(async () => {
-    const accessToken = token();
-    if (!accessToken) return;
-    const search = filters();
-    const parsedModule = search.get('module');
-    try {
-      const value = await api.startExerciseTraining(
-        {
-          filters: {
-            ...(search.get('category') ? { category: search.get('category')! } : {}),
-            ...(search.get('difficulty') ? { difficulty: search.get('difficulty')! } : {}),
-            limit: 10,
-            ...(parsedModule ? { module: Number(parsedModule) } : {}),
-            ...(search.get('q') ? { q: search.get('q')! } : {}),
-            ...(search.get('positionType')
-              ? {
-                  positionType: search.get('positionType') as
-                    'legal_position' | 'illustrative_diagram' | 'text_only',
-                }
-              : {}),
-            ...(search.get('source') ? { source: search.get('source') as 'classic' | 'book' } : {}),
+  const startTraining = useCallback(
+    async (overrides?: { source?: ExerciseSource }) => {
+      const accessToken = token();
+      if (!accessToken) return;
+      const search = filters(overrides);
+      const parsedModule = search.get('module');
+      try {
+        const value = await api.startExerciseTraining(
+          {
+            filters: {
+              ...(search.get('category') ? { category: search.get('category')! } : {}),
+              ...(search.get('difficulty') ? { difficulty: search.get('difficulty')! } : {}),
+              limit: 10,
+              ...(parsedModule ? { module: Number(parsedModule) } : {}),
+              ...(search.get('q') ? { q: search.get('q')! } : {}),
+              ...(search.get('positionType')
+                ? {
+                    positionType: search.get('positionType') as
+                      'legal_position' | 'illustrative_diagram' | 'text_only',
+                  }
+                : {}),
+              ...(search.get('source')
+                ? { source: search.get('source') as 'classic' | 'book' }
+                : {}),
+            },
           },
-        },
-        accessToken,
-      );
-      setTraining(value);
-      if (guided) {
-        window.localStorage.setItem(storageKey, value.sessionId);
+          accessToken,
+        );
+        setTraining(value);
+        if (guided) {
+          window.localStorage.setItem(storageKey, value.sessionId);
+        }
+        resetAttemptUi();
+        setShowRetryBanner(false);
+        setMessage(
+          value.total ? 'Treino iniciado.' : 'Nenhum exercício disponível para este treino.',
+        );
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : 'Falha ao iniciar treino.');
       }
-      setBoardHistory(null);
-      setHint('');
-      setSolution(null);
-      setStartedAt(Date.now());
-      setBoardLocked(false);
-      setAttemptOutcome('idle');
-      setMessage(
-        value.total ? 'Treino iniciado.' : 'Nenhum exercício disponível para este treino.',
-      );
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Falha ao iniciar treino.');
-    }
-  }, [filters, guided, storageKey]);
+    },
+    [filters, guided, storageKey],
+  );
 
   useEffect(() => {
     if (!guided || autoStarted.current) return;
@@ -177,15 +202,10 @@ export function ExerciseTrainer({
     });
   }, [guided, startTraining, storageKey]);
 
-  const sourceMounted = useRef(false);
-  useEffect(() => {
-    if (!guided || !showSourceFilter) return;
-    if (!sourceMounted.current) {
-      sourceMounted.current = true;
-      return;
-    }
-    void startTraining();
-  }, [source, guided, showSourceFilter, startTraining]);
+  function selectSource(next: ExerciseSource) {
+    setSource(next);
+    void startTraining({ source: next });
+  }
 
   useEffect(
     () => () => {
@@ -237,13 +257,9 @@ export function ExerciseTrainer({
         accessToken,
       );
       setTraining(attempt.training);
-      setBoardHistory(null);
+      resetAttemptUi();
       setLine('');
-      setHint('');
-      setSolution(null);
-      setStartedAt(Date.now());
-      setBoardLocked(false);
-      setAttemptOutcome(attempt.correct ? 'correct' : 'incorrect');
+      setShowRetryBanner(!attempt.correct);
       setMessage(
         attempt.correct
           ? attempt.training?.status === 'completed'
@@ -273,15 +289,11 @@ export function ExerciseTrainer({
       (boardHistory && boardHistory.index < boardHistory.moves.length)
     )
       return;
-    setAttemptOutcome('idle');
+    setShowRetryBanner(false);
     try {
       const chess = new Chess(boardFen);
-      const move = chess.move({
-        from: uci.slice(0, 2),
-        to: uci.slice(2, 4),
-        ...(uci[4] ? { promotion: uci[4] } : {}),
-      });
-      const canonical = `${move.from}${move.to}${move.promotion ?? ''}`;
+      const move = chess.move(uciToChessMove(uci));
+      const canonical = moveToUci(move);
       const previous =
         boardHistory?.exerciseId === current.id
           ? boardHistory
@@ -314,12 +326,8 @@ export function ExerciseTrainer({
           opponentTimer.current = setTimeout(() => {
             try {
               const replyPosition = new Chess(chess.fen());
-              const reply = replyPosition.move({
-                from: opponentMove.slice(0, 2),
-                to: opponentMove.slice(2, 4),
-                ...(opponentMove[4] ? { promotion: opponentMove[4] } : {}),
-              });
-              const replyUci = `${reply.from}${reply.to}${reply.promotion ?? ''}`;
+              const reply = replyPosition.move(uciToChessMove(opponentMove));
+              const replyUci = moveToUci(reply);
               const repliedMoves = [...moves, replyUci];
               setBoardHistory({
                 exerciseId: current.id,
@@ -399,7 +407,7 @@ export function ExerciseTrainer({
             <button
               aria-pressed={source === option.value}
               key={option.value}
-              onClick={() => setSource(option.value)}
+              onClick={() => selectSource(option.value)}
               type="button"
             >
               {option.label}
@@ -441,7 +449,7 @@ export function ExerciseTrainer({
           <button onClick={load} type="button">
             Buscar
           </button>
-          <button onClick={startTraining} type="button">
+          <button onClick={() => void startTraining()} type="button">
             Treinar resultados
           </button>
         </section>
@@ -513,10 +521,10 @@ export function ExerciseTrainer({
               Este exercício do livro não contém uma posição de tabuleiro associada.
             </p>
           )}
-          {guided && hasGuidedLine && attemptOutcome === 'incorrect' ? (
+          {guided && hasGuidedLine && showRetryBanner ? (
             <aside className={styles.incorrectFeedback}>
               <span>Esse não era o lance certo.</span>
-              <button onClick={() => setAttemptOutcome('idle')} type="button">
+              <button onClick={() => setShowRetryBanner(false)} type="button">
                 ↻ Tentar novamente
               </button>
             </aside>
