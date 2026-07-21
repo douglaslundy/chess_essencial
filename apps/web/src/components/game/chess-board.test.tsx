@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
 import type { GameMove } from '@xadrez/contracts';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { createElement } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { boardSquares, ChessBoard } from './chess-board';
 import { formatClock, formatMove } from './game-room';
+
+afterEach(() => cleanup());
 
 describe('ChessBoard', () => {
   it('keeps the expected orientation on desktop and mobile layouts', () => {
@@ -89,5 +91,43 @@ describe('ChessBoard', () => {
 
   it('makes SAN notation explicit for beginners', () => {
     expect(formatMove({ san: 'Nh3', from: 'f2', to: 'h3' } as GameMove)).toBe('Nh3 · cavalo f2→h3');
+  });
+
+  it('renders classic SVG pieces by default', () => {
+    render(
+      createElement(ChessBoard, {
+        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+        onMove: vi.fn(),
+        orientation: 'white',
+      }),
+    );
+    expect(document.querySelectorAll('svg.chessPiece').length).toBe(32);
+    expect(document.querySelectorAll('img.pieceImage').length).toBe(0);
+  });
+
+  it('renders Staunton 3D pieces as images when pieceTheme is staunton_3d', () => {
+    render(
+      createElement(ChessBoard, {
+        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+        onMove: vi.fn(),
+        orientation: 'white',
+        pieceTheme: 'staunton_3d',
+      }),
+    );
+    const images = document.querySelectorAll<HTMLImageElement>('img.pieceImage');
+    expect(images.length).toBe(32);
+    expect(images[0]?.src).toContain('/piece-themes/staunton-3d/');
+  });
+
+  it('renders wood SVG pieces when pieceTheme is wood', () => {
+    render(
+      createElement(ChessBoard, {
+        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+        onMove: vi.fn(),
+        orientation: 'white',
+        pieceTheme: 'wood',
+      }),
+    );
+    expect(document.querySelectorAll('svg.woodPiece').length).toBe(32);
   });
 });

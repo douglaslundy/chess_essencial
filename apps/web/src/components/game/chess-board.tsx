@@ -12,6 +12,17 @@ const pieceNames: Record<PieceSymbol, string> = {
   p: 'peão',
 };
 
+const pieceFileNames: Record<PieceSymbol, string> = {
+  k: 'king',
+  q: 'queen',
+  r: 'rook',
+  b: 'bishop',
+  n: 'knight',
+  p: 'pawn',
+};
+
+export type PieceTheme = 'classic' | 'staunton_3d' | 'wood';
+
 export type BoardOrientation = 'white' | 'black';
 type BoardPiece = { color: Color; type: PieceSymbol };
 
@@ -78,6 +89,85 @@ function ChessPiece({ color, type }: BoardPiece) {
   );
 }
 
+function WoodChessPiece({ color, type }: BoardPiece) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={`chessPiece woodPiece ${color === 'w' ? 'whitePiece' : 'blackPiece'}`}
+      data-color={color}
+      data-piece={type}
+      focusable="false"
+      viewBox="0 0 64 64"
+    >
+      <path className="woodBase" d="M14 50h36l4 8H10l4-8Z" />
+      <path className="woodBase" d="M20 42h24l3 8H17l3-8Z" />
+      {type === 'p' ? <circle className="woodBody" cx="32" cy="28" r="11" /> : null}
+      {type === 'r' ? (
+        <>
+          <rect className="woodBody" height="28" rx="3" width="22" x="21" y="14" />
+          <path className="woodBody" d="M19 14h4v-5h6v5h6v-5h6v5h4v6H19v-6Z" />
+        </>
+      ) : null}
+      {type === 'n' ? (
+        <path
+          className="woodBody"
+          d="M24 42c-1-10 1-18 8-23l-3-6c9 2 14 9 13 18l3 11c1 3-1 5-4 5h-4l-2-6-3 6h-8Z"
+        />
+      ) : null}
+      {type === 'b' ? (
+        <>
+          <ellipse className="woodBody" cx="32" cy="30" rx="10" ry="16" />
+          <circle className="woodBody" cx="32" cy="10" r="4" />
+          <path
+            className="woodDetail"
+            d="M26 24 38 30"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+        </>
+      ) : null}
+      {type === 'q' ? (
+        <>
+          <ellipse className="woodBody" cx="32" cy="32" rx="12" ry="14" />
+          <circle className="woodDetail" cx="32" cy="10" r="4" />
+          <circle className="woodDetail" cx="18" cy="16" r="3" />
+          <circle className="woodDetail" cx="46" cy="16" r="3" />
+          <circle className="woodDetail" cx="24" cy="12" r="3" />
+          <circle className="woodDetail" cx="40" cy="12" r="3" />
+        </>
+      ) : null}
+      {type === 'k' ? (
+        <>
+          <ellipse className="woodBody" cx="32" cy="32" rx="12" ry="15" />
+          <rect className="woodDetail" height="14" width="6" x="29" y="4" />
+          <rect className="woodDetail" height="6" width="16" x="24" y="8" />
+        </>
+      ) : null}
+    </svg>
+  );
+}
+
+function StauntonPieceImage({ color, type }: BoardPiece) {
+  const colorName = color === 'w' ? 'white' : 'black';
+  return (
+    <img
+      alt=""
+      aria-hidden="true"
+      className={`pieceImage ${color === 'w' ? 'whitePiece' : 'blackPiece'}`}
+      data-color={color}
+      data-piece={type}
+      src={`/piece-themes/staunton-3d/${colorName}-${pieceFileNames[type]}.png`}
+    />
+  );
+}
+
+function renderPiece(piece: BoardPiece, theme: PieceTheme) {
+  if (theme === 'staunton_3d') return <StauntonPieceImage color={piece.color} type={piece.type} />;
+  if (theme === 'wood') return <WoodChessPiece color={piece.color} type={piece.type} />;
+  return <ChessPiece color={piece.color} type={piece.type} />;
+}
+
 function diagramPieces(fen: string) {
   const pieces = new Map<Square, BoardPiece>();
   const ranks = (fen.split(' ')[0] ?? '').split('/');
@@ -114,6 +204,7 @@ interface ChessBoardProps {
   lastMove?: { from: string; to: string } | undefined;
   movableColor?: Color | undefined;
   onMove: (uci: string) => void;
+  pieceTheme?: PieceTheme;
 }
 
 export function ChessBoard({
@@ -123,6 +214,7 @@ export function ChessBoard({
   lastMove,
   movableColor,
   onMove,
+  pieceTheme = 'classic',
 }: ChessBoardProps) {
   const chess = useMemo(() => {
     try {
@@ -208,7 +300,12 @@ export function ChessBoard({
             <span key={rank}>{rank}</span>
           ))}
         </div>
-        <div className="chessBoard" role="grid" aria-label="Tabuleiro de xadrez">
+        <div
+          className="chessBoard"
+          data-board-theme={pieceTheme}
+          role="grid"
+          aria-label="Tabuleiro de xadrez"
+        >
           {squares.map((square, index) => {
             const piece = chess?.get(square) ?? fallbackPieces.get(square);
             const isLight = (square.charCodeAt(0) + Number(square[1])) % 2 === 1;
@@ -245,7 +342,7 @@ export function ChessBoard({
                 tabIndex={focused === square ? 0 : -1}
                 type="button"
               >
-                {piece ? <ChessPiece color={piece.color} type={piece.type} /> : null}
+                {piece ? renderPiece(piece, pieceTheme) : null}
                 {destinations.has(square) ? (
                   <span className="moveTarget" aria-hidden="true" />
                 ) : null}
