@@ -30,6 +30,20 @@ export function formatMove(move: GameMove) {
   return `${move.san} · ${name} ${move.from}→${move.to}`;
 }
 
+export function historyBaseIndex(viewIndex: number | null, moves: GameMove[]): number {
+  return viewIndex ?? moves.length - 1;
+}
+
+export function stepHistoryIndex(
+  viewIndex: number | null,
+  offset: -1 | 1,
+  moves: GameMove[],
+): number | null {
+  if (moves.length === 0) return null;
+  const base = historyBaseIndex(viewIndex, moves);
+  return Math.max(0, Math.min(moves.length - 1, base + offset));
+}
+
 function displayedClock(state: GameState, color: BoardOrientation, serverOffset: number) {
   const base = color === 'white' ? state.whiteClockMs : state.blackClockMs;
   if (state.status !== 'active' || state.sideToMove !== color || !state.activeClockStartedAt)
@@ -72,6 +86,8 @@ export function GameRoom({ gameId }: { gameId: string }) {
   const [serverOffset, setServerOffset] = useState(0);
   const [resignDialogOpen, setResignDialogOpen] = useState(false);
   const [resigning, setResigning] = useState(false);
+  const [viewIndex, setViewIndex] = useState<number | null>(null);
+  const previousMoveCount = useRef(0);
   const [, tick] = useState(0);
   const socketRef = useRef<GameSocket | undefined>(undefined);
 
@@ -150,6 +166,36 @@ export function GameRoom({ gameId }: { gameId: string }) {
   }, [gameId, isDemo]);
 
   const lastMove = moves.at(-1);
+  useEffect(() => {
+    setViewIndex((current) => {
+      if (
+        current !== null &&
+        current === previousMoveCount.current - 1 &&
+        moves.length > previousMoveCount.current
+      ) {
+        return moves.length - 1;
+      }
+      return current;
+    });
+    previousMoveCount.current = moves.length;
+  }, [moves.length]);
+
+  const viewingHistory = viewIndex !== null;
+  const viewedMove = viewingHistory ? moves[viewIndex] : undefined;
+  const displayFen = viewedMove ? viewedMove.fenAfter : state.currentFen;
+
+  function viewMove(ply: number) {
+    setViewIndex(ply - 1);
+  }
+
+  function stepView(offset: -1 | 1) {
+    setViewIndex((current) => stepHistoryIndex(current, offset, moves));
+  }
+
+  function returnToLive() {
+    setViewIndex(null);
+  }
+
   const white = state.players.find((player) => player.color === 'white');
   const black = state.players.find((player) => player.color === 'black');
   const canMove =
@@ -322,8 +368,8 @@ export function GameRoom({ gameId }: { gameId: string }) {
           />
         </div>
         <ChessBoard
-          disabled={!canMove}
-          fen={state.currentFen}
+          disabled={viewingHistory || !canMove}
+          fen={displayFen}
           lastMove={lastMove ? { from: lastMove.from, to: lastMove.to } : undefined}
           movableColor={
             isDemo
@@ -346,6 +392,28 @@ export function GameRoom({ gameId }: { gameId: string }) {
           orientation={orientation}
           pieceTheme={pieceTheme}
         />
+        {!isDemo ? (
+          <div className="historyControls">
+            <button disabled={moves.length === 0} onClick={() => stepView(-1)} type="button">
+              ← Lance anterior
+            </button>
+            <button
+              disabled={viewIndex === null || viewIndex >= moves.length - 1}
+              onClick={() => stepView(1)}
+              type="button"
+            >
+              Próximo lance →
+            </button>
+          </div>
+        ) : null}
+        {viewingHistory ? (
+          <div className="historyBanner" role="status">
+            Vendo lance {viewIndex! + 1} de {moves.length}
+            <button onClick={returnToLive} type="button">
+              Voltar ao vivo
+            </button>
+          </div>
+        ) : null}
         <div className="mobilePlayer">
           <Player
             color={orientation}
@@ -373,8 +441,30 @@ export function GameRoom({ gameId }: { gameId: string }) {
             groupedMoves.map((row) => (
               <div className="moveRow" key={row.number}>
                 <span>{row.number}.</span>
-                <strong>{row.white ? formatMove(row.white) : ''}</strong>
-                <strong>{row.black ? formatMove(row.black) : ''}</strong>
+                {row.white ? (
+                  <button
+                    aria-current={viewIndex === row.white.ply - 1}
+                    className="moveLink"
+                    onClick={() => viewMove(row.white!.ply)}
+                    type="button"
+                  >
+                    {formatMove(row.white)}
+                  </button>
+                ) : (
+                  <strong />
+                )}
+                {row.black ? (
+                  <button
+                    aria-current={viewIndex === row.black.ply - 1}
+                    className="moveLink"
+                    onClick={() => viewMove(row.black!.ply)}
+                    type="button"
+                  >
+                    {formatMove(row.black)}
+                  </button>
+                ) : (
+                  <strong />
+                )}
               </div>
             ))
           ) : (

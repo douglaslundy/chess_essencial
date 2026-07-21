@@ -905,11 +905,32 @@ input:focus-visible {
   padding: 0.45rem;
 }
 
-.moveRow strong {
+.moveRow strong,
+.moveRow .moveLink {
   min-width: 0;
   overflow-wrap: anywhere;
   font-size: 0.78rem;
   line-height: 1.35;
+}
+
+.moveRow .moveLink {
+  border: 0;
+  border-radius: 0.3rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+}
+
+.moveRow .moveLink:hover {
+  color: var(--red-bright);
+}
+
+.moveRow .moveLink[aria-current='true'] {
+  color: var(--red-bright);
+  text-decoration: underline;
 }
 
 .moveRow:nth-child(odd) {
@@ -958,6 +979,53 @@ input:focus-visible {
   padding: 0.65rem 1rem;
   color: #fde3ad;
   font-size: 0.85rem;
+}
+
+.historyControls {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.historyControls button {
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 0.45rem 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.historyControls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.historyBanner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  border-radius: 999px;
+  background: #291c08;
+  padding: 0.5rem 1rem;
+  color: #fde3ad;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.historyBanner button {
+  border: 0;
+  border-radius: 999px;
+  background: #fde3ad;
+  color: #291c08;
+  padding: 0.3rem 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 .gameMessage {
