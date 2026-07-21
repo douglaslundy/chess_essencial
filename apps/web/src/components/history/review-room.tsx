@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { reviewEligibility, type ReviewEligibility } from './review-eligibility';
 import { ChessBoard } from '@/components/game/chess-board';
 import { api } from '@/lib/api/client';
+import { usePieceTheme } from '@/lib/piece-theme';
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
@@ -17,6 +18,7 @@ export interface FutureEvaluation {
 }
 
 export function ReviewRoom({ gameId }: { gameId: string }) {
+  const { theme: pieceTheme } = usePieceTheme();
   const [state, setState] = useState<GameState | null>(null);
   const [moves, setMoves] = useState<GameMove[]>([]);
   const [annotations, setAnnotations] = useState<ReviewAnnotation[]>([]);
@@ -140,6 +142,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
           }
           onMove={() => undefined}
           orientation="white"
+          pieceTheme={pieceTheme}
         />
         {highlight ? <p className="annotationPreview">Destaque: {highlight}</p> : null}
         {arrowFrom && arrowTo ? (

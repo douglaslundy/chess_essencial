@@ -11,6 +11,7 @@ import { Chess } from 'chess.js';
 
 import { ChessBoard } from '@/components/game/chess-board';
 import { api } from '@/lib/api/client';
+import { usePieceTheme } from '@/lib/piece-theme';
 
 import styles from './exercise-trainer.module.css';
 import { guidedChallengeLine } from './guided-challenge-lines';
@@ -60,6 +61,7 @@ export function ExerciseTrainer({
   title = 'Exercícios de Xadrez Essencial',
 }: ExerciseTrainerProps = {}) {
   const [category, setCategory] = useState('');
+  const { theme: pieceTheme } = usePieceTheme();
   const [difficulty, setDifficulty] = useState(initialDifficulty);
   const [moduleNumber, setModuleNumber] = useState('');
   const [query, setQuery] = useState(initialQuery);
@@ -487,6 +489,7 @@ export function ExerciseTrainer({
                 fen={boardFen}
                 onMove={playBoardMove}
                 orientation="white"
+                pieceTheme={pieceTheme}
               />
               {current.positionType === 'legal_position' ? (
                 <div

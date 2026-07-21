@@ -1762,3 +1762,26 @@ input:focus-visible {
   background: transparent;
   color: #d8b85f;
 }
+
+.sourceFilterPreview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.sourceFilterPreview button {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 0.6rem 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sourceFilterPreview button[aria-pressed='true'] {
+  border-color: var(--red-bright);
+  background: var(--red-bright);
+  color: #1c1917;
+}

@@ -4,11 +4,18 @@ import type { PublicUser, UpdateMeInput } from '@xadrez/contracts';
 import { useEffect, useState, type FormEvent } from 'react';
 
 import { api } from '@/lib/api/client';
+import { usePieceTheme } from '@/lib/piece-theme';
 import styles from '@/components/portal/portal-pages.module.css';
 
 export default function MyDataPage() {
   const [user, setUser] = useState<PublicUser | null>(null);
   const [message, setMessage] = useState('Carregando seus dados…');
+  const { theme: pieceTheme, setTheme: setPieceTheme } = usePieceTheme();
+  const themeOptions: { value: 'classic' | 'staunton_3d' | 'wood'; label: string }[] = [
+    { label: 'Clássico', value: 'classic' },
+    { label: 'Staunton 3D', value: 'staunton_3d' },
+    { label: 'Madeira', value: 'wood' },
+  ];
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -130,6 +137,23 @@ export default function MyDataPage() {
             Salvar alterações
           </button>
         </form>
+      ) : null}
+      {user ? (
+        <section className={styles.formCard} aria-label="Tema do tabuleiro">
+          <h2>Tema do tabuleiro e peças</h2>
+          <div className="sourceFilterPreview" role="group" aria-label="Escolher tema">
+            {themeOptions.map((option) => (
+              <button
+                aria-pressed={pieceTheme === option.value}
+                key={option.value}
+                onClick={() => setPieceTheme(option.value)}
+                type="button"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </section>
       ) : null}
     </main>
   );

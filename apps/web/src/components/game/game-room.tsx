@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChessBoard, type BoardOrientation } from './chess-board';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { api, getRealtimeAccessToken, getStoredUserId } from '@/lib/api/client';
+import { usePieceTheme } from '@/lib/piece-theme';
 import { GameSocket } from '@/lib/realtime/game-socket';
 import { randomUUID } from '@/lib/uuid';
 
@@ -59,6 +60,7 @@ function demoState(gameId: string): GameState {
 
 export function GameRoom({ gameId }: { gameId: string }) {
   const isDemo = gameId === 'demo';
+  const { theme: pieceTheme } = usePieceTheme();
   const [state, setState] = useState<GameState>(() => demoState(gameId));
   const [moves, setMoves] = useState<GameMove[]>([]);
   const [connection, setConnection] = useState<
@@ -342,6 +344,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
             }
           }}
           orientation={orientation}
+          pieceTheme={pieceTheme}
         />
         <div className="mobilePlayer">
           <Player

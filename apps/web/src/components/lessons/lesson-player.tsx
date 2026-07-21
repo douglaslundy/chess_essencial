@@ -5,10 +5,12 @@ import { useEffect, useState } from 'react';
 
 import { ChessBoard } from '@/components/game/chess-board';
 import { api } from '@/lib/api/client';
+import { usePieceTheme } from '@/lib/piece-theme';
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
 export function LessonPlayer({ lessonId }: { lessonId: string }) {
+  const { theme: pieceTheme } = usePieceTheme();
   const [attempt, setAttempt] = useState<LessonAttemptView | null>(null);
   const [answer, setAnswer] = useState('');
   const [message, setMessage] = useState('Carregando aula…');
@@ -87,6 +89,7 @@ export function LessonPlayer({ lessonId }: { lessonId: string }) {
               fen={step.initialFen ?? INITIAL_FEN}
               onMove={(uci) => void submit({ type: 'move', uci })}
               orientation={step.orientation ?? 'white'}
+              pieceTheme={pieceTheme}
             />
           ) : null}
           <article className="lessonStepCard">
