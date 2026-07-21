@@ -186,6 +186,6 @@ jobs:
       - name: Verify latest migration rollback and reapply
         run: |
           pnpm --filter @xadrez/api db:rollback
-          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.game_bots') IS NOT NULL AND (SELECT count(*) FROM exercises WHERE external_id LIKE 'challenge-%') = 0;")" = "t"
-          pnpm --filter @xadrez/api db:migrate
           test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.game_bots') IS NOT NULL AND (SELECT count(*) FROM exercises WHERE external_id LIKE 'challenge-%') = 8;")" = "t"
+          pnpm --filter @xadrez/api db:migrate
+          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT to_regclass('public.game_bots') IS NOT NULL AND (SELECT count(*) FROM exercises WHERE external_id LIKE 'challenge-%') = 12;")" = "t"

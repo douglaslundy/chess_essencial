@@ -126,9 +126,7 @@ export function ExerciseTrainer({
                     'legal_position' | 'illustrative_diagram' | 'text_only',
                 }
               : {}),
-            ...(search.get('source')
-              ? { source: search.get('source') as 'classic' | 'book' }
-              : {}),
+            ...(search.get('source') ? { source: search.get('source') as 'classic' | 'book' } : {}),
           },
         },
         accessToken,
