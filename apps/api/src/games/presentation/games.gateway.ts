@@ -5,7 +5,7 @@ import {
   realtimeMoveSubmitSchema,
   type GameState,
 } from '@xadrez/contracts';
-import { HttpException, OnModuleDestroy, UnauthorizedException } from '@nestjs/common';
+import { HttpException, Logger, OnModuleDestroy, UnauthorizedException } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -31,6 +31,7 @@ interface ClientSession {
 
 @WebSocketGateway({ path: '/v1/ws', maxPayload: 16 * 1024 })
 export class GamesGateway implements OnGatewayConnection, OnGatewayDisconnect, OnModuleDestroy {
+  private readonly logger = new Logger(GamesGateway.name);
   private readonly clientsByGame = new Map<string, Set<WebSocket>>();
   private readonly sessions = new Map<WebSocket, ClientSession>();
   private readonly timeoutTimers = new Map<string, NodeJS.Timeout>();
@@ -151,10 +152,16 @@ export class GamesGateway implements OnGatewayConnection, OnGatewayDisconnect, O
           });
           this.scheduleTimeout(gameId, bot.state);
         })
-        .catch(() => {
-          // No client request is pending on this delayed callback; failures here
-          // (e.g. the game finished by resignation during the delay) are expected
-          // and non-actionable, so there is nothing to notify.
+        .catch((error: unknown) => {
+          // No client request is pending on this delayed callback, so failures here
+          // (e.g. the game finished by resignation during the delay, or a genuine
+          // DB/engine error) cannot be reported to a waiting client. Log and record
+          // a metric so real failures remain observable instead of silent.
+          this.logger.error(
+            'Failed to commit delayed bot reply',
+            error instanceof Error ? error.stack : undefined,
+          );
+          this.metrics.increment('xadrez_ws_bot_reply_failures_total');
         });
     }, GamesGateway.BOT_REPLY_DELAY_MS);
     timer.unref();

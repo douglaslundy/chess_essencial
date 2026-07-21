@@ -87,4 +87,54 @@ describe('GamesGateway bot reply delay', () => {
     expect(afterDelay).toHaveLength(2);
     expect(games.commitBotMoveIfNeeded).toHaveBeenCalledWith(gameId);
   });
+
+  it('logs and records a metric, without crashing or notifying the client, when the delayed bot commit fails', async () => {
+    const gameId = '33333333-3333-4333-8333-333333333333';
+    const playerState = {
+      activeClockStartedAt: null,
+      blackClockMs: 60000,
+      currentFen: 'startpos',
+      finishedAt: null,
+      id: gameId,
+      players: [],
+      result: 'none',
+      sideToMove: 'black',
+      startedAt: null,
+      status: 'active',
+      termination: 'none',
+      version: 1,
+      whiteClockMs: 60000,
+    };
+    const auth = { verifyAccessToken: vi.fn().mockResolvedValue({ userId: 'user-1' }) };
+    const games = {
+      commitBotMoveIfNeeded: vi.fn().mockRejectedValue(new Error('db exploded')),
+      commitPlayerMove: vi.fn().mockResolvedValue({
+        move: { id: 1, uci: 'e2e4' },
+        state: playerState,
+      }),
+      realtimeSnapshot: vi.fn().mockResolvedValue({ moves: [], state: playerState }),
+      setConnection: vi.fn().mockResolvedValue(undefined),
+    };
+    const metrics = { increment: vi.fn() };
+    const gateway = new GamesGateway(auth as never, games as never, metrics as never);
+
+    const socket = fakeSocket();
+    gateway.handleConnection(socket as never);
+    await gateway.authenticate(socket as never, { accessToken: 'token', protocolVersion: 1 });
+    await gateway.join(socket as never, { gameId, lastKnownVersion: 0 });
+    await gateway.submitMove(socket as never, {
+      clientMoveId: '11111111-1111-4111-8111-111111111111',
+      expectedVersion: 0,
+      gameId,
+      uci: 'e2e4',
+    });
+
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(games.commitBotMoveIfNeeded).toHaveBeenCalledWith(gameId);
+    const sent = parseSent(socket);
+    expect(sent.filter((m) => m.event === 'game.move_committed')).toHaveLength(1);
+    expect(sent.filter((m) => m.event === 'game.error')).toHaveLength(0);
+    expect(metrics.increment).toHaveBeenCalledWith('xadrez_ws_bot_reply_failures_total');
+  });
 });
