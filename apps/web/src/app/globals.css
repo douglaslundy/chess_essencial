@@ -6,10 +6,10 @@
   --muted: #b8b4ad;
   --red: #d10e17;
   --success: #16a34a;
-  --font-page-title: clamp(1.9rem, 4vw, 3rem);
-  --font-section-title: clamp(1.25rem, 2.2vw, 1.65rem);
-  --font-card-title: clamp(1.1rem, 1.8vw, 1.4rem);
-  --page-padding: clamp(1rem, 3vw, 2.5rem);
+  --font-page-title: clamp(1.55rem, 3.2vw, 2.35rem);
+  --font-section-title: clamp(1.15rem, 2vw, 1.45rem);
+  --font-card-title: clamp(1.05rem, 1.6vw, 1.3rem);
+  --page-padding: clamp(0.85rem, 2.5vw, 2rem);
   color-scheme: dark;
   font-family: Inter, Geist, Arial, sans-serif;
 }
@@ -48,17 +48,55 @@ a {
   font: inherit;
 }
 
-.shell {
+.landingPage {
+  min-height: 100dvh;
   display: grid;
-  min-height: 100vh;
-  place-content: center;
+  grid-template-rows: auto 1fr;
   gap: 2rem;
-  padding: 2rem;
+  padding: 0 0 2rem;
 }
-
+.landingBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem clamp(1rem, 4vw, 2.5rem);
+  border-bottom: 1px solid var(--border);
+}
+.landingBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 800;
+}
+.landingBrand span {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: var(--red);
+  font-size: 0.75rem;
+}
+.landingBar nav {
+  display: flex;
+  gap: 0.6rem;
+}
+.landingCtas {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
 .hero,
 .panel {
   width: min(100%, 48rem);
+  margin-inline: auto;
+}
+.hero {
+  padding-inline: clamp(1rem, 4vw, 2.5rem);
 }
 
 .eyebrow {
@@ -89,22 +127,6 @@ h2 {
   line-height: 1.7;
 }
 
-.status {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.625rem;
-  margin-top: 1rem;
-  font-weight: 700;
-}
-
-.statusDot {
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 999px;
-  background: var(--success);
-  box-shadow: 0 0 0 0.25rem rgba(22, 163, 74, 0.15);
-}
-
 .panel {
   padding: 1.5rem;
   border: 1px solid var(--border);
@@ -120,19 +142,17 @@ h2 {
   margin-top: 0.5rem;
 }
 
-.api {
-  margin-bottom: 0;
-  color: var(--muted);
-}
-
 code {
   color: var(--text);
 }
 
-@media (min-width: 900px) {
-  .shell {
-    grid-template-columns: minmax(0, 1.4fr) minmax(20rem, 0.8fr);
-    align-items: end;
+@media (max-width: 640px) {
+  .landingBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .landingBar nav {
+    justify-content: center;
   }
 }
 
@@ -625,9 +645,10 @@ input:focus-visible {
 .gameActions button,
 .mobileActions button {
   border: 1px solid var(--border);
-  border-radius: 0.7rem;
+  border-radius: 0.6rem;
   background: var(--surface);
-  padding: 0.75rem;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.85rem;
   cursor: pointer;
 }
 
@@ -891,11 +912,19 @@ input:focus-visible {
 }
 
 .gameMessage {
-  min-height: 1.2rem;
+  min-height: 1.4rem;
   margin: 0.7rem 0 0;
-  color: var(--muted);
-  font-size: 0.8rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.6rem;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 650;
   text-align: center;
+}
+.gameMessage:empty {
+  padding: 0;
+  background: none;
 }
 
 .mobilePlayer,
@@ -1577,6 +1606,12 @@ input:focus-visible {
 .lessonRuntimeGrid > .boardWithCoordinates {
   width: min(100%, calc(100dvh - 11rem), 46.5rem);
   justify-self: center;
+}
+.lessonRuntimeGridStacked {
+  grid-template-columns: 1fr;
+}
+.lessonRuntimeGridStacked > .boardWithCoordinates {
+  width: min(100%, calc(100dvh - 22rem), 30rem);
 }
 .lessonStepCard,
 .lessonComplete {

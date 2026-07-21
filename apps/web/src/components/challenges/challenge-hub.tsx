@@ -11,6 +11,7 @@ export function ChallengeHub() {
         guided
         initialQuery="challenge"
         positionType="legal_position"
+        storageKey="xadrez.desafios_session"
         title="Desafios progressivos"
       />
     </main>

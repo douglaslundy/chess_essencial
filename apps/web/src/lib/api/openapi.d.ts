@@ -4,2663 +4,2614 @@
  */
 
 export interface paths {
-  '/health': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Verificar saúde da API */
+        get: operations["getHealth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Verificar saúde da API */
-    get: operations['getHealth'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/register': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cadastrar usuário */
+        post: operations["register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Cadastrar usuário */
-    post: operations['register'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/resend-verification': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/resend-verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reenviar e-mail de verificação sem revelar a existência da conta */
+        post: operations["resendVerification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Reenviar e-mail de verificação sem revelar a existência da conta */
-    post: operations['resendVerification'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/verify': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirmar e-mail pelo token enviado ao usuário */
+        post: operations["verifyEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Confirmar e-mail pelo token enviado ao usuário */
-    post: operations['verifyEmail'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/password/forgot': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/password/forgot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request a password reset without revealing account existence */
+        post: operations["forgotPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Request a password reset without revealing account existence */
-    post: operations['forgotPassword'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/password/reset': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/password/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Replace the password with a single-use reset token */
+        post: operations["resetPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Replace the password with a single-use reset token */
-    post: operations['resetPassword'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/login': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Autenticar */
+        post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Autenticar */
-    post: operations['login'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/refresh': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rotacionar refresh token */
+        post: operations["refresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Rotacionar refresh token */
-    post: operations['refresh'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/logout': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revogar sessão */
+        post: operations["logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Revogar sessão */
-    post: operations['logout'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/me': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Perfil autenticado */
+        get: operations["getMe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Atualizar perfil e configurações */
+        patch: operations["updateMe"];
+        trace?: never;
     };
-    /** Perfil autenticado */
-    get: operations['getMe'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    /** Atualizar perfil e configurações */
-    patch: operations['updateMe'];
-    trace?: never;
-  };
-  '/metrics': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Expor métricas agregadas no formato Prometheus */
+        get: operations["getMetrics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Expor métricas agregadas no formato Prometheus */
-    get: operations['getMetrics'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/me/privacy': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/me/privacy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Consultar controles de privacidade */
+        get: operations["getPrivacy"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Atualizar controles de privacidade */
+        patch: operations["updatePrivacy"];
+        trace?: never;
     };
-    /** Consultar controles de privacidade */
-    get: operations['getPrivacy'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    /** Atualizar controles de privacidade */
-    patch: operations['updatePrivacy'];
-    trace?: never;
-  };
-  '/me/blocks': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/me/blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar usuários bloqueados */
+        get: operations["listBlocks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Listar usuários bloqueados */
-    get: operations['listBlocks'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/me/blocks/{userId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        userId: string;
-      };
-      cookie?: never;
+    "/me/blocks/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Bloquear usuário */
+        put: operations["blockUser"];
+        post?: never;
+        /** Remover bloqueio */
+        delete: operations["unblockUser"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    /** Bloquear usuário */
-    put: operations['blockUser'];
-    post?: never;
-    /** Remover bloqueio */
-    delete: operations['unblockUser'];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/reports': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Criar denúncia para revisão manual */
+        post: operations["createReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Criar denúncia para revisão manual */
-    post: operations['createReport'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/matchmaking/queues': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/matchmaking/queues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Entrar ou renovar presença na fila */
+        post: operations["joinMatchmakingQueue"];
+        /** Sair da fila */
+        delete: operations["leaveMatchmakingQueue"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Entrar ou renovar presença na fila */
-    post: operations['joinMatchmakingQueue'];
-    /** Sair da fila */
-    delete: operations['leaveMatchmakingQueue'];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/matchmaking/bot-games': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/matchmaking/bot-games": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Criar partida não ranqueada contra o bot autoritativo */
+        post: operations["createBotGame"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Criar partida não ranqueada contra o bot autoritativo */
-    post: operations['createBotGame'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/matchmaking/challenges': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/matchmaking/challenges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Criar desafio direto */
+        post: operations["createDirectChallenge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Criar desafio direto */
-    post: operations['createDirectChallenge'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/matchmaking/challenges/{challengeId}/respond': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/matchmaking/challenges/{challengeId}/respond": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Aceitar ou recusar desafio direto */
+        post: operations["respondDirectChallenge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Aceitar ou recusar desafio direto */
-    post: operations['respondDirectChallenge'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/games': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/games": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar histórico paginado do usuário */
+        get: operations["listGameHistory"];
+        put?: never;
+        /** Criar partida entre dois usuários ativos */
+        post: operations["createGame"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Listar histórico paginado do usuário */
-    get: operations['listGameHistory'];
-    put?: never;
-    /** Criar partida entre dois usuários ativos */
-    post: operations['createGame'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/games/{gameId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        gameId: components['parameters']['GameId'];
-      };
-      cookie?: never;
+    "/games/{gameId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gameId: components["parameters"]["GameId"];
+            };
+            cookie?: never;
+        };
+        /** Obter estado autorizado da partida */
+        get: operations["getGame"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Obter estado autorizado da partida */
-    get: operations['getGame'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/games/{gameId}/moves': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        gameId: components['parameters']['GameId'];
-      };
-      cookie?: never;
+    "/games/{gameId}/moves": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gameId: components["parameters"]["GameId"];
+            };
+            cookie?: never;
+        };
+        /** Listar lances persistidos */
+        get: operations["listGameMoves"];
+        put?: never;
+        /**
+         * Propor e persistir um lance
+         * @description O servidor deriva SAN, FEN, turno, resultado e versão. O cliente envia somente UCI e idempotência.
+         */
+        post: operations["commitGameMove"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Listar lances persistidos */
-    get: operations['listGameMoves'];
-    put?: never;
-    /**
-     * Propor e persistir um lance
-     * @description O servidor deriva SAN, FEN, turno, resultado e versão. O cliente envia somente UCI e idempotência.
-     */
-    post: operations['commitGameMove'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/games/{gameId}/review-annotations': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        gameId: components['parameters']['GameId'];
-      };
-      cookie?: never;
+    "/games/{gameId}/review-annotations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gameId: components["parameters"]["GameId"];
+            };
+            cookie?: never;
+        };
+        /** Listar anotações privadas da revisão */
+        get: operations["listReviewAnnotations"];
+        /** Salvar anotação de um ply */
+        put: operations["saveReviewAnnotation"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Listar anotações privadas da revisão */
-    get: operations['listReviewAnnotations'];
-    /** Salvar anotação de um ply */
-    put: operations['saveReviewAnnotation'];
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/games/{gameId}/pgn': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        gameId: components['parameters']['GameId'];
-      };
-      cookie?: never;
+    "/games/{gameId}/pgn": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gameId: components["parameters"]["GameId"];
+            };
+            cookie?: never;
+        };
+        /** Baixar PGN após o término */
+        get: operations["getGamePgn"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Baixar PGN após o término */
-    get: operations['getGamePgn'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/games/{gameId}/resign': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/games/{gameId}/resign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Abandonar partida */
+        post: operations["resignGame"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Abandonar partida */
-    post: operations['resignGame'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/games/{gameId}/draw-offers': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/games/{gameId}/draw-offers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Oferecer empate ou aceitar a oferta pendente do adversário */
+        post: operations["offerOrAcceptDraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Oferecer empate ou aceitar a oferta pendente do adversário */
-    post: operations['offerOrAcceptDraw'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/ratings/me': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/ratings/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ratings Xadrez Essencial do usuário por pool */
+        get: operations["getMyRatings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Ratings Xadrez Essencial do usuário por pool */
-    get: operations['getMyRatings'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/ratings/me/history': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/ratings/me/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Histórico imutável de rating do usuário */
+        get: operations["getMyRatingHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Histórico imutável de rating do usuário */
-    get: operations['getMyRatingHistory'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/ratings/{pool}/leaderboard': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/ratings/{pool}/leaderboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Leaderboard do Rating Xadrez Essencial */
+        get: operations["getRatingLeaderboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Leaderboard do Rating Xadrez Essencial */
-    get: operations['getRatingLeaderboard'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/courses': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/courses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar cursos publicados */
+        get: operations["listPublishedCourses"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Listar cursos publicados */
-    get: operations['listPublishedCourses'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/courses/{slug}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/courses/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Obter curso publicado */
+        get: operations["getPublishedCourse"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Obter curso publicado */
-    get: operations['getPublishedCourse'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/courses/{courseId}/editor': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/courses/{courseId}/editor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Abrir curso no editor */
+        get: operations["getCourseEditor"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Abrir curso no editor */
-    get: operations['getCourseEditor'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/courses/{courseId}/lessons/{slug}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/courses/{courseId}/lessons/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Criar ou versionar aula */
+        put: operations["saveCourseLesson"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    /** Criar ou versionar aula */
-    put: operations['saveCourseLesson'];
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/courses/{courseId}/publish': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/courses/{courseId}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publicar curso editorialmente completo */
+        post: operations["publishCourse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Publicar curso editorialmente completo */
-    post: operations['publishCourse'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/lessons/{lessonId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/lessons/{lessonId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Obter metadados e primeira etapa sanitizada */
+        get: operations["getLessonOverview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Obter metadados e primeira etapa sanitizada */
-    get: operations['getLessonOverview'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/lesson-attempts': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/lesson-attempts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Iniciar ou retomar tentativa */
+        post: operations["startLessonAttempt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Iniciar ou retomar tentativa */
-    post: operations['startLessonAttempt'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/lesson-attempts/{attemptId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/lesson-attempts/{attemptId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Retomar estado persistido da tentativa */
+        get: operations["getLessonAttempt"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Retomar estado persistido da tentativa */
-    get: operations['getLessonAttempt'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/lesson-attempts/{attemptId}/actions': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/lesson-attempts/{attemptId}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submeter ação para avaliação autoritativa */
+        post: operations["submitLessonAction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Submeter ação para avaliação autoritativa */
-    post: operations['submitLessonAction'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/exercises': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/exercises": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search exercises */
+        get: operations["searchExercises"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Search exercises */
-    get: operations['searchExercises'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/exercises/{exerciseId}/attempts': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/exercises/{exerciseId}/attempts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit a server-evaluated exercise attempt */
+        post: operations["submitExerciseAttempt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Submit a server-evaluated exercise attempt */
-    post: operations['submitExerciseAttempt'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/exercise-training-sessions': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/exercise-training-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start an exercise training session */
+        post: operations["startExerciseTraining"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Start an exercise training session */
-    post: operations['startExerciseTraining'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/exercise-training-sessions/{sessionId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/exercise-training-sessions/{sessionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Resume an exercise training session */
+        get: operations["getExerciseTraining"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Resume an exercise training session */
-    get: operations['getExerciseTraining'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/exercise-training-sessions/{sessionId}/hints': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/exercise-training-sessions/{sessionId}/hints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reveal the next hint for the current exercise */
+        post: operations["revealExerciseHint"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Reveal the next hint for the current exercise */
-    post: operations['revealExerciseHint'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/exercise-training-sessions/{sessionId}/solution': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/exercise-training-sessions/{sessionId}/solution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reveal the current exercise solution */
+        post: operations["revealExerciseSolution"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Reveal the current exercise solution */
-    post: operations['revealExerciseSolution'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/exercise-metrics': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/exercise-metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get exercise performance metrics for the authenticated user */
+        get: operations["getExerciseMetrics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get exercise performance metrics for the authenticated user */
-    get: operations['getExerciseMetrics'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    /** @enum {string} */
-    ExercisePositionType: 'legal_position' | 'illustrative_diagram' | 'text_only';
-    ExerciseSummary: {
-      /** Format: uuid */
-      id: string;
-      /** @enum {string} */
-      answerFormat: 'free_text' | 'move_sequence';
-      sourceNumber: number | null;
-      moduleNumber: number | null;
-      chapterNumber: number | null;
-      title: string | null;
-      promptMd: string;
-      difficulty: string | null;
-      category: string | null;
-      fen: string | null;
-      /** @enum {string|null} */
-      sideToMove: 'white' | 'black' | null;
-      tags: string[];
-      sourcePages: number[];
-      positionType: components['schemas']['ExercisePositionType'];
-    };
-    ExerciseSearchResult: {
-      items: components['schemas']['ExerciseSummary'][];
-      total: number;
-      limit: number;
-      offset: number;
-    };
-    ExerciseTrainingFilters: {
-      q?: string;
-      category?: string;
-      difficulty?: string;
-      module?: number;
-      chapter?: number;
-      /** Format: uuid */
-      lessonId?: string;
-      positionType?: components['schemas']['ExercisePositionType'];
-      /** @default 10 */
-      limit: number;
-    };
-    StartExerciseTrainingInput: {
-      filters: components['schemas']['ExerciseTrainingFilters'];
-    };
-    ExerciseTrainingView: {
-      /** Format: uuid */
-      sessionId: string;
-      /** @enum {string} */
-      status: 'started' | 'completed' | 'abandoned';
-      position: number;
-      total: number;
-      completed: number;
-      currentExercise: components['schemas']['ExerciseSummary'] | null;
-    };
-    SubmitExerciseAttemptInput: {
-      submittedLine: string[];
-      durationMs: number;
-      /** Format: uuid */
-      trainingSessionId?: string;
-      /** Format: uuid */
-      lessonAttemptId?: string;
-    };
-    ExerciseAttemptResult: {
-      /** Format: uuid */
-      attemptId: string;
-      correct: boolean;
-      score: number;
-      hintsUsed: number;
-      training: components['schemas']['ExerciseTrainingView'] | null;
-    };
-    ExerciseHint: {
-      hint: string;
-      hintNumber: number;
-      remaining: number;
-    };
-    ExerciseSolution: {
-      solutionMd: string;
-      solutionLines: string[][];
-    };
-    ExerciseMetrics: {
-      attempted: number;
-      correct: number;
-      accuracyPercent: number;
-      averageDurationMs: number;
-      hintsUsed: number;
-    };
-    PublicLessonStep: {
-      stepKey: string;
-      /** @enum {string} */
-      stepType: 'text' | 'board_instruction' | 'quiz' | 'explanation' | 'checkpoint' | 'summary';
-      title: string | null;
-      bodyMd: string;
-      initialFen: string | null;
-      /** @enum {string|null} */
-      orientation: 'white' | 'black' | null;
-    };
-    LessonOverview: {
-      /** Format: uuid */
-      lessonId: string;
-      title: string;
-      module: number;
-      estimatedMinutes: number;
-      firstStep: components['schemas']['PublicLessonStep'];
-    };
-    StartLessonAttemptInput: {
-      /** Format: uuid */
-      lessonId: string;
-    };
-    LessonActionInput:
-      | {
-          /** @constant */
-          type: 'continue';
-        }
-      | {
-          /** @constant */
-          type: 'move';
-          uci: string;
-        }
-      | {
-          /** @constant */
-          type: 'answer';
-          value: string | number | boolean;
+    schemas: {
+        /** @enum {string} */
+        ExercisePositionType: "legal_position" | "illustrative_diagram" | "text_only";
+        ExerciseSummary: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            answerFormat: "free_text" | "move_sequence";
+            sourceNumber: number | null;
+            moduleNumber: number | null;
+            chapterNumber: number | null;
+            title: string | null;
+            promptMd: string;
+            difficulty: string | null;
+            category: string | null;
+            fen: string | null;
+            /** @enum {string|null} */
+            sideToMove: "white" | "black" | null;
+            tags: string[];
+            sourcePages: number[];
+            positionType: components["schemas"]["ExercisePositionType"];
         };
-    LessonAttemptView: {
-      /** Format: uuid */
-      attemptId: string;
-      /** Format: uuid */
-      lessonId: string;
-      /** @enum {string} */
-      status: 'started' | 'completed' | 'abandoned';
-      currentStep: components['schemas']['PublicLessonStep'] | null;
-      feedback: string | null;
-      progress: {
-        completedSteps: number;
-        totalSteps: number;
-      };
-      score: number | null;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    CourseSummary: {
-      /** Format: uuid */
-      id: string;
-      slug: string;
-      title: string;
-      description: string;
-      /** @enum {string} */
-      status: 'draft' | 'published' | 'archived';
-      version: number;
-      moduleCount: number;
-    };
-    CourseDetail: components['schemas']['CourseSummary'] & {
-      modules: {
-        /** Format: uuid */
-        id: string;
-        position: number;
-        title: string;
-        sourceVolume: number;
-        lessons: Record<string, never>[];
-      }[];
-    };
-    InteractiveLesson: {
-      slug: string;
-      title: string;
-      module: number;
-      sourcePages: number[];
-      estimatedMinutes: number;
-      prerequisites: string[];
-      steps: {
-        stepKey: string;
+        ExerciseSearchResult: {
+            items: components["schemas"]["ExerciseSummary"][];
+            total: number;
+            limit: number;
+            offset: number;
+        };
+        ExerciseTrainingFilters: {
+            q?: string;
+            category?: string;
+            difficulty?: string;
+            module?: number;
+            chapter?: number;
+            /** Format: uuid */
+            lessonId?: string;
+            positionType?: components["schemas"]["ExercisePositionType"];
+            /** @enum {string} */
+            source?: "classic" | "book";
+            /** @default 10 */
+            limit: number;
+        };
+        StartExerciseTrainingInput: {
+            filters: components["schemas"]["ExerciseTrainingFilters"];
+        };
+        ExerciseTrainingView: {
+            /** Format: uuid */
+            sessionId: string;
+            /** @enum {string} */
+            status: "started" | "completed" | "abandoned";
+            position: number;
+            total: number;
+            completed: number;
+            currentExercise: components["schemas"]["ExerciseSummary"] | null;
+        };
+        SubmitExerciseAttemptInput: {
+            submittedLine: string[];
+            durationMs: number;
+            /** Format: uuid */
+            trainingSessionId?: string;
+            /** Format: uuid */
+            lessonAttemptId?: string;
+        };
+        ExerciseAttemptResult: {
+            /** Format: uuid */
+            attemptId: string;
+            correct: boolean;
+            score: number;
+            hintsUsed: number;
+            training: components["schemas"]["ExerciseTrainingView"] | null;
+        };
+        ExerciseHint: {
+            hint: string;
+            hintNumber: number;
+            remaining: number;
+        };
+        ExerciseSolution: {
+            solutionMd: string;
+            solutionLines: string[][];
+        };
+        ExerciseMetrics: {
+            attempted: number;
+            correct: number;
+            accuracyPercent: number;
+            averageDurationMs: number;
+            hintsUsed: number;
+        };
+        PublicLessonStep: {
+            stepKey: string;
+            /** @enum {string} */
+            stepType: "text" | "board_instruction" | "quiz" | "explanation" | "checkpoint" | "summary";
+            title: string | null;
+            bodyMd: string;
+            initialFen: string | null;
+            /** @enum {string|null} */
+            orientation: "white" | "black" | null;
+        };
+        LessonOverview: {
+            /** Format: uuid */
+            lessonId: string;
+            title: string;
+            module: number;
+            estimatedMinutes: number;
+            firstStep: components["schemas"]["PublicLessonStep"];
+        };
+        StartLessonAttemptInput: {
+            /** Format: uuid */
+            lessonId: string;
+        };
+        LessonActionInput: {
+            /** @constant */
+            type: "continue";
+        } | {
+            /** @constant */
+            type: "move";
+            uci: string;
+        } | {
+            /** @constant */
+            type: "answer";
+            value: string | number | boolean;
+        };
+        LessonAttemptView: {
+            /** Format: uuid */
+            attemptId: string;
+            /** Format: uuid */
+            lessonId: string;
+            /** @enum {string} */
+            status: "started" | "completed" | "abandoned";
+            currentStep: components["schemas"]["PublicLessonStep"] | null;
+            feedback: string | null;
+            progress: {
+                completedSteps: number;
+                totalSteps: number;
+            };
+            score: number | null;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        CourseSummary: {
+            /** Format: uuid */
+            id: string;
+            slug: string;
+            title: string;
+            description: string;
+            /** @enum {string} */
+            status: "draft" | "published" | "archived";
+            version: number;
+            moduleCount: number;
+        };
+        CourseDetail: components["schemas"]["CourseSummary"] & {
+            modules: {
+                /** Format: uuid */
+                id: string;
+                position: number;
+                title: string;
+                sourceVolume: number;
+                lessons: Record<string, never>[];
+            }[];
+        };
+        InteractiveLesson: {
+            slug: string;
+            title: string;
+            module: number;
+            sourcePages: number[];
+            estimatedMinutes: number;
+            prerequisites: string[];
+            steps: {
+                stepKey: string;
+                /** @enum {string} */
+                stepType: "text" | "board_instruction" | "quiz" | "explanation" | "checkpoint" | "summary";
+                bodyMd: string;
+                initialFen?: string | null;
+                /** @enum {string} */
+                orientation?: "white" | "black";
+                expectedActions?: Record<string, never>[];
+                feedback?: Record<string, never>;
+                nextStepRules?: Record<string, never>[];
+            }[];
+        };
+        SaveLessonInput: {
+            expectedVersion: number;
+            lesson: components["schemas"]["InteractiveLesson"];
+        };
+        LessonVersion: {
+            /** Format: uuid */
+            lessonId: string;
+            version: number;
+            content: components["schemas"]["InteractiveLesson"];
+            /** Format: uuid */
+            createdByUserId: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        HealthStatus: {
+            /** @constant */
+            service: "api";
+            /** @constant */
+            status: "ok";
+            /** Format: date-time */
+            timestamp: string;
+        };
+        RegisterInput: {
+            /** Format: email */
+            email: string;
+            username: string;
+            password: string;
+            displayName: string;
+        };
+        ResendVerificationInput: {
+            /** Format: email */
+            email: string;
+        };
+        TokenInput: {
+            token: string;
+        };
+        ForgotPasswordInput: {
+            /** Format: email */
+            email: string;
+        };
+        ResetPasswordInput: {
+            token: string;
+            newPassword: string;
+        };
+        LoginInput: {
+            identifier: string;
+            password: string;
+        };
+        RefreshInput: {
+            refreshToken: string;
+        };
+        PrivacySettings: {
+            isProfilePublic: boolean;
+            allowChallenges: boolean;
+            allowFriendRequests: boolean;
+        };
+        UpdatePrivacyInput: {
+            isProfilePublic?: boolean;
+            allowChallenges?: boolean;
+            allowFriendRequests?: boolean;
+        };
+        BlockedUser: {
+            /** Format: uuid */
+            id: string;
+            username: string;
+            displayName: string;
+            /** Format: date-time */
+            blockedAt: string;
+        };
         /** @enum {string} */
-        stepType: 'text' | 'board_instruction' | 'quiz' | 'explanation' | 'checkpoint' | 'summary';
-        bodyMd: string;
-        initialFen?: string | null;
+        ReportCategory: "cheating" | "harassment" | "spam" | "inappropriate_profile" | "other";
+        CreateReportInput: {
+            /** Format: uuid */
+            reportedUserId?: string;
+            /** Format: uuid */
+            gameId?: string;
+            category: components["schemas"]["ReportCategory"];
+            description?: string;
+        } | unknown | unknown;
+        ReportReceipt: {
+            /** Format: uuid */
+            id: string;
+            category: components["schemas"]["ReportCategory"];
+            /** @enum {string} */
+            status: "open";
+            /** Format: date-time */
+            createdAt: string;
+        };
+        UpdateMeInput: {
+            displayName?: string;
+            /** Format: uri */
+            avatarUrl?: string | null;
+            countryCode?: string | null;
+            timezone?: string;
+            locale?: string;
+            birthYear?: number | null;
+            bio?: string | null;
+            isProfilePublic?: boolean;
+        };
+        UserProfile: {
+            displayName: string;
+            avatarUrl: string | null;
+            countryCode: string | null;
+            timezone: string;
+            locale: string;
+            birthYear: number | null;
+            bio: string | null;
+            isProfilePublic: boolean;
+        };
+        PublicUser: {
+            /** Format: uuid */
+            id: string;
+            /** Format: email */
+            email: string;
+            username: string;
+            /** @enum {string} */
+            status: "pending" | "active" | "suspended" | "deleted";
+            /** Format: date-time */
+            emailVerifiedAt: string | null;
+            profile: components["schemas"]["UserProfile"];
+        };
+        TokenPair: {
+            accessToken: string;
+            accessTokenExpiresIn: number;
+            refreshToken: string;
+            refreshTokenExpiresIn: number;
+        };
+        RegistrationResponse: {
+            user: components["schemas"]["PublicUser"];
+            /** @description Presente somente quando a simulação local está habilitada. */
+            verificationToken?: string;
+        };
+        LoginResponse: {
+            user: components["schemas"]["PublicUser"];
+            tokens: components["schemas"]["TokenPair"];
+        };
+        ProblemDetails: {
+            /** Format: uri */
+            type: string;
+            title: string;
+            status: number;
+            detail: string;
+            instance: string;
+            requestId: string;
+            errors?: {
+                path?: string;
+                message?: string;
+            }[];
+        };
         /** @enum {string} */
-        orientation?: 'white' | 'black';
-        expectedActions?: Record<string, never>[];
-        feedback?: Record<string, never>;
-        nextStepRules?: Record<string, never>[];
-      }[];
+        RatingPool: "bullet" | "blitz" | "rapid" | "classical" | "correspondence";
+        JoinQueueInput: {
+            /** @enum {string} */
+            timeControlCode: "bullet-1-0" | "bullet-2-1" | "blitz-3-0" | "blitz-3-2" | "rapid-10-0" | "rapid-15-10" | "classical-30-0";
+            /** @default false */
+            fallbackToBot: boolean;
+            botDifficulty?: components["schemas"]["BotDifficulty"];
+            playerColor?: components["schemas"]["PlayerColorPreference"];
+        };
+        /**
+         * @default matched
+         * @enum {string}
+         */
+        BotDifficulty: "matched" | "beginner" | "intermediate" | "advanced" | "expert";
+        /**
+         * @default random
+         * @enum {string}
+         */
+        PlayerColorPreference: "white" | "black" | "random";
+        CreateBotGameInput: {
+            /** @enum {string} */
+            timeControlCode: "bullet-1-0" | "bullet-2-1" | "blitz-3-0" | "blitz-3-2" | "rapid-10-0" | "rapid-15-10" | "classical-30-0";
+            botDifficulty?: components["schemas"]["BotDifficulty"];
+            playerColor?: components["schemas"]["PlayerColorPreference"];
+        };
+        QueueStatus: {
+            /** @enum {string} */
+            status: "queued" | "matched";
+            pool: components["schemas"]["RatingPool"];
+            /** @enum {string} */
+            timeControlCode: "bullet-1-0" | "bullet-2-1" | "blitz-3-0" | "blitz-3-2" | "rapid-10-0" | "rapid-15-10" | "classical-30-0";
+            minRating: number;
+            maxRating: number;
+            /** Format: date-time */
+            enqueuedAt: string;
+            /** Format: uuid */
+            gameId?: string;
+        };
+        CreateChallengeInput: {
+            /** Format: uuid */
+            challengedUserId: string;
+            /** @enum {string} */
+            timeControlCode: "bullet-1-0" | "bullet-2-1" | "blitz-3-0" | "blitz-3-2" | "rapid-10-0" | "rapid-15-10" | "classical-30-0";
+            /**
+             * @default null
+             * @enum {string|null}
+             */
+            challengerColor: "white" | "black" | null;
+        };
+        RespondChallengeInput: {
+            accept: boolean;
+        };
+        RatingProfile: {
+            pool: components["schemas"]["RatingPool"];
+            rating: number;
+            gamesCount: number;
+            wins: number;
+            draws: number;
+            losses: number;
+            peakRating: number;
+            provisional: boolean;
+        };
+        RatingHistoryEntry: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            gameId: string;
+            pool: components["schemas"]["RatingPool"];
+            ratingBefore: number;
+            opponentRating: number;
+            expectedScore: number;
+            /** @enum {number} */
+            actualScore: 0 | 0.5 | 1;
+            kFactor: number;
+            rawDelta: number;
+            delta: number;
+            ratingAfter: number;
+            /** @enum {string} */
+            transactionType: "game" | "reversal";
+            /** Format: date-time */
+            createdAt: string;
+        };
+        LeaderboardEntry: {
+            rank: number;
+            /** Format: uuid */
+            userId: string;
+            username: string;
+            displayName: string;
+            rating: number;
+            gamesCount: number;
+            provisional: boolean;
+        };
+        CreateGameInput: {
+            /** Format: uuid */
+            opponentUserId: string;
+            /** @enum {string} */
+            timeControlCode: "bullet-1-0" | "bullet-2-1" | "blitz-3-0" | "blitz-3-2" | "rapid-10-0" | "rapid-15-10" | "classical-30-0";
+            /**
+             * @default white
+             * @enum {string}
+             */
+            creatorColor: "white" | "black";
+        };
+        SubmitMoveInput: {
+            /** Format: uuid */
+            clientMoveId: string;
+            expectedVersion: number;
+            uci: string;
+        };
+        GamePlayer: {
+            /** Format: uuid */
+            userId: string;
+            /** @enum {string} */
+            color: "white" | "black";
+            ratingBefore: number;
+        };
+        GameState: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            status: "created" | "waiting" | "active" | "finished" | "aborted";
+            /** @enum {string} */
+            result: "white_win" | "black_win" | "draw" | "none";
+            /** @enum {string} */
+            termination: "checkmate" | "resignation" | "timeout" | "stalemate" | "repetition" | "fifty_move" | "insufficient_material" | "agreement" | "abandonment" | "admin" | "none";
+            currentFen: string;
+            /** @enum {string} */
+            sideToMove: "white" | "black";
+            version: number;
+            whiteClockMs: number;
+            blackClockMs: number;
+            /** Format: date-time */
+            activeClockStartedAt: string | null;
+            /** Format: date-time */
+            startedAt: string | null;
+            /** Format: date-time */
+            finishedAt: string | null;
+            players: components["schemas"]["GamePlayer"][];
+        };
+        GameHistoryItem: {
+            /** Format: uuid */
+            id: string;
+            status: string;
+            result: string;
+            termination: string;
+            pool: components["schemas"]["RatingPool"];
+            rated: boolean;
+            /** @enum {string} */
+            color: "white" | "black";
+            timeControl: string;
+            /** Format: date-time */
+            startedAt: string | null;
+            /** Format: date-time */
+            finishedAt: string | null;
+            opponent: {
+                /** Format: uuid */
+                userId: string;
+                username: string;
+                displayName: string;
+                rating: number;
+            };
+        };
+        GameHistoryPage: {
+            items: components["schemas"]["GameHistoryItem"][];
+            page: number;
+            limit: number;
+            total: number;
+        };
+        ReviewAnnotationInput: {
+            ply: number;
+            comment: string | null;
+            arrows: Record<string, never>[];
+            highlights: Record<string, never>[];
+        };
+        ReviewAnnotation: components["schemas"]["ReviewAnnotationInput"] & {
+            /** Format: uuid */
+            gameId: string;
+            /** Format: uuid */
+            userId: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        DrawOfferAction: {
+            accepted: boolean;
+            /** Format: uuid */
+            offerId: string;
+            state: components["schemas"]["GameState"];
+        };
+        GameMove: {
+            id: number;
+            ply: number;
+            /** @enum {string} */
+            color: "white" | "black";
+            /** Format: uuid */
+            clientMoveId: string;
+            uci: string;
+            san: string;
+            from: string;
+            to: string;
+            promotion: string | null;
+            fenBefore: string;
+            fenAfter: string;
+            flags: Record<string, never>;
+            /** Format: date-time */
+            committedAt: string;
+        };
+        CommitMoveResponse: {
+            move: components["schemas"]["GameMove"];
+            state: components["schemas"]["GameState"];
+        };
     };
-    SaveLessonInput: {
-      expectedVersion: number;
-      lesson: components['schemas']['InteractiveLesson'];
+    responses: {
+        /** @description Problem Details */
+        Problem: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["ProblemDetails"];
+            };
+        };
     };
-    LessonVersion: {
-      /** Format: uuid */
-      lessonId: string;
-      version: number;
-      content: components['schemas']['InteractiveLesson'];
-      /** Format: uuid */
-      createdByUserId: string;
-      /** Format: date-time */
-      createdAt: string;
+    parameters: {
+        GameId: string;
     };
-    HealthStatus: {
-      /** @constant */
-      service: 'api';
-      /** @constant */
-      status: 'ok';
-      /** Format: date-time */
-      timestamp: string;
-    };
-    RegisterInput: {
-      /** Format: email */
-      email: string;
-      username: string;
-      password: string;
-      displayName: string;
-    };
-    ResendVerificationInput: {
-      /** Format: email */
-      email: string;
-    };
-    TokenInput: {
-      token: string;
-    };
-    ForgotPasswordInput: {
-      /** Format: email */
-      email: string;
-    };
-    ResetPasswordInput: {
-      token: string;
-      newPassword: string;
-    };
-    LoginInput: {
-      identifier: string;
-      password: string;
-    };
-    RefreshInput: {
-      refreshToken: string;
-    };
-    PrivacySettings: {
-      isProfilePublic: boolean;
-      allowChallenges: boolean;
-      allowFriendRequests: boolean;
-    };
-    UpdatePrivacyInput: {
-      isProfilePublic?: boolean;
-      allowChallenges?: boolean;
-      allowFriendRequests?: boolean;
-    };
-    BlockedUser: {
-      /** Format: uuid */
-      id: string;
-      username: string;
-      displayName: string;
-      /** Format: date-time */
-      blockedAt: string;
-    };
-    /** @enum {string} */
-    ReportCategory: 'cheating' | 'harassment' | 'spam' | 'inappropriate_profile' | 'other';
-    CreateReportInput:
-      | {
-          /** Format: uuid */
-          reportedUserId?: string;
-          /** Format: uuid */
-          gameId?: string;
-          category: components['schemas']['ReportCategory'];
-          description?: string;
-        }
-      | unknown
-      | unknown;
-    ReportReceipt: {
-      /** Format: uuid */
-      id: string;
-      category: components['schemas']['ReportCategory'];
-      /** @enum {string} */
-      status: 'open';
-      /** Format: date-time */
-      createdAt: string;
-    };
-    UpdateMeInput: {
-      displayName?: string;
-      /** Format: uri */
-      avatarUrl?: string | null;
-      countryCode?: string | null;
-      timezone?: string;
-      locale?: string;
-      birthYear?: number | null;
-      bio?: string | null;
-      isProfilePublic?: boolean;
-    };
-    UserProfile: {
-      displayName: string;
-      avatarUrl: string | null;
-      countryCode: string | null;
-      timezone: string;
-      locale: string;
-      birthYear: number | null;
-      bio: string | null;
-      isProfilePublic: boolean;
-    };
-    PublicUser: {
-      /** Format: uuid */
-      id: string;
-      /** Format: email */
-      email: string;
-      username: string;
-      /** @enum {string} */
-      status: 'pending' | 'active' | 'suspended' | 'deleted';
-      /** Format: date-time */
-      emailVerifiedAt: string | null;
-      profile: components['schemas']['UserProfile'];
-    };
-    TokenPair: {
-      accessToken: string;
-      accessTokenExpiresIn: number;
-      refreshToken: string;
-      refreshTokenExpiresIn: number;
-    };
-    RegistrationResponse: {
-      user: components['schemas']['PublicUser'];
-      /** @description Presente somente quando a simulação local está habilitada. */
-      verificationToken?: string;
-    };
-    LoginResponse: {
-      user: components['schemas']['PublicUser'];
-      tokens: components['schemas']['TokenPair'];
-    };
-    ProblemDetails: {
-      /** Format: uri */
-      type: string;
-      title: string;
-      status: number;
-      detail: string;
-      instance: string;
-      requestId: string;
-      errors?: {
-        path?: string;
-        message?: string;
-      }[];
-    };
-    /** @enum {string} */
-    RatingPool: 'bullet' | 'blitz' | 'rapid' | 'classical' | 'correspondence';
-    JoinQueueInput: {
-      /** @enum {string} */
-      timeControlCode:
-        | 'bullet-1-0'
-        | 'bullet-2-1'
-        | 'blitz-3-0'
-        | 'blitz-3-2'
-        | 'rapid-10-0'
-        | 'rapid-15-10'
-        | 'classical-30-0';
-      /** @default false */
-      fallbackToBot: boolean;
-      botDifficulty?: components['schemas']['BotDifficulty'];
-      playerColor?: components['schemas']['PlayerColorPreference'];
-    };
-    /**
-     * @default matched
-     * @enum {string}
-     */
-    BotDifficulty: 'matched' | 'beginner' | 'intermediate' | 'advanced' | 'expert';
-    /**
-     * @default random
-     * @enum {string}
-     */
-    PlayerColorPreference: 'white' | 'black' | 'random';
-    CreateBotGameInput: {
-      /** @enum {string} */
-      timeControlCode:
-        | 'bullet-1-0'
-        | 'bullet-2-1'
-        | 'blitz-3-0'
-        | 'blitz-3-2'
-        | 'rapid-10-0'
-        | 'rapid-15-10'
-        | 'classical-30-0';
-      botDifficulty?: components['schemas']['BotDifficulty'];
-      playerColor?: components['schemas']['PlayerColorPreference'];
-    };
-    QueueStatus: {
-      /** @enum {string} */
-      status: 'queued' | 'matched';
-      pool: components['schemas']['RatingPool'];
-      /** @enum {string} */
-      timeControlCode:
-        | 'bullet-1-0'
-        | 'bullet-2-1'
-        | 'blitz-3-0'
-        | 'blitz-3-2'
-        | 'rapid-10-0'
-        | 'rapid-15-10'
-        | 'classical-30-0';
-      minRating: number;
-      maxRating: number;
-      /** Format: date-time */
-      enqueuedAt: string;
-      /** Format: uuid */
-      gameId?: string;
-    };
-    CreateChallengeInput: {
-      /** Format: uuid */
-      challengedUserId: string;
-      /** @enum {string} */
-      timeControlCode:
-        | 'bullet-1-0'
-        | 'bullet-2-1'
-        | 'blitz-3-0'
-        | 'blitz-3-2'
-        | 'rapid-10-0'
-        | 'rapid-15-10'
-        | 'classical-30-0';
-      /**
-       * @default null
-       * @enum {string|null}
-       */
-      challengerColor: 'white' | 'black' | null;
-    };
-    RespondChallengeInput: {
-      accept: boolean;
-    };
-    RatingProfile: {
-      pool: components['schemas']['RatingPool'];
-      rating: number;
-      gamesCount: number;
-      wins: number;
-      draws: number;
-      losses: number;
-      peakRating: number;
-      provisional: boolean;
-    };
-    RatingHistoryEntry: {
-      /** Format: uuid */
-      id: string;
-      /** Format: uuid */
-      gameId: string;
-      pool: components['schemas']['RatingPool'];
-      ratingBefore: number;
-      opponentRating: number;
-      expectedScore: number;
-      /** @enum {number} */
-      actualScore: 0 | 0.5 | 1;
-      kFactor: number;
-      rawDelta: number;
-      delta: number;
-      ratingAfter: number;
-      /** @enum {string} */
-      transactionType: 'game' | 'reversal';
-      /** Format: date-time */
-      createdAt: string;
-    };
-    LeaderboardEntry: {
-      rank: number;
-      /** Format: uuid */
-      userId: string;
-      username: string;
-      displayName: string;
-      rating: number;
-      gamesCount: number;
-      provisional: boolean;
-    };
-    CreateGameInput: {
-      /** Format: uuid */
-      opponentUserId: string;
-      /** @enum {string} */
-      timeControlCode:
-        | 'bullet-1-0'
-        | 'bullet-2-1'
-        | 'blitz-3-0'
-        | 'blitz-3-2'
-        | 'rapid-10-0'
-        | 'rapid-15-10'
-        | 'classical-30-0';
-      /**
-       * @default white
-       * @enum {string}
-       */
-      creatorColor: 'white' | 'black';
-    };
-    SubmitMoveInput: {
-      /** Format: uuid */
-      clientMoveId: string;
-      expectedVersion: number;
-      uci: string;
-    };
-    GamePlayer: {
-      /** Format: uuid */
-      userId: string;
-      /** @enum {string} */
-      color: 'white' | 'black';
-      ratingBefore: number;
-    };
-    GameState: {
-      /** Format: uuid */
-      id: string;
-      /** @enum {string} */
-      status: 'created' | 'waiting' | 'active' | 'finished' | 'aborted';
-      /** @enum {string} */
-      result: 'white_win' | 'black_win' | 'draw' | 'none';
-      /** @enum {string} */
-      termination:
-        | 'checkmate'
-        | 'resignation'
-        | 'timeout'
-        | 'stalemate'
-        | 'repetition'
-        | 'fifty_move'
-        | 'insufficient_material'
-        | 'agreement'
-        | 'abandonment'
-        | 'admin'
-        | 'none';
-      currentFen: string;
-      /** @enum {string} */
-      sideToMove: 'white' | 'black';
-      version: number;
-      whiteClockMs: number;
-      blackClockMs: number;
-      /** Format: date-time */
-      activeClockStartedAt: string | null;
-      /** Format: date-time */
-      startedAt: string | null;
-      /** Format: date-time */
-      finishedAt: string | null;
-      players: components['schemas']['GamePlayer'][];
-    };
-    GameHistoryItem: {
-      /** Format: uuid */
-      id: string;
-      status: string;
-      result: string;
-      termination: string;
-      pool: components['schemas']['RatingPool'];
-      rated: boolean;
-      /** @enum {string} */
-      color: 'white' | 'black';
-      timeControl: string;
-      /** Format: date-time */
-      startedAt: string | null;
-      /** Format: date-time */
-      finishedAt: string | null;
-      opponent: {
-        /** Format: uuid */
-        userId: string;
-        username: string;
-        displayName: string;
-        rating: number;
-      };
-    };
-    GameHistoryPage: {
-      items: components['schemas']['GameHistoryItem'][];
-      page: number;
-      limit: number;
-      total: number;
-    };
-    ReviewAnnotationInput: {
-      ply: number;
-      comment: string | null;
-      arrows: Record<string, never>[];
-      highlights: Record<string, never>[];
-    };
-    ReviewAnnotation: components['schemas']['ReviewAnnotationInput'] & {
-      /** Format: uuid */
-      gameId: string;
-      /** Format: uuid */
-      userId: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    DrawOfferAction: {
-      accepted: boolean;
-      /** Format: uuid */
-      offerId: string;
-      state: components['schemas']['GameState'];
-    };
-    GameMove: {
-      id: number;
-      ply: number;
-      /** @enum {string} */
-      color: 'white' | 'black';
-      /** Format: uuid */
-      clientMoveId: string;
-      uci: string;
-      san: string;
-      from: string;
-      to: string;
-      promotion: string | null;
-      fenBefore: string;
-      fenAfter: string;
-      flags: Record<string, never>;
-      /** Format: date-time */
-      committedAt: string;
-    };
-    CommitMoveResponse: {
-      move: components['schemas']['GameMove'];
-      state: components['schemas']['GameState'];
-    };
-  };
-  responses: {
-    /** @description Problem Details */
-    Problem: {
-      headers: {
-        [name: string]: unknown;
-      };
-      content: {
-        'application/problem+json': components['schemas']['ProblemDetails'];
-      };
-    };
-  };
-  parameters: {
-    GameId: string;
-  };
-  requestBodies: never;
-  headers: never;
-  pathItems: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  getHealth: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Serviço operacional */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['HealthStatus'];
-        };
-      };
-    };
-  };
-  register: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RegisterInput'];
-      };
-    };
-    responses: {
-      /** @description Usuário pendente criado */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['RegistrationResponse'];
-        };
-      };
-      400: components['responses']['Problem'];
-      409: components['responses']['Problem'];
-      503: components['responses']['Problem'];
-    };
-  };
-  resendVerification: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ResendVerificationInput'];
-      };
-    };
-    responses: {
-      /** @description Solicitação processada */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      400: components['responses']['Problem'];
-      503: components['responses']['Problem'];
-    };
-  };
-  verifyEmail: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['TokenInput'];
-      };
-    };
-    responses: {
-      /** @description Usuário ativado */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      401: components['responses']['Problem'];
-    };
-  };
-  forgotPassword: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ForgotPasswordInput'];
-      };
-    };
-    responses: {
-      /** @description Request processed */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      400: components['responses']['Problem'];
-      503: components['responses']['Problem'];
-    };
-  };
-  resetPassword: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ResetPasswordInput'];
-      };
-    };
-    responses: {
-      /** @description Password replaced and sessions revoked */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      400: components['responses']['Problem'];
-      401: components['responses']['Problem'];
-    };
-  };
-  login: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['LoginInput'];
-      };
-    };
-    responses: {
-      /** @description Sessão criada */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LoginResponse'];
-        };
-      };
-      401: components['responses']['Problem'];
-      403: components['responses']['Problem'];
-    };
-  };
-  refresh: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RefreshInput'];
-      };
-    };
-    responses: {
-      /** @description Tokens rotacionados */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['TokenPair'];
-        };
-      };
-      401: components['responses']['Problem'];
-    };
-  };
-  logout: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RefreshInput'];
-      };
-    };
-    responses: {
-      /** @description Sessão revogada ou já ausente */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-    };
-  };
-  getMe: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Perfil */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PublicUser'];
-        };
-      };
-      401: components['responses']['Problem'];
-    };
-  };
-  updateMe: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdateMeInput'];
-      };
-    };
-    responses: {
-      /** @description Perfil atualizado */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PublicUser'];
-        };
-      };
-      400: components['responses']['Problem'];
-      401: components['responses']['Problem'];
-    };
-  };
-  getMetrics: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Métricas agregadas sem dados pessoais */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'text/plain': string;
-        };
-      };
-      401: components['responses']['Problem'];
-    };
-  };
-  getPrivacy: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Preferências atuais */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PrivacySettings'];
-        };
-      };
-      401: components['responses']['Problem'];
-    };
-  };
-  updatePrivacy: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdatePrivacyInput'];
-      };
-    };
-    responses: {
-      /** @description Preferências atualizadas */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['PrivacySettings'];
-        };
-      };
-      400: components['responses']['Problem'];
-      401: components['responses']['Problem'];
-    };
-  };
-  listBlocks: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Bloqueios direcionais */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['BlockedUser'][];
-        };
-      };
-      401: components['responses']['Problem'];
-    };
-  };
-  blockUser: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        userId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Usuário bloqueado */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      400: components['responses']['Problem'];
-      401: components['responses']['Problem'];
-      404: components['responses']['Problem'];
-    };
-  };
-  unblockUser: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        userId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Bloqueio removido ou já ausente */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      401: components['responses']['Problem'];
-    };
-  };
-  createReport: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreateReportInput'];
-      };
-    };
-    responses: {
-      /** @description Denúncia registrada */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ReportReceipt'];
-        };
-      };
-      400: components['responses']['Problem'];
-      401: components['responses']['Problem'];
-      404: components['responses']['Problem'];
-      409: components['responses']['Problem'];
-    };
-  };
-  joinMatchmakingQueue: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['JoinQueueInput'];
-      };
-    };
-    responses: {
-      /** @description Enfileirado ou pareado */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['QueueStatus'];
-        };
-      };
-      400: components['responses']['Problem'];
-      401: components['responses']['Problem'];
-      403: components['responses']['Problem'];
-      404: components['responses']['Problem'];
-    };
-  };
-  leaveMatchmakingQueue: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Removido */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      401: components['responses']['Problem'];
-    };
-  };
-  createBotGame: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreateBotGameInput'];
-      };
-    };
-    responses: {
-      /** @description Partida contra bot criada; inclui o primeiro lance quando o bot joga de brancas */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['GameState'];
-        };
-      };
-      400: components['responses']['Problem'];
-      401: components['responses']['Problem'];
-      404: components['responses']['Problem'];
-    };
-  };
-  createDirectChallenge: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreateChallengeInput'];
-      };
-    };
-    responses: {
-      /** @description Desafio pendente criado */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      400: components['responses']['Problem'];
-      403: components['responses']['Problem'];
-      404: components['responses']['Problem'];
-      409: components['responses']['Problem'];
-    };
-  };
-  respondDirectChallenge: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        challengeId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RespondChallengeInput'];
-      };
-    };
-    responses: {
-      /** @description Desafio resolvido; gameId presente quando aceito */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      401: components['responses']['Problem'];
-      403: components['responses']['Problem'];
-      404: components['responses']['Problem'];
-      409: components['responses']['Problem'];
-    };
-  };
-  listGameHistory: {
-    parameters: {
-      query?: {
-        page?: number;
-        limit?: number;
-        status?: string;
-        result?: string;
-        pool?: components['schemas']['RatingPool'];
-        color?: 'white' | 'black';
-        rated?: boolean;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Página do histórico */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['GameHistoryPage'];
-        };
-      };
-    };
-  };
-  createGame: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreateGameInput'];
-      };
-    };
-    responses: {
-      /** @description Partida criada */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['GameState'];
-        };
-      };
-      400: components['responses']['Problem'];
-      401: components['responses']['Problem'];
-      404: components['responses']['Problem'];
-    };
-  };
-  getGame: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        gameId: components['parameters']['GameId'];
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Estado canônico */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['GameState'];
-        };
-      };
-      401: components['responses']['Problem'];
-      404: components['responses']['Problem'];
-    };
-  };
-  listGameMoves: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        gameId: components['parameters']['GameId'];
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Lances em ordem de ply */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['GameMove'][];
-        };
-      };
-    };
-  };
-  commitGameMove: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        gameId: components['parameters']['GameId'];
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SubmitMoveInput'];
-      };
-    };
-    responses: {
-      /** @description Lance confirmado ou resposta idempotente */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CommitMoveResponse'];
-        };
-      };
-      400: components['responses']['Problem'];
-      401: components['responses']['Problem'];
-      403: components['responses']['Problem'];
-      409: components['responses']['Problem'];
-    };
-  };
-  listReviewAnnotations: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        gameId: components['parameters']['GameId'];
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Anotações por ply */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ReviewAnnotation'][];
-        };
-      };
-    };
-  };
-  saveReviewAnnotation: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        gameId: components['parameters']['GameId'];
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ReviewAnnotationInput'];
-      };
-    };
-    responses: {
-      /** @description Anotação salva */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ReviewAnnotation'];
-        };
-      };
-    };
-  };
-  getGamePgn: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        gameId: components['parameters']['GameId'];
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description PGN */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/x-chess-pgn': string;
-        };
-      };
-      404: components['responses']['Problem'];
-    };
-  };
-  resignGame: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        gameId: components['parameters']['GameId'];
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Partida finalizada */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['GameState'];
-        };
-      };
-      409: components['responses']['Problem'];
-    };
-  };
-  offerOrAcceptDraw: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        gameId: components['parameters']['GameId'];
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Oferta criada ou aceita */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['DrawOfferAction'];
-        };
-      };
-      409: components['responses']['Problem'];
-    };
-  };
-  getMyRatings: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Perfis de rating */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['RatingProfile'][];
-        };
-      };
-      401: components['responses']['Problem'];
-    };
-  };
-  getMyRatingHistory: {
-    parameters: {
-      query?: {
-        pool?: components['schemas']['RatingPool'];
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Entradas do ledger em ordem decrescente */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['RatingHistoryEntry'][];
-        };
-      };
-      400: components['responses']['Problem'];
-      401: components['responses']['Problem'];
-    };
-  };
-  getRatingLeaderboard: {
-    parameters: {
-      query?: {
-        limit?: number;
-      };
-      header?: never;
-      path: {
-        pool: components['schemas']['RatingPool'];
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Classificação do pool */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LeaderboardEntry'][];
-        };
-      };
-      400: components['responses']['Problem'];
-      401: components['responses']['Problem'];
-    };
-  };
-  listPublishedCourses: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Cursos publicados */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CourseSummary'][];
-        };
-      };
-    };
-  };
-  getPublishedCourse: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        slug: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Curso com módulos e aulas */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CourseDetail'];
-        };
-      };
-      404: components['responses']['Problem'];
-    };
-  };
-  getCourseEditor: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        courseId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Curso incluindo rascunhos */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CourseDetail'];
-        };
-      };
-      403: components['responses']['Problem'];
-    };
-  };
-  saveCourseLesson: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        courseId: string;
-        slug: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SaveLessonInput'];
-      };
-    };
-    responses: {
-      /** @description Snapshot da versão criada */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LessonVersion'];
-        };
-      };
-      403: components['responses']['Problem'];
-      409: components['responses']['Problem'];
-    };
-  };
-  publishCourse: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        courseId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Curso publicado */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['CourseSummary'];
-        };
-      };
-      400: components['responses']['Problem'];
-      403: components['responses']['Problem'];
-    };
-  };
-  getLessonOverview: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        lessonId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Aula disponível sem respostas futuras */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LessonOverview'];
-        };
-      };
-      403: components['responses']['Problem'];
-      404: components['responses']['Problem'];
-    };
-  };
-  startLessonAttempt: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['StartLessonAttemptInput'];
-      };
-    };
-    responses: {
-      /** @description Estado atual da tentativa */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LessonAttemptView'];
-        };
-      };
-    };
-  };
-  getLessonAttempt: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        attemptId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Estado atual */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LessonAttemptView'];
-        };
-      };
-      404: components['responses']['Problem'];
-    };
-  };
-  submitLessonAction: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        attemptId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['LessonActionInput'];
-      };
-    };
-    responses: {
-      /** @description Estado atualizado e persistido */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['LessonAttemptView'];
-        };
-      };
-      400: components['responses']['Problem'];
-      404: components['responses']['Problem'];
-    };
-  };
-  searchExercises: {
-    parameters: {
-      query?: {
-        q?: string;
-        category?: string;
-        difficulty?: string;
-        module?: number;
-        chapter?: number;
-        lessonId?: string;
-        positionType?: components['schemas']['ExercisePositionType'];
-        limit?: number;
-        offset?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Filtered exercises */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ExerciseSearchResult'];
-        };
-      };
-      400: components['responses']['Problem'];
-    };
-  };
-  submitExerciseAttempt: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        exerciseId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SubmitExerciseAttemptInput'];
-      };
-    };
-    responses: {
-      /** @description Evaluated attempt */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ExerciseAttemptResult'];
-        };
-      };
-      400: components['responses']['Problem'];
-      404: components['responses']['Problem'];
-    };
-  };
-  startExerciseTraining: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['StartExerciseTrainingInput'];
-      };
-    };
-    responses: {
-      /** @description Training session */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ExerciseTrainingView'];
-        };
-      };
-      400: components['responses']['Problem'];
-    };
-  };
-  getExerciseTraining: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        sessionId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Training session */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ExerciseTrainingView'];
-        };
-      };
-      404: components['responses']['Problem'];
-    };
-  };
-  revealExerciseHint: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        sessionId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Next hint */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ExerciseHint'];
-        };
-      };
-      404: components['responses']['Problem'];
-    };
-  };
-  revealExerciseSolution: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        sessionId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Exercise solution */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ExerciseSolution'];
-        };
-      };
-      404: components['responses']['Problem'];
-    };
-  };
-  getExerciseMetrics: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Exercise metrics */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ExerciseMetrics'];
-        };
-      };
-    };
-  };
+    getHealth: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Serviço operacional */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthStatus"];
+                };
+            };
+        };
+    };
+    register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterInput"];
+            };
+        };
+        responses: {
+            /** @description Usuário pendente criado */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegistrationResponse"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    resendVerification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResendVerificationInput"];
+            };
+        };
+        responses: {
+            /** @description Solicitação processada */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    verifyEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenInput"];
+            };
+        };
+        responses: {
+            /** @description Usuário ativado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    forgotPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ForgotPasswordInput"];
+            };
+        };
+        responses: {
+            /** @description Request processed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordInput"];
+            };
+        };
+        responses: {
+            /** @description Password replaced and sessions revoked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+        };
+    };
+    login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginInput"];
+            };
+        };
+        responses: {
+            /** @description Sessão criada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResponse"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    refresh: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshInput"];
+            };
+        };
+        responses: {
+            /** @description Tokens rotacionados */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenPair"];
+                };
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshInput"];
+            };
+        };
+        responses: {
+            /** @description Sessão revogada ou já ausente */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Perfil */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicUser"];
+                };
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    updateMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMeInput"];
+            };
+        };
+        responses: {
+            /** @description Perfil atualizado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicUser"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+        };
+    };
+    getMetrics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Métricas agregadas sem dados pessoais */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    getPrivacy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Preferências atuais */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrivacySettings"];
+                };
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    updatePrivacy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePrivacyInput"];
+            };
+        };
+        responses: {
+            /** @description Preferências atualizadas */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrivacySettings"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+        };
+    };
+    listBlocks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Bloqueios direcionais */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BlockedUser"][];
+                };
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    blockUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Usuário bloqueado */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    unblockUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Bloqueio removido ou já ausente */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    createReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReportInput"];
+            };
+        };
+        responses: {
+            /** @description Denúncia registrada */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportReceipt"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
+    joinMatchmakingQueue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JoinQueueInput"];
+            };
+        };
+        responses: {
+            /** @description Enfileirado ou pareado */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueueStatus"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    leaveMatchmakingQueue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removido */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    createBotGame: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBotGameInput"];
+            };
+        };
+        responses: {
+            /** @description Partida contra bot criada; inclui o primeiro lance quando o bot joga de brancas */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameState"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    createDirectChallenge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateChallengeInput"];
+            };
+        };
+        responses: {
+            /** @description Desafio pendente criado */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
+    respondDirectChallenge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                challengeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RespondChallengeInput"];
+            };
+        };
+        responses: {
+            /** @description Desafio resolvido; gameId presente quando aceito */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
+    listGameHistory: {
+        parameters: {
+            query?: {
+                page?: number;
+                limit?: number;
+                status?: string;
+                result?: string;
+                pool?: components["schemas"]["RatingPool"];
+                color?: "white" | "black";
+                rated?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Página do histórico */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameHistoryPage"];
+                };
+            };
+        };
+    };
+    createGame: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateGameInput"];
+            };
+        };
+        responses: {
+            /** @description Partida criada */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameState"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    getGame: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gameId: components["parameters"]["GameId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Estado canônico */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameState"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    listGameMoves: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gameId: components["parameters"]["GameId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lances em ordem de ply */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameMove"][];
+                };
+            };
+        };
+    };
+    commitGameMove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gameId: components["parameters"]["GameId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitMoveInput"];
+            };
+        };
+        responses: {
+            /** @description Lance confirmado ou resposta idempotente */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommitMoveResponse"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
+    listReviewAnnotations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gameId: components["parameters"]["GameId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Anotações por ply */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewAnnotation"][];
+                };
+            };
+        };
+    };
+    saveReviewAnnotation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gameId: components["parameters"]["GameId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewAnnotationInput"];
+            };
+        };
+        responses: {
+            /** @description Anotação salva */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewAnnotation"];
+                };
+            };
+        };
+    };
+    getGamePgn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gameId: components["parameters"]["GameId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description PGN */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/x-chess-pgn": string;
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    resignGame: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gameId: components["parameters"]["GameId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Partida finalizada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameState"];
+                };
+            };
+            409: components["responses"]["Problem"];
+        };
+    };
+    offerOrAcceptDraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gameId: components["parameters"]["GameId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Oferta criada ou aceita */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DrawOfferAction"];
+                };
+            };
+            409: components["responses"]["Problem"];
+        };
+    };
+    getMyRatings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Perfis de rating */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RatingProfile"][];
+                };
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    getMyRatingHistory: {
+        parameters: {
+            query?: {
+                pool?: components["schemas"]["RatingPool"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Entradas do ledger em ordem decrescente */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RatingHistoryEntry"][];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+        };
+    };
+    getRatingLeaderboard: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                pool: components["schemas"]["RatingPool"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Classificação do pool */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaderboardEntry"][];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+        };
+    };
+    listPublishedCourses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cursos publicados */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourseSummary"][];
+                };
+            };
+        };
+    };
+    getPublishedCourse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Curso com módulos e aulas */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourseDetail"];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    getCourseEditor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                courseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Curso incluindo rascunhos */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourseDetail"];
+                };
+            };
+            403: components["responses"]["Problem"];
+        };
+    };
+    saveCourseLesson: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                courseId: string;
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveLessonInput"];
+            };
+        };
+        responses: {
+            /** @description Snapshot da versão criada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonVersion"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
+    publishCourse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                courseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Curso publicado */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourseSummary"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    getLessonOverview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lessonId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Aula disponível sem respostas futuras */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonOverview"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    startLessonAttempt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartLessonAttemptInput"];
+            };
+        };
+        responses: {
+            /** @description Estado atual da tentativa */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonAttemptView"];
+                };
+            };
+        };
+    };
+    getLessonAttempt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attemptId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Estado atual */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonAttemptView"];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    submitLessonAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attemptId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LessonActionInput"];
+            };
+        };
+        responses: {
+            /** @description Estado atualizado e persistido */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonAttemptView"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    searchExercises: {
+        parameters: {
+            query?: {
+                q?: string;
+                category?: string;
+                difficulty?: string;
+                module?: number;
+                chapter?: number;
+                lessonId?: string;
+                positionType?: components["schemas"]["ExercisePositionType"];
+                source?: "classic" | "book";
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Filtered exercises */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExerciseSearchResult"];
+                };
+            };
+            400: components["responses"]["Problem"];
+        };
+    };
+    submitExerciseAttempt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exerciseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitExerciseAttemptInput"];
+            };
+        };
+        responses: {
+            /** @description Evaluated attempt */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExerciseAttemptResult"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    startExerciseTraining: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartExerciseTrainingInput"];
+            };
+        };
+        responses: {
+            /** @description Training session */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExerciseTrainingView"];
+                };
+            };
+            400: components["responses"]["Problem"];
+        };
+    };
+    getExerciseTraining: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Training session */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExerciseTrainingView"];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    revealExerciseHint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Next hint */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExerciseHint"];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    revealExerciseSolution: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sessionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Exercise solution */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExerciseSolution"];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    getExerciseMetrics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Exercise metrics */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExerciseMetrics"];
+                };
+            };
+        };
+    };
 }

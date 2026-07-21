@@ -104,6 +104,7 @@ export class ExercisesRepository {
       module: query.module ?? null,
       positionType: query.positionType ?? null,
       q: query.q ?? null,
+      source: query.source ?? null,
     };
   }
 
@@ -119,6 +120,11 @@ export class ExercisesRepository {
          AND (${filter.module}::integer IS NULL OR e.module_number = ${filter.module})
          AND (${filter.positionType}::text IS NULL OR e.position_type = ${filter.positionType})
          AND (${filter.q}::text IS NULL OR concat_ws(' ', e.title, e.prompt_md, e.category, array_to_string(e.tags, ' ')) ILIKE '%' || ${filter.q} || '%')
+         AND (${filter.source}::text IS NULL OR CASE ${filter.source}
+           WHEN 'classic' THEN 'classico' = ANY(e.tags)
+           WHEN 'book' THEN NOT ('classico' = ANY(e.tags)) AND NOT ('challenge' = ANY(e.tags))
+           ELSE true END)
+         AND (${filter.q}::text IS NOT NULL OR NOT ('challenge' = ANY(e.tags)))
          AND (${filter.lessonId}::uuid IS NULL OR EXISTS (
            SELECT 1 FROM lesson_exercises le WHERE le.exercise_id = e.id AND le.lesson_id = ${filter.lessonId}
          ))
@@ -136,6 +142,11 @@ export class ExercisesRepository {
          AND (${filter.module}::integer IS NULL OR e.module_number = ${filter.module})
          AND (${filter.positionType}::text IS NULL OR e.position_type = ${filter.positionType})
          AND (${filter.q}::text IS NULL OR concat_ws(' ', e.title, e.prompt_md, e.category, array_to_string(e.tags, ' ')) ILIKE '%' || ${filter.q} || '%')
+         AND (${filter.source}::text IS NULL OR CASE ${filter.source}
+           WHEN 'classic' THEN 'classico' = ANY(e.tags)
+           WHEN 'book' THEN NOT ('classico' = ANY(e.tags)) AND NOT ('challenge' = ANY(e.tags))
+           ELSE true END)
+         AND (${filter.q}::text IS NOT NULL OR NOT ('challenge' = ANY(e.tags)))
          AND (${filter.lessonId}::uuid IS NULL OR EXISTS (
            SELECT 1 FROM lesson_exercises le WHERE le.exercise_id = e.id AND le.lesson_id = ${filter.lessonId}
          ))
@@ -179,6 +190,11 @@ export class ExercisesRepository {
                AND (${filter.module}::integer IS NULL OR e.module_number = ${filter.module})
                AND (${filter.positionType}::text IS NULL OR e.position_type = ${filter.positionType})
                AND (${filter.q}::text IS NULL OR concat_ws(' ', e.title, e.prompt_md, e.category, array_to_string(e.tags, ' ')) ILIKE '%' || ${filter.q} || '%')
+               AND (${filter.source}::text IS NULL OR CASE ${filter.source}
+                 WHEN 'classic' THEN 'classico' = ANY(e.tags)
+                 WHEN 'book' THEN NOT ('classico' = ANY(e.tags)) AND NOT ('challenge' = ANY(e.tags))
+                 ELSE true END)
+               AND (${filter.q}::text IS NOT NULL OR NOT ('challenge' = ANY(e.tags)))
                AND (${filter.lessonId}::uuid IS NULL OR EXISTS (
                  SELECT 1 FROM lesson_exercises le WHERE le.exercise_id = e.id AND le.lesson_id = ${filter.lessonId}
                ))

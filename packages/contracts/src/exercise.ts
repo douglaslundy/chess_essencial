@@ -17,6 +17,7 @@ export const exerciseSearchQuerySchema = z.object({
   offset: z.coerce.number().int().nonnegative().default(0),
   positionType: exercisePositionTypeSchema.optional(),
   q: z.string().trim().min(1).max(120).optional(),
+  source: z.enum(['classic', 'book']).optional(),
 });
 
 export const exerciseSummarySchema = z.object({

@@ -829,6 +829,8 @@ export interface components {
       /** Format: uuid */
       lessonId?: string;
       positionType?: components['schemas']['ExercisePositionType'];
+      /** @enum {string} */
+      source?: 'classic' | 'book';
       /** @default 10 */
       limit: number;
     };
@@ -2500,6 +2502,7 @@ export interface operations {
         chapter?: number;
         lessonId?: string;
         positionType?: components['schemas']['ExercisePositionType'];
+        source?: 'classic' | 'book';
         limit?: number;
         offset?: number;
       };

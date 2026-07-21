@@ -76,9 +76,14 @@ export function LessonPlayer({ lessonId }: { lessonId: string }) {
           <p>Nota: {attempt.score ?? 100}%</p>
         </section>
       ) : step ? (
-        <section className="lessonRuntimeGrid">
-          {step.stepType === 'board_instruction' || step.stepType === 'checkpoint' ? (
+        <section
+          className={`lessonRuntimeGrid ${step.stepType === 'quiz' ? 'lessonRuntimeGridStacked' : ''}`}
+        >
+          {step.stepType === 'board_instruction' ||
+          step.stepType === 'checkpoint' ||
+          (step.stepType === 'quiz' && step.initialFen) ? (
             <ChessBoard
+              disabled={step.stepType === 'quiz'}
               fen={step.initialFen ?? INITIAL_FEN}
               onMove={(uci) => void submit({ type: 'move', uci })}
               orientation={step.orientation ?? 'white'}

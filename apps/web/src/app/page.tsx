@@ -1,37 +1,50 @@
-import { webEnv } from '@/env';
+import Link from 'next/link';
 
-const foundations = [
-  'Frontend e backend independentes',
-  'Servidor autoritativo para partidas',
-  'Contratos versionados em /v1',
+const highlights = [
+  'Partidas ao vivo com servidor autoritativo',
+  'Exercícios e desafios progressivos, do iniciante ao avançado',
+  'Cursos e aulas interativas com tabuleiro',
 ];
 
 export default function HomePage() {
   return (
-    <main className="shell">
+    <main className="landingPage">
+      <header className="landingBar">
+        <Link className="landingBrand" href="/">
+          <span>XE</span>
+          <strong>Xadrez Essencial</strong>
+        </Link>
+        <nav aria-label="Acesso">
+          <Link className="secondaryButton" href="/entrar">
+            Entrar
+          </Link>
+          <Link className="primaryButton" href="/entrar">
+            Criar conta grátis
+          </Link>
+        </nav>
+      </header>
+
       <section className="hero" aria-labelledby="page-title">
-        <p className="eyebrow">Fase 1 · Fundação técnica</p>
-        <h1 id="page-title">Xadrez Essencial</h1>
+        <p className="eyebrow">Plataforma de xadrez</p>
+        <h1 id="page-title">Aprenda e jogue xadrez do jeito certo</h1>
         <p className="lead">
-          A base da plataforma está pronta para evoluir em fases verificáveis, preservando as regras
-          do jogo, o tempo e o rating no servidor.
+          Aulas, exercícios e desafios organizados por dificuldade, partidas ao vivo com regras e
+          tempo validados pelo servidor, e ranking para acompanhar sua evolução.
         </p>
-        <div className="status" role="status">
-          <span className="statusDot" aria-hidden="true" />
-          Web operacional
+        <div className="landingCtas">
+          <Link className="primaryButton" href="/entrar">
+            Começar agora
+          </Link>
         </div>
       </section>
 
-      <section className="panel" aria-labelledby="foundations-title">
-        <h2 id="foundations-title">Princípios do bootstrap</h2>
+      <section className="panel" aria-labelledby="highlights-title">
+        <h2 id="highlights-title">O que você encontra na plataforma</h2>
         <ul>
-          {foundations.map((foundation) => (
-            <li key={foundation}>{foundation}</li>
+          {highlights.map((highlight) => (
+            <li key={highlight}>{highlight}</li>
           ))}
         </ul>
-        <p className="api">
-          API configurada em <code>{webEnv.NEXT_PUBLIC_API_URL}</code>
-        </p>
       </section>
     </main>
   );

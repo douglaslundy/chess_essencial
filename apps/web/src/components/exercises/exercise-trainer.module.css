@@ -60,6 +60,27 @@
   color: #64748b;
   font-size: 0.8rem;
 }
+.sourceFilter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+}
+.sourceFilter button {
+  border: 1px solid #52525b;
+  border-radius: 999px;
+  background: #18181b;
+  color: #d4d4d8;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.sourceFilter button[aria-pressed='true'] {
+  border-color: #e5c56f;
+  background: #e5c56f;
+  color: #1c1917;
+}
 .filters {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 0.7fr auto auto;
@@ -86,11 +107,12 @@
 .filters button,
 .actions button {
   border: 0;
-  border-radius: 0.6rem;
-  min-height: 2.6rem;
-  padding: 0.6rem 1rem;
+  border-radius: 0.55rem;
+  min-height: 2.2rem;
+  padding: 0.5rem 0.85rem;
   background: #172554;
   color: #fff;
+  font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -202,10 +224,11 @@
 }
 .boardControls button {
   border: 1px solid #52525b;
-  border-radius: 0.6rem;
+  border-radius: 0.55rem;
   background: #e2e8f0;
   color: #172554;
-  padding: 0.6rem 0.9rem;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.85rem;
   font-weight: 800;
   cursor: pointer;
 }

@@ -24,12 +24,16 @@ const emptyMetrics: ExerciseMetrics = {
   hintsUsed: 0,
 };
 
+type ExerciseSource = 'all' | 'classic' | 'book';
+
 interface ExerciseTrainerProps {
   description?: string;
   guided?: boolean;
   initialDifficulty?: string;
   initialQuery?: string;
   positionType?: 'legal_position' | 'illustrative_diagram' | 'text_only';
+  showSourceFilter?: boolean;
+  storageKey?: string;
   title?: string;
 }
 
@@ -39,12 +43,15 @@ export function ExerciseTrainer({
   initialDifficulty = '',
   initialQuery = '',
   positionType,
+  showSourceFilter = false,
+  storageKey = 'xadrez.challenge_training_session',
   title = 'Exercícios de Xadrez Essencial',
 }: ExerciseTrainerProps = {}) {
   const [category, setCategory] = useState('');
   const [difficulty, setDifficulty] = useState(initialDifficulty);
   const [moduleNumber, setModuleNumber] = useState('');
   const [query, setQuery] = useState(initialQuery);
+  const [source, setSource] = useState<ExerciseSource>('all');
   const [result, setResult] = useState(emptySearch);
   const [metrics, setMetrics] = useState(emptyMetrics);
   const [training, setTraining] = useState<ExerciseTrainingView | null>(null);
@@ -74,8 +81,9 @@ export function ExerciseTrainer({
     if (difficulty) value.set('difficulty', difficulty);
     if (moduleNumber) value.set('module', moduleNumber);
     if (positionType) value.set('positionType', positionType);
+    if (source !== 'all') value.set('source', source);
     return value;
-  }, [category, difficulty, moduleNumber, positionType, query]);
+  }, [category, difficulty, moduleNumber, positionType, query, source]);
 
   const load = useCallback(async () => {
     if (guided) return;
@@ -118,13 +126,16 @@ export function ExerciseTrainer({
                     'legal_position' | 'illustrative_diagram' | 'text_only',
                 }
               : {}),
+            ...(search.get('source')
+              ? { source: search.get('source') as 'classic' | 'book' }
+              : {}),
           },
         },
         accessToken,
       );
       setTraining(value);
       if (guided) {
-        window.localStorage.setItem('xadrez.challenge_training_session', value.sessionId);
+        window.localStorage.setItem(storageKey, value.sessionId);
       }
       setBoardHistory(null);
       setHint('');
@@ -137,7 +148,7 @@ export function ExerciseTrainer({
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Falha ao iniciar treino.');
     }
-  }, [filters, guided]);
+  }, [filters, guided, storageKey]);
 
   useEffect(() => {
     if (!guided || autoStarted.current) return;
@@ -145,7 +156,7 @@ export function ExerciseTrainer({
     queueMicrotask(() => {
       void (async () => {
         const accessToken = token();
-        const savedSession = window.localStorage.getItem('xadrez.challenge_training_session');
+        const savedSession = window.localStorage.getItem(storageKey);
         if (accessToken && savedSession) {
           try {
             const saved = await api.getExerciseTraining(savedSession, accessToken);
@@ -158,13 +169,23 @@ export function ExerciseTrainer({
             );
             return;
           } catch {
-            window.localStorage.removeItem('xadrez.challenge_training_session');
+            window.localStorage.removeItem(storageKey);
           }
         }
         await startTraining();
       })();
     });
-  }, [guided, startTraining]);
+  }, [guided, startTraining, storageKey]);
+
+  const sourceMounted = useRef(false);
+  useEffect(() => {
+    if (!guided || !showSourceFilter) return;
+    if (!sourceMounted.current) {
+      sourceMounted.current = true;
+      return;
+    }
+    void startTraining();
+  }, [source, guided, showSourceFilter, startTraining]);
 
   useEffect(
     () => () => {
@@ -236,6 +257,7 @@ export function ExerciseTrainer({
   }
 
   const current = training?.currentExercise;
+  const hasGuidedLine = guided && current ? Boolean(guidedChallengeLine(current.id)) : false;
   const boardFen =
     current && boardHistory?.exerciseId === current.id
       ? boardHistory.positions[boardHistory.index]!
@@ -270,49 +292,53 @@ export function ExerciseTrainer({
 
       if (guided) {
         const expected = guidedChallengeLine(current.id);
-        if (!expected || canonical !== expected[moves.length - 1]) {
-          setBoardLocked(true);
-          setMessage('Esse não é o lance esperado. Avaliando para você tentar novamente…');
-          void submit(moves);
-          return;
-        }
-        const opponentMove = expected[moves.length];
-        if (!opponentMove) {
-          setBoardLocked(true);
-          setMessage('Lance correto. Liberando o próximo desafio…');
-          void submit(moves);
-          return;
-        }
-
-        setBoardLocked(true);
-        setMessage('Boa jogada. O adversário está respondendo…');
-        opponentTimer.current = setTimeout(() => {
-          try {
-            const replyPosition = new Chess(chess.fen());
-            const reply = replyPosition.move({
-              from: opponentMove.slice(0, 2),
-              to: opponentMove.slice(2, 4),
-              ...(opponentMove[4] ? { promotion: opponentMove[4] } : {}),
-            });
-            const replyUci = `${reply.from}${reply.to}${reply.promotion ?? ''}`;
-            const repliedMoves = [...moves, replyUci];
-            setBoardHistory({
-              exerciseId: current.id,
-              index: repliedMoves.length,
-              moves: repliedMoves,
-              positions: [...positions, replyPosition.fen()],
-            });
-            setLine(repliedMoves.join(' '));
-            if (repliedMoves.length === expected.length) void submit(repliedMoves);
-            else {
-              setBoardLocked(false);
-              setMessage('O adversário respondeu. Agora é sua vez.');
-            }
-          } catch {
-            setBoardLocked(false);
-            setMessage('Não foi possível reproduzir a resposta automática.');
+        if (expected) {
+          if (canonical !== expected[moves.length - 1]) {
+            setBoardLocked(true);
+            setMessage('Esse não é o lance esperado. Avaliando para você tentar novamente…');
+            void submit(moves);
+            return;
           }
-        }, 450);
+          const opponentMove = expected[moves.length];
+          if (!opponentMove) {
+            setBoardLocked(true);
+            setMessage('Lance correto. Liberando o próximo desafio…');
+            void submit(moves);
+            return;
+          }
+
+          setBoardLocked(true);
+          setMessage('Boa jogada. O adversário está respondendo…');
+          opponentTimer.current = setTimeout(() => {
+            try {
+              const replyPosition = new Chess(chess.fen());
+              const reply = replyPosition.move({
+                from: opponentMove.slice(0, 2),
+                to: opponentMove.slice(2, 4),
+                ...(opponentMove[4] ? { promotion: opponentMove[4] } : {}),
+              });
+              const replyUci = `${reply.from}${reply.to}${reply.promotion ?? ''}`;
+              const repliedMoves = [...moves, replyUci];
+              setBoardHistory({
+                exerciseId: current.id,
+                index: repliedMoves.length,
+                moves: repliedMoves,
+                positions: [...positions, replyPosition.fen()],
+              });
+              setLine(repliedMoves.join(' '));
+              if (repliedMoves.length === expected.length) void submit(repliedMoves);
+              else {
+                setBoardLocked(false);
+                setMessage('O adversário respondeu. Agora é sua vez.');
+              }
+            } catch {
+              setBoardLocked(false);
+              setMessage('Não foi possível reproduzir a resposta automática.');
+            }
+          }, 450);
+        } else if (current.answerFormat === 'move_sequence') {
+          setMessage('Lance registrado. Toque em Confirmar quando terminar a sequência.');
+        }
       }
     } catch {
       setMessage('Esse lance não é permitido nesta posição.');
@@ -357,6 +383,27 @@ export function ExerciseTrainer({
             <span>Tempo médio</span>
           </div>
         </section>
+      ) : null}
+
+      {guided && showSourceFilter ? (
+        <div className={styles.sourceFilter} role="group" aria-label="Origem dos exercícios">
+          {(
+            [
+              { label: 'Todos', value: 'all' },
+              { label: 'Clássicos', value: 'classic' },
+              { label: 'Livro', value: 'book' },
+            ] as const
+          ).map((option) => (
+            <button
+              aria-pressed={source === option.value}
+              key={option.value}
+              onClick={() => setSource(option.value)}
+              type="button"
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
       ) : null}
 
       {!guided ? (
@@ -474,7 +521,7 @@ export function ExerciseTrainer({
               <strong>Solução:</strong> {solution.solutionMd}
             </aside>
           ) : null}
-          {!guided ? (
+          {!guided || !hasGuidedLine ? (
             <label className={styles.answer}>
               {current.answerFormat === 'free_text'
                 ? 'Resposta'
@@ -489,9 +536,9 @@ export function ExerciseTrainer({
             </label>
           ) : null}
           <div className={styles.actions}>
-            {!guided ? (
+            {!guided || !hasGuidedLine ? (
               <button onClick={() => void submit()} type="button">
-                Enviar tentativa
+                {guided ? 'Confirmar resposta' : 'Enviar tentativa'}
               </button>
             ) : null}
             <button onClick={revealHint} type="button">
