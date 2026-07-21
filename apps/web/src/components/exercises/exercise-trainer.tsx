@@ -10,8 +10,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Chess } from 'chess.js';
 
 import { ChessBoard } from '@/components/game/chess-board';
+import {
+  MoveAnnouncement,
+  describeImportantMove,
+  type Announcement,
+} from '@/components/game/move-announcement';
 import { api } from '@/lib/api/client';
 import { usePieceTheme } from '@/lib/piece-theme';
+import { playCaptureSound, playMoveSound, primeAudio } from '@/lib/sound';
 
 import styles from './exercise-trainer.module.css';
 import { guidedChallengeLine } from './guided-challenge-lines';
@@ -76,6 +82,7 @@ export function ExerciseTrainer({
   const [startedAt, setStartedAt] = useState(0);
   const [boardLocked, setBoardLocked] = useState(false);
   const [showRetryBanner, setShowRetryBanner] = useState(false);
+  const [announcement, setAnnouncement] = useState<Announcement | null>(null);
   const autoStarted = useRef(false);
   const opponentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [boardHistory, setBoardHistory] = useState<{
@@ -262,6 +269,11 @@ export function ExerciseTrainer({
       resetAttemptUi();
       setLine('');
       setShowRetryBanner(!attempt.correct);
+      setAnnouncement({
+        key: `attempt-${Date.now()}`,
+        text: attempt.correct ? 'Você conseguiu!' : 'Essa não era a jogada certa.',
+        tone: attempt.correct ? 'success' : 'danger',
+      });
       setMessage(
         attempt.correct
           ? attempt.training?.status === 'completed'
@@ -291,10 +303,27 @@ export function ExerciseTrainer({
       (boardHistory && boardHistory.index < boardHistory.moves.length)
     )
       return;
+    primeAudio();
     setShowRetryBanner(false);
     try {
       const chess = new Chess(boardFen);
       const move = chess.move(uciToChessMove(uci));
+      if (move.captured) playCaptureSound();
+      else playMoveSound();
+      const described = describeImportantMove({
+        san: move.san,
+        to: move.to,
+        flags: {
+          capture: move.isCapture() || move.isEnPassant(),
+          castling: move.isKingsideCastle()
+            ? 'king_side'
+            : move.isQueensideCastle()
+              ? 'queen_side'
+              : null,
+          promotion: move.isPromotion(),
+        },
+      });
+      if (described) setAnnouncement({ ...described, key: `${current.id}-${Date.now()}` });
       const canonical = moveToUci(move);
       const previous =
         boardHistory?.exerciseId === current.id
@@ -457,6 +486,7 @@ export function ExerciseTrainer({
         </section>
       ) : null}
 
+      <MoveAnnouncement announcement={announcement} />
       <p className={styles.status} role="status">
         {message}
       </p>
