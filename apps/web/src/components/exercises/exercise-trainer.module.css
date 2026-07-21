@@ -107,7 +107,8 @@
   padding: 0.6rem 0.75rem;
 }
 .filters button,
-.actions button {
+.actions button,
+.boardControls button {
   border: 0;
   border-radius: 0.55rem;
   min-height: 2.2rem;
@@ -249,16 +250,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
-}
-.boardControls button {
-  border: 1px solid #52525b;
-  border-radius: 0.55rem;
-  background: #e2e8f0;
-  color: #172554;
-  padding: 0.45rem 0.75rem;
-  font-size: 0.85rem;
-  font-weight: 800;
-  cursor: pointer;
 }
 .boardControls button:disabled {
   cursor: not-allowed;

@@ -494,6 +494,7 @@ export function ExerciseTrainer({
                   aria-label="Controles do histórico do exercício"
                 >
                   <button
+                    className={styles.secondaryAction}
                     disabled={!boardHistory || boardHistory.index === 0}
                     onClick={() => moveBoardHistory(-1)}
                     type="button"
@@ -501,6 +502,7 @@ export function ExerciseTrainer({
                     ← Voltar lance
                   </button>
                   <button
+                    className={styles.secondaryAction}
                     disabled={!boardHistory || boardHistory.index >= boardHistory.moves.length}
                     onClick={() => moveBoardHistory(1)}
                     type="button"
