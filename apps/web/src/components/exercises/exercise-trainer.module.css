@@ -61,23 +61,25 @@
   font-size: 0.8rem;
 }
 .sourceFilter {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  justify-content: center;
+  display: inline-flex;
+  justify-self: center;
+  gap: 0.15rem;
+  border: 1px solid #3f3f46;
+  border-radius: 0.6rem;
+  background: #18181b;
+  padding: 0.2rem;
 }
 .sourceFilter button {
-  border: 1px solid #52525b;
-  border-radius: 999px;
-  background: #18181b;
-  color: #d4d4d8;
-  padding: 0.35rem 0.85rem;
-  font-size: 0.78rem;
+  border: 0;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: #a1a1aa;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
 }
 .sourceFilter button[aria-pressed='true'] {
-  border-color: #e5c56f;
   background: #e5c56f;
   color: #1c1917;
 }
@@ -110,11 +112,18 @@
   border-radius: 0.55rem;
   min-height: 2.2rem;
   padding: 0.5rem 0.85rem;
-  background: #172554;
-  color: #fff;
   font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
+}
+.filters button,
+.primaryAction {
+  background: #172554;
+  color: #fff;
+}
+.secondaryAction {
+  background: #e2e8f0;
+  color: #172554;
 }
 .status {
   min-height: 1.4rem;
@@ -200,10 +209,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
-}
-.actions button:nth-child(n + 2) {
-  background: #e2e8f0;
-  color: #172554;
 }
 .results h2 {
   margin-top: 0;

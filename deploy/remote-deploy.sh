@@ -59,6 +59,13 @@ set +a
 compose=(docker compose --project-name "$PROJECT_NAME" --file "$COMPOSE_FILE" --env-file "$ENV_FILE")
 "${compose[@]}" config >/dev/null
 
+# Each deploy tags 3 fresh images and never removes the previous ones, so
+# repeated deploys (e.g. several pushes in a short window) can silently fill
+# the disk and take the whole stack down. Reclaim dangling layers/build
+# cache before building so a low-disk VPS still has room for this build.
+docker image prune --force >/dev/null 2>&1 || true
+docker builder prune --force --filter "until=24h" >/dev/null 2>&1 || true
+
 docker build --file "$ROOT_DIR/deploy/Dockerfile" --target api \
   --build-arg "NEXT_PUBLIC_API_URL=$PUBLIC_API_URL" --tag "xadrez-api:$IMAGE_TAG" "$ROOT_DIR"
 docker build --file "$ROOT_DIR/deploy/Dockerfile" --target worker \
@@ -118,3 +125,11 @@ wait_for_url course "http://127.0.0.1:$API_PORT/v1/courses/xadrez-essencial"
 
 "${compose[@]}" ps
 printf '%s\n' "release.image_tag=$IMAGE_TAG"
+
+# Now that the new images are confirmed healthy, drop older xadrez-{api,worker,web}
+# tags so the untagged/previous-release images don't accumulate on disk forever.
+for repo in xadrez-api xadrez-worker xadrez-web; do
+  docker images "$repo" --format '{{.Repository}}:{{.Tag}}' \
+    | grep -v ":$IMAGE_TAG$" \
+    | xargs --no-run-if-empty docker rmi --force >/dev/null 2>&1 || true
+done

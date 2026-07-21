@@ -555,15 +555,15 @@ export function ExerciseTrainer({
           ) : null}
           <div className={styles.actions}>
             {!guided || !hasGuidedLine ? (
-              <button onClick={() => void submit()} type="button">
+              <button className={styles.primaryAction} onClick={() => void submit()} type="button">
                 {guided ? 'Confirmar resposta' : 'Enviar tentativa'}
               </button>
             ) : null}
-            <button onClick={revealHint} type="button">
+            <button className={styles.secondaryAction} onClick={revealHint} type="button">
               Pedir dica
             </button>
             {!guided ? (
-              <button onClick={revealSolution} type="button">
+              <button className={styles.secondaryAction} onClick={revealSolution} type="button">
                 Ver solução
               </button>
             ) : null}
