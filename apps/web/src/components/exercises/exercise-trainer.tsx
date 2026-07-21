@@ -61,6 +61,7 @@ export function ExerciseTrainer({
   const [message, setMessage] = useState('Carregando exercícios…');
   const [startedAt, setStartedAt] = useState(0);
   const [boardLocked, setBoardLocked] = useState(false);
+  const [attemptOutcome, setAttemptOutcome] = useState<'idle' | 'correct' | 'incorrect'>('idle');
   const autoStarted = useRef(false);
   const opponentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [boardHistory, setBoardHistory] = useState<{
@@ -140,6 +141,7 @@ export function ExerciseTrainer({
       setSolution(null);
       setStartedAt(Date.now());
       setBoardLocked(false);
+      setAttemptOutcome('idle');
       setMessage(
         value.total ? 'Treino iniciado.' : 'Nenhum exercício disponível para este treino.',
       );
@@ -241,12 +243,13 @@ export function ExerciseTrainer({
       setSolution(null);
       setStartedAt(Date.now());
       setBoardLocked(false);
+      setAttemptOutcome(attempt.correct ? 'correct' : 'incorrect');
       setMessage(
         attempt.correct
           ? attempt.training?.status === 'completed'
             ? 'Parabéns! Você concluiu todos os desafios.'
             : `Correto. Próximo desafio liberado. Pontuação: ${attempt.score}.`
-          : 'Ainda não. O desafio continua disponível para você tentar novamente.',
+          : 'Ainda não. Esse não era o lance certo.',
       );
       if (!guided) setMetrics(await api.getExerciseMetrics(accessToken));
     } catch (error) {
@@ -270,6 +273,7 @@ export function ExerciseTrainer({
       (boardHistory && boardHistory.index < boardHistory.moves.length)
     )
       return;
+    setAttemptOutcome('idle');
     try {
       const chess = new Chess(boardFen);
       const move = chess.move({
@@ -509,6 +513,14 @@ export function ExerciseTrainer({
               Este exercício do livro não contém uma posição de tabuleiro associada.
             </p>
           )}
+          {guided && hasGuidedLine && attemptOutcome === 'incorrect' ? (
+            <aside className={styles.incorrectFeedback}>
+              <span>Esse não era o lance certo.</span>
+              <button onClick={() => setAttemptOutcome('idle')} type="button">
+                ↻ Tentar novamente
+              </button>
+            </aside>
+          ) : null}
           {hint ? (
             <aside className={styles.feedback}>
               <strong>Dica:</strong> {hint}

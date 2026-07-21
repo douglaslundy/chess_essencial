@@ -173,6 +173,29 @@
   color: #fef3c7;
   padding: 0.75rem;
 }
+.incorrectFeedback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  border-left: 3px solid #dc2626;
+  background: #2c1414;
+  color: #fecaca;
+  padding: 0.6rem 0.85rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+}
+.incorrectFeedback button {
+  border: 1px solid #fecaca;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: #fecaca;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
 .actions {
   display: flex;
   flex-wrap: wrap;
