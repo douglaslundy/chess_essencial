@@ -116,6 +116,8 @@ export class GamesGateway implements OnGatewayConnection, OnGatewayDisconnect, O
     }
   }
 
+  private static readonly BOT_REPLY_DELAY_MS = 1000;
+
   @SubscribeMessage('move.submit')
   async submitMove(@ConnectedSocket() client: WebSocket, @MessageBody() body: unknown) {
     try {
@@ -125,17 +127,37 @@ export class GamesGateway implements OnGatewayConnection, OnGatewayDisconnect, O
       if (!this.session(client).gameIds.has(command.gameId)) {
         throw new UnauthorizedException('Join the game before submitting a move');
       }
-      const results = await this.games.commitMoveSequence(command.gameId, userId, command);
-      for (const result of results) {
-        this.broadcast(command.gameId, 'game.move_committed', {
-          clock: this.clock(result.state),
-          ...result,
-        });
-      }
-      this.scheduleTimeout(command.gameId, results.at(-1)!.state);
+      const result = await this.games.commitPlayerMove(command.gameId, userId, command);
+      this.broadcast(command.gameId, 'game.move_committed', {
+        clock: this.clock(result.state),
+        ...result,
+      });
+      this.scheduleTimeout(command.gameId, result.state);
+      this.scheduleBotReply(command.gameId);
     } catch (error) {
       this.fail(client, 'move.submit', error);
     }
+  }
+
+  private scheduleBotReply(gameId: string) {
+    const timer = setTimeout(() => {
+      void this.games
+        .commitBotMoveIfNeeded(gameId)
+        .then((bot) => {
+          if (!bot) return;
+          this.broadcast(gameId, 'game.move_committed', {
+            clock: this.clock(bot.state),
+            ...bot,
+          });
+          this.scheduleTimeout(gameId, bot.state);
+        })
+        .catch(() => {
+          // No client request is pending on this delayed callback; failures here
+          // (e.g. the game finished by resignation during the delay) are expected
+          // and non-actionable, so there is nothing to notify.
+        });
+    }, GamesGateway.BOT_REPLY_DELAY_MS);
+    timer.unref();
   }
 
   notifyFinished(gameId: string, state: GameState) {

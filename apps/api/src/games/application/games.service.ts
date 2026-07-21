@@ -102,7 +102,18 @@ export class GamesService {
     }
   }
 
-  private async commitBotMoveIfNeeded(gameId: string) {
+  async commitPlayerMove(gameId: string, userId: string, input: SubmitMoveInput) {
+    try {
+      const result = await this.games.commitMove(gameId, userId, input);
+      if (result.state.status === 'finished') await this.ratings.processFinishedGame(gameId);
+      return result;
+    } catch (error) {
+      await this.ratings.processFinishedGame(gameId);
+      throw error;
+    }
+  }
+
+  async commitBotMoveIfNeeded(gameId: string) {
     const turn = await this.games.botTurn(gameId);
     if (!turn) return null;
     const uci = selectBotMove(turn.currentFen, turn.targetRating);
