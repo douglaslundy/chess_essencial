@@ -52,6 +52,7 @@ export const updateMeInputSchema = z
     birthYear: z.number().int().min(1900).max(new Date().getUTCFullYear()).nullable().optional(),
     bio: z.string().trim().max(500).nullable().optional(),
     isProfilePublic: z.boolean().optional(),
+    boardTheme: z.enum(['classic', 'staunton_3d', 'wood']).optional(),
   })
   .refine((value) => Object.keys(value).length > 0, 'Informe ao menos uma configuração');
 
@@ -70,6 +71,7 @@ export const publicUserSchema = z.object({
     birthYear: z.number().int().nullable(),
     bio: z.string().nullable(),
     isProfilePublic: z.boolean(),
+    boardTheme: z.enum(['classic', 'staunton_3d', 'wood']),
   }),
 });
 

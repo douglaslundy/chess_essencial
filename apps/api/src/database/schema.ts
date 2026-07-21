@@ -41,6 +41,7 @@ export const terminationReasonEnum = pgEnum('termination_reason', [
   'none',
 ]);
 export const colorSideEnum = pgEnum('color_side', ['white', 'black']);
+export const boardThemeEnum = pgEnum('board_theme', ['classic', 'staunton_3d', 'wood']);
 export const ratingPoolEnum = pgEnum('rating_pool', [
   'bullet',
   'blitz',
@@ -74,6 +75,7 @@ export const userProfiles = pgTable('user_profiles', {
   isProfilePublic: boolean('is_profile_public').notNull().default(true),
   allowChallenges: boolean('allow_challenges').notNull().default(true),
   allowFriendRequests: boolean('allow_friend_requests').notNull().default(true),
+  boardTheme: boardThemeEnum('board_theme').notNull().default('classic'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

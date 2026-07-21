@@ -38,6 +38,7 @@ class FakeUsersRepository {
         avatarUrl: null,
         bio: null,
         birthYear: null,
+        boardTheme: 'classic',
         countryCode: null,
         createdAt: now,
         displayName: input.displayName,

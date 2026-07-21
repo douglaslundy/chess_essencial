@@ -1075,6 +1075,8 @@ export interface components {
       birthYear?: number | null;
       bio?: string | null;
       isProfilePublic?: boolean;
+      /** @enum {string} */
+      boardTheme?: 'classic' | 'staunton_3d' | 'wood';
     };
     UserProfile: {
       displayName: string;
@@ -1085,6 +1087,8 @@ export interface components {
       birthYear: number | null;
       bio: string | null;
       isProfilePublic: boolean;
+      /** @enum {string} */
+      boardTheme: 'classic' | 'staunton_3d' | 'wood';
     };
     PublicUser: {
       /** Format: uuid */

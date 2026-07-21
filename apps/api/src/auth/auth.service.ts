@@ -395,6 +395,7 @@ export class AuthService {
         avatarUrl: user.profile.avatarUrl,
         bio: user.profile.bio,
         birthYear: user.profile.birthYear,
+        boardTheme: user.profile.boardTheme,
         countryCode: user.profile.countryCode,
         displayName: user.profile.displayName,
         isProfilePublic: user.profile.isProfilePublic,

@@ -1155,10 +1155,11 @@ components:
         birthYear: {type: [integer, 'null'], minimum: 1900}
         bio: {type: [string, 'null'], maxLength: 500}
         isProfilePublic: {type: boolean}
+        boardTheme: {type: string, enum: [classic, staunton_3d, wood]}
       additionalProperties: false
     UserProfile:
       type: object
-      required: [displayName, avatarUrl, countryCode, timezone, locale, birthYear, bio, isProfilePublic]
+      required: [displayName, avatarUrl, countryCode, timezone, locale, birthYear, bio, isProfilePublic, boardTheme]
       properties:
         displayName: {type: string}
         avatarUrl: {type: [string, 'null']}
@@ -1168,6 +1169,7 @@ components:
         birthYear: {type: [integer, 'null']}
         bio: {type: [string, 'null']}
         isProfilePublic: {type: boolean}
+        boardTheme: {type: string, enum: [classic, staunton_3d, wood]}
       additionalProperties: false
     PublicUser:
       type: object
