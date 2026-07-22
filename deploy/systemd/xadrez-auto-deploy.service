@@ -6,9 +6,12 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 WorkingDirectory=/opt/chess/src
+# HOME must be set so git/ssh find /root/.ssh/known_hosts; the repo's
+# core.sshCommand supplies the read-only deploy key (do not set
+# GIT_SSH_COMMAND here — it would override that config).
+Environment=HOME=/root
 Environment=XADREZ_ROOT_DIR=/opt/chess/src
 Environment=XADREZ_ENV_FILE=/opt/chess/.env.vps
-Environment=GIT_SSH_COMMAND=ssh -i /opt/chess/.ssh/id_ed25519 -o IdentitiesOnly=yes
 ExecStart=/usr/bin/bash /opt/chess/src/deploy/auto-deploy.sh
 TimeoutStartSec=30min
 
