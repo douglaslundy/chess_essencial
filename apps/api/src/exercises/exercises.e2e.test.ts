@@ -191,4 +191,107 @@ describeDatabase('exercise runtime database integration', () => {
       hintsUsed: 1,
     });
   });
+
+  it('grades a mate-in-two incrementally and excludes it once solved', async () => {
+    await sql`
+      INSERT INTO exercises (
+        external_id, source_number, module_number, chapter_number, title, prompt_md,
+        solution_md, difficulty, category, fen, side_to_move, solution_lines, hints,
+        tags, status, position_type, import_metadata
+      ) VALUES (
+        'evaluate-line-mate-in-two', 1301, 1, 1, 'Mate em dois de teste',
+        'Calcule a sequência forçada.', '1.Qg8+ Rxg8 2.Nf7#', 'advanced', 'Desafios de teste',
+        '5r1k/6pp/4Q2N/8/8/8/8/K7 w - - 0 1', 'white',
+        '[ ["e6g8", "f8g8", "h6f7"] ]'::jsonb, '["Sacrifício de dama."]'::jsonb,
+        ARRAY['evaluatelinetest'], 'published', 'legal_position',
+        '{"answerFormat":"move_sequence"}'::jsonb
+      )
+      ON CONFLICT (external_id) DO UPDATE SET updated_at = now()
+    `;
+
+    const started = await app.inject({
+      headers: auth(),
+      method: 'POST',
+      payload: { filters: { limit: 5, q: 'evaluatelinetest' } },
+      url: '/v1/exercise-training-sessions',
+    });
+    expect(started.statusCode, started.body).toBe(201);
+    const sessionId = started.json().sessionId as string;
+    const mateExerciseId = started.json().currentExercise.id as string;
+
+    const step1 = await app.inject({
+      headers: auth(),
+      method: 'POST',
+      payload: { trainingSessionId: sessionId, playedMoves: ['e6g8'] },
+      url: `/v1/exercises/${mateExerciseId}/evaluate-line`,
+    });
+    expect(step1.statusCode, step1.body).toBe(201);
+    expect(step1.json()).toMatchObject({
+      status: 'continue',
+      opponentReply: 'f8g8',
+      movesConfirmed: 1,
+      attempt: null,
+    });
+
+    const step2 = await app.inject({
+      headers: auth(),
+      method: 'POST',
+      payload: { trainingSessionId: sessionId, playedMoves: ['e6g8', 'h6f7'] },
+      url: `/v1/exercises/${mateExerciseId}/evaluate-line`,
+    });
+    expect(step2.statusCode, step2.body).toBe(201);
+    expect(step2.json()).toMatchObject({ status: 'solved', opponentReply: null });
+    expect(step2.json().attempt).toMatchObject({ correct: true });
+
+    const restarted = await app.inject({
+      headers: auth(),
+      method: 'POST',
+      payload: { filters: { limit: 5, q: 'evaluatelinetest' } },
+      url: '/v1/exercise-training-sessions',
+    });
+    expect(restarted.statusCode, restarted.body).toBe(201);
+    expect(restarted.json().total).toBe(0);
+  });
+
+  it('reports a wrong first move as incorrect without advancing', async () => {
+    await sql`
+      INSERT INTO exercises (
+        external_id, source_number, module_number, chapter_number, title, prompt_md,
+        solution_md, difficulty, category, fen, side_to_move, solution_lines, hints,
+        tags, status, position_type, import_metadata
+      ) VALUES (
+        'evaluate-line-wrong-move', 1302, 1, 1, 'Lance único de teste',
+        'Encontre o lance.', '1.Re8#', 'beginner', 'Desafios de teste',
+        '6k1/5ppp/8/8/8/8/8/4R1K1 w - - 0 1', 'white',
+        '[ ["e1e8"] ]'::jsonb, '["Torre para a oitava."]'::jsonb,
+        ARRAY['wrongmovetest'], 'published', 'legal_position',
+        '{"answerFormat":"move_sequence"}'::jsonb
+      )
+      ON CONFLICT (external_id) DO UPDATE SET updated_at = now()
+    `;
+    const started = await app.inject({
+      headers: auth(),
+      method: 'POST',
+      payload: { filters: { limit: 1, q: 'wrongmovetest' } },
+      url: '/v1/exercise-training-sessions',
+    });
+    const sessionId = started.json().sessionId as string;
+    const currentId = started.json().currentExercise.id as string;
+
+    const wrong = await app.inject({
+      headers: auth(),
+      method: 'POST',
+      payload: { trainingSessionId: sessionId, playedMoves: ['e2e3'] },
+      url: `/v1/exercises/${currentId}/evaluate-line`,
+    });
+    expect(wrong.statusCode, wrong.body).toBe(201);
+    expect(wrong.json()).toMatchObject({ status: 'incorrect', attempt: null });
+
+    const session = await app.inject({
+      headers: auth(),
+      method: 'GET',
+      url: `/v1/exercise-training-sessions/${sessionId}`,
+    });
+    expect(session.json()).toMatchObject({ position: 1, status: 'started' });
+  });
 });

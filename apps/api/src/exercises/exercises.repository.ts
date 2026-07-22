@@ -1,5 +1,6 @@
 import { ChessJsRules } from '@xadrez/chess-domain';
 import type {
+  EvaluateExerciseLineInput,
   ExerciseSearchQuery,
   ExerciseTrainingFilters,
   SubmitExerciseAttemptInput,
@@ -7,6 +8,7 @@ import type {
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { DatabaseService } from '../database/database.service.js';
+import { gradePlayedMoves } from './exercise-grader.js';
 
 type ExerciseRow = {
   answer_format: 'free_text' | 'move_sequence';
@@ -195,6 +197,10 @@ export class ExercisesRepository {
                  WHEN 'book' THEN NOT ('classico' = ANY(e.tags)) AND NOT ('challenge' = ANY(e.tags))
                  ELSE true END)
                AND (${filter.q}::text IS NOT NULL OR NOT ('challenge' = ANY(e.tags)))
+               AND NOT EXISTS (
+                 SELECT 1 FROM exercise_attempts a
+                  WHERE a.exercise_id = e.id AND a.user_id = ${userId} AND a.correct = true
+               )
                AND (${filter.lessonId}::uuid IS NULL OR EXISTS (
                  SELECT 1 FROM lesson_exercises le WHERE le.exercise_id = e.id AND le.lesson_id = ${filter.lessonId}
                ))
@@ -347,6 +353,56 @@ export class ExercisesRepository {
       training: input.trainingSessionId
         ? await this.training(userId, input.trainingSessionId)
         : null,
+    };
+  }
+
+  async evaluateLine(userId: string, exerciseId: string, input: EvaluateExerciseLineInput) {
+    const sql = this.database.client;
+    const [exercise] = await sql<{ solution_lines: string[][] }[]>`
+      SELECT e.solution_lines
+        FROM exercises e
+        JOIN exercise_training_items i ON i.exercise_id = e.id
+        JOIN exercise_training_sessions s ON s.id = i.session_id
+       WHERE e.id = ${exerciseId} AND e.status = 'published'
+         AND s.id = ${input.trainingSessionId} AND s.user_id = ${userId}
+         AND s.status = 'started' AND i.position = s.current_position
+    `;
+    if (!exercise) throw new NotFoundException('Exercise is not current in this training session');
+
+    const grade = gradePlayedMoves(exercise.solution_lines, input.playedMoves);
+
+    if (grade.status !== 'solved') {
+      return {
+        attempt: null,
+        movesConfirmed: grade.movesConfirmed,
+        opponentReply: grade.opponentReply,
+        status: grade.status,
+      };
+    }
+
+    const fullLine =
+      exercise.solution_lines.find((line) => {
+        const playerMoves = line
+          .filter((_, index) => index % 2 === 0)
+          .map((move) => move.trim().toLowerCase());
+        const played = input.playedMoves.map((move) => move.trim().toLowerCase());
+        return (
+          played.length === playerMoves.length &&
+          played.every((move, index) => move === playerMoves[index])
+        );
+      }) ?? input.playedMoves;
+
+    const attempt = await this.attempt(userId, exerciseId, {
+      durationMs: 0,
+      submittedLine: fullLine,
+      trainingSessionId: input.trainingSessionId,
+    });
+
+    return {
+      attempt,
+      movesConfirmed: grade.movesConfirmed,
+      opponentReply: null,
+      status: 'solved' as const,
     };
   }
 

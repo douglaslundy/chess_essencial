@@ -704,6 +704,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/exercises/{exerciseId}/evaluate-line': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Incrementally grade the player's moves for a board exercise */
+    post: operations['evaluateExerciseLine'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/exercise-training-sessions': {
     parameters: {
       query?: never;
@@ -862,6 +879,18 @@ export interface components {
       score: number;
       hintsUsed: number;
       training: components['schemas']['ExerciseTrainingView'] | null;
+    };
+    EvaluateExerciseLineInput: {
+      /** Format: uuid */
+      trainingSessionId: string;
+      playedMoves: string[];
+    };
+    EvaluateExerciseLineResult: {
+      /** @enum {string} */
+      status: 'continue' | 'solved' | 'incorrect';
+      opponentReply: string | null;
+      movesConfirmed: number;
+      attempt: components['schemas']['ExerciseAttemptResult'] | null;
     };
     ExerciseHint: {
       hint: string;
@@ -2550,6 +2579,34 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ExerciseAttemptResult'];
+        };
+      };
+      400: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  evaluateExerciseLine: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        exerciseId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['EvaluateExerciseLineInput'];
+      };
+    };
+    responses: {
+      /** @description Incremental grading result */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EvaluateExerciseLineResult'];
         };
       };
       400: components['responses']['Problem'];

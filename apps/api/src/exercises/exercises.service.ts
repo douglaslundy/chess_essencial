@@ -1,4 +1,5 @@
 import type {
+  EvaluateExerciseLineInput,
   ExerciseSearchQuery,
   StartExerciseTrainingInput,
   SubmitExerciseAttemptInput,
@@ -33,6 +34,10 @@ export class ExercisesService {
 
   attempt(userId: string, exerciseId: string, input: SubmitExerciseAttemptInput) {
     return this.exercises.attempt(userId, exerciseId, input);
+  }
+
+  evaluateLine(userId: string, exerciseId: string, input: EvaluateExerciseLineInput) {
+    return this.exercises.evaluateLine(userId, exerciseId, input);
   }
 
   metrics(userId: string) {

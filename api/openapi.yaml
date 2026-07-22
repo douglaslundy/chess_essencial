@@ -732,6 +732,25 @@ paths:
               schema: {$ref: '#/components/schemas/ExerciseAttemptResult'}
         '400': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
+  /exercises/{exerciseId}/evaluate-line:
+    post:
+      summary: Incrementally grade the player's moves for a board exercise
+      operationId: evaluateExerciseLine
+      parameters:
+        - {name: exerciseId, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/EvaluateExerciseLineInput'}
+      responses:
+        '201':
+          description: Incremental grading result
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/EvaluateExerciseLineResult'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
   /exercise-training-sessions:
     post:
       summary: Start an exercise training session
@@ -894,6 +913,23 @@ components:
         training:
           oneOf:
             - {$ref: '#/components/schemas/ExerciseTrainingView'}
+            - {type: 'null'}
+    EvaluateExerciseLineInput:
+      type: object
+      required: [trainingSessionId, playedMoves]
+      properties:
+        trainingSessionId: {type: string, format: uuid}
+        playedMoves: {type: array, minItems: 1, maxItems: 50, items: {type: string}}
+    EvaluateExerciseLineResult:
+      type: object
+      required: [status, opponentReply, movesConfirmed, attempt]
+      properties:
+        status: {type: string, enum: [continue, solved, incorrect]}
+        opponentReply: {type: [string, 'null']}
+        movesConfirmed: {type: integer, minimum: 0}
+        attempt:
+          oneOf:
+            - {$ref: '#/components/schemas/ExerciseAttemptResult'}
             - {type: 'null'}
     ExerciseHint:
       type: object

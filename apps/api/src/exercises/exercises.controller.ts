@@ -1,4 +1,5 @@
 import {
+  evaluateExerciseLineInputSchema,
   exerciseSearchQuerySchema,
   startExerciseTrainingInputSchema,
   submitExerciseAttemptInputSchema,
@@ -55,6 +56,19 @@ export class ExercisesController {
       request.auth.userId,
       parseInput(idSchema, exerciseId),
       parseInput(submitExerciseAttemptInputSchema, body),
+    );
+  }
+
+  @Post('exercises/:exerciseId/evaluate-line')
+  evaluateLine(
+    @Req() request: AuthenticatedRequest,
+    @Param('exerciseId') exerciseId: string,
+    @Body() body: unknown,
+  ) {
+    return this.exercises.evaluateLine(
+      request.auth.userId,
+      parseInput(idSchema, exerciseId),
+      parseInput(evaluateExerciseLineInputSchema, body),
     );
   }
 
