@@ -270,9 +270,14 @@ export class ExercisesRepository {
     if (!exercise) throw new NotFoundException('Exercise not found');
 
     // The linked lesson (lowest position) that teaches this exercise supplies
-    // the verified study text; its non-quiz steps are the teaching material.
-    const [lesson] = await sql<{ id: string; module_title: string | null; title: string }[]>`
-      SELECT l.id, l.title, m.title AS module_title
+    // the verified study text; its non-quiz steps are the teaching material and
+    // its page range is what the student "flips through" up to the question.
+    const [lesson] = await sql<
+      { id: string; module_title: string | null; source_pages: number[]; title: string }[]
+    >`
+      SELECT l.id, l.title, m.title AS module_title,
+        CASE WHEN l.source_pages IS NULL THEN '{}'::integer[]
+          ELSE ARRAY(SELECT generate_series(lower(l.source_pages), upper(l.source_pages) - 1)) END AS source_pages
         FROM lesson_exercises le
         JOIN lessons l ON l.id = le.lesson_id AND l.status = 'published'
         JOIN course_modules m ON m.id = l.module_id
@@ -294,7 +299,8 @@ export class ExercisesRepository {
       chapterNumber: exercise.chapter_number,
       lessonTitle: lesson?.title ?? null,
       moduleTitle: lesson?.module_title ?? null,
-      sourcePages: exercise.source_pages,
+      sourcePages:
+        lesson && lesson.source_pages.length > 0 ? lesson.source_pages : exercise.source_pages,
       teaching: teaching.map((step) => ({ bodyMd: step.body_md, title: step.title })),
     };
   }

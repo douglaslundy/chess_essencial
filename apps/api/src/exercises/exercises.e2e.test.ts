@@ -295,9 +295,11 @@ describeDatabase('exercise runtime database integration', () => {
     expect(study.statusCode, study.body).toBe(200);
     const body = study.json();
     expect(body.lessonTitle).toBe('Aula de estudo');
+    expect(body.moduleTitle).toBe('Módulo de estudo');
     expect(body.teaching).toEqual([
       { title: 'Objetivo', bodyMd: 'Estude o princípio antes de responder.' },
     ]);
+    // Pages come from the linked lesson's source_pages range [4,6).
     expect(body.sourcePages).toEqual([4, 5]);
   });
 
