@@ -76,6 +76,19 @@ export const exerciseAttemptResultSchema = z.object({
   training: exerciseTrainingViewSchema.nullable(),
 });
 
+export const exerciseStudyStepSchema = z.object({
+  bodyMd: z.string(),
+  title: z.string().nullable(),
+});
+
+export const exerciseStudyContextSchema = z.object({
+  chapterNumber: z.number().int().positive().nullable(),
+  lessonTitle: z.string().nullable(),
+  moduleTitle: z.string().nullable(),
+  sourcePages: z.array(z.number().int().positive()),
+  teaching: z.array(exerciseStudyStepSchema),
+});
+
 export const evaluateExerciseLineInputSchema = z.object({
   playedMoves: z.array(z.string().trim().min(2).max(20)).min(1).max(50),
   trainingSessionId: z.string().uuid(),
@@ -125,6 +138,7 @@ export type ExerciseMetrics = z.infer<typeof exerciseMetricsSchema>;
 export type ExerciseSearchQuery = z.infer<typeof exerciseSearchQuerySchema>;
 export type ExerciseSearchResult = z.infer<typeof exerciseSearchResultSchema>;
 export type ExerciseSolution = z.infer<typeof exerciseSolutionSchema>;
+export type ExerciseStudyContext = z.infer<typeof exerciseStudyContextSchema>;
 export type ExerciseSummary = z.infer<typeof exerciseSummarySchema>;
 export type ExerciseTrainingFilters = z.infer<typeof exerciseTrainingFiltersSchema>;
 export type ExerciseTrainingView = z.infer<typeof exerciseTrainingViewSchema>;

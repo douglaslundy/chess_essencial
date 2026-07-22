@@ -40,6 +40,10 @@ export class ExercisesService {
     return this.exercises.evaluateLine(userId, exerciseId, input);
   }
 
+  studyContext(exerciseId: string) {
+    return this.exercises.studyContext(exerciseId);
+  }
+
   metrics(userId: string) {
     return this.exercises.metrics(userId);
   }

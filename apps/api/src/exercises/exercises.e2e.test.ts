@@ -253,6 +253,43 @@ describeDatabase('exercise runtime database integration', () => {
     expect(restarted.json().total).toBe(0);
   });
 
+  it('returns verified study context from the linked lesson', async () => {
+    const [module] = await sql<{ id: string }[]>`
+      SELECT id FROM course_modules ORDER BY position LIMIT 1
+    `;
+    const [lesson] = await sql<{ id: string }[]>`
+      INSERT INTO lessons (module_id, slug, position, title, status, source_pages)
+      VALUES (${module!.id}, 'study-context-lesson', 999, 'Aula de estudo', 'published', '[4,6)'::int4range)
+      ON CONFLICT (module_id, slug) DO UPDATE SET title = excluded.title
+      RETURNING id
+    `;
+    await sql`
+      INSERT INTO lesson_steps (lesson_id, step_key, position, step_type, title, body_md)
+      VALUES
+        (${lesson!.id}, 'objetivo', 1, 'text', 'Objetivo', 'Estude o princípio antes de responder.'),
+        (${lesson!.id}, 'pergunta', 2, 'quiz', 'Pergunta', 'Esta parte é um quiz e não deve aparecer.')
+      ON CONFLICT DO NOTHING
+    `;
+    await sql`
+      INSERT INTO lesson_exercises (lesson_id, exercise_id, position)
+      VALUES (${lesson!.id}, ${textualExerciseId}, 1)
+      ON CONFLICT (lesson_id, exercise_id) DO NOTHING
+    `;
+
+    const study = await app.inject({
+      headers: auth(),
+      method: 'GET',
+      url: `/v1/exercises/${textualExerciseId}/study`,
+    });
+    expect(study.statusCode, study.body).toBe(200);
+    const body = study.json();
+    expect(body.lessonTitle).toBe('Aula de estudo');
+    expect(body.teaching).toEqual([
+      { title: 'Objetivo', bodyMd: 'Estude o princípio antes de responder.' },
+    ]);
+    expect(body.sourcePages).toEqual([4, 5]);
+  });
+
   it('reports a wrong first move as incorrect without advancing', async () => {
     await sql`
       INSERT INTO exercises (

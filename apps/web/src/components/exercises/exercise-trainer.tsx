@@ -4,6 +4,7 @@ import type {
   ExerciseMetrics,
   ExerciseSearchResult,
   ExerciseSolution,
+  ExerciseStudyContext,
   ExerciseTrainingView,
 } from '@xadrez/contracts';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -89,6 +90,8 @@ export function ExerciseTrainer({
   const [showRetryBanner, setShowRetryBanner] = useState(false);
   const [resultModal, setResultModal] = useState<'won' | 'lost' | null>(null);
   const [playerMoves, setPlayerMoves] = useState<string[]>([]);
+  const [study, setStudy] = useState<ExerciseStudyContext | null>(null);
+  const [studyOpen, setStudyOpen] = useState(true);
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
   const autoStarted = useRef(false);
   const announceSeq = useRef(0);
@@ -301,6 +304,37 @@ export function ExerciseTrainer({
     guided && current
       ? current.positionType === 'legal_position' && current.answerFormat === 'move_sequence'
       : false;
+  // Book/text exercises get a verified study panel (linked lesson text) before
+  // the question so the student never answers blind.
+  const showsStudy = Boolean(current && current.answerFormat === 'free_text');
+  const currentId = current?.id ?? null;
+  useEffect(() => {
+    let active = true;
+    const accessToken = token();
+    if (!currentId || !showsStudy || !accessToken) {
+      queueMicrotask(() => {
+        if (active) setStudy(null);
+      });
+      return () => {
+        active = false;
+      };
+    }
+    queueMicrotask(() => {
+      if (active) setStudyOpen(true);
+    });
+    api
+      .getExerciseStudy(currentId, accessToken)
+      .then((value) => {
+        if (active) setStudy(value);
+      })
+      .catch(() => {
+        if (active) setStudy(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [currentId, showsStudy]);
+
   const boardFen =
     current && boardHistory?.exerciseId === current.id
       ? boardHistory.positions[boardHistory.index]!
@@ -561,6 +595,38 @@ export function ExerciseTrainer({
                 : 'Posição legal'}
           </span>
           <h2>{current.title ?? `Exercício ${current.sourceNumber ?? ''}`}</h2>
+          {showsStudy && study && (study.teaching.length > 0 || study.sourcePages.length > 0) ? (
+            <section className={styles.studyPanel} aria-label="Conteúdo de estudo">
+              <button
+                aria-expanded={studyOpen}
+                className={styles.studyToggle}
+                onClick={() => setStudyOpen((value) => !value)}
+                type="button"
+              >
+                <span>📖 Estudo{study.lessonTitle ? `: ${study.lessonTitle}` : ''}</span>
+                <span aria-hidden="true">{studyOpen ? '▾' : '▸'}</span>
+              </button>
+              {studyOpen ? (
+                <div className={styles.studyBody}>
+                  {study.teaching.map((step, index) => (
+                    <div key={index}>
+                      {step.title ? <strong>{step.title}</strong> : null}
+                      <p>{step.bodyMd}</p>
+                    </div>
+                  ))}
+                  {study.sourcePages.length > 0 ? (
+                    <p className={styles.studySource}>
+                      Fonte: página{study.sourcePages.length > 1 ? 's' : ''} {study.sourcePages[0]}
+                      {study.sourcePages.length > 1
+                        ? `–${study.sourcePages[study.sourcePages.length - 1]}`
+                        : ''}
+                      {study.moduleTitle ? ` · ${study.moduleTitle}` : ''}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+            </section>
+          ) : null}
           <p>{current.promptMd}</p>
           {boardFen ? (
             <div className={styles.boardArea}>

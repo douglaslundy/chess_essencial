@@ -211,6 +211,52 @@
   flex-wrap: wrap;
   gap: 0.6rem;
 }
+.studyPanel {
+  margin: 0.5rem 0 0.85rem;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  border-left: 3px solid var(--gold, #d8b66c);
+  border-radius: 0.6rem;
+  background: rgba(216, 182, 108, 0.06);
+  overflow: hidden;
+}
+.studyToggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  border: 0;
+  background: transparent;
+  color: var(--gold, #d8b66c);
+  padding: 0.6rem 0.85rem;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  text-align: left;
+}
+.studyBody {
+  padding: 0 0.85rem 0.75rem;
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+.studyBody > div {
+  margin-top: 0.5rem;
+}
+.studyBody strong {
+  display: block;
+  margin-bottom: 0.15rem;
+}
+.studyBody p {
+  margin: 0.15rem 0;
+}
+.studySource {
+  margin-top: 0.6rem;
+  font-size: 0.82rem;
+  color: var(--muted, #b8b4ad);
+  font-style: italic;
+}
+
 .resultOverlay {
   position: fixed;
   inset: 0;

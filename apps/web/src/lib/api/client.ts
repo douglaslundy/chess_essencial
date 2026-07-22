@@ -13,6 +13,7 @@ import type {
   ExerciseMetrics,
   ExerciseSearchResult,
   ExerciseSolution,
+  ExerciseStudyContext,
   ExerciseTrainingView,
   StartExerciseTrainingInput,
   SubmitExerciseAttemptInput,
@@ -276,6 +277,8 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(input),
     }),
+  getExerciseStudy: (exerciseId: string, token: string) =>
+    request<ExerciseStudyContext>(`/exercises/${exerciseId}/study`, token),
   getExerciseMetrics: (token: string) => request<ExerciseMetrics>('/exercise-metrics', token),
   getHistory: (query: URLSearchParams, token: string) =>
     request<GameHistoryPage>(`/games?${query.toString()}`, token),

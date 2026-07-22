@@ -789,6 +789,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/exercises/{exerciseId}/study': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get verified study context (linked lesson text) for an exercise */
+    get: operations['getExerciseStudy'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/exercise-metrics': {
     parameters: {
       query?: never;
@@ -891,6 +908,16 @@ export interface components {
       opponentReply: string | null;
       movesConfirmed: number;
       attempt: components['schemas']['ExerciseAttemptResult'] | null;
+    };
+    ExerciseStudyContext: {
+      chapterNumber: number | null;
+      lessonTitle: string | null;
+      moduleTitle: string | null;
+      sourcePages: number[];
+      teaching: {
+        title: string | null;
+        bodyMd: string;
+      }[];
     };
     ExerciseHint: {
       hint: string;
@@ -2702,6 +2729,29 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ExerciseSolution'];
+        };
+      };
+      404: components['responses']['Problem'];
+    };
+  };
+  getExerciseStudy: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        exerciseId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Study context */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExerciseStudyContext'];
         };
       };
       404: components['responses']['Problem'];

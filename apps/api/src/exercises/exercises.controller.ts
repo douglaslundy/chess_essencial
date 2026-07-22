@@ -72,6 +72,11 @@ export class ExercisesController {
     );
   }
 
+  @Get('exercises/:exerciseId/study')
+  study(@Param('exerciseId') exerciseId: string) {
+    return this.exercises.studyContext(parseInput(idSchema, exerciseId));
+  }
+
   @Get('exercise-metrics')
   metrics(@Req() request: AuthenticatedRequest) {
     return this.exercises.metrics(request.auth.userId);

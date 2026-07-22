@@ -70,6 +70,7 @@ const startExerciseTraining = vi.fn();
 const submitExerciseAttempt = vi.fn();
 const evaluateExerciseLine = vi.fn();
 const getExerciseTraining = vi.fn();
+const getExerciseStudy = vi.fn();
 
 vi.mock('@/lib/api/client', () => ({
   api: {
@@ -81,6 +82,7 @@ vi.mock('@/lib/api/client', () => ({
     startExerciseTraining: (...args: unknown[]) => startExerciseTraining(...args),
     submitExerciseAttempt: (...args: unknown[]) => submitExerciseAttempt(...args),
     evaluateExerciseLine: (...args: unknown[]) => evaluateExerciseLine(...args),
+    getExerciseStudy: (...args: unknown[]) => getExerciseStudy(...args),
   },
 }));
 
@@ -195,5 +197,43 @@ describe('ExerciseTrainer guided auto-grading modal', () => {
 
     expect(await screen.findByText('Não foi dessa vez')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Tentar novamente/ })).toBeTruthy();
+  });
+});
+
+describe('ExerciseTrainer book study context', () => {
+  beforeEach(() => {
+    window.localStorage.setItem('xadrez.access_token', 'test-token');
+    getExerciseMetrics.mockResolvedValue(emptyMetrics);
+    const book: ExerciseTrainingView = {
+      ...trainingView(),
+      currentExercise: {
+        ...trainingView().currentExercise!,
+        answerFormat: 'free_text',
+        positionType: 'text_only',
+        fen: null,
+        promptMd: 'Explique a ideia principal.',
+      },
+    };
+    startExerciseTraining.mockResolvedValue(book);
+    getExerciseStudy.mockResolvedValue({
+      chapterNumber: 1,
+      lessonTitle: 'Como aprender xadrez',
+      moduleTitle: 'Fundamentos absolutos',
+      sourcePages: [4, 5],
+      teaching: [{ title: 'Objetivo', bodyMd: 'Reconheça o foco do capítulo.' }],
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
+    window.localStorage.clear();
+    vi.clearAllMocks();
+  });
+
+  it('shows the verified study text before a book question', async () => {
+    render(<ExerciseTrainer guided />);
+    expect(await screen.findByText('Reconheça o foco do capítulo.')).toBeTruthy();
+    expect(screen.getByText(/Estudo: Como aprender xadrez/)).toBeTruthy();
+    expect(screen.getByText(/Fonte: páginas 4–5/)).toBeTruthy();
   });
 });

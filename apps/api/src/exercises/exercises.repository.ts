@@ -254,6 +254,51 @@ export class ExercisesRepository {
     };
   }
 
+  async studyContext(exerciseId: string) {
+    const sql = this.database.client;
+    const [exercise] = await sql<
+      {
+        chapter_number: number | null;
+        source_pages: number[];
+      }[]
+    >`
+      SELECT e.chapter_number,
+        CASE WHEN e.source_pages IS NULL THEN '{}'::integer[]
+          ELSE ARRAY(SELECT generate_series(lower(e.source_pages), upper(e.source_pages) - 1)) END AS source_pages
+        FROM exercises e WHERE e.id = ${exerciseId} AND e.status = 'published'
+    `;
+    if (!exercise) throw new NotFoundException('Exercise not found');
+
+    // The linked lesson (lowest position) that teaches this exercise supplies
+    // the verified study text; its non-quiz steps are the teaching material.
+    const [lesson] = await sql<{ id: string; module_title: string | null; title: string }[]>`
+      SELECT l.id, l.title, m.title AS module_title
+        FROM lesson_exercises le
+        JOIN lessons l ON l.id = le.lesson_id AND l.status = 'published'
+        JOIN course_modules m ON m.id = l.module_id
+       WHERE le.exercise_id = ${exerciseId}
+       ORDER BY l.position, le.position
+       LIMIT 1
+    `;
+
+    const teaching = lesson
+      ? await sql<{ body_md: string; title: string | null }[]>`
+          SELECT s.title, s.body_md
+            FROM lesson_steps s
+           WHERE s.lesson_id = ${lesson.id} AND s.step_type <> 'quiz'
+           ORDER BY s.position
+        `
+      : [];
+
+    return {
+      chapterNumber: exercise.chapter_number,
+      lessonTitle: lesson?.title ?? null,
+      moduleTitle: lesson?.module_title ?? null,
+      sourcePages: exercise.source_pages,
+      teaching: teaching.map((step) => ({ bodyMd: step.body_md, title: step.title })),
+    };
+  }
+
   async hint(userId: string, sessionId: string) {
     const sql = this.database.client;
     const [row] = await sql<{ hints: string[]; hints_used: number }[]>`
