@@ -5,8 +5,11 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=/home/lundy/xadrez-essencial
-ExecStart=/usr/bin/bash /home/lundy/xadrez-essencial/deploy/auto-deploy.sh
+WorkingDirectory=/opt/chess/src
+Environment=XADREZ_ROOT_DIR=/opt/chess/src
+Environment=XADREZ_ENV_FILE=/opt/chess/.env.vps
+Environment=GIT_SSH_COMMAND=ssh -i /opt/chess/.ssh/id_ed25519 -o IdentitiesOnly=yes
+ExecStart=/usr/bin/bash /opt/chess/src/deploy/auto-deploy.sh
 TimeoutStartSec=30min
 
 [Install]

@@ -4,8 +4,12 @@ set -Eeuo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-ENV_FILE="$ROOT_DIR/.env.vps"
+ENV_FILE="${XADREZ_ENV_FILE:-$ROOT_DIR/.env.vps}"
 COMPOSE_FILE="$ROOT_DIR/deploy/docker-compose.vps.yml"
+# Optional Traefik overlay: when present (and the external `proxy` network
+# exists) it joins web/api to the shared reverse proxy. Kept in the compose set
+# for every command so auto-deploys never drop the HTTPS routing.
+OVERLAY_FILE="$ROOT_DIR/deploy/docker-compose.traefik.yml"
 PROJECT_NAME="xadrez-essencial"
 IMAGE_TAG="$(git rev-parse --short=12 HEAD)"
 export IMAGE_TAG
@@ -56,7 +60,11 @@ set -a
 source "$ENV_FILE"
 set +a
 
-compose=(docker compose --project-name "$PROJECT_NAME" --file "$COMPOSE_FILE" --env-file "$ENV_FILE")
+compose=(docker compose --project-name "$PROJECT_NAME" --file "$COMPOSE_FILE")
+if [[ -f "$OVERLAY_FILE" ]] && docker network inspect proxy >/dev/null 2>&1; then
+  compose+=(--file "$OVERLAY_FILE")
+fi
+compose+=(--env-file "$ENV_FILE")
 "${compose[@]}" config >/dev/null
 
 # Each deploy tags 3 fresh images and never removes the previous ones, so
