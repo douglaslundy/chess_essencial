@@ -14,7 +14,6 @@ const navigation = [
   { href: '/app/desafios', label: 'Desafios' },
   { href: '/app/ranking', label: 'Ranking' },
   { href: '/app/cursos', label: 'Cursos e aulas' },
-  { href: '/app/meus-dados', label: 'Meus dados' },
   { href: '/app/partida/demo', label: 'Tabuleiro demonstrativo' },
 ] as const;
 
