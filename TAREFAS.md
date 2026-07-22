@@ -99,13 +99,20 @@ Ordem aprovada pelo usuário: 1→8, em modo automático, deploy incremental.
 - [x] **SP5 — Meus dados no canto superior direito.** Nome do usuário vira menu dropdown (rating + "Meus dados" + "Sair"); item removido da sidebar. (Upload de avatar: PENDENTE, ver abaixo.)
 - [x] **SP7 — Contraste do tabuleiro/peças.** Preenchimentos mais puros, contornos de tom oposto mais fortes e halos por cor; casas com tons levemente separados.
 
-Sub-projetos ainda PENDENTES (precisam de spec própria; não implementados nesta sessão para não fazer malfeito):
+Concluídos depois (todos deployados):
 
-- [ ] **SP3 — Exercícios do livro com conteúdo de estudo antes da pergunta.** As 1.298 perguntas do livro são `free_text` de reflexão. O conteúdo de estudo JÁ existe nas 119 aulas (714 steps, 1282 links aula↔exercício). Solução proposta: exibir o conteúdo da aula vinculada (ou um resumo/páginas de origem `sourcePages`) antes da pergunta. Requer wiring aula↔exercício no fluxo de Exercícios.
-- [ ] **SP6 — Modo de partida sem tempo** (partidas livres) + tabuleiro demonstrativo com voltar/avançar lance e ramificação (jogar lance diferente ao voltar). Backend (time control opcional/sem relógio) + frontend.
-- [ ] **SP5b — Upload de avatar** em Meus Dados, exibido no canto superior direito e onde precisar. Requer definição de storage (a VPS não tem bucket; avaliar coluna base64 pequena vs. volume de arquivos vs. storage externo).
-- [ ] **SP8 — Área de administrador.** Já existe `/app/admin/curso` e role `admin`. Ampliar para: gerenciar bots, bloquear/excluir/banir usuários, regras da plataforma, config de SMTP (ver pendência acima). Auditar o que já é configurável antes de implementar.
-- [ ] **Aulas — botão "aula anterior"/navegação entre aulas.** A unificação tabuleiro+pergunta já foi feita (layout `lessonRuntimeGridStacked`). Falta navegação prev/next entre aulas do curso (requer sequência de aulas exposta pela API).
+- [x] **SP3 — Conteúdo de estudo antes das perguntas do livro.** `GET /v1/exercises/:id/study` retorna o texto real da aula vinculada + páginas; painel de estudo no `ExerciseTrainer`.
+- [x] **SP6 — Modo sem tempo** (time control `untimed`, relógio ∞, não ranqueado) + tabuleiro demonstrativo com voltar/avançar e ramificação.
+- [x] **SP5b — Upload de avatar** via bucket MinIO (serviço isolado no stack, bucket público `avatars` servido pelo Traefik em `/avatars`, `POST /v1/me/avatar` com imagem redimensionada no cliente ≤512KB). Exibido em Meus Dados e no canto superior direito.
+- [x] **SP8 — Área de administrador** com gestão de usuários (suspender/reativar/soft-delete, guardada por role admin).
+- [x] **Curso alinhado ao livro completo** (`livrocompleto/Xadrez_Essencial_Edicao_Completa_Douglas_Lundy.pdf`): 119 aulas enriquecidas com o texto real de cada capítulo (script `scripts/enrich-lessons-from-book.mjs`, 714→863 steps).
+- [x] **Deploy 100% via git-pull automático**: timer systemd `xadrez-auto-deploy.timer` na VPS deploya `origin/main` a cada minuto (build + migrate/seed/import + up com overlay Traefik). Push = deploy. Não usar SSH manual para deploy.
+
+Pendências restantes:
+
+- [ ] **Aulas — botão "aula anterior"/navegação prev/next entre aulas** (requer sequência exposta pela API).
+- [ ] **SP8+ — Admin:** gerenciar bots, regras da plataforma, config de SMTP via UX (ver pendência SMTP acima).
+- [ ] **SMTP real** ainda é placeholder em produção (e-mails de verificação não saem).
 
 ## Fase 18 — Aplicativo mobile (P2; exige decisão)
 
