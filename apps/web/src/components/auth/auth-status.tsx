@@ -132,7 +132,12 @@ export function AuthStatus() {
               <p className="userMenuEmpty">Jogue partidas ranqueadas para receber seu rating.</p>
             )}
           </div>
-          <Link className="userMenuLink" href="/app/meus-dados" onClick={() => setOpen(false)} role="menuitem">
+          <Link
+            className="userMenuLink"
+            href="/app/meus-dados"
+            onClick={() => setOpen(false)}
+            role="menuitem"
+          >
             Meus dados
           </Link>
           <button className="userMenuLogout" onClick={logout} role="menuitem" type="button">
