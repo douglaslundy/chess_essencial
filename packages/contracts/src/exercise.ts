@@ -76,6 +76,18 @@ export const exerciseAttemptResultSchema = z.object({
   training: exerciseTrainingViewSchema.nullable(),
 });
 
+export const evaluateExerciseLineInputSchema = z.object({
+  playedMoves: z.array(z.string().trim().min(2).max(20)).min(1).max(50),
+  trainingSessionId: z.string().uuid(),
+});
+
+export const evaluateExerciseLineResultSchema = z.object({
+  attempt: exerciseAttemptResultSchema.nullable(),
+  movesConfirmed: z.number().int().nonnegative(),
+  opponentReply: z.string().nullable(),
+  status: z.enum(['continue', 'solved', 'incorrect']),
+});
+
 export const exerciseHintSchema = z.object({
   hint: z.string(),
   hintNumber: z.number().int().positive(),
@@ -104,6 +116,8 @@ export const exerciseImportReportSchema = z.object({
   total: z.number().int().nonnegative(),
 });
 
+export type EvaluateExerciseLineInput = z.infer<typeof evaluateExerciseLineInputSchema>;
+export type EvaluateExerciseLineResult = z.infer<typeof evaluateExerciseLineResultSchema>;
 export type ExerciseAttemptResult = z.infer<typeof exerciseAttemptResultSchema>;
 export type ExerciseHint = z.infer<typeof exerciseHintSchema>;
 export type ExerciseImportReport = z.infer<typeof exerciseImportReportSchema>;

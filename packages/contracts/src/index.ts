@@ -124,6 +124,8 @@ export {
   type StartLessonAttemptInput,
 } from './lesson-runtime.js';
 export {
+  evaluateExerciseLineInputSchema,
+  evaluateExerciseLineResultSchema,
   exerciseAnswerFormatSchema,
   exerciseAttemptResultSchema,
   exerciseHintSchema,
@@ -138,6 +140,8 @@ export {
   exerciseTrainingViewSchema,
   startExerciseTrainingInputSchema,
   submitExerciseAttemptInputSchema,
+  type EvaluateExerciseLineInput,
+  type EvaluateExerciseLineResult,
   type ExerciseAttemptResult,
   type ExerciseHint,
   type ExerciseImportReport,
