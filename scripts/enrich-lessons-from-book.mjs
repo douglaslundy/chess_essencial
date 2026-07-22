@@ -135,7 +135,8 @@ function extractBlocks(bodyLines) {
     const cut = before.search(/(?:^|\n|\s)\d+\.\s+[A-ZÀ-Ú][^\n]*$/m);
     // Fallback: cut at the last "\n<number>. " before the tag.
     const lastNum = before.lastIndexOf('\n');
-    joined = cut >= 0 ? before.slice(0, cut) : before.slice(0, lastNum >= 0 ? lastNum : before.length);
+    joined =
+      cut >= 0 ? before.slice(0, cut) : before.slice(0, lastNum >= 0 ? lastNum : before.length);
     // Also strip any trailing "  N. ..." fragment on the last line.
     joined = joined.replace(/\s+\d+\.\s+[A-ZÀ-Ú][^\n]*$/g, '');
   }
@@ -188,7 +189,7 @@ function enrichLesson(entry, chapter) {
   );
   const summary = steps.find((s) => s.stepType === 'summary') ?? steps[steps.length - 1];
 
-  const roomForBook = MAX_STEPS - 1 /* objetivo */ - practice.length - 1 /* summary */;
+  const roomForBook = MAX_STEPS - 1 /* objetivo */ - practice.length - 1; /* summary */
   if (roomForBook < 1) return; // no room; keep original
 
   const usedKeys = new Set(['objetivo', 'resumo']);
@@ -207,10 +208,11 @@ function enrichLesson(entry, chapter) {
     while (usedKeys.has(key)) key = `${key}-${index + 1}`;
     usedKeys.add(key);
     return baseStep({
-      bodyMd: b.heading && !/^licao/.test(key) ? `${b.text}` : b.text,
+      bodyMd: b.text,
       stepKey: key,
       stepType: 'explanation',
-      title: b.heading ?? null,
+      // title is optional but must be a string (never null) for the importer.
+      title: b.heading ?? 'Conceito central',
     });
   });
 

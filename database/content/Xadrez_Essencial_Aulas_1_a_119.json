@@ -110,7 +110,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "5 min: revisar um conceito. 8 min: resolver posições sem mover as peças. 5 min: comparar com as soluções. 2 min: registrar um erro recorrente em uma frase concreta, por exemplo: “não verifiquei a resposta do adversário”.",
@@ -201,7 +201,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Resolva por escrito os exercícios 5 e 6. Registre a justificativa e digite \"feito\" para continuar.",
@@ -280,7 +280,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "O bispo percorre diagonais. Um bispo de casas claras nunca alcança uma casa escura. O par de bispos pode cobrir as duas cores e costuma ganhar valor quando a posição está aberta.",
@@ -410,7 +410,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "A captura en passant só pode ocorrer imediatamente após o avanço duplo do peão adversário. Se o jogador fizer outro lance, o direito desaparece.",
@@ -518,7 +518,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Resolva por escrito os exercícios 33 e 34. Registre a justificativa e digite \"feito\" para continuar.",
@@ -592,7 +592,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Resolva por escrito os exercícios 41 e 42. Registre a justificativa e digite \"feito\" para continuar.",
@@ -762,7 +762,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Um garfo é um ataque simultâneo a dois ou mais alvos. Peões e cavalos são garfeadores frequentes porque sua forma de ataque difere da maioria das peças.",
@@ -892,7 +892,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Construa mentalmente um quadrado cuja lateral corresponde ao número de passos do peão até promover. Se o rei adversário pode entrar no quadrado em seu lance, normalmente alcança o peão; se não pode, o peão promove, salvo táticas ou obstáculos especiais.",
@@ -1005,7 +1005,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Mais desenvolvimento e pressão Peças entram com ameaças; o rei central preto não roca.",
@@ -1107,7 +1107,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Resolva por escrito os exercícios 91 e 92. Registre a justificativa e digite \"feito\" para continuar.",
@@ -1182,7 +1182,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "O jogador iniciante costuma perceber uma ideia e executá-la imediatamente. O jogador treinado separa percepção, geração de opções, cálculo e julgamento. Essa separação evita que a primeira ideia pareça obrigatória apenas por ter sido a primeira. Em cada posição, o objetivo é produzir uma decisão verificável: o lance escolhido deve sobreviver à resposta mais forte do adversário e conduzir a uma posição que você saiba avaliar. O protocolo deste volume tem cinco etapas: orientação, varredura tática, candidatos, cálculo e decisão. Na orientação, identifique de quem é a vez, o estado dos reis, o material e as tensões. Na varredura, procure cheques, capturas e ameaças para ambos os lados. Em seguida, formule poucos candidatos relevantes. Calcule as respostas mais fortes e, por fim, compare as posições resultantes. O método não elimina erros; ele reduz erros evitáveis e torna o estudo posterior muito mais preciso. Protocolo O-C-C-A-D Orientar a posição; Checar urgências; Criar candidatos; Analisar melhores respostas; Decidir e fazer a verificação final.",
@@ -1286,7 +1286,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Comece pelo que pode ser contado ou localizado: material, lado a jogar, direitos de roque, peças atacadas, peças sem defesa, linhas abertas e casas de entrada. Esse inventário impede avaliações baseadas apenas em impressão. Uma dama ativa pode parecer dominante e, ainda assim, estar exposta a um ganho de tempo; um peão extra pode ser irrelevante se o rei estiver sob ataque direto. A contagem material não precisa ser aritmética em toda jogada. Procure diferenças: par de bispos, qualidade, peões extras, peões dobrados ou uma peça fora de jogo. Em seguida, pergunte se a atividade compensa ou amplia essa diferença.",
@@ -1390,7 +1390,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Cheques são candidatos naturais porque exigem resposta, mas nem todo cheque é bom. Um cheque pode deslocar uma peça ativa para uma casa ruim, ajudar o rei adversário a melhorar ou simplesmente perder tempo. Analise o cheque até a posição posterior: o que acontece depois da defesa mais forte? Considere as três classes de resposta: capturar a peça que dá xeque, interpor uma peça e mover o rei. Em xeques de cavalo ou peão não há interposição; em xeque duplo, apenas o movimento do rei é possível. Conhecer essas restrições acelera o cálculo.",
@@ -1495,7 +1495,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Em muitas posições, dois a quatro candidatos são suficientes. Um conjunto útil costuma incluir o lance forçante mais promissor, uma melhoria posicional e uma resposta profilática. Listas longas consomem tempo e favorecem análise superficial; listas de um único lance favorecem visão de túnel. A geração deve ser guiada pela posição. Se há ataque ao rei, candidatos forçantes ganham prioridade. Se a posição está fechada, rupturas e manobras podem ser mais importantes. Se você está pior, procure atividade e complicações; se está melhor, considere simplificações que preservem a vantagem.",
@@ -1600,7 +1600,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Cada candidato forma um ramo. Em seu lance, você escolhe uma opção; no lance adversário, deve procurar a resposta mais forte. O erro comum é calcular como se o adversário cooperasse. Use a pergunta: “qual resposta me incomoda mais?”. Essa disciplina transforma o cálculo de narrativa otimista em teste adversarial. Trabalhe um ramo por vez. Retorne mentalmente à posição inicial antes de mudar de candidato. Misturar peças e casas de ramos diferentes produz alucinações de tabuleiro: peças desaparecem, linhas permanecem abertas depois de fechadas e capturas impossíveis parecem legais. Regra de ramo único Calcule um candidato até uma posição avaliável. Retorne conscientemente à posição inicial antes de abrir outro ramo.",
@@ -1703,7 +1703,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Depois de cada lance imaginado, atualize origem, destino, peças capturadas e linhas que se abriram ou fecharam. Em vez de “ver um filme”, use um registro compacto: a torre saiu de d1, a coluna d ficou livre, o cavalo foi removido de f6. A linguagem concreta reduz erros. Em variantes longas, marque mentalmente âncoras: posição inicial, primeira transformação e posição final. Ao retornar, reconstrua a partir da âncora anterior. Jogadores que tentam sustentar toda a árvore simultaneamente confundem ramos.",
@@ -1809,7 +1809,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Não existe fórmula universal, mas há uma hierarquia prática. Primeiro, verifique mate e perdas forçadas. Depois, material e segurança dos reis. Em seguida, atividade, estrutura de peões, espaço e planos. Um fator urgente pode dominar todos os demais: rei exposto torna irrelevante um peão extra; uma peça presa pode valer menos que seu valor nominal. Valores de peças são referências, não preços fixos. Uma torre ativa na sétima fileira pode superar duas peças menores descoordenadas; um bispo ruim pode ser temporariamente inferior a um cavalo centralizado. A avaliação deve combinar quantidade e função. Ordem de avaliação Tática imediata e reis -> material -> atividade -> estrutura -> espaço -> planos e facilidade de execução.",
@@ -1911,7 +1911,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Antes de formular seu plano, observe o último lance adversário. Que linha foi aberta? Que casa passou a ser controlada? Que peça ganhou rota? Muitas ameaças são anunciadas por um lance preparatório. Interpretar a mudança é mais útil que repetir regras gerais. A intenção adversária pode ser tática, estratégica ou libertadora. Uma ameaça tática exige resposta concreta. Um plano estratégico pode ser neutralizado, acelerado ou ignorado se você possui ação mais forte. Uma ruptura libertadora costuma ser impedida ou tornada desfavorável.",
@@ -2013,7 +2013,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "A recaptura é visualmente dominante: uma peça foi tomada e a mão deseja restaurar o material. Esse automatismo ignora cheques intermediários, ataques à dama e oportunidades superiores. A correção é procedural: sempre que houver captura, reinicie a varredura CCT antes de recapturar. Outro automatismo é completar um plano antigo apesar de a posição ter mudado. Um lance adversário pode criar ameaça, trocar a peça-chave ou alterar a estrutura. Planos são hipóteses condicionais, não compromissos.",
@@ -2112,7 +2112,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Jogar rápido em todas as posições não é boa gestão; é evitar o trabalho de decisão. Da mesma forma, gastar metade do tempo em uma posição não crítica compromete o restante. Use pouco tempo em recapturas verificadas e posições conhecidas, e invista quando houver ruptura, sacrifício, mudança estrutural ou escolha entre vários candidatos. Reserve uma margem para a fase final. Em controles com incremento, a margem pode ser menor, mas ainda é necessário evitar chegar a posições complexas dependendo apenas dos segundos adicionais. Momento crítico Invista tempo quando a decisão modifica irreversivelmente material, estrutura, segurança do rei ou natureza da posição.",
@@ -2214,7 +2214,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Linha didática: 1.e4 e5 2.Cf3 Cc6 3.Bc4 d6 4.Cc3 Bg4 5.h3 Bh5 6.Cxe5! Bxd1 7.Bxf7+ Re7 8.Cd5#. O ponto não é memorizar uma armadilha. A lição é comparar ameaças: as pretas capturam a dama, mas deixam o rei numa rede de lances forçantes. Antes de aceitar material, verifique cheques e mates do adversário. Na posição após 5...Bh5, as brancas geram um candidato surpreendente porque a cravada do cavalo é apenas aparente: a sequência forçada contra o rei vale mais que a dama. Esse tipo de lance só deve ser jogado após cálculo completo; sem a continuação, seria uma perda material. Partida de treinamento: transformação e final de torres A partida seguinte foi composta para este curso e validada quanto à legalidade dos lances. Seu objetivo é mostrar como o método se repete em posições diferentes. 1.e4 e5 2.Cf3 Cc6 3.Bb5 a6 4.Ba4 Cf6 5.O-O Be7 6.Te1 b5 7.Bb3 d6 8.c3 O-O 9.h3 Ca5 10.Bc2 c5 11.d4 Dc7 12.Cbd2 cxd4 13.cxd4 Bd7 14.Cf1 Tfc8 15.Bb1 Cc6 16.Ce3 Cxd4 17.Cxd4 exd4 18.Dxd4 Be6 19.Bd2 Dc5 20.Dd3 Dh5 21.Bc3 Cd7 22.Cf5 Bf8 23.Dg3 Dg6 24.Dxg6 hxg6 25.Cd4 Bc4 26.a3 d5 27.e5 Cc5 28.Bc2 Ce6 29.Cxe6 fxe6 30.Bxg6. A abertura produz uma estrutura típica da Espanhola. As brancas não procuram tática imediata; organizam o centro e redirecionam o cavalo de f1 para e3/f5. A troca em d4 modifica a posição e exige reavaliação. O lance 18.Dxd4 restaura o peão, centraliza a dama e prepara o desenvolvimento do bispo de c1. Após a troca de damas, a natureza muda: segurança do rei perde peso relativo e estrutura/atividade passam a dominar. A continuação 30...Tc7 31.Bb4 Bxb4 32.axb4 d4 33.Ted1 Td8 34.Bd3 Bxd3 35.Txd3 Tc4 36.Tb1 Td5 37.f4 g5 38.g3 Rg7 39.Rf2 Rg6 40.Rf3 Tc2 41.Tbd1 Txb2 42.Txd4 Txd4 43.Txd4 alcança um final de torres. As brancas têm peão extra, mas a torre preta é ativa. A decisão correta não decorre apenas da contagem: é preciso considerar atividade, peões passados, vulnerabilidade da base e possibilidades de xeques laterais.",
@@ -2308,7 +2308,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Resolva sem mover as peças quando houver diagrama. Para cada questão, escreva: ameaça adversária, candidatos, variante principal e avaliação final. Nas questões conceituais, use respostas específicas e operacionais. O objetivo não é apenas acertar, mas demonstrar um método reproduzível. Classifique seus erros em quatro categorias: percepção, geração de candidatos, cálculo ou avaliação. Essa classificação indicará o tipo de treino mais eficiente para a próxima etapa.",
@@ -2393,7 +2393,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Todo motivo tático pode ser descrito por três elementos. O alvo é a peça, casa ou rei que sofrerá a ação. A linha é o caminho geométrico usado por dama, torre, bispo, cavalo ou peão. O tempo é a prioridade criada por cheque, captura, ameaça ou ataque a uma peça mais valiosa. Quando esses elementos convergem, a posição deixa de admitir decisões lentas. A descrição objetiva precede o cálculo. Em vez de pensar apenas “há ataque”, identifique: qual peça está sem defesa, qual linha pode abrir e que lance obriga resposta. Essa linguagem reduz a dependência de inspiração e permite comparar combinações diferentes pelo mesmo método. Teste A-L-T Alvo: o que está vulnerável? Linha: por onde a ação ocorre? Tempo: qual lance exige resposta?",
@@ -2498,7 +2498,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Um ataque duplo funciona quando o adversário não consegue neutralizar as duas ameaças com uma única resposta. O cheque é especialmente poderoso porque obriga o rei a reagir, deixando o segundo alvo para o lance seguinte. Cavalo, peão e dama são peças frequentes nesse motivo, mas qualquer peça pode atacar dois pontos. A casa de chegada é mais importante que a peça atacante. Procure casas a partir das quais o cavalo ataca rei e dama, o peão ataca duas peças maiores ou a dama combina cheque com captura. Em seguida, verifique se a peça atacante pode ser tomada e se o adversário possui uma resposta intermediária.",
@@ -2604,7 +2604,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Na cravada absoluta, mover a peça exporia o rei e seria ilegal. Na cravada relativa, o movimento é legal, mas abandona uma peça ou casa de maior valor. Essa distinção altera o cálculo: uma peça absolutamente cravada pode ainda capturar ao longo da linha; uma peça relativamente cravada pode mover se obtiver compensação suficiente. Explorar uma cravada exige aumentar a pressão ou atacar a peça cravada com peões. Repetir atacantes sem considerar defensores pode falhar. Também é necessário verificar contra-ataques da peça cravada e lances que interponham uma nova peça. Cravada não é captura A peça cravada continua existindo, pode defender casas e, em cravadas relativas, pode mover se o resultado justificar.",
@@ -2709,7 +2709,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "No ataque descoberto, a peça que se move revela a ação de uma peça de longo alcance. O lance é forte quando a peça móvel cria uma segunda ameaça: cheque, captura ou ataque a uma peça valiosa. Se ela apenas sai da linha sem ganhar tempo, o adversário pode responder à ameaça revelada. Para encontrar descobertas, observe peças próprias alinhadas. Pergunte quais peças bloqueiam torres, bispos e damas e para onde podem mover com tempo. O cálculo deve considerar capturas da peça que se move e interposições na linha recém-aberta.",
@@ -2815,7 +2815,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Desviar significa obrigar uma peça defensora a abandonar uma casa, linha ou proteção. A peça pode ser atraída por uma captura, forçada a responder a um cheque ou sobrecarregada por uma ameaça. Depois do desvio, o alvo principal perde sua defesa. O primeiro passo é identificar a função defensiva. Em seguida, procure um lance que exija da peça uma tarefa incompatível. Calcule se ela realmente é obrigada a mover e se outra peça pode assumir a defesa.",
@@ -2919,7 +2919,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Uma peça está sobrecarregada quando precisa proteger simultaneamente dois alvos ou duas funções. Atacar um dos pontos com tempo obriga a peça a abandonar o outro. Reis e damas frequentemente sobrecarregam torres e peças menores em posições defensivas. Para explorar sobrecarga, liste o que cada defensor protege. Depois procure capturas, cheques ou ameaças que exijam sua movimentação. A combinação falha se outra peça puder assumir uma das funções ou se o contra-ataque for mais forte.",
@@ -3024,7 +3024,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "O mate do corredor ocorre quando o rei está confinado por seus próprios peões e uma torre ou dama invade a última fileira. A prevenção típica é criar uma casa de fuga, defender a fileira ou manter uma peça capaz de interpor-se. Porém, o avanço de um peão também pode criar fraquezas; deve ser realizado quando a ameaça é concreta. Ao atacar, procure peças sobrecarregadas defendendo a última fileira. Sacrifícios que desviem a torre defensora ou removam a única casa de fuga transformam pressão latente em mate.",
@@ -3127,7 +3127,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "No padrão de Anastásia, um cavalo controla casas próximas ao rei e uma torre ou dama usa a coluna lateral. O peão do próprio defensor costuma restringir o rei. O ataque frequentemente exige abrir a coluna h por sacrifício. O cavalo não precisa dar o xeque; sua função é retirar a casa de fuga. Esse princípio é geral: uma peça pode ser decisiva sem atacar o rei diretamente.",
@@ -3230,7 +3230,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Antes de sacrificar, compare o número de atacantes e defensores, mas não use a contagem como fórmula mecânica. A qualidade das peças, a possibilidade de trazer reforços e a existência de linhas abertas são mais importantes. Um atacante distante pode ser irrelevante; uma peça defensora cravada pode não cumprir sua função. A segurança do próprio rei também entra no cálculo. Abrir o centro enquanto seu rei permanece vulnerável pode permitir contra-ataques com cheque. Ataque sustentável Linhas abertas + peças suficientes + fugas controladas + segurança do próprio rei.",
@@ -3334,7 +3334,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Um sacrifício pode buscar mate, recuperação forçada de material, promoção, ataque persistente, domínio de casas ou imobilização das peças adversárias. Quanto mais concreta a compensação, menor a incerteza. Sacrifícios puramente intuitivos exigem avaliação cuidadosa de longo prazo. Diferencie sacrifício verdadeiro de combinação: na combinação, o material retorna de forma forçada; no sacrifício posicional, a compensação é duradoura, mas não imediatamente recuperada.",
@@ -3435,7 +3435,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Contra uma ameaça, examine capturar o atacante, trocar peças-chave, interpor, criar fuga, devolver material e contra-atacar com cheque. A defesa mais passiva nem sempre é a mais segura. Trocar a dama atacante ou devolver qualidade pode eliminar todo o perigo. Quando há mate ameaçado, a avaliação material perde prioridade. O objetivo é sobreviver à sequência forçada; depois, a posição resultante pode ser julgada.",
@@ -3538,7 +3538,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "1.e4 e5 2.Cf3 Cc6 3.Bc4 Cd4?! oferece o peão de e5 como isca. Depois de 4.Cxe5? Dg5, as pretas atacam g2 e e5. O erro decisivo é 5.Cxf7?, quando 5...Dxg2 6.Tf1 Dxe4+ força 7.Be2 Cf3#. A lição não é memorizar uma armadilha como repertório. O ponto é reconhecer que a captura de peões afastou o cavalo da defesa, abriu a diagonal da dama e deixou o rei sem desenvolvimento. As brancas calcularam ganhos materiais e ignoraram cheques e ameaças de mate.",
@@ -3670,7 +3670,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Uma avaliação prática deve comparar material, segurança dos reis, estrutura de peões, espaço, atividade das peças e iniciativa. O valor de cada fator depende da posição: um peão extra pode ser irrelevante durante um ataque ao rei, enquanto uma casa forte pode dominar uma posição sem tática imediata. Evite somar vantagens como pontos abstratos. Pergunte qual fator pode ser convertido primeiro e qual fator pode desaparecer após uma troca ou ruptura. Ficha E-E-T Estrutura: o que é fixo? Espaço/atividade: qual peça está limitada? Transformação: que ruptura ou troca melhora a posição?",
@@ -3773,7 +3773,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Uma cadeia tem ponta e base. A ponta ganha espaço; a base sustenta o conjunto e costuma ser o alvo mais vulnerável. A direção da cadeia sugere o flanco em que há mais espaço e melhores condições para avançar. Peões não recuam. Cada avanço deve ser avaliado também pelas casas que deixa para trás e pelas linhas que abre para ambas as partes.",
@@ -3877,7 +3877,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Sem cadeias centrais fixas, bispos, damas e torres ganham alcance. Desenvolvimento e segurança do rei têm prioridade. Um atraso de tempo pode permitir ocupação de coluna ou ataque contra o rei no centro. Cavalos precisam de postos estáveis; bispos tendem a valorizar diagonais longas. Evite movimentos de ala que não respondam à luta central.",
@@ -3981,7 +3981,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "O peão isolado em d4 controla e5 e c5, concede espaço e libera colunas para as peças. O avanço d4d5 é a ruptura temática: abre diagonais e pode criar ataque contra o rei. Peças devem permanecer ativas. Trocas indiscriminadas reduzem a compensação dinâmica e aproximam um final em que o peão será atacado.",
@@ -4084,7 +4084,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Peões pendentes controlam casas importantes e sustentam peças ativas. Os avanços c4-c5 e d4-d5 podem ganhar espaço, abrir linhas ou criar um passado protegido. A melhor ruptura depende da disposição das peças: avance o peão cuja troca melhora suas linhas e deixa o outro protegido.",
@@ -4187,7 +4187,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Com peões brancos em a2-b2 contra a7-b7-c6, o avanço b2-b4-b5 procura provocar ...cxb5 ou fixar c6. O resultado desejado é um peão atrasado em c6, uma coluna b aberta ou uma casa de invasão. O plano exige preparação: torre em b1, dama ou bispo apoiando b5 e controle da ruptura ...c5. Ataque de minoria Preparar b4-b5, controlar ...c5 e transformar c6 em alvo acessível.",
@@ -4290,7 +4290,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "O peão atrasado não pode avançar com segurança e costuma ficar em coluna semiaberta. A casa à frente dele pode se tornar posto avançado. O defensor busca uma ruptura libertadora; o atacante ocupa a casa e dobra pressão. Nem todo peão atrasado é ruim: atividade, controle de casas e possibilidade de avanço podem compensar.",
@@ -4393,7 +4393,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "O primeiro objetivo é controlar a coluna; o segundo é conquistar uma casa de entrada. Dobre torres quando a segunda torre aumenta a pressão ou permite uma invasão. Caso contrário, use uma torre para outra função. Em coluna semiaberta, o peão adversário na base é alvo natural. A pressão pode obrigar peças passivas a defendê-lo.",
@@ -4497,7 +4497,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Um bispo limitado por peões próprios na mesma cor é chamado ruim, mas pode defender pontos importantes. O problema real ocorre quando não possui rota ativa nem pode ser trocado. Melhore-o por ruptura de peões, transferência para outra diagonal ou troca pelo defensor-chave.",
@@ -4600,7 +4600,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Um passado distante obriga o rei adversário a se afastar do outro flanco. Mesmo quando não promove, ele cria uma distração que permite invasão do rei ou ganho de peões. Avance com cálculo: um passado bloqueado e sem apoio pode ser apenas um alvo.",
@@ -4704,7 +4704,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Restrição significa reduzir lances úteis: controlar rupturas, ocupar casas, limitar peças e impedir reorganização. Ela prepara o ataque ao alvo, mas não substitui a necessidade de abrir uma linha. Evite superestender peões apenas para ganhar espaço. Espaço sem apoio pode oferecer casas de bloqueio e alvos.",
@@ -4809,7 +4809,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Considere a sequência de plano: desenvolvimento completo, troca central que cria a estrutura Carlsbad, preparação com Tb1 e b4, fixação por b5, ocupação da coluna b e pressão em c6. O ponto crítico não é o avanço b5 isolado, mas a coordenação que impede ...c5 e reduz o contrajogo central. Depois de criar c6 como alvo, o lado atacante melhora a peça pior, força uma defesa passiva e transfere a pressão para o flanco do rei. Se o defensor se desorganiza, uma segunda fraqueza surge; se troca peças, o peão fraco permanece no final.",
@@ -4912,7 +4912,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "No meio-jogo, a exposição do rei pode ser fatal. No final, a redução de forças permite centralizá-lo. Um rei ativo ataca peões, sustenta passados, corta rotas e obriga peças adversárias à defesa. Centralizar não significa caminhar automaticamente para o centro. O objetivo é alcançar casas de entrada úteis sem permitir táticas, xeques decisivos ou promoção adversária.",
@@ -5016,7 +5016,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Dois reis em uma mesma linha, separados por uma casa, formam oposição. Em posições simétricas, quem não tem o lance frequentemente força o outro a ceder passagem. A oposição é um meio, não um fim. Ela só importa se o rei puder penetrar, defender uma casachave ou impedir a invasão rival.",
@@ -5120,7 +5120,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Trace mentalmente um quadrado do peão até a casa de promoção. Se o rei defensor entra no quadrado em seu turno, normalmente alcança o peão. A regra deve ser ajustada quando há bloqueios ou promoção com xeque.",
@@ -5224,7 +5224,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Maiorias bloqueadas podem criar um passado por ruptura. Um peão é sacrificado para desviar o peão rival e liberar outro. A ordem dos avanços determina qual coluna se abre. Calcule a estrutura final, não apenas a primeira captura. Uma ruptura correta deve deixar um passado que o rei rival não consiga conter.",
@@ -5327,7 +5327,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "A torre deve buscar fileiras de invasão, ataques laterais e xeques. Defender passivamente um peão pode custar vários tempos e permitir que o rei adversário avance. Quando puder escolher, ataque os peões pela base e force o rei rival a protegê-los. Torre ativa Xeques, invasão e ataque pela base normalmente precedem a defesa de peões.",
@@ -5430,7 +5430,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Na posição de Lucena, o rei atacante está diante do peão na sétima fileira e a torre defensora dá xeques. A técnica consiste em afastar o rei rival, colocar a torre na quarta fileira e interpor-se aos xeques. A ordem evita que a torre adversária ataque o peão por trás ou aproxime o rei.",
@@ -5533,7 +5533,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Quando o rei defensor está cortado, não apresse o peão. Melhore o rei, proteja a torre contra xeques e avance somente quando a posição das peças estiver coordenada.",
@@ -5636,7 +5636,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "O bispo controla ambos os flancos à distância, mas não pode perder um tempo com facilidade. O rei ataca os peões e o bispo limita a reação ou sustenta a ruptura.",
@@ -5739,7 +5739,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Com peões em ambos os flancos, o lado superior pode ter dificuldade porque o bispo defensor controla casas que o atacante não pode contestar. A criação de passados conectados e a atividade do rei são essenciais. No meio-jogo, bispos opostos favorecem ataques; no final, frequentemente aumentam as chances de empate.",
@@ -5832,7 +5832,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Como não há xeques à distância, finais de cavalos se aproximam dos finais de peões. Um tempo pode decidir a corrida do rei. O cavalo, porém, cria garfos e ataca peões de ambos os lados.",
@@ -5934,7 +5934,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "A dama centralizada combina xeques, ataques a peões e apoio à promoção. Antes de avançar um passado, verifique todos os xeques disponíveis ao adversário. O rei deve buscar abrigo relativo junto a peões ou à própria dama, evitando linhas de xeque contínuo.",
@@ -6037,7 +6037,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Restrinja o contrajogo; ative o rei e as peças; prepare um peão passado; transforme a posição por troca, ruptura ou invasão. O método evita o avanço prematuro de peões. A cada etapa, compare a melhor defesa adversária. A técnica é medida pela resistência enfrentada, não pela aparência do plano. Método R-A-P-T Restringir; ativar; preparar o passado; transformar a vantagem.",
@@ -6140,7 +6140,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Desenvolva peças com função concreta, controle casas centrais e evite mover a mesma peça repetidamente sem necessidade. O valor de um tempo depende da ameaça, da estrutura e da segurança do rei. A abertura termina quando a posição exige um plano de longo prazo: ruptura de peões, ocupação de coluna, transferência de peça ou ataque ao rei. Nesse momento, a pergunta deixa de ser “qual é a teoria?” e passa a ser “qual transformação melhora minha posição?”. Trocas na abertura determinam maiorias, peões isolados, bispos bons e casas fracas. Antes de simplificar, projete o final provável: qual lado terá rei mais ativo, melhor estrutura e peça superior?",
@@ -6243,7 +6243,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Capturar no centro define a estrutura e pode liberar uma peça adversária. Manter a tensão preserva opções, mas exige cálculo de capturas e avanços. Avançar ganha espaço, porém entrega casas e fixa alvos. As rupturas são lances de peão que alteram linhas e casas. Elas devem ser preparadas por desenvolvimento e pela posição das peças. Uma ruptura correta com peças mal colocadas pode ser prematura. Quando as damas saem, a estrutura permanece. O jogador deve saber qual minoria atacar, qual maioria criar um passado e quais trocas favorecem sua peça menor.",
@@ -6346,7 +6346,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Na Italiana, o bispo em c4 mira f7 e o plano c2-c3 seguido de d2-d4 desafia o centro. Na Ruy Lopez, o bispo em b5 aumenta a pressão indireta sobre e5 e provoca decisões na ala da dama. O Diagrama 155 exige cálculo porque o centro aberto expõe reis e peças. Nos Diagramas 156 e 157, a posição fechada permite manobras como Nbd2-f1-g3 e expansão ...b5, ...c5. Trocas em e4/e5 podem produzir finais simétricos, nos quais a atividade decide. A Ruy Lopez também pode levar a finais com maioria branca na ala do rei e maioria preta na ala da dama.",
@@ -6449,7 +6449,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Depois de d2-d4 e ...c5xd4, as brancas ganham desenvolvimento e espaço; as pretas obtêm um peão central extra e a coluna c semiaberta. Essa troca define o sistema mais que o nome da variante. Nos Diagramas 159 e 160, a estrutura determina as corridas: g2-g4-h4 contra o rei preto; ...b5 e pressão na coluna c contra o rei branco. O centro pode interromper qualquer ataque. Se o ataque não decide, as pretas frequentemente chegam ao final com maioria central e coluna c; as brancas podem ter peça ativa e alvo em d6.",
@@ -6561,7 +6561,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Na variante do Avanço, as brancas ganham espaço e fecham o centro. A cadeia aponta para a ala do rei; a base d4 torna-se alvo de ...c5, ...Nc6 e ...Qb6. O Diagrama 162 mostra a segunda ruptura, ...f6. Ela ataca a ponta e5 e abre a coluna f, mas pode enfraquecer o rei. As brancas escolhem f2-f4, exf6 ou avanço e5-e6 conforme a posição. Na variante da troca, a simetria exige iniciativa. Na variante do Avanço, o bispo de casas claras preto pode ser limitado, mas torna-se útil se a estrutura se abre.",
@@ -6664,7 +6664,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Depois de ...dxe4, o bispo sai por f5 ou g4 antes de ...e6. Esse detalhe diferencia a Caro-Kann de muitas estruturas francesas. As pretas não devem apenas defender. ...c5 ataca o centro e ...e5 pode igualar quando bem preparado. As brancas tentam conservar iniciativa sem criar peões avançados vulneráveis. A Caro-Kann frequentemente conduz a finais com estrutura preta sólida e ligeiro espaço branco. A atividade do rei e das torres decide se a vantagem espacial tem efeito real.",
@@ -6767,7 +6767,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "c2-c4 não sacrifica necessariamente um peão; questiona o apoio de d5. No Gambito da Dama Recusado, as pretas mantêm o centro com ...e6 e precisam ativar o bispo de c8. Nos Diagramas 168 e 169, b2-b4-b5 ataca a cadeia a7-b7-c6-d5. O objetivo é criar c6 atrasado ou abrir linhas, não ganhar espaço sem alvo. Se as torres entram na coluna c ou b, c6 pode permanecer fraco. As pretas compensam com maioria central e possibilidade de ...c5.",
@@ -6870,7 +6870,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Na Eslava, ...c6 sustenta d5 sem bloquear o bispo. A captura ...dxc4 é correta quando as pretas podem desenvolver e defender o peão apenas enquanto isso for eficiente. Na Semi-Eslava, ...e6 fecha o bispo de c8, mas permite desenvolvimento sólido. Na Meran, ...b5 ganha espaço enquanto e3-e4 cria um centro forte. As trocas podem deixar maioria preta na ala da dama e casa c4 como posto. As brancas procuram melhor atividade e pressão sobre c6/e6. Abertura: capturar em c4 sem perder tempos Na Eslava, ...c6 sustenta d5 sem bloquear o bispo. A captura ...dxc4 é correta quando as pretas podem desenvolver e defender o peão apenas enquanto isso for eficiente. As brancas recuperam com e2-e3 e Bxc4; a4 impede ...b5 ou força uma estrutura específica.",
@@ -6964,7 +6964,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "As pretas deixam as brancas ocupar d4 e e4, desenvolvem por fianqueto e atacam o centro com ...e5 ou ...c5. O rei é protegido antes da ruptura. Nos Diagramas 174 e 175, ...f5 deve ser apoiado por peças. As brancas avançam b2-b4-b5 e abrem linhas contra c7/d6. Se o ataque preto é neutralizado e as damas saem, o espaço branco e o peão d6 podem tornar-se relevantes. As pretas buscam atividade, ruptura ...c6 ou controle das casas escuras.",
@@ -7067,7 +7067,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Na Nimzo-Índia, ...Bb4 impede e2-e4 imediato e ameaça trocar em c3. As brancas escolhem desenvolvimento, a3 ou Qc2 conforme a estrutura desejada. O Diagrama 177 mostra peões c3-c4. Eles são alvos potenciais, mas controlam d5/e5, abrem a coluna b e sustentam e3-e4. A avaliação deve somar fraquezas e recursos. Trocas amplificam fraquezas estáticas, mas o par de bispos pode dominar um final aberto. O lado preto tenta fixar c4/c3; o lado branco busca criar um centro móvel.",
@@ -7170,7 +7170,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "1.c4 ataca d5 e prepara desenvolvimento por fianqueto. 1.Nf3 evita comprometer o peão d e reduz algumas respostas adversárias. No Diagrama 179, a simetria pode ser quebrada por d2-d4, b2-b3 ou uma ordem que permita iniciativa. No Diagrama 180, as brancas podem preparar c3-d4 ou atacar na ala do rei. As posições de flanco frequentemente conduzem a finais sem fraquezas graves, nos quais espaço, casas e atividade das peças pesam mais que material.",
@@ -7281,7 +7281,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Para cada sistema, registre sequência-base, desvios críticos, estrutura desejada, ruptura principal e peça problemática. A sequência serve como mapa, não como substituto da análise. A partida a seguir foi composta para ensino e usa uma estrutura italiana. Ela não representa uma partida histórica. O objetivo é acompanhar a mudança de perguntas ao longo das fases. Após cada partida, classifique o primeiro momento em que deixou de entender a posição. Atualize a ficha com plano, erro e posição-modelo, não apenas com um novo lance.",
@@ -7393,7 +7393,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "As condições mínimas são: rei próprio seguro, desenvolvimento suficiente, centro sob controle e possibilidade de trazer a dama ou uma torre ao setor. Sem essas bases, o ataque costuma perder tempos e abrir o próprio rei. O Diagrama 182 mostra a convergência em h7. O alvo pode ser um peão, uma casa de mate ou uma peça que sustenta o roque. O atacante deve definir qual troca abre a linha desejada. Se o rei se estabiliza e a vantagem desaparece, insistir pode transformar iniciativa em fraquezas. O atacante deve saber converter para material, estrutura ou final favorável.",
@@ -7505,7 +7505,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Quando o adversário atrasa o roque, compare cada lance com uma ruptura central imediata. Um tempo gasto em manobra de ala pode permitir ...O-O e eliminar o alvo. Nos Diagramas 184 e 185, d4-d5 ou e4-e5 altera a posição do rei e cria acesso para dama, bispos e torres. Depois da ruptura, calcule primeiro xeques e capturas. Se a abertura do centro produz melhor estrutura ou peça ativa, a troca de damas pode ser excelente. O ataque não precisa terminar em mate para ser bemsucedido. Abertura: abrir antes que o rei escape Quando o adversário atrasa o roque, compare cada lance com uma ruptura central imediata. Um tempo gasto em manobra de ala pode permitir ...O-O e eliminar o alvo. O objetivo não é abrir o centro a qualquer custo, mas fazê-lo quando suas peças ocupam linhas melhores. A mesma ruptura pode favorecer o lado mais desenvolvido.",
@@ -7608,7 +7608,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Peões em h6, g6 ou f6 podem servir de ganchos. O atacante avança até criar contato; se o defensor captura, abre linha; se mantém, o peão pode ser fixado. Nos Diagramas 187-189, g4-g5 ou h4-h5 não são objetivos finais. Eles preparam uma coluna g ou h, uma diagonal para a dama ou uma casa para o cavalo. Se as damas saem, os peões avançados podem tornar-se fracos. Antes da tempestade, avalie se o final resultante ainda é aceitável.",
@@ -7720,7 +7720,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "O roque longo geralmente exige cuidado com a coluna c; o roque curto exige atenção às colunas g e h. A posição do centro determina se a corrida é legítima. Nos Diagramas 190-192, cada lado dispõe de um plano conhecido. Conte quantos lances faltam para abrir uma linha e quantos xeques o adversário terá ao fazê-lo. O lado cujo ataque chega depois pode buscar troca de damas. O lado que atacou primeiro deve verificar se a troca preserva material ou estrutura superior. Abertura: escolher a ala e preparar a corrida O roque longo geralmente exige cuidado com a coluna c; o roque curto exige atenção às colunas g e h. A posição do centro determina se a corrida é legítima. Antes de avançar, complete as peças que entrarão no ataque. Um lance de torre pode valer mais que um avanço se prepara a coluna decisiva.",
@@ -7823,7 +7823,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "A formação clássica inclui bispo em d3, cavalo em f3, dama com acesso a h5 e ausência de defensor eficaz em f6. O centro deve impedir contra-ataque imediato. Depois de Bxh7+ Kxh7, verifique Ng5+, Qh5, Qxf7 e as casas g8, g6 e h6. Calcule também a recusa do sacrifício e as defesas com ...Bxg5 ou ...Kg8. O defensor pode impedir o padrão antes do sacrifício: controlar g5, criar casa f8, trocar o bispo de d3 ou atacar o centro.",
@@ -7935,7 +7935,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Pressão de bispo e cavalo sobre f7 força o defensor a desenvolver com precisão. O atacante deve evitar movimentos repetidos de dama que perdem tempos. Nos Diagramas 196 e 197, a compensação está em desenvolvimento, rei exposto e peças pretas descoordenadas. Calcule até uma posição estável, não apenas até o primeiro xeque. O Diagrama 198 mostra uma regra simples: responder à pressão com desenvolvimento. ...Nf6 e ...Bg7 protegem e simultaneamente preparam o roque.",
@@ -8047,7 +8047,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Uma coluna semiaberta precisa de ponto de invasão. No roque longo, c3 e c2 são alvos típicos; no roque curto, g2, h2 e f2 cumprem função semelhante. No Diagrama 199, a ideia ...Rxc3 pode quebrar o escudo do rei. O cálculo deve incluir bxc3, entrada da dama e possibilidade de xeques contínuos. Se o mate não ocorre, o atacante precisa receber peões, estrutura destruída ou posição de rei permanentemente insegura. A qualidade sacrificada deve ter compensação mensurável.",
@@ -8159,7 +8159,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Pergunte: qual é o próximo lance do adversário, que linha pretende abrir e qual defensor quer remover? A resposta deve enfrentar o mecanismo, não apenas o sintoma. O Diagrama 202 ilustra a troca funcional: eliminar uma peça que sustenta a pressão. O Diagrama 203 destaca a casa de fuga, recurso simples que modifica toda a árvore de cálculo. Cada concessão deve ser comparada: devolver peão, aceitar final inferior ou permitir fraqueza estrutural pode ser melhor que permanecer sob ataque.",
@@ -8271,7 +8271,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "A troca de damas elimina muitos mates, mas precisa ser avaliada pelo final. Se a estrutura ou o material ficam perdidos, simplificar apenas muda a forma da derrota. Nos Diagramas 204-206, o defensor busca ruptura, xeque ou ataque à dama. Lances forçantes interrompem a sequência adversária e podem recuperar a iniciativa. Aceitar empate por perpétuo pode ser a decisão correta. Recusar uma repetição sem alternativa objetiva frequentemente transforma defesa bem-sucedida em derrota. Abertura: simplificar sem cair em final perdido A troca de damas elimina muitos mates, mas precisa ser avaliada pelo final. Se a estrutura ou o material ficam perdidos, simplificar apenas muda a forma da derrota. Procure trocas que removem a peça mais forte do ataque, não trocas automáticas. Às vezes a dama defensora deve permanecer para criar xeques.",
@@ -8374,7 +8374,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Depois de ganhar material, continuar sacrificando pode devolver a vantagem. O novo objetivo é consolidar o rei, completar o desenvolvimento e impedir o contrajogo. A primeira rota é material: recolher peça ou peões e trocar atacantes adversários. A segunda é estrutural: fixar fraquezas e ocupar casas. A terceira é técnica: trocar damas e entrar em final superior. No final, centralize o rei, crie um segundo alvo e evite devolver atividade. A vantagem obtida pelo ataque precisa ser tratada com os métodos estudados no Volume",
@@ -8458,7 +8458,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Use A-L-V-O: Avaliar o centro e os reis; Localizar o ponto de entrada; Verificar forças e defesas; Ordenar candidatos por força. O protocolo evita ataques baseados apenas em intuição visual. Para cada candidato atacante, calcule a resposta mais resistente, não a mais natural. Para cada defesa, calcule a continuação mais forçante do adversário. Registre quatro momentos: oportunidade de ataque, melhor defesa adversária, ponto de conversão e eventual contra-jogo. Esse registro cria padrões transferíveis.",
@@ -8569,7 +8569,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "A sequência a seguir foi composta para ensino: 1.e4 e5 2.Nf3 Nc6 3.Bc4 Nf6 4.d3 Be7 5.O-O O-O 6.Re1 d6 7.c3 h6 8.Nbd2 Re8 9.Nf1 Bf8 10.Ng3 Be6 11.Bb5 a6 12.Ba4 b5 13.Bc2 d5 14.exd5 Bxd5. 15.d4 exd4 16.Rxe8 Qxe8 17.Nxd4 Nxd4 18.cxd4 Bd6 19.Nf5 Be4 20.Nxd6 cxd6 21.Bxe4 Qxe4 22.Be3 Rc8 23.Rc1 Rxc1 24.Qxc1. Semana 1: reproduza os 30 diagramas e nomeie condição, ruptura e defesa. Semana 2: resolva exercícios 771-836 sem mover peças. Semana 3: jogue posições de ataque e defesa com cores alternadas. Semana 4: analise cinco partidas próprias com o protocolo A-L-V-O.",
@@ -8682,7 +8682,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Nos primeiros lances, o objetivo não é provar memória perfeita, mas alcançar uma posição compreendida. Ao reconhecer a estrutura, registre mentalmente a ruptura principal, a pior peça e o plano adversário. Use o ciclo O-C-C-A-D: observar ameaças e desequilíbrios; criar candidatos; calcular variantes; avaliar posições finais; decidir e executar. O ciclo deve ser completo nos momentos críticos e abreviado em posições estáveis. Em finais, há menos peças, mas cada tempo é mais valioso. O mesmo ciclo continua válido, com ênfase em atividade do rei, peões passados, oposição e transposição para posições conhecidas.",
@@ -8785,7 +8785,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Cada ficha deve conter posição-base, ordem de lances, plano principal, ruptura adversária, erro típico e final recorrente. Cinco informações bem conectadas valem mais que vinte lances isolados. O Diagrama 215 pode surgir de ordens diferentes. A estrutura informa quais planos continuam válidos. O jogador preparado reconhece o tipo de centro antes de buscar o nome exato da variante. Uma linha de abertura deve terminar com uma previsão do meio-jogo e do final: quais peças trocar, qual maioria avançar e qual fraqueza pode permanecer.",
@@ -8897,7 +8897,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Jogue rapidamente apenas quando a posição coincide com a preparação e a resposta adversária foi verificada. Um lance conhecido em uma posição diferente pode ser um erro grave. O Diagrama 217 reúne vários sinais: reis em alas opostas, coluna semiaberta e ruptura central. Esse é o momento de investir tempo. O Diagrama 218 é mais estável e permite decisão por princípios. No Diagrama 219, o objetivo é reduzir a complexidade: torre ativa, rei protegido e plano simples. Em apuro, prefira lances que limitam respostas sem comprometer a posição.",
@@ -9009,7 +9009,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "O fechamento do centro no Diagrama 220 define alas de ataque e planos de longo prazo. A escolha de f4 ou b5 altera o mapa da partida e merece cálculo comparativo. O Diagrama 222 apresenta uma ruptura de minoria. A execução prematura pode permitir contrajogo central; a execução tardia pode perder a oportunidade. Na análise, marque o primeiro lance em que o plano correto deixou de ser disponível. O erro decisivo costuma ocorrer antes do lance que perde material.",
@@ -9121,7 +9121,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "No Diagrama 223, os candidatos incluem continuação forçante, consolidação e desenvolvimento. O lance mais agressivo não é automaticamente o melhor se deixa peças soltas. Compare candidatos por segurança, material, atividade, estrutura, iniciativa e transição. O método não produz uma soma mecânica; ele obriga a explicitar diferenças. No Diagrama 225, cada lance conduz a uma família diferente de finais. O jogador deve reconhecer oposição, ruptura e casas de entrada antes de escolher.",
@@ -9233,7 +9233,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "No Diagrama 226, a árvore começa pelas rupturas e sacrifícios que criam ameaças imediatas. Variantes laterais sem impacto podem ser descartadas cedo. O Diagrama 227 exige atenção às linhas abertas depois de cada troca. Recoloque mentalmente as peças e elimine do cálculo as que já foram capturadas. O Diagrama 228 mostra um ponto de parada: não há tática imediata, e a posição pode ser julgada por oposição, casas de entrada e maiorias.",
@@ -9345,7 +9345,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "No Diagrama 229, avalie estrutura, bispos, casas, espaço e segurança. O par de bispos só importa se houver linhas e alvos; a estrutura só importa se puder ser atacada. No Diagrama 230, o peão isolado fornece atividade e a ruptura d5. O plano muda se as peças forem trocadas e o peão se tornar uma fraqueza estática. Trocas alteram o peso dos fatores. Um bispo ruim pode tornar-se defensor essencial; um peão fraco pode virar passado protegido.",
@@ -9457,7 +9457,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Pequenas concessões defensivas podem somar-se. Antes de jogar um peão, verifique quais casas perde e se a peça que deveria defendê-las permanece disponível. No Diagrama 232, a ordem é neutralizar a ameaça sobre a dama, criar segurança para o rei e ativar a torre. Tentar contra-atacar sem resolver o perigo imediato falha. No Diagrama 234, a torre ativa na segunda fileira e o avanço b5-b4 criam problemas. Uma defesa passiva permitiria ao rei branco melhorar sem risco.",
@@ -9569,7 +9569,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "A conversão começa antes do final. Trocas devem preservar a peça mais ativa, eliminar bloqueadores e conduzir a uma estrutura em que o plano seja executável. No Diagrama 235, a torre deve ganhar atividade antes do avanço. No Diagrama 236, cortar o rei e proteger a base reduz xeques laterais e ataques aos peões. No Diagrama 237, o defensor pode segurar uma ala. O atacante deve criar uma segunda frente, obrigando o rei ou as peças a abandonar a primeira.",
@@ -9680,7 +9680,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "No Diagrama 238, anote o que você esperava da posição: ruptura, plano e resposta adversária. Depois compare a expectativa com o que realmente ocorreu. Para cada momento crítico, escreva os candidatos considerados, a variante calculada e a avaliação final. Inclua também a ameaça que você talvez não tenha percebido. A análise termina com uma regra aplicável a outras posições, não com a frase “eu deveria ter jogado outro lance”.",
@@ -9782,7 +9782,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Use bancos para observar frequência, desempenho e transposições, mas filtre por nível, ritmo e data quando isso for relevante ao repertório. No Diagrama 239, compare primeiro os candidatos humanos. Depois peça ao motor a melhor defesa e a razão tática ou posicional da diferença. Em finais, aguarde estabilidade da avaliação e examine posições de tabela quando aplicável. Uma linha longa pode esconder uma transposição simples. Abertura: banco para padrões, não autoridade isolada Use bancos para observar frequência, desempenho e transposições, mas filtre por nível, ritmo e data quando isso for relevante ao repertório. Uma linha popular pode ser inadequada ao estilo ou exigir precisão excessiva. Registre posições explicáveis, não apenas a primeira escolha do banco.",
@@ -9884,7 +9884,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Partida didática: 1.d4 d5 2.c4 e6 3.Nc3 Nf6 4.cxd5 exd5 5.Bg5 Be7 6.e3 O-O 7.Bd3 Nbd7 8.Qc2 Re8 9.Nge2 Nf8 10.O-O c6 11.Rab1 a5 12.a3 Bd6. 13.b4 axb4 14.axb4 Ng6 15.b5 Bd7 16.bxc6 bxc6 17.Na4 h6 18.Bxf6 Qxf6 19.Nc5 Bxc5 20.Qxc5 Nh4 21.Rb7 Bf5 22.Bxf5 Qxf5 23.Ng3 Qg6 24.Rc1 Re6 25.Rc7 Ra2 26.Rxc6. 26...Rxc6 27.Qxc6 Qxc6 28.Rxc6 Ra1+ 29.Nf1. O Diagrama 240 mostra a transição: as brancas têm vantagem material, mas ainda precisam neutralizar a torre ativa e ativar o rei.",
@@ -9988,7 +9988,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Use o Diagrama 241 para distinguir memória de compreensão. Registre onde a teoria termina, quais planos permanecem claros e em que lances o relógio começa a ser consumido sem necessidade. Agrupe erros em percepção, candidatos, cálculo, avaliação, tempo e execução. Uma sequência de derrotas pode esconder um único padrão recorrente, como trocar a peça ativa ou apressar a ruptura. O Diagrama 243 verifica se o conceito sobrevive fora da posição estudada. Reapresente a mesma ideia com peças ou alas invertidas e compare a qualidade da decisão.",
@@ -10101,7 +10101,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "O Diagrama 244 representa uma sessão de alta intensidade: posição crítica, relógio e análise completa. O Diagrama 245 serve a uma sessão técnica, com foco em planos e casas. Evite acumular sessões difíceis em dias consecutivos quando a precisão já caiu. Intercale cálculo profundo com revisão de partidas, padrões táticos e estudo posicional. O Diagrama 246 deve reaparecer depois de um dia, uma semana e algumas semanas. A repetição não busca decorar o lance, mas recuperar o procedimento sem pistas.",
@@ -10213,7 +10213,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "No Diagrama 247, prepare as principais escolhas das pretas e a ruptura ...d5. No Diagrama 248, registre o ponto em que a posição deixa de ser teórica e exige decisão concreta. A melhor preparação conduz a posições em que seus planos são claros e as decisões adversárias são difíceis. Uma surpresa sem base posicional pode consumir mais energia de quem a joga. O Diagrama 249 mostra por que finais devem integrar a preparação. Conhecer oposição e maioria permite aceitar ou evitar trocas de peças no momento correto.",
@@ -10326,7 +10326,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "O Diagrama 250 exige precisão, mas a urgência deve vir das ameaças objetivas, não do desejo de justificar a abertura. Respire, descreva a posição e selecione candidatos. No Diagrama 252, interrompa a narrativa do erro anterior: aceite que a posição mudou, atualize material e ameaças, e procure o recurso mais resistente disponível. Em finais longos, a atenção oscila. Divida a tarefa em unidades: atividade do rei, peões passados, xeques e transposição teórica.",
@@ -10438,7 +10438,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "No Diagrama 253, revise a estrutura e o primeiro ponto de decisão, não dezenas de variantes. Antes da rodada, confirme horário, material, hidratação e condições logísticas. O Diagrama 254 representa uma decisão típica. Use uma sequência breve: ameaça adversária, candidatos, cálculo, avaliação e verificação final. No Diagrama 255, conte tempos e confirme oposição. Quando a partida termina, anote rapidamente momentos críticos e estado do relógio.",
@@ -10550,7 +10550,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "O Diagrama 256 contém ataques opostos e rupturas: é uma posição que merece tempo. O Diagrama 257 é conhecido estruturalmente e permite decisão mais rápida. Calcule profundamente quando há lances forçantes, transformações irreversíveis ou várias respostas defensivas. Em posições estáveis, compare poucos planos e avance. No Diagrama 258, use pontos de controle: oposição, ruptura e posição resultante. Lances que reduzem opções adversárias são valiosos em apuro.",
@@ -10663,7 +10663,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "No Diagrama 259, diferentes planos podem ser jogáveis. A situação do torneio pode favorecer uma estrutura mais complexa ou uma linha mais sólida, desde que ambas sejam conhecidas. No Diagrama 260, reduzir risco significa completar desenvolvimento, controlar rupturas e manter atividade. Passividade pode aumentar, não reduzir, a probabilidade de derrota. O Diagrama 261 mostra vantagem pequena e plano técnico. Criar problemas reais por atividade é melhor que escolher uma linha inferior por ser “complicada”.",
@@ -10766,7 +10766,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "No Diagrama 262, uma posição tática sob fadiga pede processo simples. Fora do tabuleiro, prepare material, horários e deslocamento com antecedência para não consumir atenção competitiva. No Diagrama 263, melhorar a pior peça oferece um plano claro. Em partidas longas, alterne períodos de cálculo intenso com observação tranquila da posição. O Diagrama 264 simboliza uma revisão curta. Registre a lição principal, faça uma refeição adequada ao seu contexto e preserve tempo de descanso.",
@@ -10878,7 +10878,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "No Diagrama 265, o ritmo clássico permite comparar planos e finais. Treine com anotação de variantes, avaliação e revisão completa. No Diagrama 266, selecione dois ou três candidatos e calcule apenas respostas críticas. O treino deve reproduzir o relógio real. No Diagrama 267, padrões táticos e verificação de peças soltas dominam. Blitz é útil para automatizar reconhecimento, mas não substitui análise lenta.",
@@ -10990,7 +10990,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Registre frequência de chegada à posição preparada, qualidade da primeira decisão autônoma e tempo consumido. Uma linha não é eficaz se nunca é lembrada ou entendida. Conte recorrências por categoria e gravidade. Reduzir erros simples de percepção pode produzir mais resultado que aprofundar uma variante rara. No Diagrama 269, avalie procedimento, não memória do lance. Inverta cores, desloque a estrutura e peça a justificativa completa.",
@@ -11101,7 +11101,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Leia regulamento, ritmo, critérios de desempate, política de atrasos e restrições a dispositivos. Dúvidas devem ser dirigidas à arbitragem, não resolvidas por suposição. Mantenha silêncio, registre lances conforme exigido e acione o árbitro diante de irregularidade. Não pressione o adversário por gestos, comentários ou ofertas repetidas de empate. Confirme o resultado e preserve planilhas ou registros quando necessário. Analise a própria conduta com a mesma seriedade aplicada aos lances.",
@@ -11212,7 +11212,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Reúna dez partidas recentes, classifique os erros e escolha duas prioridades. Revise posições-chave do repertório e finais que influenciam suas trocas. Semanas 3 e 4: cálculo no relógio e partidas clássicas. Semana 5: simulação de duas rodadas no mesmo dia. Semana 6: preparação específica e revisão dos erros da simulação. Na semana 7, reduza volume, preserve intensidade curta e revise fichas. Na semana 8, mantenha rotina familiar e evite introduzir repertório extenso. Abertura: semanas 1 e 2 - diagnóstico e base Reúna dez partidas recentes, classifique os erros e escolha duas prioridades. Revise posições-chave do repertório e finais que influenciam suas trocas. No Diagrama 270, explique a estrutura Carlsbad, o momento de b4-b5 e a resposta central das pretas antes de calcular. Meio-jogo: semanas 3 a 6 - carga e simulação Semanas 3 e 4: cálculo no relógio e partidas clássicas. Semana 5: simulação de duas rodadas no mesmo dia. Semana 6: preparação específica e revisão dos erros da simulação. Registre sono, energia percebida, tempo e qualidade das decisões, sem buscar correlações conclusivas em amostras pequenas. Use os dados para ajustar rotina. Final: semanas 7 e 8 - redução e competição Na semana 7, reduza volume, preserve intensidade curta e revise fichas. Na semana 8, mantenha rotina familiar e evite introduzir repertório extenso. Depois do torneio, aguarde a recuperação inicial e execute a análise em três etapas: reconstrução própria, verificação e plano de correção. O ciclo seguinte começa pelos padrões observados. Redução pré-competitiva Nas semanas finais, reduza volume e preserve sessões curtas de qualidade. Evite repertório extenso e mudanças radicais.",
@@ -11298,7 +11298,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "O Diagrama 271 representa o núcleo permanente: desenvolvimento, centro e segurança do rei. O aluno avança quando executa essas tarefas sem abandonar a verificação tática. O Diagrama 272 reapresenta temas básicos em uma posição mais densa. A mesma pergunta - quais são os xeques, capturas e ameaças - agora exige ordenar variantes e considerar a defesa mais forte. No Diagrama 273, o domínio não é lembrar um lance, mas reconstruir oposição, casas de entrada e ruptura. A avaliação deve mudar cores, alas ou peças para testar transferência.",
@@ -11411,7 +11411,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "No Diagrama 274, o aluno deve indicar peça menos ativa, ruptura central e condição para realizá-la. Nomes de aberturas são secundários ao entendimento das tarefas. O Diagrama 275 treina a rotina: observar xeques, capturas e ameaças; conferir peças soltas; comparar dois ou três candidatos. O Diagrama 276 introduz oposição e casas-chave. O rei deixa de ser apenas peça a proteger e torna-se a principal unidade de combate.",
@@ -11506,7 +11506,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "No Diagrama 277, a abertura termina numa estrutura de peão isolado. O aluno deve conhecer atividade, ruptura d5 e trocas que aliviam ou agravam a fraqueza. O Diagrama 278 contém pressão em f7. Antes de sacrificar, conte atacantes, defensores, casas de fuga e resposta intermediária. No Diagrama 279, a torre deve criar ameaças e limitar o rei. A defesa passiva de peões costuma perder tempos decisivos.",
@@ -11619,7 +11619,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "O Diagrama 280 exige comparar rupturas em alas diferentes e preparar a pior peça. O repertório avançado inclui ordens de lance, transposições e alternativas de risco. No Diagrama 281, o plano próprio deve ser confrontado com o recurso adversário. A profilaxia não é passividade; é retirar força da resposta antes de avançar. O Diagrama 282 serve como teste sem pistas. O jogador deve formular avaliação, plano, variante principal e posição final esperada.",
@@ -11732,7 +11732,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Sequência: 1.e4 e5 2.Cf3 d6 3.d4 Bg4 4.dxe5 Bxf3 5.Dxf3 dxe5 6.Bc4 Cf6 7.Db3 De7. No Diagrama 283, as brancas atacam b7 e f7 enquanto completam o desenvolvimento. Seguiu-se 8.Cc3 c6 9.Bg5 b5 10.Cxb5! cxb5 11.Bxb5+. O Diagrama 284 mostra que o material sacrificado comprou linhas, tempos e exposição do rei. 11...Cbd7 12.O-O-O Td8 13.Txd7! Txd7 14.Td1 De6 15.Bxd7+ Cxd7 16.Db8+! Cxb8 17.Td8#. O Diagrama 285 encerra a partida.",
@@ -11845,7 +11845,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "No Diagrama 286, a simetria material esconde planos diferentes. As brancas preparam b4-b5; as pretas buscam atividade central e na ala do rei. No Diagrama 287, b4 já foi executado. Antes de b5, verifique ...c5, ...Cg4 e a coordenação da torre em b1. O Diagrama 288 mostra a posição depois de trocas. A fraqueza em c6 só importa se as peças brancas puderem invadi-la e impedir contrajogo em f5.",
@@ -11958,7 +11958,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Depois de 1.e4 e5 2.Cf3 d6 3.Bc4 Bg4 4.Cc3 g6, o Diagrama 289 mostra rei no centro, f7 vulnerável e peças brancas prontas. 5.Cxe5! Bxd1 leva ao Diagrama",
@@ -12044,7 +12044,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "No Diagrama 292, as brancas possuem peões dobrados, mas também coluna b e par de bispos. A avaliação exige comparar atividade e fraquezas, não aplicar rótulos automáticos. No Diagrama 293, a torre ativa oferece mais chances que a defesa passiva. Cortar o rei e criar xeques laterais são prioridades. O Diagrama 294 exige contar tempos, identificar oposição e avaliar a ruptura g4g5. O final não deve ser estimado apenas por número de peões.",
@@ -12157,7 +12157,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "No Diagrama 295, identifique a pior peça, a ruptura e o risco imediato. A resposta recebe pontuação por plano, justificativa e segurança. Em cada posição, escreva xeques, capturas e ameaças antes do lance escolhido. A omissão de uma resposta forçante reduz a nota mesmo quando o lance final é aceitável. No Diagrama 296, explique oposição e casa-chave. Depois, execute a posição contra resistência correta.",
@@ -12288,7 +12288,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "No Diagrama 297, explique a compensação do peão isolado, a ruptura d5 e as trocas desejáveis para cada lado. No Diagrama 298, reconstruir ameaças precede qualquer contra-ataque. O candidato deve ser testado contra xeques e capturas do adversário. O teste inclui posição equivalente à estudada, com cores ou alas alteradas. O aluno deve recuperar o procedimento, não a memória visual.",
@@ -12419,7 +12419,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "No Diagrama 299, identifique o momento em que a teoria termina. Registre três candidatos, o recurso defensivo mais forte e o tempo investido. O Diagrama 300 exige plano de minoria, resposta central e final projetado. O candidato principal deve sobreviver a uma variante concreta. O relatório classifica erros por percepção, candidatos, cálculo, avaliação, relógio e execução. Cada erro gera uma posição de treino e data de revisão.",
@@ -12548,7 +12548,7 @@
             "nextStepRules": [],
             "stepKey": "conceito",
             "stepType": "explanation",
-            "title": null
+            "title": "Conceito central"
           },
           {
             "bodyMd": "Organize o repertório por estruturas: centro aberto, peão isolado, Carlsbad, cadeias fechadas, Siciliana, Francesa, Caro-Kann, Eslava e sistemas indianos. Classifique posições por percepção, candidatos, cálculo, avaliação, profilaxia, ataque, defesa, conversão e relógio. Uma mesma posição pode aparecer em mais de um índice. Meses 1-3: fundamentos e tática; 4-6: estruturas e finais; 7-9: repertório e partidas; 10-12: simulação, avaliações e revisão acumulada.",
