@@ -254,12 +254,23 @@ describeDatabase('exercise runtime database integration', () => {
   });
 
   it('returns verified study context from the linked lesson', async () => {
+    // Use an isolated course/module so the seeded course publish test is
+    // unaffected by this fixture lesson.
+    const [course] = await sql<{ id: string }[]>`
+      INSERT INTO courses (slug, title, description, status)
+      VALUES ('study-context-course', 'Curso de estudo', 'fixture', 'draft')
+      ON CONFLICT (slug) DO UPDATE SET title = excluded.title
+      RETURNING id
+    `;
     const [module] = await sql<{ id: string }[]>`
-      SELECT id FROM course_modules ORDER BY position LIMIT 1
+      INSERT INTO course_modules (course_id, position, title)
+      VALUES (${course!.id}, 1, 'Módulo de estudo')
+      ON CONFLICT (course_id, position) DO UPDATE SET title = excluded.title
+      RETURNING id
     `;
     const [lesson] = await sql<{ id: string }[]>`
       INSERT INTO lessons (module_id, slug, position, title, status, source_pages)
-      VALUES (${module!.id}, 'study-context-lesson', 999, 'Aula de estudo', 'published', '[4,6)'::int4range)
+      VALUES (${module!.id}, 'study-context-lesson', 1, 'Aula de estudo', 'published', '[4,6)'::int4range)
       ON CONFLICT (module_id, slug) DO UPDATE SET title = excluded.title
       RETURNING id
     `;
