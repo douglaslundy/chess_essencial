@@ -25,7 +25,10 @@ export const apiEnvSchema = z.object({
   MINIO_PORT: z.coerce.number().int().min(1).max(65_535).default(9000),
   MINIO_PUBLIC_URL: z.string().url().optional(),
   MINIO_SECRET_KEY: z.string().min(1).optional(),
-  MINIO_USE_SSL: z.coerce.boolean().default(false),
+  // A string 'false' must map to false — z.coerce.boolean() would make it true.
+  MINIO_USE_SSL: z
+    .union([z.boolean(), z.enum(['true', 'false']).transform((value) => value === 'true')])
+    .default(false),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().optional(),
   OTEL_SERVICE_NAME: z.string().min(1).max(100).default('xadrez-api'),
