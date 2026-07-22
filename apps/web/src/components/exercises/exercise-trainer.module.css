@@ -211,6 +211,45 @@
   flex-wrap: wrap;
   gap: 0.6rem;
 }
+.resultOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+}
+.resultDialog {
+  width: min(100%, 24rem);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  background: var(--surface, #17171d);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+.resultDialog h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+}
+.resultDialog p {
+  margin: 0 0 1.15rem;
+  color: var(--muted, #b8b4ad);
+}
+.resultWon {
+  border-top: 4px solid #16a34a;
+}
+.resultLost {
+  border-top: 4px solid #dc2626;
+}
+.resultActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
 .results h2 {
   margin-top: 0;
 }

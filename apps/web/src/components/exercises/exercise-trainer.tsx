@@ -17,10 +17,15 @@ import {
 } from '@/components/game/move-announcement';
 import { api } from '@/lib/api/client';
 import { usePieceTheme } from '@/lib/piece-theme';
-import { playCaptureSound, playMoveSound, primeAudio } from '@/lib/sound';
+import {
+  playCaptureSound,
+  playDefeatSound,
+  playMoveSound,
+  playVictorySound,
+  primeAudio,
+} from '@/lib/sound';
 
 import styles from './exercise-trainer.module.css';
-import { guidedChallengeLine } from './guided-challenge-lines';
 
 const emptySearch: ExerciseSearchResult = { items: [], limit: 20, offset: 0, total: 0 };
 const emptyMetrics: ExerciseMetrics = {
@@ -82,8 +87,11 @@ export function ExerciseTrainer({
   const [startedAt, setStartedAt] = useState(0);
   const [boardLocked, setBoardLocked] = useState(false);
   const [showRetryBanner, setShowRetryBanner] = useState(false);
+  const [resultModal, setResultModal] = useState<'won' | 'lost' | null>(null);
+  const [playerMoves, setPlayerMoves] = useState<string[]>([]);
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
   const autoStarted = useRef(false);
+  const announceSeq = useRef(0);
   const opponentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [boardHistory, setBoardHistory] = useState<{
     exerciseId: string;
@@ -117,6 +125,7 @@ export function ExerciseTrainer({
     setSolution(null);
     setStartedAt(Date.now());
     setBoardLocked(false);
+    setPlayerMoves([]);
   }
 
   const load = useCallback(async () => {
@@ -288,7 +297,10 @@ export function ExerciseTrainer({
   }
 
   const current = training?.currentExercise;
-  const hasGuidedLine = guided && current ? Boolean(guidedChallengeLine(current.id)) : false;
+  const isPlayablePosition =
+    guided && current
+      ? current.positionType === 'legal_position' && current.answerFormat === 'move_sequence'
+      : false;
   const boardFen =
     current && boardHistory?.exerciseId === current.id
       ? boardHistory.positions[boardHistory.index]!
@@ -323,7 +335,8 @@ export function ExerciseTrainer({
           promotion: move.isPromotion(),
         },
       });
-      if (described) setAnnouncement({ ...described, key: `${current.id}-${Date.now()}` });
+      announceSeq.current += 1;
+      if (described) setAnnouncement({ ...described, key: `${current.id}-${announceSeq.current}` });
       const canonical = moveToUci(move);
       const previous =
         boardHistory?.exerciseId === current.id
@@ -335,55 +348,96 @@ export function ExerciseTrainer({
       if (current.answerFormat === 'move_sequence') setLine(moves.join(' '));
       else setMessage('Movimento reproduzido no tabuleiro; responda à pergunta no campo de texto.');
 
-      if (guided) {
-        const expected = guidedChallengeLine(current.id);
-        if (expected) {
-          if (canonical !== expected[moves.length - 1]) {
-            setBoardLocked(true);
-            setMessage('Esse não é o lance esperado. Avaliando para você tentar novamente…');
-            void submit(moves);
-            return;
-          }
-          const opponentMove = expected[moves.length];
-          if (!opponentMove) {
-            setBoardLocked(true);
-            setMessage('Lance correto. Liberando o próximo desafio…');
-            void submit(moves);
-            return;
-          }
-
-          setBoardLocked(true);
-          setMessage('Boa jogada. O adversário está respondendo…');
-          opponentTimer.current = setTimeout(() => {
-            try {
-              const replyPosition = new Chess(chess.fen());
-              const reply = replyPosition.move(uciToChessMove(opponentMove));
-              const replyUci = moveToUci(reply);
-              const repliedMoves = [...moves, replyUci];
-              setBoardHistory({
-                exerciseId: current.id,
-                index: repliedMoves.length,
-                moves: repliedMoves,
-                positions: [...positions, replyPosition.fen()],
-              });
-              setLine(repliedMoves.join(' '));
-              if (repliedMoves.length === expected.length) void submit(repliedMoves);
-              else {
-                setBoardLocked(false);
-                setMessage('O adversário respondeu. Agora é sua vez.');
-              }
-            } catch {
-              setBoardLocked(false);
-              setMessage('Não foi possível reproduzir a resposta automática.');
-            }
-          }, 450);
-        } else if (current.answerFormat === 'move_sequence') {
-          setMessage('Lance registrado. Toque em Confirmar quando terminar a sequência.');
-        }
+      if (isPlayablePosition && training) {
+        const played = [...playerMoves, canonical];
+        setPlayerMoves(played);
+        setBoardLocked(true);
+        setMessage('Avaliando sua jogada…');
+        void evaluatePlayedLine(played, current, chess.fen(), moves, positions);
       }
     } catch {
       setMessage('Esse lance não é permitido nesta posição.');
     }
+  }
+
+  async function evaluatePlayedLine(
+    played: string[],
+    exercise: NonNullable<typeof current>,
+    fenAfterPlayer: string,
+    moves: string[],
+    positions: string[],
+  ) {
+    const accessToken = token();
+    if (!accessToken || !training) return;
+    try {
+      const result = await api.evaluateExerciseLine(
+        exercise.id,
+        { playedMoves: played, trainingSessionId: training.sessionId },
+        accessToken,
+      );
+      if (result.status === 'solved') {
+        if (result.attempt?.training) setTraining(result.attempt.training);
+        primeAudio();
+        playVictorySound();
+        setResultModal('won');
+        return;
+      }
+      if (result.status === 'incorrect') {
+        primeAudio();
+        playDefeatSound();
+        setResultModal('lost');
+        return;
+      }
+      // status === 'continue': animate the forced opponent reply, then unlock.
+      const opponentMove = result.opponentReply;
+      if (!opponentMove) {
+        setBoardLocked(false);
+        setMessage('Boa jogada. Continue a sequência.');
+        return;
+      }
+      setMessage('Boa jogada. O adversário está respondendo…');
+      opponentTimer.current = setTimeout(() => {
+        try {
+          const replyPosition = new Chess(fenAfterPlayer);
+          const reply = replyPosition.move(uciToChessMove(opponentMove));
+          if (reply.captured) playCaptureSound();
+          else playMoveSound();
+          const replyUci = moveToUci(reply);
+          const repliedMoves = [...moves, replyUci];
+          setBoardHistory({
+            exerciseId: exercise.id,
+            index: repliedMoves.length,
+            moves: repliedMoves,
+            positions: [...positions, replyPosition.fen()],
+          });
+          setLine(repliedMoves.join(' '));
+          setBoardLocked(false);
+          setMessage('O adversário respondeu. Agora é sua vez.');
+        } catch {
+          setBoardLocked(false);
+          setMessage('Não foi possível reproduzir a resposta automática.');
+        }
+      }, 450);
+    } catch (error) {
+      setBoardLocked(false);
+      setMessage(error instanceof Error ? error.message : 'Falha ao avaliar a jogada.');
+    }
+  }
+
+  function closeResultModalAndAdvance() {
+    setResultModal(null);
+    resetAttemptUi();
+    if (training?.status === 'completed') {
+      setMessage('Parabéns! Você concluiu todos os desafios.');
+    } else {
+      setMessage('Próximo desafio liberado.');
+    }
+  }
+
+  function retryCurrentExercise() {
+    setResultModal(null);
+    resetAttemptUi();
+    setMessage('Tente novamente.');
   }
 
   function moveBoardHistory(offset: -1 | 1) {
@@ -556,7 +610,7 @@ export function ExerciseTrainer({
               Este exercício do livro não contém uma posição de tabuleiro associada.
             </p>
           )}
-          {guided && hasGuidedLine && showRetryBanner ? (
+          {!guided && showRetryBanner ? (
             <aside className={styles.incorrectFeedback}>
               <span>Esse não era o lance certo.</span>
               <button onClick={() => setShowRetryBanner(false)} type="button">
@@ -574,7 +628,7 @@ export function ExerciseTrainer({
               <strong>Solução:</strong> {solution.solutionMd}
             </aside>
           ) : null}
-          {!guided || !hasGuidedLine ? (
+          {!guided || !isPlayablePosition ? (
             <label className={styles.answer}>
               {current.answerFormat === 'free_text'
                 ? 'Resposta'
@@ -589,7 +643,7 @@ export function ExerciseTrainer({
             </label>
           ) : null}
           <div className={styles.actions}>
-            {!guided || !hasGuidedLine ? (
+            {!guided || !isPlayablePosition ? (
               <button className={styles.primaryAction} onClick={() => void submit()} type="button">
                 {guided ? 'Confirmar resposta' : 'Enviar tentativa'}
               </button>
@@ -632,6 +686,46 @@ export function ExerciseTrainer({
             ))}
           </div>
         </section>
+      ) : null}
+
+      {resultModal ? (
+        <div className={styles.resultOverlay} role="presentation">
+          <div
+            className={`${styles.resultDialog} ${
+              resultModal === 'won' ? styles.resultWon : styles.resultLost
+            }`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="exercise-result-title"
+          >
+            <h2 id="exercise-result-title">
+              {resultModal === 'won' ? 'Você venceu!' : 'Não foi dessa vez'}
+            </h2>
+            <p>
+              {resultModal === 'won'
+                ? 'Exercício resolvido corretamente.'
+                : 'Esse não era o lance certo. Estude a posição e tente de novo.'}
+            </p>
+            <div className={styles.resultActions}>
+              {resultModal === 'lost' ? (
+                <button
+                  className={styles.primaryAction}
+                  onClick={retryCurrentExercise}
+                  type="button"
+                >
+                  ↻ Tentar novamente
+                </button>
+              ) : null}
+              <button
+                className={styles.secondaryAction}
+                onClick={closeResultModalAndAdvance}
+                type="button"
+              >
+                Próximo exercício →
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </main>
   );

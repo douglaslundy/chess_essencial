@@ -2,6 +2,8 @@
 
 ## Última atualização
 
+2026-07-22 - Deploy de produção em `chess.dlsistemas.com.br` (VPS 144.91.92.70, atrás do Traefik compartilhado, HTTPS/Let's Encrypt, isolado dos demais sistemas). Sub-projeto 1 do lote grande de melhorias implementado: avaliação automática de exercícios de tabuleiro (endpoint `POST /v1/exercises/:id/evaluate-line`), mate em N lances, modal de vitória/derrota com som, e progressão persistente (exclui exercícios já resolvidos). Dívida técnica do `guided-challenge-lines.ts` (mapa client-side duplicando `solution_lines`) resolvida — arquivo e teste removidos, avaliação agora é 100% server-authoritative via `solution_lines`. Trabalhando nos sub-projetos 2-8 em modo automático.
+
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 

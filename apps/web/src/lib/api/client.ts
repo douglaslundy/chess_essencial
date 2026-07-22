@@ -6,6 +6,8 @@ import type {
   LessonVersion,
   SaveLessonInput,
   DrawOfferAction,
+  EvaluateExerciseLineInput,
+  EvaluateExerciseLineResult,
   ExerciseAttemptResult,
   ExerciseHint,
   ExerciseMetrics,
@@ -266,6 +268,11 @@ export const api = {
     }),
   submitExerciseAttempt: (exerciseId: string, input: SubmitExerciseAttemptInput, token: string) =>
     request<ExerciseAttemptResult>(`/exercises/${exerciseId}/attempts`, token, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  evaluateExerciseLine: (exerciseId: string, input: EvaluateExerciseLineInput, token: string) =>
+    request<EvaluateExerciseLineResult>(`/exercises/${exerciseId}/evaluate-line`, token, {
       method: 'POST',
       body: JSON.stringify(input),
     }),
