@@ -68,3 +68,23 @@ export function playCaptureSound(): void {
   playTone(420, 0, 90, context);
   playTone(280, 0.08, 130, context);
 }
+
+export function playVictorySound(): void {
+  if (isSoundMuted()) return;
+  const context = getContext();
+  if (!context) return;
+  // Rising major triad (C–E–G–C) as a small fanfare.
+  playTone(523.25, 0, 140, context);
+  playTone(659.25, 0.12, 140, context);
+  playTone(783.99, 0.24, 160, context);
+  playTone(1046.5, 0.38, 220, context);
+}
+
+export function playDefeatSound(): void {
+  if (isSoundMuted()) return;
+  const context = getContext();
+  if (!context) return;
+  // Falling minor interval to signal a miss.
+  playTone(392, 0, 160, context);
+  playTone(311.13, 0.14, 240, context);
+}
