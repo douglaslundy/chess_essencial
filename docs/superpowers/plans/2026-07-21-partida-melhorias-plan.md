@@ -21,43 +21,45 @@
 
 ## File Structure
 
-| File | Responsibility |
-|---|---|
-| `apps/web/src/lib/sound.ts` (new) | Web Audio synthesized move/capture sounds + mute preference (localStorage) |
-| `apps/web/src/lib/sound.test.ts` (new) | Unit tests for the sound module |
-| `apps/web/src/components/game/move-announcement.tsx` (new) | Shared "balloon" component + `describeImportantMove()` pure function |
-| `apps/web/src/components/game/move-announcement.module.css` (new) | Balloon styles |
-| `apps/web/src/components/game/move-announcement.test.tsx` (new) | Tests for the balloon + `describeImportantMove` |
-| `apps/api/src/games/application/games.service.ts` (modify) | New `commitPlayerMove`, `commitBotMoveIfNeeded` made public |
-| `apps/api/src/games/presentation/games.gateway.ts` (modify) | `submitMove` broadcasts the player's move immediately, schedules the bot's reply 1s later |
-| `apps/api/src/games/realtime.e2e.test.ts` (modify) | Small addition asserting the delayed-broadcast contract still round-trips |
-| `apps/api/src/games/presentation/games.gateway.test.ts` (new) | Unit test for the 1s bot-reply delay using fake timers |
-| `database/migrations/0014_board_theme.up.sql` / `.down.sql` (new) | `board_theme` enum + column on `user_profiles` |
-| `apps/api/src/database/schema.ts` (modify) | `boardThemeEnum`, `boardTheme` column |
-| `packages/contracts/src/auth.ts` (modify) | `boardTheme` in `updateMeInputSchema` and `publicUserSchema.profile` |
-| `api/openapi.yaml` (modify) | `boardTheme` in `UpdateMeInput` and `UserProfile` schemas |
-| `apps/api/src/users/users.service.ts` (modify) | `boardTheme` in `toPublicUser()` |
-| `apps/web/src/components/game/chess-board.tsx` (modify) | `pieceTheme` prop, `WoodChessPiece`, image-based rendering for `staunton_3d` |
-| `apps/web/src/components/game/chess-board.test.tsx` (modify) | Tests for the 3 theme render paths |
-| `apps/web/src/app/globals.css` (modify) | Board/piece theme CSS, move-history nav CSS |
-| `apps/web/src/lib/piece-theme.tsx` (new) | `PieceThemeProvider` + `usePieceTheme()` |
-| `apps/web/src/app/app/layout.tsx` (modify) | Wrap with `PieceThemeProvider` |
-| `apps/web/src/app/app/meus-dados/page.tsx` (modify) | Theme picker UI |
-| `apps/web/src/components/game/game-room.tsx` (modify) | Move-history navigation, balloon + sound + mute wiring, `pieceTheme` |
-| `apps/web/src/components/game/game-room.test.tsx` (modify) | Tests for history navigation |
-| `apps/web/src/components/exercises/exercise-trainer.tsx` (modify) | Sound + balloon wiring, `pieceTheme` |
-| `apps/web/src/components/exercises/exercise-trainer.test.tsx` (modify) | Tests for sound/balloon wiring |
-| `apps/web/src/components/history/review-room.tsx`, `apps/web/src/components/lessons/lesson-player.tsx` (modify) | Pass `pieceTheme` through so the preference applies platform-wide |
+| File                                                                                                            | Responsibility                                                                            |
+| --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `apps/web/src/lib/sound.ts` (new)                                                                               | Web Audio synthesized move/capture sounds + mute preference (localStorage)                |
+| `apps/web/src/lib/sound.test.ts` (new)                                                                          | Unit tests for the sound module                                                           |
+| `apps/web/src/components/game/move-announcement.tsx` (new)                                                      | Shared "balloon" component + `describeImportantMove()` pure function                      |
+| `apps/web/src/components/game/move-announcement.module.css` (new)                                               | Balloon styles                                                                            |
+| `apps/web/src/components/game/move-announcement.test.tsx` (new)                                                 | Tests for the balloon + `describeImportantMove`                                           |
+| `apps/api/src/games/application/games.service.ts` (modify)                                                      | New `commitPlayerMove`, `commitBotMoveIfNeeded` made public                               |
+| `apps/api/src/games/presentation/games.gateway.ts` (modify)                                                     | `submitMove` broadcasts the player's move immediately, schedules the bot's reply 1s later |
+| `apps/api/src/games/realtime.e2e.test.ts` (modify)                                                              | Small addition asserting the delayed-broadcast contract still round-trips                 |
+| `apps/api/src/games/presentation/games.gateway.test.ts` (new)                                                   | Unit test for the 1s bot-reply delay using fake timers                                    |
+| `database/migrations/0014_board_theme.up.sql` / `.down.sql` (new)                                               | `board_theme` enum + column on `user_profiles`                                            |
+| `apps/api/src/database/schema.ts` (modify)                                                                      | `boardThemeEnum`, `boardTheme` column                                                     |
+| `packages/contracts/src/auth.ts` (modify)                                                                       | `boardTheme` in `updateMeInputSchema` and `publicUserSchema.profile`                      |
+| `api/openapi.yaml` (modify)                                                                                     | `boardTheme` in `UpdateMeInput` and `UserProfile` schemas                                 |
+| `apps/api/src/users/users.service.ts` (modify)                                                                  | `boardTheme` in `toPublicUser()`                                                          |
+| `apps/web/src/components/game/chess-board.tsx` (modify)                                                         | `pieceTheme` prop, `WoodChessPiece`, image-based rendering for `staunton_3d`              |
+| `apps/web/src/components/game/chess-board.test.tsx` (modify)                                                    | Tests for the 3 theme render paths                                                        |
+| `apps/web/src/app/globals.css` (modify)                                                                         | Board/piece theme CSS, move-history nav CSS                                               |
+| `apps/web/src/lib/piece-theme.tsx` (new)                                                                        | `PieceThemeProvider` + `usePieceTheme()`                                                  |
+| `apps/web/src/app/app/layout.tsx` (modify)                                                                      | Wrap with `PieceThemeProvider`                                                            |
+| `apps/web/src/app/app/meus-dados/page.tsx` (modify)                                                             | Theme picker UI                                                                           |
+| `apps/web/src/components/game/game-room.tsx` (modify)                                                           | Move-history navigation, balloon + sound + mute wiring, `pieceTheme`                      |
+| `apps/web/src/components/game/game-room.test.tsx` (modify)                                                      | Tests for history navigation                                                              |
+| `apps/web/src/components/exercises/exercise-trainer.tsx` (modify)                                               | Sound + balloon wiring, `pieceTheme`                                                      |
+| `apps/web/src/components/exercises/exercise-trainer.test.tsx` (modify)                                          | Tests for sound/balloon wiring                                                            |
+| `apps/web/src/components/history/review-room.tsx`, `apps/web/src/components/lessons/lesson-player.tsx` (modify) | Pass `pieceTheme` through so the preference applies platform-wide                         |
 
 ---
 
 ## Task 1: Sound module
 
 **Files:**
+
 - Create: `apps/web/src/lib/sound.ts`
 - Test: `apps/web/src/lib/sound.test.ts`
 
 **Interfaces:**
+
 - Produces: `playMoveSound(): void`, `playCaptureSound(): void`, `primeAudio(): void`, `isSoundMuted(): boolean`, `setSoundMuted(muted: boolean): void`, `__resetAudioContextForTests(): void` (test-only export).
 
 - [ ] **Step 1: Write the failing test**
@@ -207,7 +209,12 @@ export function primeAudio(): void {
   if (context && context.state === 'suspended') void context.resume();
 }
 
-function playTone(frequency: number, startOffsetSeconds: number, durationMs: number, context: AudioContext) {
+function playTone(
+  frequency: number,
+  startOffsetSeconds: number,
+  durationMs: number,
+  context: AudioContext,
+) {
   const oscillator = context.createOscillator();
   const gain = context.createGain();
   oscillator.type = 'sine';
@@ -264,11 +271,13 @@ git commit -m "feat: add synthesized move/capture sound module"
 ## Task 2: Move announcement balloon
 
 **Files:**
+
 - Create: `apps/web/src/components/game/move-announcement.tsx`
 - Create: `apps/web/src/components/game/move-announcement.module.css`
 - Test: `apps/web/src/components/game/move-announcement.test.tsx`
 
 **Interfaces:**
+
 - Produces: `type AnnouncementTone = 'neutral' | 'success' | 'danger'`, `interface Announcement { text: string; tone: AnnouncementTone; key: string }`, `describeImportantMove(move: { san: string; to: string; flags: { capture: boolean; castling: 'king_side' | 'queen_side' | null; promotion: boolean } }): { text: string; tone: AnnouncementTone } | null`, `MoveAnnouncement({ announcement }: { announcement: Announcement | null })` (React component).
 - Consumes: nothing from other tasks.
 
@@ -521,11 +530,13 @@ git commit -m "feat: add shared move-announcement balloon component"
 ## Task 3: Backend — delay the bot's reply by 1 second
 
 **Files:**
+
 - Modify: `apps/api/src/games/application/games.service.ts:86-113` (current `commitMove`/`commitMoveSequence`/`commitBotMoveIfNeeded`)
 - Modify: `apps/api/src/games/presentation/games.gateway.ts:119-139` (current `submitMove`)
 - Test: Create `apps/api/src/games/presentation/games.gateway.test.ts`
 
 **Interfaces:**
+
 - Produces: `GamesService.commitPlayerMove(gameId: string, userId: string, input: SubmitMoveInput): Promise<{ move: GameMove; state: GameState }>` (new, gateway-only), `GamesService.commitBotMoveIfNeeded(gameId: string): Promise<{ move: GameMove; state: GameState } | null>` (existing method, made non-private).
 - Consumes: nothing from Tasks 1-2.
 
@@ -734,11 +745,7 @@ describe('GamesGateway bot reply delay', () => {
       setConnection: vi.fn().mockResolvedValue(undefined),
     };
     const metrics = { increment: vi.fn() };
-    const gateway = new GamesGateway(
-      auth as never,
-      games as never,
-      metrics as never,
-    );
+    const gateway = new GamesGateway(auth as never, games as never, metrics as never);
 
     const socket = fakeSocket();
     gateway.handleConnection(socket as never);
@@ -794,6 +801,7 @@ git commit -m "feat: delay the bot's reply move by 1s instead of committing it s
 ## Task 4: Backend — `board_theme` migration, schema, contracts, OpenAPI
 
 **Files:**
+
 - Create: `database/migrations/0014_board_theme.up.sql`
 - Create: `database/migrations/0014_board_theme.down.sql`
 - Modify: `apps/api/src/database/schema.ts`
@@ -802,6 +810,7 @@ git commit -m "feat: delay the bot's reply move by 1s instead of committing it s
 - Modify: `apps/api/src/users/users.service.ts`
 
 **Interfaces:**
+
 - Produces: `UpdateMeInput.boardTheme?: 'classic' | 'staunton_3d' | 'wood'`, `PublicUser.profile.boardTheme: 'classic' | 'staunton_3d' | 'wood'`.
 - Consumes: nothing from Tasks 1-3.
 
@@ -891,19 +900,19 @@ If `packages/contracts/src/auth.test.ts` has a fixture object asserting against 
 In `api/openapi.yaml`, find the `UpdateMeInput` schema (around line 1146-1158):
 
 ```yaml
-    UpdateMeInput:
-      type: object
-      minProperties: 1
-      properties:
-        displayName: {type: string, minLength: 2, maxLength: 80}
-        avatarUrl: {type: [string, 'null'], format: uri}
-        countryCode: {type: [string, 'null'], minLength: 2, maxLength: 2}
-        timezone: {type: string, minLength: 1, maxLength: 64}
-        locale: {type: string, minLength: 2, maxLength: 10}
-        birthYear: {type: [integer, 'null'], minimum: 1900}
-        bio: {type: [string, 'null'], maxLength: 500}
-        isProfilePublic: {type: boolean}
-      additionalProperties: false
+UpdateMeInput:
+  type: object
+  minProperties: 1
+  properties:
+    displayName: { type: string, minLength: 2, maxLength: 80 }
+    avatarUrl: { type: [string, 'null'], format: uri }
+    countryCode: { type: [string, 'null'], minLength: 2, maxLength: 2 }
+    timezone: { type: string, minLength: 1, maxLength: 64 }
+    locale: { type: string, minLength: 2, maxLength: 10 }
+    birthYear: { type: [integer, 'null'], minimum: 1900 }
+    bio: { type: [string, 'null'], maxLength: 500 }
+    isProfilePublic: { type: boolean }
+  additionalProperties: false
 ```
 
 Add a `boardTheme` line right before `additionalProperties: false`:
@@ -917,47 +926,60 @@ Add a `boardTheme` line right before `additionalProperties: false`:
 Then find `UserProfile` (around line 1159-1171):
 
 ```yaml
-    UserProfile:
-      type: object
-      required: [displayName, avatarUrl, countryCode, timezone, locale, birthYear, bio, isProfilePublic]
-      properties:
-        displayName: {type: string}
-        avatarUrl: {type: [string, 'null']}
-        countryCode: {type: [string, 'null']}
-        timezone: {type: string}
-        locale: {type: string}
-        birthYear: {type: [integer, 'null']}
-        bio: {type: [string, 'null']}
-        isProfilePublic: {type: boolean}
-      additionalProperties: false
+UserProfile:
+  type: object
+  required: [displayName, avatarUrl, countryCode, timezone, locale, birthYear, bio, isProfilePublic]
+  properties:
+    displayName: { type: string }
+    avatarUrl: { type: [string, 'null'] }
+    countryCode: { type: [string, 'null'] }
+    timezone: { type: string }
+    locale: { type: string }
+    birthYear: { type: [integer, 'null'] }
+    bio: { type: [string, 'null'] }
+    isProfilePublic: { type: boolean }
+  additionalProperties: false
 ```
 
 Replace the `required` line and add `boardTheme`:
 
 ```yaml
-    UserProfile:
-      type: object
-      required: [displayName, avatarUrl, countryCode, timezone, locale, birthYear, bio, isProfilePublic, boardTheme]
-      properties:
-        displayName: {type: string}
-        avatarUrl: {type: [string, 'null']}
-        countryCode: {type: [string, 'null']}
-        timezone: {type: string}
-        locale: {type: string}
-        birthYear: {type: [integer, 'null']}
-        bio: {type: [string, 'null']}
-        isProfilePublic: {type: boolean}
-        boardTheme: {type: string, enum: [classic, staunton_3d, wood]}
-      additionalProperties: false
+UserProfile:
+  type: object
+  required:
+    [
+      displayName,
+      avatarUrl,
+      countryCode,
+      timezone,
+      locale,
+      birthYear,
+      bio,
+      isProfilePublic,
+      boardTheme,
+    ]
+  properties:
+    displayName: { type: string }
+    avatarUrl: { type: [string, 'null'] }
+    countryCode: { type: [string, 'null'] }
+    timezone: { type: string }
+    locale: { type: string }
+    birthYear: { type: [integer, 'null'] }
+    bio: { type: [string, 'null'] }
+    isProfilePublic: { type: boolean }
+    boardTheme: { type: string, enum: [classic, staunton_3d, wood] }
+  additionalProperties: false
 ```
 
 - [ ] **Step 6: Regenerate the typed SDK/OpenAPI clients**
 
 Run:
+
 ```bash
 pnpm --filter @xadrez/sdk generate:api
 pnpm --filter @xadrez/web generate:api
 ```
+
 Expected: `packages/sdk/src/generated/openapi.ts` and `apps/web/src/lib/api/openapi.d.ts` are rewritten to include `boardTheme`.
 
 Run: `pnpm --filter @xadrez/sdk generate:check`
@@ -1006,12 +1028,14 @@ Expected: all passing. `apps/api/src/users/*.e2e.test.ts` are gated behind `RUN_
 - [ ] **Step 9: Typecheck, lint, format across the touched packages**
 
 Run:
+
 ```bash
 pnpm --filter @xadrez/contracts typecheck && pnpm --filter @xadrez/contracts lint
 pnpm --filter @xadrez/api typecheck && pnpm --filter @xadrez/api lint
 pnpm --filter @xadrez/sdk typecheck && pnpm --filter @xadrez/sdk lint
 pnpm --filter @xadrez/web typecheck && pnpm --filter @xadrez/web lint
 ```
+
 Expected: all clean.
 
 Run: `npx prettier --check database/migrations/0014_board_theme.up.sql database/migrations/0014_board_theme.down.sql apps/api/src/database/schema.ts apps/api/src/users/users.service.ts packages/contracts/src/auth.ts api/openapi.yaml packages/sdk/src/generated/openapi.ts apps/web/src/lib/api/openapi.d.ts`
@@ -1031,11 +1055,13 @@ git commit -m "feat: add board_theme profile field (migration, schema, contracts
 ## Task 5: `ChessBoard` — three piece themes
 
 **Files:**
+
 - Modify: `apps/web/src/components/game/chess-board.tsx`
 - Modify: `apps/web/src/components/game/chess-board.test.tsx`
 - Modify: `apps/web/src/app/globals.css`
 
 **Interfaces:**
+
 - Produces: `ChessBoardProps.pieceTheme?: 'classic' | 'staunton_3d' | 'wood'` (default `'classic'`).
 - Consumes: the 12 PNG files already committed at `apps/web/public/piece-themes/staunton-3d/{white,black}-{king,queen,bishop,knight,rook,pawn}.png` (generated earlier this session from the user-supplied 3D model).
 
@@ -1204,7 +1230,9 @@ Find the line rendering the piece inside `squares.map` (around line 248):
 Replace with:
 
 ```typescript
-                {piece ? renderPiece(piece, pieceTheme) : null}
+{
+  piece ? renderPiece(piece, pieceTheme) : null;
+}
 ```
 
 - [ ] **Step 3: Add board/piece theme CSS**
@@ -1276,43 +1304,43 @@ Add the following block right after it:
 In `apps/web/src/components/game/chess-board.test.tsx`, add the following `it()` blocks inside the existing `describe('ChessBoard', ...)` block (after the existing tests):
 
 ```typescript
-  it('renders classic SVG pieces by default', () => {
-    render(
-      createElement(ChessBoard, {
-        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-        onMove: vi.fn(),
-        orientation: 'white',
-      }),
-    );
-    expect(document.querySelectorAll('svg.chessPiece').length).toBe(32);
-    expect(document.querySelectorAll('img.pieceImage').length).toBe(0);
-  });
+it('renders classic SVG pieces by default', () => {
+  render(
+    createElement(ChessBoard, {
+      fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      onMove: vi.fn(),
+      orientation: 'white',
+    }),
+  );
+  expect(document.querySelectorAll('svg.chessPiece').length).toBe(32);
+  expect(document.querySelectorAll('img.pieceImage').length).toBe(0);
+});
 
-  it('renders Staunton 3D pieces as images when pieceTheme is staunton_3d', () => {
-    render(
-      createElement(ChessBoard, {
-        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-        onMove: vi.fn(),
-        orientation: 'white',
-        pieceTheme: 'staunton_3d',
-      }),
-    );
-    const images = document.querySelectorAll<HTMLImageElement>('img.pieceImage');
-    expect(images.length).toBe(32);
-    expect(images[0]?.src).toContain('/piece-themes/staunton-3d/');
-  });
+it('renders Staunton 3D pieces as images when pieceTheme is staunton_3d', () => {
+  render(
+    createElement(ChessBoard, {
+      fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      onMove: vi.fn(),
+      orientation: 'white',
+      pieceTheme: 'staunton_3d',
+    }),
+  );
+  const images = document.querySelectorAll<HTMLImageElement>('img.pieceImage');
+  expect(images.length).toBe(32);
+  expect(images[0]?.src).toContain('/piece-themes/staunton-3d/');
+});
 
-  it('renders wood SVG pieces when pieceTheme is wood', () => {
-    render(
-      createElement(ChessBoard, {
-        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-        onMove: vi.fn(),
-        orientation: 'white',
-        pieceTheme: 'wood',
-      }),
-    );
-    expect(document.querySelectorAll('svg.woodPiece').length).toBe(32);
-  });
+it('renders wood SVG pieces when pieceTheme is wood', () => {
+  render(
+    createElement(ChessBoard, {
+      fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      onMove: vi.fn(),
+      orientation: 'white',
+      pieceTheme: 'wood',
+    }),
+  );
+  expect(document.querySelectorAll('svg.woodPiece').length).toBe(32);
+});
 ```
 
 - [ ] **Step 5: Run test to verify it passes**
@@ -1344,6 +1372,7 @@ git commit -m "feat: add wood and Staunton 3D piece themes to ChessBoard"
 ## Task 6: Piece theme preference — context, provider, Meus Dados selector
 
 **Files:**
+
 - Create: `apps/web/src/lib/piece-theme.tsx`
 - Modify: `apps/web/src/app/app/layout.tsx`
 - Modify: `apps/web/src/app/app/meus-dados/page.tsx`
@@ -1353,6 +1382,7 @@ git commit -m "feat: add wood and Staunton 3D piece themes to ChessBoard"
 - Modify: `apps/web/src/components/lessons/lesson-player.tsx`
 
 **Interfaces:**
+
 - Consumes: `ChessBoardProps.pieceTheme` (Task 5), `PublicUser.profile.boardTheme` / `UpdateMeInput.boardTheme` (Task 4).
 - Produces: `PieceThemeProvider({ children })`, `usePieceTheme(): { theme: PieceTheme; setTheme: (theme: PieceTheme) => void }`.
 
@@ -1437,7 +1467,7 @@ import { usePieceTheme } from '@/lib/piece-theme';
 Inside `export function GameRoom({ gameId }: { gameId: string })`, right after the existing `const isDemo = gameId === 'demo';` line, add:
 
 ```typescript
-  const { theme: pieceTheme } = usePieceTheme();
+const { theme: pieceTheme } = usePieceTheme();
 ```
 
 Find the `<ChessBoard ... />` element and add `pieceTheme={pieceTheme}` as a prop (any position in the prop list is fine, e.g. right after `orientation={orientation}` at the end).
@@ -1451,7 +1481,7 @@ import { usePieceTheme } from '@/lib/piece-theme';
 Inside `export function ExerciseTrainer({...})`, right after the existing `const [category, setCategory] = useState('');` line, add:
 
 ```typescript
-  const { theme: pieceTheme } = usePieceTheme();
+const { theme: pieceTheme } = usePieceTheme();
 ```
 
 Find the `<ChessBoard ... />` element and add `pieceTheme={pieceTheme}` to its props.
@@ -1469,12 +1499,12 @@ import { usePieceTheme } from '@/lib/piece-theme';
 Inside `export default function MyDataPage()`, right after `const [message, setMessage] = useState('Carregando seus dados…');`, add:
 
 ```typescript
-  const { theme: pieceTheme, setTheme: setPieceTheme } = usePieceTheme();
-  const themeOptions: { value: 'classic' | 'staunton_3d' | 'wood'; label: string }[] = [
-    { label: 'Clássico', value: 'classic' },
-    { label: 'Staunton 3D', value: 'staunton_3d' },
-    { label: 'Madeira', value: 'wood' },
-  ];
+const { theme: pieceTheme, setTheme: setPieceTheme } = usePieceTheme();
+const themeOptions: { value: 'classic' | 'staunton_3d' | 'wood'; label: string }[] = [
+  { label: 'Clássico', value: 'classic' },
+  { label: 'Staunton 3D', value: 'staunton_3d' },
+  { label: 'Madeira', value: 'wood' },
+];
 ```
 
 Find the closing `</form>` tag (right before the final `) : null}` and `</main>`) and add a new section right after `</form>`:
@@ -1564,11 +1594,13 @@ git commit -m "feat: add piece/board theme picker to Meus Dados, wired into ever
 ## Task 7: Move-history navigation in `GameRoom`
 
 **Files:**
+
 - Modify: `apps/web/src/components/game/game-room.tsx`
 - Modify: `apps/web/src/app/globals.css`
 - Test: Create `apps/web/src/components/game/game-room.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `GameMove.fenAfter`, `GameMove.ply` (existing contract fields).
 - Produces: nothing consumed by later tasks (self-contained UI feature).
 
@@ -1653,42 +1685,42 @@ export function stepHistoryIndex(
 Inside `export function GameRoom({ gameId }: { gameId: string })`, right after the existing `const [resigning, setResigning] = useState(false);` line, add:
 
 ```typescript
-  const [viewIndex, setViewIndex] = useState<number | null>(null);
-  const previousMoveCount = useRef(0);
+const [viewIndex, setViewIndex] = useState<number | null>(null);
+const previousMoveCount = useRef(0);
 ```
 
 Right after the existing `const lastMove = moves.at(-1);` line, add:
 
 ```typescript
-  useEffect(() => {
-    setViewIndex((current) => {
-      if (
-        current !== null &&
-        current === previousMoveCount.current - 1 &&
-        moves.length > previousMoveCount.current
-      ) {
-        return moves.length - 1;
-      }
-      return current;
-    });
-    previousMoveCount.current = moves.length;
-  }, [moves.length]);
+useEffect(() => {
+  setViewIndex((current) => {
+    if (
+      current !== null &&
+      current === previousMoveCount.current - 1 &&
+      moves.length > previousMoveCount.current
+    ) {
+      return moves.length - 1;
+    }
+    return current;
+  });
+  previousMoveCount.current = moves.length;
+}, [moves.length]);
 
-  const viewingHistory = viewIndex !== null;
-  const viewedMove = viewingHistory ? moves[viewIndex] : undefined;
-  const displayFen = viewedMove ? viewedMove.fenAfter : state.currentFen;
+const viewingHistory = viewIndex !== null;
+const viewedMove = viewingHistory ? moves[viewIndex] : undefined;
+const displayFen = viewedMove ? viewedMove.fenAfter : state.currentFen;
 
-  function viewMove(ply: number) {
-    setViewIndex(ply - 1);
-  }
+function viewMove(ply: number) {
+  setViewIndex(ply - 1);
+}
 
-  function stepView(offset: -1 | 1) {
-    setViewIndex((current) => stepHistoryIndex(current, offset, moves));
-  }
+function stepView(offset: -1 | 1) {
+  setViewIndex((current) => stepHistoryIndex(current, offset, moves));
+}
 
-  function returnToLive() {
-    setViewIndex(null);
-  }
+function returnToLive() {
+  setViewIndex(null);
+}
 ```
 
 - [ ] **Step 4: Wire the board and add the navigation UI**
@@ -1899,9 +1931,11 @@ git commit -m "feat: add read-only move-history navigation to live games"
 ## Task 8: Wire balloon + sound + mute into `GameRoom`
 
 **Files:**
+
 - Modify: `apps/web/src/components/game/game-room.tsx`
 
 **Interfaces:**
+
 - Consumes: `MoveAnnouncement`, `Announcement`, `describeImportantMove` (Task 2), `playMoveSound`, `playCaptureSound`, `primeAudio`, `isSoundMuted`, `setSoundMuted` (Task 1).
 
 - [ ] **Step 1: Add imports and state**
@@ -1910,18 +1944,24 @@ In `apps/web/src/components/game/game-room.tsx`, add these imports near the top,
 
 ```typescript
 import { MoveAnnouncement, describeImportantMove, type Announcement } from './move-announcement';
-import { isSoundMuted, playCaptureSound, playMoveSound, primeAudio, setSoundMuted } from '@/lib/sound';
+import {
+  isSoundMuted,
+  playCaptureSound,
+  playMoveSound,
+  primeAudio,
+  setSoundMuted,
+} from '@/lib/sound';
 ```
 
 Inside `export function GameRoom(...)`, right after the `const [viewIndex, setViewIndex] = useState<number | null>(null);` line added in Task 7, add:
 
 ```typescript
-  const [announcement, setAnnouncement] = useState<Announcement | null>(null);
-  const [muted, setMuted] = useState(false);
+const [announcement, setAnnouncement] = useState<Announcement | null>(null);
+const [muted, setMuted] = useState(false);
 
-  useEffect(() => {
-    setMuted(isSoundMuted());
-  }, []);
+useEffect(() => {
+  setMuted(isSoundMuted());
+}, []);
 ```
 
 - [ ] **Step 2: Play sounds and announce on every committed move**
@@ -2064,10 +2104,12 @@ git commit -m "feat: play move/capture sounds and show important-move balloons i
 ## Task 9: Sound + balloon in Exercícios/Desafios, verify history buttons
 
 **Files:**
+
 - Modify: `apps/web/src/components/exercises/exercise-trainer.tsx`
 - Test: Modify `apps/web/src/components/exercises/exercise-trainer.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `MoveAnnouncement`, `Announcement`, `describeImportantMove` (Task 2), `playMoveSound`, `playCaptureSound`, `primeAudio` (Task 1).
 
 - [ ] **Step 1: Add imports and announcement state**
@@ -2075,14 +2117,18 @@ git commit -m "feat: play move/capture sounds and show important-move balloons i
 In `apps/web/src/components/exercises/exercise-trainer.tsx`, add these imports alongside the existing `import { ChessBoard } from '@/components/game/chess-board';` line:
 
 ```typescript
-import { MoveAnnouncement, describeImportantMove, type Announcement } from '@/components/game/move-announcement';
+import {
+  MoveAnnouncement,
+  describeImportantMove,
+  type Announcement,
+} from '@/components/game/move-announcement';
 import { playCaptureSound, playMoveSound, primeAudio } from '@/lib/sound';
 ```
 
 Right after the existing `const [showRetryBanner, setShowRetryBanner] = useState(false);` line, add:
 
 ```typescript
-  const [announcement, setAnnouncement] = useState<Announcement | null>(null);
+const [announcement, setAnnouncement] = useState<Announcement | null>(null);
 ```
 
 - [ ] **Step 2: Play a sound and derive an announcement on every board move**
@@ -2139,7 +2185,7 @@ Replace those lines with:
 Note: this introduces a reference to `moves.length`, which doesn't exist in this component — use `Date.now()` instead for a unique key, since exercise moves don't have a shared move-index array like `GameRoom` does. Correct the added line to:
 
 ```typescript
-      if (described) setAnnouncement({ ...described, key: `${current.id}-${Date.now()}` });
+if (described) setAnnouncement({ ...described, key: `${current.id}-${Date.now()}` });
 ```
 
 - [ ] **Step 3: Announce success/failure on attempt submission**
@@ -2187,13 +2233,13 @@ In `apps/web/src/components/exercises/exercise-trainer.test.tsx`, find an existi
 For the correct-attempt test, add:
 
 ```typescript
-    expect(await screen.findByText('Você conseguiu!')).toBeInTheDocument();
+expect(await screen.findByText('Você conseguiu!')).toBeInTheDocument();
 ```
 
 For the incorrect-attempt test, add:
 
 ```typescript
-    expect(await screen.findByText('Essa não era a jogada certa.')).toBeInTheDocument();
+expect(await screen.findByText('Essa não era a jogada certa.')).toBeInTheDocument();
 ```
 
 If the existing tests use `screen.getByText`/`findByText` with different query helpers, match whatever pattern the surrounding test already uses instead of introducing a new one.

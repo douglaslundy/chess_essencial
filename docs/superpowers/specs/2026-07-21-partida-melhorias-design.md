@@ -22,6 +22,7 @@ Fora de escopo: tabuleiro 3D navegável de verdade (só imagens estáticas gerad
 **Situação atual:** `GamesService.commitMoveSequence()` chama `commitMove()` do jogador e, na mesma chamada, `commitBotMoveIfNeeded()` — o gateway (`games.gateway.ts`) só transmite os eventos depois que TUDO terminou, então o lance do bot chega quase junto com a confirmação do lance do jogador.
 
 **Mudança:**
+
 - `GamesGateway.submitMove` deixa de aguardar o lance do bot. `GamesService.commitMove` (novo método, sem o bot embutido) roda e é transmitido imediatamente.
 - Depois de transmitir o lance do jogador, se for a vez do bot (`games.botTurn(gameId)` teria um turno), o gateway agenda `commitBotMoveIfNeeded` num `setTimeout` de 1000ms. Quando o timer dispara, computa e persiste o lance do bot e transmite `game.move_committed` separadamente para a sala.
 - Timers de partida (`scheduleTimeout`, relógio) continuam sendo agendados a partir do estado mais recente depois de cada broadcast (do jogador e do bot), sem mudança de comportamento ali.
@@ -49,6 +50,7 @@ Fora de escopo: tabuleiro 3D navegável de verdade (só imagens estáticas gerad
 **Novo componente compartilhado** `MoveAnnouncement` (`apps/web/src/components/game/move-announcement.tsx` + `.module.css`): recebe `text: string | null` e `tone: 'neutral' | 'success' | 'danger'`; renderiza um balão com `role="status" aria-live="polite"`, animação de entrada/saída via CSS, e timer interno de ~2.5s que o esconde sozinho (limpo com `useEffect`/`clearTimeout` a cada novo texto).
 
 **Detecção do evento** a partir de um `GameMove` recebido (via `move` handler do `GameSocket`, tanto para o lance do jogador quanto do adversário/bot):
+
 - `move.san.includes('#')` → "Xeque-mate!"
 - `move.san.includes('+')` → "Xeque!"
 - `move.flags.promotion` → "Promoção! `<SAN>`"
@@ -74,6 +76,7 @@ Usado em `GameRoom` (dispara a cada `move` recebido do socket) e em `ExerciseTra
 **Backend:** migração nova adiciona `board_theme` (enum `classic`/`staunton_3d`/`wood`, default `classic`) em `user_profiles`. `updateMeInputSchema` e o schema de perfil ganham o campo `boardTheme`. Endpoint `PATCH /v1/users/me` já existente passa a aceitar/retornar esse campo sem mudança de rota.
 
 **Frontend:**
+
 - `ChessBoard` ganha uma prop `pieceTheme: 'classic' | 'staunton_3d' | 'wood'` (default `'classic'`). Para `'classic'` e `'wood'`, continua renderizando `<ChessPiece>` (SVG inline) — `'wood'` usa um novo conjunto de `path`s desenhado à mão (mesmo padrão de código do conjunto atual) com paleta de cor terrosa/madeira aplicada via CSS. Para `'staunton_3d'`, renderiza `<img src="/piece-themes/staunton-3d/{color}-{piece}.png">` (os 12 arquivos já gerados a partir do modelo 3D enviado, recortados e centralizados).
 - Board (`.chessBoard`/`.lightSquare`/`.darkSquare`) ganha variantes de cor por tema via um atributo `data-board-theme` no container, com blocos CSS adicionais (não mexe na estrutura de grid existente).
 - Preferência é lida do perfil do usuário (`api.getMe()`) e passada via um Context simples (`PieceThemeContext`) para não ter que perfurar props em cada tela que usa `ChessBoard`; um hook `usePieceTheme()` expõe `theme` e `setTheme()` (que chama `api.updateMe({ boardTheme })` e atualiza o Context otimisticamente).
@@ -94,6 +97,7 @@ Já existe (`boardControls` com "← Voltar lance"/"↻ Repetir lance") para exe
 ## 8. Balão de acerto/erro em Exercícios/Desafios
 
 Reaproveita `MoveAnnouncement` (item 3). Em `ExerciseTrainer.submit()`:
+
 - `attempt.correct === true` → balão tom `success`, texto "Você conseguiu!" (ou "Parabéns! Você concluiu todos os desafios." quando `status === 'completed'`, reaproveitando o texto que já existe em `message`).
 - `attempt.correct === false` → balão tom `danger`, texto "Essa não era a jogada certa." — o banner atual (`.incorrectFeedback` com botão "Tentar novamente") continua existindo como está (ele já cumpre a função de ação, não é só mensagem); o balão é um reforço visual momentâneo a mais, não substitui o banner.
 
