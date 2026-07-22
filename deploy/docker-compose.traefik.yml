@@ -1,0 +1,40 @@
+networks:
+  proxy:
+    external: true
+
+services:
+  web:
+    networks:
+      - default
+      - proxy
+    labels:
+      traefik.enable: 'true'
+      traefik.docker.network: proxy
+      traefik.http.middlewares.chess-https-redirect.redirectscheme.scheme: https
+      traefik.http.middlewares.chess-https-redirect.redirectscheme.permanent: 'true'
+      traefik.http.routers.chess-web-http.entrypoints: web
+      traefik.http.routers.chess-web-http.rule: Host(`${DOMAIN}`)
+      traefik.http.routers.chess-web-http.middlewares: chess-https-redirect
+      traefik.http.routers.chess-web.entrypoints: websecure
+      traefik.http.routers.chess-web.rule: Host(`${DOMAIN}`)
+      traefik.http.routers.chess-web.priority: '100'
+      traefik.http.routers.chess-web.tls: 'true'
+      traefik.http.routers.chess-web.tls.certresolver: letsencrypt
+      traefik.http.services.chess-web.loadbalancer.server.port: '3000'
+
+  api:
+    networks:
+      - default
+      - proxy
+    labels:
+      traefik.enable: 'true'
+      traefik.docker.network: proxy
+      traefik.http.routers.chess-api-http.entrypoints: web
+      traefik.http.routers.chess-api-http.rule: Host(`${DOMAIN}`) && PathPrefix(`/v1`)
+      traefik.http.routers.chess-api-http.middlewares: chess-https-redirect
+      traefik.http.routers.chess-api.entrypoints: websecure
+      traefik.http.routers.chess-api.rule: Host(`${DOMAIN}`) && PathPrefix(`/v1`)
+      traefik.http.routers.chess-api.priority: '200'
+      traefik.http.routers.chess-api.tls: 'true'
+      traefik.http.routers.chess-api.tls.certresolver: letsencrypt
+      traefik.http.services.chess-api.loadbalancer.server.port: '4000'

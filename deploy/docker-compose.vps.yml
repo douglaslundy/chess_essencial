@@ -61,7 +61,7 @@ services:
       METRICS_TOKEN: ${METRICS_TOKEN}
       NODE_ENV: production
       REDIS_URL: redis://redis:6379
-      SMTP_URL: smtp://mailpit:1025
+      SMTP_URL: ${SMTP_URL:-smtp://mailpit:1025}
       WEB_ORIGIN: ${WEB_ORIGIN}
     healthcheck:
       test:
