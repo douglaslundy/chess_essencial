@@ -7,6 +7,24 @@ import { api } from '@/lib/api/client';
 import { usePieceTheme } from '@/lib/piece-theme';
 import styles from '@/components/portal/portal-pages.module.css';
 
+// Resize an image file to a square-ish JPEG (max `size` px) and return base64
+// without the data: prefix, keeping the upload well under the server limit.
+async function resizeToJpegBase64(file: File, size: number): Promise<string> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, size / Math.max(bitmap.width, bitmap.height));
+  const width = Math.round(bitmap.width * scale);
+  const height = Math.round(bitmap.height * scale);
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('Canvas indisponível');
+  context.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close();
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+  return dataUrl.split(',')[1] ?? '';
+}
+
 export default function MyDataPage() {
   const [user, setUser] = useState<PublicUser | null>(null);
   const [message, setMessage] = useState('Carregando seus dados…');
@@ -64,6 +82,24 @@ export default function MyDataPage() {
     }
   }
 
+  async function onAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    const token = window.localStorage.getItem('xadrez.access_token');
+    if (!token) return;
+    setMessage('Enviando avatar…');
+    try {
+      const dataBase64 = await resizeToJpegBase64(file, 256);
+      const updated = await api.uploadAvatar({ contentType: 'image/jpeg', dataBase64 }, token);
+      setUser(updated);
+      window.dispatchEvent(new Event('xadrez-auth'));
+      setMessage('Avatar atualizado.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Não foi possível enviar o avatar.');
+    }
+  }
+
   return (
     <main className={styles.page}>
       <header className={styles.heading}>
@@ -74,6 +110,22 @@ export default function MyDataPage() {
       <p className={styles.status} role="status">
         {message}
       </p>
+      {user ? (
+        <div className={styles.avatarRow}>
+          {user.profile.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img alt="Avatar" className={styles.avatarPreview} src={user.profile.avatarUrl} />
+          ) : (
+            <span className={styles.avatarFallback} aria-hidden="true">
+              {user.profile.displayName.slice(0, 2).toUpperCase()}
+            </span>
+          )}
+          <label className={styles.avatarUpload}>
+            Trocar avatar
+            <input accept="image/*" hidden onChange={onAvatarChange} type="file" />
+          </label>
+        </div>
+      ) : null}
       {user ? (
         <form className={styles.formCard} onSubmit={save}>
           <div className={styles.formGrid}>

@@ -175,6 +175,23 @@ export interface paths {
     patch: operations['updateMe'];
     trace?: never;
   };
+  '/me/avatar': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Upload a profile avatar (base64 image) to object storage */
+    post: operations['uploadAvatar'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/metrics': {
     parameters: {
       query?: never;
@@ -1175,6 +1192,11 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
+    UploadAvatarInput: {
+      /** @enum {string} */
+      contentType: 'image/jpeg' | 'image/png' | 'image/webp';
+      dataBase64: string;
+    };
     UpdateMeInput: {
       displayName?: string;
       /** Format: uri */
@@ -1774,6 +1796,32 @@ export interface operations {
     responses: {
       /** @description Perfil atualizado */
       200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PublicUser'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+    };
+  };
+  uploadAvatar: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UploadAvatarInput'];
+      };
+    };
+    responses: {
+      /** @description Updated profile */
+      201: {
         headers: {
           [name: string]: unknown;
         };

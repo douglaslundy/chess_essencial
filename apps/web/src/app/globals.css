@@ -356,6 +356,11 @@ input:focus-visible {
   font-weight: 800;
 }
 
+.userAvatarImage {
+  object-fit: cover;
+  padding: 0;
+}
+
 .userRating {
   display: inline-grid;
   place-items: center;

@@ -37,6 +37,7 @@ import type {
   ReviewAnnotationInput,
   TokenPair,
   UpdateMeInput,
+  UploadAvatarInput,
 } from '@xadrez/contracts';
 
 import type { components } from './openapi';
@@ -227,6 +228,8 @@ export const api = {
   getMe: (token: string) => request<PublicUser>('/me', token),
   updateMe: (input: UpdateMeInput, token: string) =>
     request<PublicUser>('/me', token, { method: 'PATCH', body: JSON.stringify(input) }),
+  uploadAvatar: (input: UploadAvatarInput, token: string) =>
+    request<PublicUser>('/me/avatar', token, { method: 'POST', body: JSON.stringify(input) }),
   getLeaderboard: (pool: RatingPool, token: string) =>
     request<LeaderboardEntry[]>(`/ratings/${pool}/leaderboard?limit=100`, token),
   getRatings: (token: string) => request<RatingProfile[]>('/ratings/me', token),

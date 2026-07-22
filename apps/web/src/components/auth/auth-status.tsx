@@ -41,6 +41,7 @@ function headlineRating(ratings: RatingProfile[]): RatingProfile | null {
 export function AuthStatus() {
   const username = useSyncExternalStore(subscribe, usernameSnapshot, () => null);
   const [ratings, setRatings] = useState<RatingProfile[]>([]);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -56,6 +57,14 @@ export function AuthStatus() {
       })
       .catch(() => {
         if (active) setRatings([]);
+      });
+    api
+      .getMe(token)
+      .then((me) => {
+        if (active) setAvatarUrl(me.profile.avatarUrl);
+      })
+      .catch(() => {
+        if (active) setAvatarUrl(null);
       });
     return () => {
       active = false;
@@ -99,9 +108,14 @@ export function AuthStatus() {
         onClick={() => setOpen((value) => !value)}
         type="button"
       >
-        <span aria-hidden="true" className="userAvatar">
-          {username.slice(0, 2).toUpperCase()}
-        </span>
+        {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img alt="" className="userAvatar userAvatarImage" src={avatarUrl} />
+        ) : (
+          <span aria-hidden="true" className="userAvatar">
+            {username.slice(0, 2).toUpperCase()}
+          </span>
+        )}
         <strong>{username}</strong>
         {headline ? (
           <span className="userRating" title={`Rating ${poolLabels[headline.pool]}`}>

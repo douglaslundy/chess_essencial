@@ -11,7 +11,9 @@ import { MetricsService } from './observability/metrics.service.js';
 export async function createApp() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter({ bodyLimit: 1_048_576 }),
+    // 2 MB accommodates base64-encoded avatar uploads (image capped at 512 KB
+    // binary server-side); other endpoints stay small by their own schemas.
+    new FastifyAdapter({ bodyLimit: 2_097_152 }),
   );
   const config = app.get(ConfigService);
 

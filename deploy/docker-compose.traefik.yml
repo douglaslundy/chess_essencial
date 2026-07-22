@@ -3,6 +3,22 @@ networks:
     external: true
 
 services:
+  # Serve avatar objects publicly at chess.dlsistemas.com.br/avatars/* straight
+  # from the public-read MinIO bucket (higher priority than the web/api routers).
+  minio:
+    networks:
+      - default
+      - proxy
+    labels:
+      traefik.enable: 'true'
+      traefik.docker.network: proxy
+      traefik.http.routers.chess-avatars.entrypoints: websecure
+      traefik.http.routers.chess-avatars.rule: Host(`${DOMAIN}`) && PathPrefix(`/avatars`)
+      traefik.http.routers.chess-avatars.priority: '300'
+      traefik.http.routers.chess-avatars.tls: 'true'
+      traefik.http.routers.chess-avatars.tls.certresolver: letsencrypt
+      traefik.http.services.chess-avatars.loadbalancer.server.port: '9000'
+
   web:
     networks:
       - default

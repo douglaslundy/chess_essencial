@@ -56,6 +56,12 @@ export const updateMeInputSchema = z
   })
   .refine((value) => Object.keys(value).length > 0, 'Informe ao menos uma configuração');
 
+export const uploadAvatarInputSchema = z.object({
+  // Small, client-resized image sent as base64 (no data: prefix).
+  contentType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
+  dataBase64: z.string().min(1).max(1_400_000),
+});
+
 export const publicUserSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
@@ -91,5 +97,6 @@ export type LogoutInput = z.infer<typeof logoutInputSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordInputSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordInputSchema>;
 export type UpdateMeInput = z.infer<typeof updateMeInputSchema>;
+export type UploadAvatarInput = z.infer<typeof uploadAvatarInputSchema>;
 export type PublicUser = z.infer<typeof publicUserSchema>;
 export type TokenPair = z.infer<typeof tokenPairSchema>;

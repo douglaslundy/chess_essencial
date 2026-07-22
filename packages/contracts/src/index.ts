@@ -21,6 +21,7 @@ export {
   resendVerificationInputSchema,
   tokenPairSchema,
   updateMeInputSchema,
+  uploadAvatarInputSchema,
   verifyEmailInputSchema,
   type ForgotPasswordInput,
   type LoginInput,
@@ -32,6 +33,7 @@ export {
   type ResendVerificationInput,
   type TokenPair,
   type UpdateMeInput,
+  type UploadAvatarInput,
   type VerifyEmailInput,
 } from './auth.js';
 export {

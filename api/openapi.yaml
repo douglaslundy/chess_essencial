@@ -186,6 +186,23 @@ paths:
                 $ref: '#/components/schemas/PublicUser'
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
+  /me/avatar:
+    post:
+      summary: Upload a profile avatar (base64 image) to object storage
+      operationId: uploadAvatar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UploadAvatarInput'}
+      responses:
+        '201':
+          description: Updated profile
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PublicUser'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
   /metrics:
     get:
       summary: Expor métricas agregadas no formato Prometheus
@@ -1268,6 +1285,12 @@ components:
         status: {type: string, enum: [open]}
         createdAt: {type: string, format: date-time}
       additionalProperties: false
+    UploadAvatarInput:
+      type: object
+      required: [contentType, dataBase64]
+      properties:
+        contentType: {type: string, enum: [image/jpeg, image/png, image/webp]}
+        dataBase64: {type: string, minLength: 1, maxLength: 1400000}
     UpdateMeInput:
       type: object
       minProperties: 1

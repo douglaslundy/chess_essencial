@@ -1,5 +1,5 @@
-import { updateMeInputSchema } from '@xadrez/contracts';
-import { Body, Controller, Get, Patch, Req, UseGuards } from '@nestjs/common';
+import { updateMeInputSchema, uploadAvatarInputSchema } from '@xadrez/contracts';
+import { Body, Controller, Get, Patch, Post, Req, UseGuards } from '@nestjs/common';
 
 import { AccessTokenGuard, type AuthenticatedRequest } from '../auth/access-token.guard.js';
 import { parseInput } from '../common/http/parse-input.js';
@@ -18,5 +18,13 @@ export class UsersController {
   @Patch()
   updateMe(@Req() request: AuthenticatedRequest, @Body() body: unknown) {
     return this.usersService.updateMe(request.auth.userId, parseInput(updateMeInputSchema, body));
+  }
+
+  @Post('avatar')
+  uploadAvatar(@Req() request: AuthenticatedRequest, @Body() body: unknown) {
+    return this.usersService.uploadAvatar(
+      request.auth.userId,
+      parseInput(uploadAvatarInputSchema, body),
+    );
   }
 }
