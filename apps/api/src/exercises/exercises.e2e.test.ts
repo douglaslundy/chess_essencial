@@ -94,7 +94,7 @@ describeDatabase('exercise runtime database integration', () => {
     const search = await app.inject({
       headers: auth(),
       method: 'GET',
-      url: '/v1/exercises?difficulty=beginner&positionType=legal_position&q=mate_em_um',
+      url: '/v1/exercises?difficulty=beginner&positionType=legal_position&q=corredor',
     });
     expect(search.statusCode, search.body).toBe(200);
     expect(search.json().total).toBeGreaterThanOrEqual(1);
