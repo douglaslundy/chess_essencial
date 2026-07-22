@@ -1197,7 +1197,8 @@ export interface components {
         | 'blitz-3-2'
         | 'rapid-10-0'
         | 'rapid-15-10'
-        | 'classical-30-0';
+        | 'classical-30-0'
+        | 'untimed';
       /** @default false */
       fallbackToBot: boolean;
       botDifficulty?: components['schemas']['BotDifficulty'];
@@ -1222,7 +1223,8 @@ export interface components {
         | 'blitz-3-2'
         | 'rapid-10-0'
         | 'rapid-15-10'
-        | 'classical-30-0';
+        | 'classical-30-0'
+        | 'untimed';
       botDifficulty?: components['schemas']['BotDifficulty'];
       playerColor?: components['schemas']['PlayerColorPreference'];
     };
@@ -1238,7 +1240,8 @@ export interface components {
         | 'blitz-3-2'
         | 'rapid-10-0'
         | 'rapid-15-10'
-        | 'classical-30-0';
+        | 'classical-30-0'
+        | 'untimed';
       minRating: number;
       maxRating: number;
       /** Format: date-time */
@@ -1257,7 +1260,8 @@ export interface components {
         | 'blitz-3-2'
         | 'rapid-10-0'
         | 'rapid-15-10'
-        | 'classical-30-0';
+        | 'classical-30-0'
+        | 'untimed';
       /**
        * @default null
        * @enum {string|null}
@@ -1318,7 +1322,8 @@ export interface components {
         | 'blitz-3-2'
         | 'rapid-10-0'
         | 'rapid-15-10'
-        | 'classical-30-0';
+        | 'classical-30-0'
+        | 'untimed';
       /**
        * @default white
        * @enum {string}

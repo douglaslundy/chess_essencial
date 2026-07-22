@@ -30,6 +30,16 @@ const timeControls = [
     initialMs: 1_800_000,
     incrementMs: 0,
   },
+  {
+    // Untimed / free play: a 20-day clock (safely below the int4 initial_ms
+    // limit) that never runs out in a session. Unrated. The UI shows "∞".
+    code: 'untimed',
+    label: 'Sem tempo',
+    pool: 'correspondence',
+    initialMs: 1_728_000_000,
+    incrementMs: 0,
+    rated: false,
+  },
 ] as const;
 const courseModules = [
   'Fundamentos',
@@ -49,7 +59,7 @@ try {
     for (const control of timeControls)
       await transaction`
       INSERT INTO game_time_controls (code, label, pool, initial_ms, increment_ms, delay_ms, rated, active)
-      VALUES (${control.code}, ${control.label}, ${control.pool}, ${control.initialMs}, ${control.incrementMs}, 0, true, true)
+      VALUES (${control.code}, ${control.label}, ${control.pool}, ${control.initialMs}, ${control.incrementMs}, 0, ${'rated' in control ? control.rated : true}, true)
       ON CONFLICT (code) DO UPDATE SET label = EXCLUDED.label, pool = EXCLUDED.pool,
         initial_ms = EXCLUDED.initial_ms, increment_ms = EXCLUDED.increment_ms,
         delay_ms = EXCLUDED.delay_ms, rated = EXCLUDED.rated, active = EXCLUDED.active

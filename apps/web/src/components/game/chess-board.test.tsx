@@ -89,6 +89,10 @@ describe('ChessBoard', () => {
     expect(formatClock(-10)).toBe('0:00');
   });
 
+  it('shows an infinity glyph for the untimed control', () => {
+    expect(formatClock(1_728_000_000)).toBe('∞');
+  });
+
   it('makes SAN notation explicit for beginners', () => {
     expect(formatMove({ san: 'Nh3', from: 'f2', to: 'h3' } as GameMove)).toBe('Nh3 · cavalo f2→h3');
   });

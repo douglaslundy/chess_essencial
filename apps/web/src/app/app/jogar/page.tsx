@@ -20,6 +20,12 @@ const controls: Array<{ code: TimeControlCode; label: string; detail: string; po
     detail: 'Longa e profunda · 30 min',
     pool: 'Clássica',
   },
+  {
+    code: 'untimed',
+    label: 'Sem tempo',
+    detail: 'Jogo livre, sem relógio · não ranqueado',
+    pool: 'Livre',
+  },
 ];
 
 export default function PlayPage() {

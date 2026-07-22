@@ -10,6 +10,7 @@ export const timeControlCodeSchema = z.enum([
   'rapid-10-0',
   'rapid-15-10',
   'classical-30-0',
+  'untimed',
 ]);
 
 export const botDifficultySchema = z.enum([

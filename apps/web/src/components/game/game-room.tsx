@@ -21,7 +21,12 @@ import { randomUUID } from '@/lib/uuid';
 
 const initialFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
+// Clocks at or above 7 days belong to the untimed ("Sem tempo") control and
+// render as an infinity glyph instead of a huge countdown.
+const UNTIMED_CLOCK_THRESHOLD_MS = 604_800_000;
+
 export function formatClock(milliseconds: number) {
+  if (milliseconds >= UNTIMED_CLOCK_THRESHOLD_MS) return '∞';
   const safe = Math.max(0, milliseconds);
   const totalSeconds = Math.ceil(safe / 1000);
   const minutes = Math.floor(totalSeconds / 60);
@@ -50,6 +55,19 @@ export function stepHistoryIndex(
   if (moves.length === 0) return null;
   const base = historyBaseIndex(viewIndex, moves);
   return Math.max(0, Math.min(moves.length - 1, base + offset));
+}
+
+// Where a demo move branches from: keeps moves up to the viewed position and
+// returns the FEN to continue from. When not viewing history, appends normally.
+export function demoBranchPoint(
+  moves: GameMove[],
+  viewIndex: number | null,
+  startFen: string,
+): { baseFen: string; baseMoves: GameMove[]; branchAt: number } {
+  const branchAt = viewIndex === null ? moves.length : viewIndex + 1;
+  const baseMoves = moves.slice(0, branchAt);
+  const baseFen = branchAt === 0 ? startFen : baseMoves[branchAt - 1]!.fenAfter;
+  return { baseFen, baseMoves, branchAt };
 }
 
 function displayedClock(state: GameState, color: BoardOrientation, serverOffset: number) {
@@ -274,7 +292,10 @@ export function GameRoom({ gameId }: { gameId: string }) {
 
   function playDemoMove(uci: string) {
     try {
-      const chess = new Chess(state.currentFen);
+      // Branching: if the player rewound the demo and plays from a past
+      // position, drop the later moves and continue from there.
+      const { baseFen, baseMoves, branchAt } = demoBranchPoint(moves, viewIndex, initialFen);
+      const chess = new Chess(baseFen);
       const fenBefore = chess.fen();
       const move = chess.move({
         from: uci.slice(0, 2),
@@ -298,21 +319,26 @@ export function GameRoom({ gameId }: { gameId: string }) {
           promotion: move.isPromotion(),
         },
         from: move.from,
-        id: moves.length + 1,
-        ply: moves.length + 1,
+        id: branchAt + 1,
+        ply: branchAt + 1,
         promotion: move.promotion ?? null,
         san: move.san,
         to: move.to,
         uci: `${move.from}${move.to}${move.promotion ?? ''}`,
       };
-      setMoves((current) => [...current, nextMove]);
+      setMoves([...baseMoves, nextMove]);
+      setViewIndex(null);
       setState((current) => ({
         ...current,
         currentFen: chess.fen(),
         sideToMove: chess.turn() === 'w' ? 'white' : 'black',
         version: current.version + 1,
       }));
-      setMessage('Lance aplicado somente nesta demonstração.');
+      setMessage(
+        branchAt < moves.length
+          ? 'Nova linha a partir deste lance (demonstração).'
+          : 'Lance aplicado somente nesta demonstração.',
+      );
     } catch {
       setMessage('Esse lance não é permitido nesta posição.');
     }
@@ -397,14 +423,14 @@ export function GameRoom({ gameId }: { gameId: string }) {
           />
         </div>
         <ChessBoard
-          disabled={viewingHistory || !canMove}
+          disabled={isDemo ? !canMove : viewingHistory || !canMove}
           fen={displayFen}
           lastMove={lastMove ? { from: lastMove.from, to: lastMove.to } : undefined}
           movableColor={
             isDemo
-              ? state.sideToMove === 'white'
-                ? 'w'
-                : 'b'
+              ? displayFen.split(' ')[1] === 'b'
+                ? 'b'
+                : 'w'
               : myColor === 'white'
                 ? 'w'
                 : myColor === 'black'
@@ -422,25 +448,28 @@ export function GameRoom({ gameId }: { gameId: string }) {
           orientation={orientation}
           pieceTheme={pieceTheme}
         />
-        {!isDemo ? (
-          <div className="historyControls">
-            <button disabled={moves.length === 0} onClick={() => stepView(-1)} type="button">
-              ← Lance anterior
-            </button>
-            <button
-              disabled={viewIndex === null || viewIndex >= moves.length - 1}
-              onClick={() => stepView(1)}
-              type="button"
-            >
-              Próximo lance →
-            </button>
-          </div>
+        <div className="historyControls">
+          <button disabled={moves.length === 0} onClick={() => stepView(-1)} type="button">
+            ← Voltar lance
+          </button>
+          <button
+            disabled={viewIndex === null || viewIndex >= moves.length - 1}
+            onClick={() => stepView(1)}
+            type="button"
+          >
+            Avançar lance →
+          </button>
+        </div>
+        {isDemo && viewingHistory ? (
+          <p className="demoBranchHint" role="note">
+            Jogue um lance nesta posição para criar uma nova linha.
+          </p>
         ) : null}
         {viewingHistory ? (
           <div className="historyBanner" role="status">
             Vendo lance {viewIndex! + 1} de {moves.length}
             <button onClick={returnToLive} type="button">
-              Voltar ao vivo
+              {isDemo ? 'Ir ao último lance' : 'Voltar ao vivo'}
             </button>
           </div>
         ) : null}

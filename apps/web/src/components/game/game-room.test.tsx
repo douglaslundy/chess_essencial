@@ -2,7 +2,9 @@
 import type { GameMove } from '@xadrez/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { historyBaseIndex, stepHistoryIndex } from './game-room';
+import { demoBranchPoint, historyBaseIndex, stepHistoryIndex } from './game-room';
+
+const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
 function move(ply: number, fenAfter: string): GameMove {
   return {
@@ -42,5 +44,30 @@ describe('history navigation helpers', () => {
 
   it('does nothing meaningful with zero moves', () => {
     expect(stepHistoryIndex(null, -1, [])).toBeNull();
+  });
+});
+
+describe('demoBranchPoint', () => {
+  const moves = [move(1, 'fen-1'), move(2, 'fen-2'), move(3, 'fen-3')];
+
+  it('appends at the tip when not viewing history', () => {
+    const point = demoBranchPoint(moves, null, START);
+    expect(point.branchAt).toBe(3);
+    expect(point.baseMoves).toHaveLength(3);
+    expect(point.baseFen).toBe('fen-3');
+  });
+
+  it('branches from the viewed position, dropping later moves', () => {
+    const point = demoBranchPoint(moves, 0, START);
+    expect(point.branchAt).toBe(1);
+    expect(point.baseMoves).toHaveLength(1);
+    expect(point.baseFen).toBe('fen-1');
+  });
+
+  it('branches from the start when rewound before the first move', () => {
+    const point = demoBranchPoint([], null, START);
+    expect(point.branchAt).toBe(0);
+    expect(point.baseMoves).toHaveLength(0);
+    expect(point.baseFen).toBe(START);
   });
 });

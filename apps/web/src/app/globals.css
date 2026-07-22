@@ -1142,6 +1142,13 @@ input:focus-visible {
   opacity: 0.4;
 }
 
+.demoBranchHint {
+  margin: 0.4rem 0 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--gold, #d8b66c);
+}
+
 .historyBanner {
   display: flex;
   align-items: center;
