@@ -210,6 +210,40 @@ export interface paths {
     patch: operations['updatePrivacy'];
     trace?: never;
   };
+  '/admin/users': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List platform users (admin only) */
+    get: operations['adminListUsers'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/users/{userId}/status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Change a user's status (admin only; delete is a reversible soft-delete) */
+    patch: operations['adminUpdateUserStatus'];
+    trace?: never;
+  };
   '/me/blocks': {
     parameters: {
       query?: never;
@@ -1099,6 +1133,26 @@ export interface components {
       /** Format: date-time */
       blockedAt: string;
     };
+    AdminUser: {
+      /** Format: uuid */
+      id: string;
+      username: string;
+      email: string;
+      displayName: string | null;
+      /** @enum {string} */
+      status: 'pending' | 'active' | 'suspended' | 'deleted';
+      isAdmin: boolean;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    AdminUserList: {
+      items: components['schemas']['AdminUser'][];
+      total: number;
+    };
+    UpdateAdminUserStatusInput: {
+      /** @enum {string} */
+      status: 'active' | 'suspended' | 'deleted';
+    };
     /** @enum {string} */
     ReportCategory: 'cheating' | 'harassment' | 'spam' | 'inappropriate_profile' | 'other';
     CreateReportInput:
@@ -1797,6 +1851,63 @@ export interface operations {
       };
       400: components['responses']['Problem'];
       401: components['responses']['Problem'];
+    };
+  };
+  adminListUsers: {
+    parameters: {
+      query?: {
+        q?: string;
+        status?: 'pending' | 'active' | 'suspended' | 'deleted';
+        limit?: number;
+        offset?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description User list */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminUserList'];
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  adminUpdateUserStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateAdminUserStatusInput'];
+      };
+    };
+    responses: {
+      /** @description Updated user */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminUser'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
     };
   };
   listBlocks: {

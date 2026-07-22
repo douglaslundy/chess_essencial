@@ -1,4 +1,7 @@
 import type {
+  AdminUser,
+  AdminUserList,
+  UpdateAdminUserStatusInput,
   CreateBotGameInput,
   CourseDetail,
   CourseSummary,
@@ -279,6 +282,13 @@ export const api = {
     }),
   getExerciseStudy: (exerciseId: string, token: string) =>
     request<ExerciseStudyContext>(`/exercises/${exerciseId}/study`, token),
+  adminListUsers: (query: URLSearchParams, token: string) =>
+    request<AdminUserList>(`/admin/users?${query.toString()}`, token),
+  adminUpdateUserStatus: (userId: string, input: UpdateAdminUserStatusInput, token: string) =>
+    request<AdminUser>(`/admin/users/${userId}/status`, token, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    }),
   getExerciseMetrics: (token: string) => request<ExerciseMetrics>('/exercise-metrics', token),
   getHistory: (query: URLSearchParams, token: string) =>
     request<GameHistoryPage>(`/games?${query.toString()}`, token),

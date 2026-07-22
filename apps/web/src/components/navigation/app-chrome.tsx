@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 
 import { AuthStatus } from '@/components/auth/auth-status';
+import { api } from '@/lib/api/client';
 
 const navigation = [
   { href: '/app', label: 'Visão geral' },
@@ -20,9 +21,28 @@ const navigation = [
 export function AppChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     queueMicrotask(() => setMenuOpen(false));
+  }, [pathname]);
+
+  useEffect(() => {
+    const token = window.localStorage.getItem('xadrez.access_token');
+    if (!token) return;
+    let active = true;
+    // Probe the admin-guarded endpoint: only admins get a 200.
+    api
+      .adminListUsers(new URLSearchParams({ limit: '1' }), token)
+      .then(() => {
+        if (active) setIsAdmin(true);
+      })
+      .catch(() => {
+        if (active) setIsAdmin(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [pathname]);
 
   return (
@@ -43,6 +63,14 @@ export function AppChrome({ children }: { children: ReactNode }) {
               </Link>
             );
           })}
+          {isAdmin ? (
+            <Link
+              className={pathname.startsWith('/app/admin') ? 'activeNav' : undefined}
+              href="/app/admin"
+            >
+              Administração
+            </Link>
+          ) : null}
         </nav>
         <div className="sidebarFooter">
           <span className="onlineDot" />

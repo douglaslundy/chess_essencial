@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
+import { AdminModule } from './admin/admin.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { validateApiEnv } from './config/env.js';
 import { CoursesModule } from './courses/courses.module.js';
@@ -17,6 +18,7 @@ import { SafetyModule } from './safety/safety.module.js';
 
 @Module({
   imports: [
+    AdminModule,
     AuthModule,
     CoursesModule,
     DatabaseModule,

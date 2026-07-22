@@ -1,0 +1,86 @@
+import type { AdminUserSearchQuery, UpdateAdminUserStatusInput } from '@xadrez/contracts';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+
+import { DatabaseService } from '../database/database.service.js';
+
+type AdminUserRow = {
+  created_at: Date;
+  display_name: string | null;
+  email: string;
+  id: string;
+  is_admin: boolean;
+  status: 'pending' | 'active' | 'suspended' | 'deleted';
+  username: string;
+};
+
+function toAdminUser(row: AdminUserRow) {
+  return {
+    createdAt: row.created_at.toISOString(),
+    displayName: row.display_name,
+    email: row.email,
+    id: row.id,
+    isAdmin: row.is_admin,
+    status: row.status,
+    username: row.username,
+  };
+}
+
+@Injectable()
+export class AdminRepository {
+  constructor(private readonly database: DatabaseService) {}
+
+  async listUsers(query: AdminUserSearchQuery) {
+    const sql = this.database.client;
+    const q = query.q ?? null;
+    const status = query.status ?? null;
+    const [count] = await sql<{ total: number }[]>`
+      SELECT count(*)::integer AS total FROM users u
+       WHERE (${status}::text IS NULL OR u.status = ${status}::user_status)
+         AND (${q}::text IS NULL OR concat_ws(' ', u.username, u.email) ILIKE '%' || ${q} || '%')
+    `;
+    const rows = await sql<AdminUserRow[]>`
+      SELECT u.id, u.email, u.username, u.status, u.created_at,
+        p.display_name,
+        EXISTS (SELECT 1 FROM user_roles r WHERE r.user_id = u.id AND r.role = 'admin') AS is_admin
+        FROM users u
+        LEFT JOIN user_profiles p ON p.user_id = u.id
+       WHERE (${status}::text IS NULL OR u.status = ${status}::user_status)
+         AND (${q}::text IS NULL OR concat_ws(' ', u.username, u.email) ILIKE '%' || ${q} || '%')
+       ORDER BY u.created_at DESC
+       LIMIT ${query.limit} OFFSET ${query.offset}
+    `;
+    return { items: rows.map(toAdminUser), total: count?.total ?? 0 };
+  }
+
+  async updateStatus(
+    actingUserId: string,
+    targetUserId: string,
+    input: UpdateAdminUserStatusInput,
+  ) {
+    const sql = this.database.client;
+    if (actingUserId === targetUserId) {
+      throw new BadRequestException('Você não pode alterar o seu próprio status.');
+    }
+    const [target] = await sql<{ is_admin: boolean }[]>`
+      SELECT EXISTS (SELECT 1 FROM user_roles r WHERE r.user_id = ${targetUserId} AND r.role = 'admin') AS is_admin
+        FROM users u WHERE u.id = ${targetUserId}
+    `;
+    if (!target) throw new NotFoundException('Usuário não encontrado');
+    if (target.is_admin) {
+      throw new BadRequestException('Não é possível alterar o status de outro administrador.');
+    }
+    const [updated] = await sql<AdminUserRow[]>`
+      UPDATE users u SET status = ${input.status}::user_status, updated_at = now()
+       WHERE u.id = ${targetUserId}
+       RETURNING u.id, u.email, u.username, u.status, u.created_at,
+         (SELECT p.display_name FROM user_profiles p WHERE p.user_id = u.id) AS display_name,
+         false AS is_admin
+    `;
+    if (!updated) throw new NotFoundException('Usuário não encontrado');
+    // Suspending or deleting a user revokes their active sessions.
+    if (input.status !== 'active') {
+      await sql`DELETE FROM user_sessions WHERE user_id = ${targetUserId}`;
+    }
+    return toAdminUser(updated);
+  }
+}
