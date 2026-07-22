@@ -83,6 +83,12 @@ Reduzir o tempo de release e completar retenção, restore e alertas operacionai
 - Métricas e alertas essenciais possuem teste operacional.
 - Relay SMTP de produção suporta TLS e autenticação; Mailpit permanece restrito a desenvolvimento/homologação.
 
+### Pendência aberta em 2026-07-22 (pós-deploy chess.dlsistemas.com.br)
+
+- O deploy em produção (VPS 144.91.92.70, atrás do Traefik) subiu com `SMTP_URL` **placeholder** (`smtp://user:password@smtp.placeholder.invalid:587`) em `/opt/chess/.env.vps` — e-mails de verificação de cadastro NÃO são enviados de verdade até isso ser resolvido.
+- Tarefa: criar uma página de configuração de SMTP via UX (host, porta, usuário, senha, remetente, TLS) na área `/app/admin` (já existe `/app/admin/curso`; role `admin` já existe em `schema.ts`), acessível a partir do fluxo de criação de usuário administrador. Persistir a configuração (não depender só de variável de ambiente estática) para permitir troca sem redeploy.
+- Depois que essa página existir e estiver validada em produção, remover o placeholder do `.env.vps` da VPS e migrar para a configuração via UI.
+
 ## Fase 18 — Aplicativo mobile (P2; exige decisão)
 
 ### Objetivo
