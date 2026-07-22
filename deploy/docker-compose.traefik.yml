@@ -29,6 +29,8 @@ services:
     labels:
       traefik.enable: 'true'
       traefik.docker.network: proxy
+      traefik.http.middlewares.chess-https-redirect.redirectscheme.scheme: https
+      traefik.http.middlewares.chess-https-redirect.redirectscheme.permanent: 'true'
       traefik.http.routers.chess-api-http.entrypoints: web
       traefik.http.routers.chess-api-http.rule: Host(`${DOMAIN}`) && PathPrefix(`/v1`)
       traefik.http.routers.chess-api-http.middlewares: chess-https-redirect
