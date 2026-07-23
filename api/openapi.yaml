@@ -487,6 +487,18 @@ paths:
               schema: {$ref: '#/components/schemas/AdminUserList'}
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
+  /admin/bots/stats:
+    get:
+      summary: Bot persona fleet stats (admin only)
+      operationId: adminGetBotStats
+      responses:
+        '200':
+          description: Bot persona stats
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AdminBotStats'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
   /admin/users/{userId}/status:
     patch:
       summary: Change a user's status (admin only; delete is a reversible soft-delete)
@@ -1505,6 +1517,14 @@ components:
       properties:
         items: {type: array, items: {$ref: '#/components/schemas/AdminUser'}}
         total: {type: integer, minimum: 0}
+    AdminBotStats:
+      type: object
+      required: [total, onlineNow, friendshipsCount, gamesPlayed]
+      properties:
+        total: {type: integer, minimum: 0}
+        onlineNow: {type: integer, minimum: 0}
+        friendshipsCount: {type: integer, minimum: 0}
+        gamesPlayed: {type: integer, minimum: 0}
     UpdateAdminUserStatusInput:
       type: object
       required: [status]

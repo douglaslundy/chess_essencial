@@ -11,6 +11,11 @@ const sections = [
     title: 'Curso e aulas',
     description: 'Editar e publicar o conteúdo do curso.',
   },
+  {
+    href: '/app/admin/bots',
+    title: 'Bots sociais',
+    description: 'Estatísticas das contas-bot: total, online agora, amizades e partidas.',
+  },
 ];
 
 export default function AdminHubPage() {

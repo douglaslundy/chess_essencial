@@ -31,11 +31,13 @@ export {
   type SendFriendRequestInput,
 } from './social.js';
 export {
+  adminBotStatsSchema,
   adminUserListSchema,
   adminUserSchema,
   adminUserSearchQuerySchema,
   adminUserStatusSchema,
   updateAdminUserStatusInputSchema,
+  type AdminBotStats,
   type AdminUser,
   type AdminUserList,
   type AdminUserSearchQuery,

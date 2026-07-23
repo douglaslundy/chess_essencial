@@ -502,6 +502,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/admin/bots/stats': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Bot persona fleet stats (admin only) */
+    get: operations['adminGetBotStats'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/admin/users/{userId}/status': {
     parameters: {
       query?: never;
@@ -1446,6 +1463,12 @@ export interface components {
     AdminUserList: {
       items: components['schemas']['AdminUser'][];
       total: number;
+    };
+    AdminBotStats: {
+      total: number;
+      onlineNow: number;
+      friendshipsCount: number;
+      gamesPlayed: number;
     };
     UpdateAdminUserStatusInput: {
       /** @enum {string} */
@@ -2725,6 +2748,28 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['AdminUserList'];
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  adminGetBotStats: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Bot persona stats */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminBotStats'];
         };
       };
       401: components['responses']['Problem'];

@@ -1,4 +1,5 @@
 import type {
+  AdminBotStats,
   AdminUser,
   AdminUserList,
   UpdateAdminUserStatusInput,
@@ -358,6 +359,7 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify(input),
     }),
+  adminGetBotStats: (token: string) => request<AdminBotStats>('/admin/bots/stats', token),
   getExerciseMetrics: (token: string) => request<ExerciseMetrics>('/exercise-metrics', token),
   getHistory: (query: URLSearchParams, token: string) =>
     request<GameHistoryPage>(`/games?${query.toString()}`, token),

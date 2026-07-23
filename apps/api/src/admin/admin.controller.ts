@@ -19,6 +19,11 @@ export class AdminController {
     return this.admin.listUsers(parseInput(adminUserSearchQuerySchema, query));
   }
 
+  @Get('bots/stats')
+  getBotStats() {
+    return this.admin.getBotStats();
+  }
+
   @Patch('users/:userId/status')
   updateUserStatus(
     @Req() request: AuthenticatedRequest,

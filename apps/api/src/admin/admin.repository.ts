@@ -84,4 +84,34 @@ export class AdminRepository {
     }
     return toAdminUser(updated);
   }
+
+  async botPersonaStats(): Promise<{
+    friendshipsCount: number;
+    gamesPlayed: number;
+    personaUserIds: string[];
+    total: number;
+  }> {
+    const sql = this.database.client;
+    const personas = await sql<{ userId: string }[]>`SELECT user_id AS "userId" FROM bot_personas`;
+    const [friendships] = await sql<{ count: number }[]>`
+      SELECT count(*)::integer AS count
+      FROM friendships
+      WHERE status = 'accepted'
+        AND (
+          requester_id IN (SELECT user_id FROM bot_personas)
+          OR addressee_id IN (SELECT user_id FROM bot_personas)
+        )
+    `;
+    const [games] = await sql<{ count: number }[]>`
+      SELECT count(*)::integer AS count
+      FROM game_bots
+      WHERE bot_user_id IN (SELECT user_id FROM bot_personas)
+    `;
+    return {
+      friendshipsCount: friendships?.count ?? 0,
+      gamesPlayed: games?.count ?? 0,
+      personaUserIds: personas.map((persona) => persona.userId),
+      total: personas.length,
+    };
+  }
 }

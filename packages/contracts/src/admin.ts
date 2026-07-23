@@ -30,6 +30,14 @@ export const updateAdminUserStatusInputSchema = z.object({
   status: z.enum(['active', 'suspended', 'deleted']),
 });
 
+export const adminBotStatsSchema = z.object({
+  friendshipsCount: z.number().int().nonnegative(),
+  gamesPlayed: z.number().int().nonnegative(),
+  onlineNow: z.number().int().nonnegative(),
+  total: z.number().int().nonnegative(),
+});
+
+export type AdminBotStats = z.infer<typeof adminBotStatsSchema>;
 export type AdminUser = z.infer<typeof adminUserSchema>;
 export type AdminUserList = z.infer<typeof adminUserListSchema>;
 export type AdminUserSearchQuery = z.infer<typeof adminUserSearchQuerySchema>;

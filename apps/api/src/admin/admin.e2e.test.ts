@@ -111,4 +111,58 @@ describeDatabase('admin user management database integration', () => {
     });
     expect(self.statusCode).toBe(400);
   });
+
+  it('forbids non-admins from viewing bot fleet stats', async () => {
+    const response = await app.inject({
+      headers: auth(member),
+      method: 'GET',
+      url: '/v1/admin/bots/stats',
+    });
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('reports bot persona fleet stats for an admin', async () => {
+    // Other e2e test files share this database and may create their own bot
+    // personas/friendships, so assert the delta this fixture adds rather
+    // than exact totals.
+    const before = await app.inject({
+      headers: auth(admin),
+      method: 'GET',
+      url: '/v1/admin/bots/stats',
+    });
+    expect(before.statusCode, before.body).toBe(200);
+    const baseline = before.json();
+
+    const [persona] = await database.client<{ id: string }[]>`
+      INSERT INTO users (email, username, password_hash, status, email_verified_at)
+      VALUES (
+        'admin-stats-fixture-bot@bots.internal.xadrez.invalid', 'admin_stats_fixture_bot',
+        '$argon2id$v=19$m=65536,t=3,p=4$tfY8w/jfpydVWz+cywI0jQ$EF4JyCThCB04ZUXOZG1g74Ufjwg2BGyiCh3F+L72MNM',
+        'active', now()
+      )
+      RETURNING id
+    `;
+    await database.client`
+      INSERT INTO user_profiles (user_id, display_name, timezone, locale)
+      VALUES (${persona!.id}, 'Admin Stats Fixture Bot', 'America/Sao_Paulo', 'pt-BR')
+    `;
+    await database.client`
+      INSERT INTO bot_personas (user_id, target_rating, online_windows)
+      VALUES (${persona!.id}, 1200, '[]'::jsonb)
+    `;
+    await database.client`
+      INSERT INTO friendships (requester_id, addressee_id, status)
+      VALUES (${member.userId}, ${persona!.id}, 'accepted')
+    `;
+
+    const after = await app.inject({
+      headers: auth(admin),
+      method: 'GET',
+      url: '/v1/admin/bots/stats',
+    });
+    expect(after.statusCode, after.body).toBe(200);
+    const stats = after.json();
+    expect(stats.total).toBe(baseline.total + 1);
+    expect(stats.friendshipsCount).toBe(baseline.friendshipsCount + 1);
+  });
 });
