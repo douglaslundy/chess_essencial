@@ -2,7 +2,7 @@
 import type { GameMove } from '@xadrez/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { demoBranchPoint, historyBaseIndex, stepHistoryIndex } from './game-room';
+import { demoBranchPoint, gameOutcomeFor, historyBaseIndex, stepHistoryIndex } from './game-room';
 
 const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
@@ -23,6 +23,23 @@ function move(ply: number, fenAfter: string): GameMove {
     uci: 'e2e4',
   };
 }
+
+describe('gameOutcomeFor', () => {
+  it('is a win when the result matches the player color', () => {
+    expect(gameOutcomeFor('white_win', 'white')).toBe('win');
+    expect(gameOutcomeFor('black_win', 'black')).toBe('win');
+  });
+
+  it('is a loss when the result belongs to the opponent', () => {
+    expect(gameOutcomeFor('black_win', 'white')).toBe('loss');
+    expect(gameOutcomeFor('white_win', 'black')).toBe('loss');
+  });
+
+  it('is a draw regardless of color', () => {
+    expect(gameOutcomeFor('draw', 'white')).toBe('draw');
+    expect(gameOutcomeFor('draw', 'black')).toBe('draw');
+  });
+});
 
 describe('history navigation helpers', () => {
   const moves = [move(1, 'fen-1'), move(2, 'fen-2'), move(3, 'fen-3')];

@@ -13,7 +13,9 @@ import { GameSocket } from '@/lib/realtime/game-socket';
 import {
   isSoundMuted,
   playCaptureSound,
+  playDefeatSound,
   playMoveSound,
+  playVictorySound,
   primeAudio,
   setSoundMuted,
 } from '@/lib/sound';
@@ -34,6 +36,20 @@ export function formatClock(milliseconds: number) {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
+const terminationLabels: Record<GameState['termination'], string> = {
+  admin: 'por decisão administrativa',
+  abandonment: 'por abandono',
+  agreement: 'por acordo mútuo',
+  checkmate: 'por xeque-mate',
+  fifty_move: 'pela regra dos 50 lances',
+  insufficient_material: 'por material insuficiente',
+  none: '',
+  repetition: 'por repetição de posição',
+  resignation: 'por desistência',
+  stalemate: 'por afogamento',
+  timeout: 'por tempo esgotado',
+};
+
 export function formatMove(move: GameMove) {
   const piece = move.san.match(/^[KQRBN]/)?.[0];
   const name =
@@ -41,6 +57,14 @@ export function formatMove(move: GameMove) {
       piece ?? ''
     ] ?? 'peão';
   return `${move.san} · ${name} ${move.from}→${move.to}`;
+}
+
+export function gameOutcomeFor(
+  result: GameState['result'],
+  myColor: 'white' | 'black',
+): 'win' | 'loss' | 'draw' {
+  if (result === 'draw') return 'draw';
+  return result === `${myColor}_win` ? 'win' : 'loss';
 }
 
 export function historyBaseIndex(viewIndex: number | null, moves: GameMove[]): number {
@@ -115,6 +139,11 @@ export function GameRoom({ gameId }: { gameId: string }) {
   const [viewIndex, setViewIndex] = useState<number | null>(null);
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
   const [muted, setMuted] = useState(false);
+  const [resultModal, setResultModal] = useState<{
+    outcome: 'win' | 'loss' | 'draw';
+    reason: string;
+  } | null>(null);
+  const previousStatusRef = useRef(state.status);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -216,6 +245,21 @@ export function GameRoom({ gameId }: { gameId: string }) {
     });
     previousMoveCount.current = moves.length;
   }, [moves.length]);
+
+  useEffect(() => {
+    if (
+      !isDemo &&
+      myColor !== null &&
+      previousStatusRef.current !== 'finished' &&
+      state.status === 'finished'
+    ) {
+      const outcome = gameOutcomeFor(state.result, myColor);
+      setResultModal({ outcome, reason: terminationLabels[state.termination] });
+      if (outcome === 'win') playVictorySound();
+      else if (outcome === 'loss') playDefeatSound();
+    }
+    previousStatusRef.current = state.status;
+  }, [isDemo, myColor, state.result, state.status, state.termination]);
 
   const viewingHistory = viewIndex !== null;
   const viewedMove = viewingHistory ? moves[viewIndex] : undefined;
@@ -569,6 +613,34 @@ export function GameRoom({ gameId }: { gameId: string }) {
         open={resignDialogOpen}
         title="Desistir da partida?"
       />
+      {resultModal ? (
+        <div className="gameResultOverlay" role="presentation">
+          <div
+            aria-labelledby="game-result-title"
+            aria-modal="true"
+            className={`gameResultDialog gameResult-${resultModal.outcome}`}
+            role="dialog"
+          >
+            <h2 id="game-result-title">
+              {resultModal.outcome === 'win'
+                ? 'Você venceu!'
+                : resultModal.outcome === 'loss'
+                  ? 'Você perdeu'
+                  : 'Empate'}
+            </h2>
+            <p>
+              {resultModal.outcome === 'win'
+                ? `Vitória ${resultModal.reason}.`
+                : resultModal.outcome === 'loss'
+                  ? `Derrota ${resultModal.reason}.`
+                  : `Empate ${resultModal.reason}.`}
+            </p>
+            <button className="gameResultAction" onClick={() => setResultModal(null)} type="button">
+              Fechar
+            </button>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
