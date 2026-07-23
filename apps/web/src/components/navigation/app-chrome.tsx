@@ -16,6 +16,7 @@ const navigation = [
   { href: '/app/ranking', label: 'Ranking' },
   { href: '/app/cursos', label: 'Cursos e aulas' },
   { href: '/app/amigos', label: 'Amigos' },
+  { href: '/app/mensagens', label: 'Mensagens' },
   { href: '/app/feed', label: 'Feed' },
   { href: '/app/partida/demo', label: 'Tabuleiro demonstrativo' },
 ] as const;

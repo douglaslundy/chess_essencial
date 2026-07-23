@@ -13,6 +13,7 @@ import { HealthController } from './health/health.controller.js';
 import { HealthService } from './health/health.service.js';
 import { LessonRuntimeModule } from './lesson-runtime/lesson-runtime.module.js';
 import { MatchmakingModule } from './matchmaking/matchmaking.module.js';
+import { MessagesModule } from './messages/messages.module.js';
 import { ObservabilityModule } from './observability/observability.module.js';
 import { RatingsModule } from './ratings/ratings.module.js';
 import { RedisModule } from './redis/redis.module.js';
@@ -31,6 +32,7 @@ import { StorageModule } from './storage/storage.module.js';
     GamesModule,
     LessonRuntimeModule,
     MatchmakingModule,
+    MessagesModule,
     ObservabilityModule,
     RatingsModule,
     RedisModule,

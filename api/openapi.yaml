@@ -308,6 +308,51 @@ paths:
               schema: {$ref: '#/components/schemas/PublicProfile'}
         '401': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
+  /messages/conversations:
+    get:
+      summary: List conversations with accepted friends, most recent first
+      operationId: listConversations
+      responses:
+        '200':
+          description: Conversations
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/Conversation'}}
+        '401': {$ref: '#/components/responses/Problem'}
+  /messages/{friendUserId}:
+    get:
+      summary: List the direct message history with a friend (marks it read)
+      operationId: listMessages
+      parameters:
+        - {name: friendUserId, in: path, required: true, schema: {type: string, format: uuid}}
+        - {name: before, in: query, required: false, schema: {type: string, format: date-time}}
+      responses:
+        '200':
+          description: Messages, oldest first
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/DirectMessage'}}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+    post:
+      summary: Send a direct message to a friend
+      operationId: sendMessage
+      parameters:
+        - {name: friendUserId, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SendMessageInput'}
+      responses:
+        '201':
+          description: Sent message
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DirectMessage'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
   /feed:
     get:
       summary: List the viewer's feed (own posts plus accepted friends' posts)
@@ -1527,6 +1572,37 @@ components:
             properties:
               pool: {type: string, enum: [bullet, blitz, rapid, classical, correspondence]}
               rating: {type: integer}
+    DirectMessage:
+      type: object
+      required: [id, senderId, recipientId, body, createdAt, mine]
+      properties:
+        id: {type: string, format: uuid}
+        senderId: {type: string, format: uuid}
+        recipientId: {type: string, format: uuid}
+        body: {type: string}
+        createdAt: {type: string, format: date-time}
+        mine: {type: boolean}
+    SendMessageInput:
+      type: object
+      required: [body]
+      properties:
+        body: {type: string, minLength: 1, maxLength: 2000}
+    Conversation:
+      type: object
+      required: [userId, username, displayName, presence, lastMessage, unreadCount]
+      properties:
+        userId: {type: string, format: uuid}
+        username: {type: string}
+        displayName: {type: string}
+        presence: {$ref: '#/components/schemas/Presence'}
+        lastMessage:
+          type: [object, 'null']
+          required: [body, createdAt, mine]
+          properties:
+            body: {type: string}
+            createdAt: {type: string, format: date-time}
+            mine: {type: boolean}
+        unreadCount: {type: integer}
     Post:
       type: object
       required:

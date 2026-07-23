@@ -329,6 +329,41 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/messages/conversations': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List conversations with accepted friends, most recent first */
+    get: operations['listConversations'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/messages/{friendUserId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List the direct message history with a friend (marks it read) */
+    get: operations['listMessages'];
+    put?: never;
+    /** Send a direct message to a friend */
+    post: operations['sendMessage'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/feed': {
     parameters: {
       query?: never;
@@ -1461,6 +1496,35 @@ export interface components {
         rating: number;
       }[];
     };
+    DirectMessage: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      senderId: string;
+      /** Format: uuid */
+      recipientId: string;
+      body: string;
+      /** Format: date-time */
+      createdAt: string;
+      mine: boolean;
+    };
+    SendMessageInput: {
+      body: string;
+    };
+    Conversation: {
+      /** Format: uuid */
+      userId: string;
+      username: string;
+      displayName: string;
+      presence: components['schemas']['Presence'];
+      lastMessage: {
+        body: string;
+        /** Format: date-time */
+        createdAt: string;
+        mine: boolean;
+      } | null;
+      unreadCount: number;
+    };
     Post: {
       /** Format: uuid */
       id: string;
@@ -2327,6 +2391,82 @@ export interface operations {
       };
       401: components['responses']['Problem'];
       404: components['responses']['Problem'];
+    };
+  };
+  listConversations: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Conversations */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Conversation'][];
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  listMessages: {
+    parameters: {
+      query?: {
+        before?: string;
+      };
+      header?: never;
+      path: {
+        friendUserId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Messages, oldest first */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DirectMessage'][];
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  sendMessage: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        friendUserId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SendMessageInput'];
+      };
+    };
+    responses: {
+      /** @description Sent message */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DirectMessage'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
     };
   };
   listFeed: {

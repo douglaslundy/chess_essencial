@@ -2297,3 +2297,121 @@ input:focus-visible {
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+.messagesLayout {
+  display: grid;
+  grid-template-columns: minmax(14rem, 20rem) 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+  min-height: 24rem;
+}
+@media (max-width: 720px) {
+  .messagesLayout {
+    grid-template-columns: 1fr;
+  }
+}
+.conversationList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.conversationItem {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--surface);
+  color: var(--text);
+  padding: 0.55rem 0.7rem;
+  text-align: left;
+  cursor: pointer;
+}
+.conversationItem[aria-pressed='true'] {
+  border-color: var(--red-bright);
+}
+.conversationItemBody {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.conversationItemBody small {
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.conversationUnread {
+  margin-left: auto;
+  border-radius: 999px;
+  background: var(--red-bright);
+  color: #1c1917;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.1rem 0.5rem;
+}
+.messageThread {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+  background: var(--surface);
+  padding: 0.9rem;
+}
+.messageList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+  overflow-y: auto;
+  margin: 0.6rem 0;
+}
+.messageBubbleMine,
+.messageBubbleTheirs {
+  max-width: 75%;
+  border-radius: 0.7rem;
+  padding: 0.45rem 0.7rem;
+  margin: 0;
+}
+.messageBubbleMine {
+  align-self: flex-end;
+  background: var(--red);
+  color: #fff;
+}
+.messageBubbleTheirs {
+  align-self: flex-start;
+  background: var(--surface-2);
+  color: var(--text);
+}
+.messageBubbleMine time,
+.messageBubbleTheirs time {
+  display: block;
+  font-size: 0.72rem;
+  opacity: 0.75;
+  margin-top: 0.2rem;
+}
+.messageComposer {
+  display: flex;
+  gap: 0.6rem;
+}
+.messageComposer input {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 0.5rem 0.7rem;
+}
+.messageComposer button {
+  border: 0;
+  border-radius: 0.55rem;
+  background: var(--red);
+  color: #fff;
+  padding: 0.5rem 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.messageComposer button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

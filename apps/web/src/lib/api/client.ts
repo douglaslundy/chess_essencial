@@ -5,6 +5,8 @@ import type {
   CreateBotGameInput,
   CourseDetail,
   CourseSummary,
+  Conversation,
+  DirectMessage,
   Friend,
   FriendRequest,
   FriendRequestsView,
@@ -42,6 +44,7 @@ import type {
   ResendVerificationInput,
   ReviewAnnotation,
   ReviewAnnotationInput,
+  SendMessageInput,
   TokenPair,
   UpdateMeInput,
   UploadAvatarInput,
@@ -278,6 +281,14 @@ export const api = {
     request<Post>(`/posts/${postId}/like`, token, { method: 'POST' }),
   unlikePost: (postId: string, token: string) =>
     request<void>(`/posts/${postId}/like`, token, { method: 'DELETE' }),
+  listConversations: (token: string) => request<Conversation[]>('/messages/conversations', token),
+  listMessages: (friendUserId: string, token: string) =>
+    request<DirectMessage[]>(`/messages/${friendUserId}`, token),
+  sendMessage: (friendUserId: string, input: SendMessageInput, token: string) =>
+    request<DirectMessage>(`/messages/${friendUserId}`, token, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
   getLeaderboard: (pool: RatingPool, token: string) =>
     request<LeaderboardEntry[]>(`/ratings/${pool}/leaderboard?limit=100`, token),
   getRatings: (token: string) => request<RatingProfile[]>('/ratings/me', token),

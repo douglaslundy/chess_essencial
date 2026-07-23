@@ -9,6 +9,14 @@ export {
   type UploadPostPhotoResult,
 } from './feed.js';
 export {
+  conversationSchema,
+  directMessageSchema,
+  sendMessageInputSchema,
+  type Conversation,
+  type DirectMessage,
+  type SendMessageInput,
+} from './messages.js';
+export {
   friendRequestSchema,
   friendRequestsViewSchema,
   friendSchema,
