@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
+import { toIsoString } from '../common/dates/to-iso-string.js';
 import { DatabaseService } from '../database/database.service.js';
 
 type PostRow = {
@@ -7,7 +8,7 @@ type PostRow = {
   author_id: string;
   author_username: string;
   body: string | null;
-  created_at: Date;
+  created_at: Date | string;
   id: string;
   like_count: number;
   liked_by_me: boolean;
@@ -105,7 +106,7 @@ export class FeedRepository {
       authorId: row.author_id,
       authorUsername: row.author_username,
       body: row.body,
-      createdAt: row.created_at.toISOString(),
+      createdAt: toIsoString(row.created_at),
       id: row.id,
       likeCount: row.like_count,
       likedByMe: row.liked_by_me,

@@ -1,12 +1,13 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 
+import { toIsoString, toIsoStringOrNull } from '../common/dates/to-iso-string.js';
 import { DatabaseService } from '../database/database.service.js';
 
 type ConversationRow = {
   display_name: string;
   last_body: string | null;
-  last_created_at: Date | null;
-  last_seen_at: Date | null;
+  last_created_at: Date | string | null;
+  last_seen_at: Date | string | null;
   last_sender_id: string | null;
   unread_count: number;
   user_id: string;
@@ -15,7 +16,7 @@ type ConversationRow = {
 
 type MessageRow = {
   body: string;
-  created_at: Date;
+  created_at: Date | string;
   id: string;
   recipient_id: string;
   sender_id: string;
@@ -67,11 +68,11 @@ export class MessagesRepository {
       lastMessage: row.last_created_at
         ? {
             body: row.last_body ?? '',
-            createdAt: row.last_created_at.toISOString(),
+            createdAt: toIsoString(row.last_created_at),
             mine: row.last_sender_id === userId,
           }
         : null,
-      lastSeenAt: row.last_seen_at?.toISOString() ?? null,
+      lastSeenAt: toIsoStringOrNull(row.last_seen_at),
       unreadCount: row.unread_count,
       userId: row.user_id,
       username: row.username,
@@ -117,7 +118,7 @@ export class MessagesRepository {
   private toMessage(viewerId: string, row: MessageRow) {
     return {
       body: row.body,
-      createdAt: row.created_at.toISOString(),
+      createdAt: toIsoString(row.created_at),
       id: row.id,
       mine: row.sender_id === viewerId,
       recipientId: row.recipient_id,

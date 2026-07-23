@@ -5,16 +5,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import { toIsoString, toIsoStringOrNull } from '../common/dates/to-iso-string.js';
 import { DatabaseService } from '../database/database.service.js';
 
 type FriendRow = {
   display_name: string;
-  last_seen_at: Date | null;
+  last_seen_at: Date | string | null;
   user_id: string;
   username: string;
 };
 
-type RequestRow = FriendRow & { created_at: Date };
+type RequestRow = FriendRow & { created_at: Date | string };
 
 @Injectable()
 export class SocialRepository {
@@ -153,7 +154,7 @@ export class SocialRepository {
   async publicProfile(viewerId: string | null, username: string) {
     const sql = this.database.client;
     const [row] = await sql<
-      { display_name: string; id: string; last_seen_at: Date | null; username: string }[]
+      { display_name: string; id: string; last_seen_at: Date | string | null; username: string }[]
     >`
       SELECT u.id, u.username::text, p.display_name, u.last_seen_at
         FROM users u JOIN user_profiles p ON p.user_id = u.id
@@ -208,7 +209,7 @@ export class SocialRepository {
   private toFriend(row: FriendRow) {
     return {
       displayName: row.display_name,
-      presence: { lastSeenAt: row.last_seen_at?.toISOString() ?? null, online: false },
+      presence: { lastSeenAt: toIsoStringOrNull(row.last_seen_at), online: false },
       userId: row.user_id,
       username: row.username,
     };
@@ -216,7 +217,7 @@ export class SocialRepository {
 
   private toRequest(row: RequestRow) {
     return {
-      createdAt: row.created_at.toISOString(),
+      createdAt: toIsoString(row.created_at),
       displayName: row.display_name,
       userId: row.user_id,
       username: row.username,

@@ -1,6 +1,7 @@
 import type { Friend, FriendRequestsView, PublicProfile } from '@xadrez/contracts';
 import { Injectable } from '@nestjs/common';
 
+import { toIsoStringOrNull } from '../common/dates/to-iso-string.js';
 import { RedisService } from '../redis/redis.service.js';
 import { SocialRepository } from './social.repository.js';
 
@@ -80,7 +81,7 @@ export class SocialService {
     return {
       displayName: profile.displayName,
       friendshipStatus: profile.friendshipStatus,
-      presence: { lastSeenAt: profile.lastSeenAt?.toISOString() ?? null, online },
+      presence: { lastSeenAt: toIsoStringOrNull(profile.lastSeenAt), online },
       ratings: profile.ratings.map((rating) => ({
         pool: rating.pool as PublicProfile['ratings'][number]['pool'],
         rating: rating.rating,

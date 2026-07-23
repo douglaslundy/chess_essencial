@@ -1,10 +1,11 @@
 import type { AdminUserSearchQuery, UpdateAdminUserStatusInput } from '@xadrez/contracts';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
+import { toIsoString } from '../common/dates/to-iso-string.js';
 import { DatabaseService } from '../database/database.service.js';
 
 type AdminUserRow = {
-  created_at: Date;
+  created_at: Date | string;
   display_name: string | null;
   email: string;
   id: string;
@@ -15,7 +16,7 @@ type AdminUserRow = {
 
 function toAdminUser(row: AdminUserRow) {
   return {
-    createdAt: row.created_at.toISOString(),
+    createdAt: toIsoString(row.created_at),
     displayName: row.display_name,
     email: row.email,
     id: row.id,
