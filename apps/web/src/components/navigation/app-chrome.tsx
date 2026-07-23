@@ -15,8 +15,11 @@ const navigation = [
   { href: '/app/desafios', label: 'Desafios' },
   { href: '/app/ranking', label: 'Ranking' },
   { href: '/app/cursos', label: 'Cursos e aulas' },
+  { href: '/app/amigos', label: 'Amigos' },
   { href: '/app/partida/demo', label: 'Tabuleiro demonstrativo' },
 ] as const;
+
+const HEARTBEAT_INTERVAL_MS = 30_000;
 
 export function AppChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -44,6 +47,16 @@ export function AppChrome({ children }: { children: ReactNode }) {
       active = false;
     };
   }, [pathname]);
+
+  useEffect(() => {
+    function ping() {
+      const token = window.localStorage.getItem('xadrez.access_token');
+      if (token) void api.heartbeat(token).catch(() => undefined);
+    }
+    ping();
+    const interval = setInterval(ping, HEARTBEAT_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="appShell">

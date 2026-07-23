@@ -300,6 +300,11 @@ input:focus-visible {
   box-shadow: none;
 }
 
+.offlineDot {
+  background: var(--muted);
+  box-shadow: none;
+}
+
 .appContent {
   width: 100%;
   min-width: 0;

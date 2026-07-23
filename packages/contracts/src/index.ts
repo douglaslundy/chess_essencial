@@ -1,4 +1,18 @@
 export {
+  friendRequestSchema,
+  friendRequestsViewSchema,
+  friendSchema,
+  presenceSchema,
+  publicProfileSchema,
+  sendFriendRequestInputSchema,
+  type Friend,
+  type FriendRequest,
+  type FriendRequestsView,
+  type Presence,
+  type PublicProfile,
+  type SendFriendRequestInput,
+} from './social.js';
+export {
   adminUserListSchema,
   adminUserSchema,
   adminUserSearchQuerySchema,

@@ -203,6 +203,111 @@ paths:
               schema: {$ref: '#/components/schemas/PublicUser'}
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
+  /presence/heartbeat:
+    post:
+      summary: Signal that the current user is online
+      operationId: heartbeat
+      responses:
+        '204': {description: Recorded}
+        '401': {$ref: '#/components/responses/Problem'}
+  /friends:
+    get:
+      summary: List accepted friends with presence
+      operationId: listFriends
+      responses:
+        '200':
+          description: Friends
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/Friend'}}
+        '401': {$ref: '#/components/responses/Problem'}
+  /friends/requests:
+    get:
+      summary: List incoming and outgoing pending friend requests
+      operationId: listFriendRequests
+      responses:
+        '200':
+          description: Requests
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FriendRequestsView'}
+        '401': {$ref: '#/components/responses/Problem'}
+    post:
+      summary: Send a friend request by username
+      operationId: sendFriendRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SendFriendRequestInput'}
+      responses:
+        '201':
+          description: Created request
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FriendRequest'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /friends/requests/{username}/accept:
+    post:
+      summary: Accept a pending incoming friend request
+      operationId: acceptFriendRequest
+      parameters:
+        - {name: username, in: path, required: true, schema: {type: string}}
+      responses:
+        '201':
+          description: New friend
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Friend'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /friends/requests/{username}/decline:
+    post:
+      summary: Decline a pending incoming friend request
+      operationId: declineFriendRequest
+      parameters:
+        - {name: username, in: path, required: true, schema: {type: string}}
+      responses:
+        '204': {description: Declined}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /friends/requests/{username}:
+    delete:
+      summary: Cancel a pending outgoing friend request
+      operationId: cancelFriendRequest
+      parameters:
+        - {name: username, in: path, required: true, schema: {type: string}}
+      responses:
+        '204': {description: Cancelled}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /friends/{userId}:
+    delete:
+      summary: Remove an accepted friend
+      operationId: removeFriend
+      parameters:
+        - {name: userId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '204': {description: Removed}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /users/{username}:
+    get:
+      summary: Public profile with presence, ratings and friendship status
+      operationId: getPublicProfile
+      parameters:
+        - {name: username, in: path, required: true, schema: {type: string}}
+      responses:
+        '200':
+          description: Public profile
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PublicProfile'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
   /metrics:
     get:
       summary: Expor métricas agregadas no formato Prometheus
@@ -1291,6 +1396,58 @@ components:
       properties:
         contentType: {type: string, enum: [image/jpeg, image/png, image/webp]}
         dataBase64: {type: string, minLength: 1, maxLength: 1400000}
+    Presence:
+      type: object
+      required: [online, lastSeenAt]
+      properties:
+        online: {type: boolean}
+        lastSeenAt: {type: [string, 'null'], format: date-time}
+    Friend:
+      type: object
+      required: [userId, username, displayName, presence]
+      properties:
+        userId: {type: string, format: uuid}
+        username: {type: string}
+        displayName: {type: string}
+        presence: {$ref: '#/components/schemas/Presence'}
+    FriendRequest:
+      type: object
+      required: [userId, username, displayName, createdAt]
+      properties:
+        userId: {type: string, format: uuid}
+        username: {type: string}
+        displayName: {type: string}
+        createdAt: {type: string, format: date-time}
+    FriendRequestsView:
+      type: object
+      required: [incoming, outgoing]
+      properties:
+        incoming: {type: array, items: {$ref: '#/components/schemas/FriendRequest'}}
+        outgoing: {type: array, items: {$ref: '#/components/schemas/FriendRequest'}}
+    SendFriendRequestInput:
+      type: object
+      required: [username]
+      properties:
+        username: {type: string, minLength: 3, maxLength: 30}
+    PublicProfile:
+      type: object
+      required: [userId, username, displayName, presence, friendshipStatus, ratings]
+      properties:
+        userId: {type: string, format: uuid}
+        username: {type: string}
+        displayName: {type: string}
+        presence: {$ref: '#/components/schemas/Presence'}
+        friendshipStatus:
+          type: string
+          enum: [none, pending_outgoing, pending_incoming, friends, self]
+        ratings:
+          type: array
+          items:
+            type: object
+            required: [pool, rating]
+            properties:
+              pool: {type: string, enum: [bullet, blitz, rapid, classical, correspondence]}
+              rating: {type: integer}
     UpdateMeInput:
       type: object
       minProperties: 1

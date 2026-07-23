@@ -5,9 +5,14 @@ import type {
   CreateBotGameInput,
   CourseDetail,
   CourseSummary,
+  Friend,
+  FriendRequest,
+  FriendRequestsView,
   LeaderboardEntry,
   LessonVersion,
+  PublicProfile,
   SaveLessonInput,
+  SendFriendRequestInput,
   DrawOfferAction,
   EvaluateExerciseLineInput,
   EvaluateExerciseLineResult,
@@ -230,6 +235,30 @@ export const api = {
     request<PublicUser>('/me', token, { method: 'PATCH', body: JSON.stringify(input) }),
   uploadAvatar: (input: UploadAvatarInput, token: string) =>
     request<PublicUser>('/me/avatar', token, { method: 'POST', body: JSON.stringify(input) }),
+  heartbeat: (token: string) => request<void>('/presence/heartbeat', token, { method: 'POST' }),
+  listFriends: (token: string) => request<Friend[]>('/friends', token),
+  listFriendRequests: (token: string) => request<FriendRequestsView>('/friends/requests', token),
+  sendFriendRequest: (input: SendFriendRequestInput, token: string) =>
+    request<FriendRequest>('/friends/requests', token, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  acceptFriendRequest: (username: string, token: string) =>
+    request<Friend>(`/friends/requests/${encodeURIComponent(username)}/accept`, token, {
+      method: 'POST',
+    }),
+  declineFriendRequest: (username: string, token: string) =>
+    request<void>(`/friends/requests/${encodeURIComponent(username)}/decline`, token, {
+      method: 'POST',
+    }),
+  cancelFriendRequest: (username: string, token: string) =>
+    request<void>(`/friends/requests/${encodeURIComponent(username)}`, token, {
+      method: 'DELETE',
+    }),
+  removeFriend: (userId: string, token: string) =>
+    request<void>(`/friends/${userId}`, token, { method: 'DELETE' }),
+  getPublicProfile: (username: string, token: string) =>
+    request<PublicProfile>(`/users/${encodeURIComponent(username)}`, token),
   getLeaderboard: (pool: RatingPool, token: string) =>
     request<LeaderboardEntry[]>(`/ratings/${pool}/leaderboard?limit=100`, token),
   getRatings: (token: string) => request<RatingProfile[]>('/ratings/me', token),

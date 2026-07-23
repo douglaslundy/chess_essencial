@@ -14,7 +14,9 @@ import { LessonRuntimeModule } from './lesson-runtime/lesson-runtime.module.js';
 import { MatchmakingModule } from './matchmaking/matchmaking.module.js';
 import { ObservabilityModule } from './observability/observability.module.js';
 import { RatingsModule } from './ratings/ratings.module.js';
+import { RedisModule } from './redis/redis.module.js';
 import { SafetyModule } from './safety/safety.module.js';
+import { SocialModule } from './social/social.module.js';
 import { StorageModule } from './storage/storage.module.js';
 
 @Module({
@@ -29,7 +31,9 @@ import { StorageModule } from './storage/storage.module.js';
     MatchmakingModule,
     ObservabilityModule,
     RatingsModule,
+    RedisModule,
     SafetyModule,
+    SocialModule,
     StorageModule,
     ConfigModule.forRoot({
       envFilePath: ['../../.env', '.env'],
