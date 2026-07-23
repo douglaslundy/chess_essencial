@@ -128,9 +128,12 @@ services:
     <<: *app-defaults
     image: xadrez-worker:${IMAGE_TAG:-local}
     depends_on:
+      postgres:
+        condition: service_healthy
       redis:
         condition: service_healthy
     environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       NODE_ENV: production
       REDIS_URL: redis://redis:6379
       WORKER_HEALTH_PORT: 4001

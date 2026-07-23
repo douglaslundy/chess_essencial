@@ -13,4 +13,8 @@ describe('parseWorkerEnv', () => {
   it('rejects an invalid Redis URL', () => {
     expect(() => parseWorkerEnv({ REDIS_URL: 'not-a-url' })).toThrow();
   });
+
+  it('rejects an invalid database URL', () => {
+    expect(() => parseWorkerEnv({ DATABASE_URL: 'not-a-url' })).toThrow();
+  });
 });
