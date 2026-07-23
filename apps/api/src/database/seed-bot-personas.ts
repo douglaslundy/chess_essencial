@@ -46,10 +46,13 @@ try {
         if (!user) continue;
         await transaction`
           INSERT INTO user_profiles (
-            user_id, display_name, timezone, locale,
+            user_id, display_name, birth_date, timezone, locale,
             is_profile_public, allow_challenges, allow_friend_requests
           )
-          VALUES (${user.id}, ${identity.displayName}, 'America/Sao_Paulo', 'pt-BR', true, true, true)
+          VALUES (
+            ${user.id}, ${identity.displayName}, ${identity.birthDate}::date,
+            'America/Sao_Paulo', 'pt-BR', true, true, true
+          )
           ON CONFLICT (user_id) DO NOTHING
         `;
         for (const pool of ratingPools) {

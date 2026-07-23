@@ -156,7 +156,7 @@ export class MatchmakingRepository {
       throw new BadRequestException('Players must be different');
     }
 
-    return this.database.client.begin(async (transaction) => {
+    const created = await this.database.client.begin(async (transaction) => {
       const timeControl = await this.timeControl(transaction, input.timeControlCode);
       const [challenged] = await transaction<{ id: string }[]>`
         SELECT id FROM users WHERE id = ${input.challengedUserId} AND status = 'active'
@@ -201,8 +201,20 @@ export class MatchmakingRepository {
           ${input.challengerColor}::color_side, ${expiresAt.toISOString()}
         )
       `;
-      return { id: challengeId, status: 'pending', expiresAt: expiresAt.toISOString() };
+      return { id: challengeId, status: 'pending' as const, expiresAt: expiresAt.toISOString() };
     });
+
+    // A bot persona has no session of its own to accept the challenge, so it
+    // "accepts" itself immediately here — same code path a human opponent's
+    // own accept click would go through.
+    const [botPersona] = await this.database.client<{ userId: string }[]>`
+      SELECT user_id AS "userId" FROM bot_personas WHERE user_id = ${input.challengedUserId}
+    `;
+    if (!botPersona) return created;
+    const accepted = await this.respondChallenge(input.challengedUserId, created.id, {
+      accept: true,
+    });
+    return { ...created, ...accepted };
   }
 
   async respondChallenge(userId: string, challengeId: string, input: RespondChallengeInput) {
@@ -355,6 +367,17 @@ export class MatchmakingRepository {
         (${gameId}, ${creatorUserId}, ${creatorColor}, ${creatorRating}),
         (${gameId}, ${opponentUserId}, ${opponentColor}, ${opponentRating})
     `;
+    const [botPersona] = await transaction<{ userId: string }[]>`
+      SELECT user_id AS "userId" FROM bot_personas
+      WHERE user_id IN (${creatorUserId}, ${opponentUserId})
+    `;
+    if (botPersona) {
+      const botRating = botPersona.userId === creatorUserId ? creatorRating : opponentRating;
+      await transaction`
+        INSERT INTO game_bots (game_id, bot_user_id, difficulty, target_rating)
+        VALUES (${gameId}, ${botPersona.userId}, 'matched', ${botRating})
+      `;
+    }
     await transaction`
       INSERT INTO outbox_events (aggregate_type, aggregate_id, event_type, payload)
       VALUES ('game', ${gameId}, 'game.created', ${JSON.stringify({

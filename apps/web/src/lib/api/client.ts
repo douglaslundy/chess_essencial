@@ -3,6 +3,7 @@ import type {
   AdminUserList,
   UpdateAdminUserStatusInput,
   CreateBotGameInput,
+  CreateChallengeInput,
   CourseDetail,
   CourseProgress,
   CourseSummary,
@@ -380,6 +381,12 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(input),
     }),
+  createDirectChallenge: (input: CreateChallengeInput, token: string) =>
+    request<{ expiresAt?: string; gameId?: string; id: string; status: 'accepted' | 'pending' }>(
+      '/matchmaking/challenges',
+      token,
+      { method: 'POST', body: JSON.stringify(input) },
+    ),
   leaveQueue: (token: string) => request<void>('/matchmaking/queues', token, { method: 'DELETE' }),
   resign: (gameId: string, token: string) =>
     request<GameState>(`/games/${gameId}/resign`, token, { method: 'POST' }),

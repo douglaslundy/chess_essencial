@@ -611,7 +611,7 @@ paths:
           application/json:
             schema: {$ref: '#/components/schemas/CreateChallengeInput'}
       responses:
-        '201': {description: Desafio pendente criado}
+        '201': {description: Desafio pendente criado; se o desafiado for um bot social, já vem aceito com gameId}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}

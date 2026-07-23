@@ -51,4 +51,15 @@ describe('generateBotIdentities', () => {
     const second = generateBotIdentities(30, seededRandom(123));
     expect(first).toEqual(second);
   });
+
+  it('gives every persona a birth date corresponding to an age between 18 and 65', () => {
+    const now = new Date(Date.UTC(2026, 0, 1));
+    const identities = generateBotIdentities(200, seededRandom(55), now);
+    for (const identity of identities) {
+      expect(identity.birthDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      const age = now.getUTCFullYear() - Number(identity.birthDate.slice(0, 4));
+      expect(age).toBeGreaterThanOrEqual(18);
+      expect(age).toBeLessThanOrEqual(65);
+    }
+  });
 });

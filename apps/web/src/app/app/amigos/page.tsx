@@ -1,6 +1,7 @@
 'use client';
 
 import type { Friend, FriendRequestsView } from '@xadrez/contracts';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
 import { api } from '@/lib/api/client';
@@ -19,6 +20,7 @@ function formatLastSeen(lastSeenAt: string | null) {
 }
 
 export default function FriendsPage() {
+  const router = useRouter();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<FriendRequestsView>(emptyRequests);
   const [username, setUsername] = useState('');
@@ -106,6 +108,27 @@ export default function FriendsPage() {
       await load();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Não foi possível cancelar o pedido.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function challenge(friend: Friend) {
+    const accessToken = token();
+    if (!accessToken) return;
+    setBusy(true);
+    try {
+      const result = await api.createDirectChallenge(
+        { challengedUserId: friend.userId, challengerColor: null, timeControlCode: 'blitz-3-0' },
+        accessToken,
+      );
+      if (result.status === 'accepted' && result.gameId) {
+        router.push(`/app/partida/${result.gameId}`);
+        return;
+      }
+      setMessage(`Desafio enviado para ${friend.displayName}.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Não foi possível desafiar.');
     } finally {
       setBusy(false);
     }
@@ -218,6 +241,9 @@ export default function FriendsPage() {
                   : formatLastSeen(friend.presence.lastSeenAt)}
               </span>
               <div className="adminUserActions">
+                <button disabled={busy} onClick={() => void challenge(friend)} type="button">
+                  Jogar
+                </button>
                 <button
                   className="dangerAction"
                   disabled={busy}

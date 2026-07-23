@@ -108,11 +108,15 @@ const LAST_NAMES = [
 const RATING_BANDS = [700, 900, 1100, 1300, 1500, 1700, 1900, 2100] as const;
 
 export interface BotIdentity {
+  birthDate: string;
   displayName: string;
   email: string;
   targetRating: number;
   username: string;
 }
+
+const MIN_AGE_YEARS = 18;
+const MAX_AGE_YEARS = 65;
 
 const COMBINING_DIACRITICS = new RegExp('[\u0300-\u036f]', 'g');
 
@@ -131,14 +135,26 @@ function sampleRating(random: () => number): number {
   return band + Math.floor(random() * 150);
 }
 
+// Every persona must look like a plausible adult platform user: an age
+// somewhere between 18 and 65, with a day/month that isn't suspiciously
+// always the 1st of January.
+function sampleBirthDate(random: () => number, now: Date): string {
+  const age = MIN_AGE_YEARS + Math.floor(random() * (MAX_AGE_YEARS - MIN_AGE_YEARS + 1));
+  const year = now.getUTCFullYear() - age;
+  const month = 1 + Math.floor(random() * 12);
+  const day = 1 + Math.floor(random() * 28);
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 /**
- * Generates `count` distinct bot personas (name, username, email, target
- * rating). Deterministic given the same `random` source, so tests can pass a
- * seeded generator instead of Math.random.
+ * Generates `count` distinct bot personas (name, username, email, birth
+ * date, target rating). Deterministic given the same `random` source, so
+ * tests can pass a seeded generator instead of Math.random.
  */
 export function generateBotIdentities(
   count: number,
   random: () => number = Math.random,
+  now: Date = new Date(),
 ): BotIdentity[] {
   const usedFullNames = new Set<string>();
   const usedUsernames = new Set<string>();
@@ -164,6 +180,7 @@ export function generateBotIdentities(
     usedUsernames.add(username);
 
     identities.push({
+      birthDate: sampleBirthDate(random, now),
       displayName: fullName,
       email: `${username}@bots.internal.xadrez.invalid`,
       targetRating: sampleRating(random),

@@ -38,16 +38,26 @@ export class RatingsRepository {
       if (!firstPlayer || !secondPlayer)
         throw new InternalServerErrorException('A rated game must have two players');
 
-      // Bot opponents never get a rating_profiles row of their own (the bot
-      // identity is shared across every difficulty and every human, so a
-      // persisted rating for it would be meaningless): only the human side
-      // is rated, using the bot's per-game target_rating (captured on
-      // game_players.rating_before at creation) as the fixed opponent rating.
+      // The single shared practice-bot identity never gets a rating_profiles
+      // row of its own (it's reused across every difficulty and every
+      // human, so a persisted rating for it would be meaningless): only the
+      // human side is rated there, using the bot's per-game target_rating
+      // (captured on game_players.rating_before at creation) as the fixed
+      // opponent rating. A bot persona (apps/api/src/database/bot-personas)
+      // is a real, distinct account with its own evolving rating_profiles
+      // row, so games against one are rated normally on both sides, exactly
+      // like a human vs human game.
       const [bot] = await transaction<{ botUserId: string }[]>`
         SELECT bot_user_id AS "botUserId" FROM game_bots WHERE game_id = ${gameId}
       `;
-      const ratedPlayers = bot
-        ? players.filter((player) => player.userId !== bot.botUserId)
+      const [persona] = bot
+        ? await transaction<{ userId: string }[]>`
+            SELECT user_id AS "userId" FROM bot_personas WHERE user_id = ${bot.botUserId}
+          `
+        : [];
+      const isSharedPracticeBot = Boolean(bot) && !persona;
+      const ratedPlayers = isSharedPracticeBot
+        ? players.filter((player) => player.userId !== bot!.botUserId)
         : players;
       const expectedLedgerCount = ratedPlayers.length;
 
@@ -78,11 +88,11 @@ export class RatingsRepository {
       if (ledgerCount?.count)
         throw new InternalServerErrorException('Incomplete rating ledger state');
 
-      const botOpponentRating = bot
+      const botOpponentRating = isSharedPracticeBot
         ? (
             await transaction<{ ratingBefore: number }[]>`
               SELECT rating_before AS "ratingBefore" FROM game_players
-               WHERE game_id = ${gameId} AND user_id = ${bot.botUserId}
+               WHERE game_id = ${gameId} AND user_id = ${bot!.botUserId}
             `
           )[0]?.ratingBefore
         : undefined;
@@ -91,7 +101,7 @@ export class RatingsRepository {
       for (const player of ratedPlayers) {
         const profile = profileByUser.get(player.userId);
         const opponentRating =
-          bot && botOpponentRating !== undefined
+          isSharedPracticeBot && botOpponentRating !== undefined
             ? botOpponentRating
             : profiles.find((candidate) => candidate.userId !== player.userId)?.rating;
         if (!profile || opponentRating === undefined)

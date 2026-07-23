@@ -34,11 +34,24 @@ export class MatchmakingService {
     return this.matchmaking.leave(userId);
   }
 
-  createChallenge(userId: string, input: CreateChallengeInput) {
-    return this.matchmaking.createChallenge(userId, input);
+  async createChallenge(userId: string, input: CreateChallengeInput) {
+    const result = await this.matchmaking.createChallenge(userId, input);
+    // A no-op unless the challenged user turned out to be a bot persona,
+    // which auto-accepts inside matchmaking.createChallenge and may now
+    // need to make the opening move.
+    if (result.status === 'accepted' && result.gameId) {
+      await this.games.commitBotMoveIfNeeded(result.gameId);
+    }
+    return result;
   }
 
-  respondChallenge(userId: string, challengeId: string, input: RespondChallengeInput) {
-    return this.matchmaking.respondChallenge(userId, challengeId, input);
+  async respondChallenge(userId: string, challengeId: string, input: RespondChallengeInput) {
+    const result = await this.matchmaking.respondChallenge(userId, challengeId, input);
+    // A no-op unless the accepted opponent turned out to be a bot persona
+    // (or the practice bot) whose turn it now is — see commitBotMoveIfNeeded.
+    if (result.status === 'accepted' && result.gameId) {
+      await this.games.commitBotMoveIfNeeded(result.gameId);
+    }
+    return result;
   }
 }
