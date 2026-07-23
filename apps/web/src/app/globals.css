@@ -239,6 +239,7 @@ input:focus-visible {
   display: flex;
   height: 100vh;
   flex-direction: column;
+  overflow-y: auto;
   border-right: 1px solid var(--border);
   background: rgba(10, 10, 13, 0.96);
   padding: 1.5rem 1rem;
