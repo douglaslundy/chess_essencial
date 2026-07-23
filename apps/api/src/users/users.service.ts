@@ -56,7 +56,7 @@ export class UsersService {
       profile: {
         avatarUrl: user.profile.avatarUrl,
         bio: user.profile.bio,
-        birthYear: user.profile.birthYear,
+        birthDate: user.profile.birthDate,
         boardTheme: user.profile.boardTheme,
         countryCode: user.profile.countryCode,
         displayName: user.profile.displayName,

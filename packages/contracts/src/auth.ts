@@ -42,6 +42,8 @@ export const resetPasswordInputSchema = z.object({
   newPassword: z.string().min(12).max(128),
 });
 
+const MIN_BIRTH_DATE = '1900-01-01';
+
 export const updateMeInputSchema = z
   .object({
     displayName: z.string().trim().min(2).max(80).optional(),
@@ -49,12 +51,23 @@ export const updateMeInputSchema = z
     countryCode: z.string().trim().length(2).toUpperCase().nullable().optional(),
     timezone: z.string().trim().min(1).max(64).optional(),
     locale: z.string().trim().min(2).max(10).optional(),
-    birthYear: z.number().int().min(1900).max(new Date().getUTCFullYear()).nullable().optional(),
+    birthDate: z.iso
+      .date()
+      .nullable()
+      .optional()
+      .refine(
+        (value) => value == null || (value >= MIN_BIRTH_DATE && value <= todayIsoDate()),
+        'Data de nascimento inválida',
+      ),
     bio: z.string().trim().max(500).nullable().optional(),
     isProfilePublic: z.boolean().optional(),
     boardTheme: z.enum(['classic', 'staunton_3d', 'wood']).optional(),
   })
   .refine((value) => Object.keys(value).length > 0, 'Informe ao menos uma configuração');
+
+function todayIsoDate() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 export const uploadAvatarInputSchema = z.object({
   // Small, client-resized image sent as base64 (no data: prefix).
@@ -74,7 +87,7 @@ export const publicUserSchema = z.object({
     countryCode: z.string().nullable(),
     timezone: z.string(),
     locale: z.string(),
-    birthYear: z.number().int().nullable(),
+    birthDate: z.iso.date().nullable(),
     bio: z.string().nullable(),
     isProfilePublic: z.boolean(),
     boardTheme: z.enum(['classic', 'staunton_3d', 'wood']),

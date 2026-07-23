@@ -60,10 +60,10 @@ export default function MyDataPage() {
     const token = window.localStorage.getItem('xadrez.access_token');
     if (!token) return;
     const data = new FormData(event.currentTarget);
-    const birthYear = String(data.get('birthYear') ?? '').trim();
+    const birthDate = String(data.get('birthDate') ?? '').trim();
     const input: UpdateMeInput = {
       bio: String(data.get('bio') ?? '').trim() || null,
-      birthYear: birthYear ? Number(birthYear) : null,
+      birthDate: birthDate || null,
       countryCode:
         String(data.get('countryCode') ?? '')
           .trim()
@@ -164,12 +164,13 @@ export default function MyDataPage() {
               <input defaultValue={user.profile.locale} name="locale" required />
             </label>
             <label className={styles.field}>
-              Ano de nascimento
+              Data de nascimento
               <input
-                defaultValue={user.profile.birthYear ?? ''}
-                min="1900"
-                name="birthYear"
-                type="number"
+                defaultValue={user.profile.birthDate ?? ''}
+                max={new Date().toISOString().slice(0, 10)}
+                min="1900-01-01"
+                name="birthDate"
+                type="date"
               />
             </label>
           </div>

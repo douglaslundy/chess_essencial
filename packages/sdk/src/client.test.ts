@@ -21,7 +21,7 @@ describe('XadrezApiClient authentication contract', () => {
             profile: {
               avatarUrl: null,
               bio: null,
-              birthYear: null,
+              birthDate: null,
               countryCode: null,
               displayName: 'Mobile',
               isProfilePublic: true,

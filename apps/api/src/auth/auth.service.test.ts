@@ -37,7 +37,7 @@ class FakeUsersRepository {
         allowFriendRequests: true,
         avatarUrl: null,
         bio: null,
-        birthYear: null,
+        birthDate: null,
         boardTheme: 'classic',
         countryCode: null,
         createdAt: now,

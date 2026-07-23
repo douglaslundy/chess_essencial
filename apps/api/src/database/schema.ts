@@ -4,6 +4,7 @@ import {
   boolean,
   char,
   customType,
+  date,
   integer,
   jsonb,
   pgEnum,
@@ -16,7 +17,6 @@ import {
 } from 'drizzle-orm/pg-core';
 
 const citext = customType<{ data: string }>({ dataType: () => 'citext' });
-const smallint = customType<{ data: number }>({ dataType: () => 'smallint' });
 
 export const userStatusEnum = pgEnum('user_status', ['pending', 'active', 'suspended', 'deleted']);
 export const gameStatusEnum = pgEnum('game_status', [
@@ -70,7 +70,7 @@ export const userProfiles = pgTable('user_profiles', {
   countryCode: varchar('country_code', { length: 2 }),
   timezone: varchar('timezone', { length: 64 }).notNull().default('UTC'),
   locale: varchar('locale', { length: 10 }).notNull().default('pt-BR'),
-  birthYear: smallint('birth_year'),
+  birthDate: date('birth_date', { mode: 'string' }),
   bio: varchar('bio', { length: 500 }),
   isProfilePublic: boolean('is_profile_public').notNull().default(true),
   allowChallenges: boolean('allow_challenges').notNull().default(true),

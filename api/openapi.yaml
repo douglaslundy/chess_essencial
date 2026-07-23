@@ -1654,21 +1654,21 @@ components:
         countryCode: {type: [string, 'null'], minLength: 2, maxLength: 2}
         timezone: {type: string, minLength: 1, maxLength: 64}
         locale: {type: string, minLength: 2, maxLength: 10}
-        birthYear: {type: [integer, 'null'], minimum: 1900}
+        birthDate: {type: [string, 'null'], format: date}
         bio: {type: [string, 'null'], maxLength: 500}
         isProfilePublic: {type: boolean}
         boardTheme: {type: string, enum: [classic, staunton_3d, wood]}
       additionalProperties: false
     UserProfile:
       type: object
-      required: [displayName, avatarUrl, countryCode, timezone, locale, birthYear, bio, isProfilePublic, boardTheme]
+      required: [displayName, avatarUrl, countryCode, timezone, locale, birthDate, bio, isProfilePublic, boardTheme]
       properties:
         displayName: {type: string}
         avatarUrl: {type: [string, 'null']}
         countryCode: {type: [string, 'null']}
         timezone: {type: string}
         locale: {type: string}
-        birthYear: {type: [integer, 'null']}
+        birthDate: {type: [string, 'null'], format: date}
         bio: {type: [string, 'null']}
         isProfilePublic: {type: boolean}
         boardTheme: {type: string, enum: [classic, staunton_3d, wood]}

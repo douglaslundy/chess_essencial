@@ -1561,7 +1561,8 @@ export interface components {
       countryCode?: string | null;
       timezone?: string;
       locale?: string;
-      birthYear?: number | null;
+      /** Format: date */
+      birthDate?: string | null;
       bio?: string | null;
       isProfilePublic?: boolean;
       /** @enum {string} */
@@ -1573,7 +1574,8 @@ export interface components {
       countryCode: string | null;
       timezone: string;
       locale: string;
-      birthYear: number | null;
+      /** Format: date */
+      birthDate: string | null;
       bio: string | null;
       isProfilePublic: boolean;
       /** @enum {string} */
