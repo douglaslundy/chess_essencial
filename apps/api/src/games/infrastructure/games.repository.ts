@@ -219,8 +219,10 @@ export class GamesRepository {
       `;
       if (!user) throw new NotFoundException('Usuário ativo não encontrado');
 
-      const [timeControl] = await transaction<{ id: string; initialMs: number; pool: string }[]>`
-        SELECT id, initial_ms AS "initialMs", pool
+      const [timeControl] = await transaction<
+        { id: string; initialMs: number; pool: string; rated: boolean }[]
+      >`
+        SELECT id, initial_ms AS "initialMs", pool, rated
         FROM game_time_controls
         WHERE code = ${input.timeControlCode} AND active = true
       `;
@@ -247,7 +249,7 @@ export class GamesRepository {
           initial_fen, current_fen, side_to_move, white_clock_ms,
           black_clock_ms, active_clock_started_at, started_at
         ) VALUES (
-          ${gameId}, 'active', 'none', 'none', ${timeControl.id}, false,
+          ${gameId}, 'active', 'none', 'none', ${timeControl.id}, ${timeControl.rated},
           'startpos', ${initialFen}, 'white', ${timeControl.initialMs},
           ${timeControl.initialMs}, now(), now()
         )

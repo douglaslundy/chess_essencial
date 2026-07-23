@@ -38,7 +38,20 @@ export class RatingsRepository {
       if (!firstPlayer || !secondPlayer)
         throw new InternalServerErrorException('A rated game must have two players');
 
-      for (const player of players) {
+      // Bot opponents never get a rating_profiles row of their own (the bot
+      // identity is shared across every difficulty and every human, so a
+      // persisted rating for it would be meaningless): only the human side
+      // is rated, using the bot's per-game target_rating (captured on
+      // game_players.rating_before at creation) as the fixed opponent rating.
+      const [bot] = await transaction<{ botUserId: string }[]>`
+        SELECT bot_user_id AS "botUserId" FROM game_bots WHERE game_id = ${gameId}
+      `;
+      const ratedPlayers = bot
+        ? players.filter((player) => player.userId !== bot.botUserId)
+        : players;
+      const expectedLedgerCount = ratedPlayers.length;
+
+      for (const player of ratedPlayers) {
         await transaction`SELECT pg_advisory_xact_lock(hashtextextended(${`rating:user:${player.userId}:${game.pool}`}, 0))`;
         await transaction`
           INSERT INTO rating_profiles (user_id, pool)
@@ -61,19 +74,31 @@ export class RatingsRepository {
         FROM rating_transactions
         WHERE game_id = ${gameId} AND transaction_type = 'game'
       `;
-      if (ledgerCount?.count === 2) return false;
+      if (ledgerCount?.count === expectedLedgerCount) return false;
       if (ledgerCount?.count)
         throw new InternalServerErrorException('Incomplete rating ledger state');
 
+      const botOpponentRating = bot
+        ? (
+            await transaction<{ ratingBefore: number }[]>`
+              SELECT rating_before AS "ratingBefore" FROM game_players
+               WHERE game_id = ${gameId} AND user_id = ${bot.botUserId}
+            `
+          )[0]?.ratingBefore
+        : undefined;
+
       const profileByUser = new Map(profiles.map((profile) => [profile.userId, profile]));
-      for (const player of players) {
+      for (const player of ratedPlayers) {
         const profile = profileByUser.get(player.userId);
-        const opponent = profiles.find((candidate) => candidate.userId !== player.userId);
-        if (!profile || !opponent)
+        const opponentRating =
+          bot && botOpponentRating !== undefined
+            ? botOpponentRating
+            : profiles.find((candidate) => candidate.userId !== player.userId)?.rating;
+        if (!profile || opponentRating === undefined)
           throw new InternalServerErrorException('Rating profile not found');
 
         const actualScore = this.score(game.result, player.color);
-        const calculation = calculateRatingChange(profile, opponent.rating, actualScore);
+        const calculation = calculateRatingChange(profile, opponentRating, actualScore);
         const nextGamesCount = profile.gamesCount + 1;
         const win = actualScore === 1 ? 1 : 0;
         const draw = actualScore === 0.5 ? 1 : 0;

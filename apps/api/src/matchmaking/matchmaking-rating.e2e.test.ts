@@ -86,7 +86,7 @@ describeDatabase('matchmaking and rating database integration', () => {
     expect(counts).toEqual({ games: 1, queued: 0 });
   });
 
-  it('creates an unrated authoritative bot game with chosen color and difficulty', async () => {
+  it('creates a rated authoritative bot game (matching the chosen time control) with chosen color and difficulty', async () => {
     const created = await app.inject({
       headers: auth(first),
       method: 'POST',
@@ -133,9 +133,69 @@ describeDatabase('matchmaking and rating database integration', () => {
     expect(persisted).toEqual({
       difficulty: 'expert',
       moves: 3,
-      rated: false,
+      rated: true,
       targetRating: 2000,
     });
+  });
+
+  it('leaves an untimed bot game unrated', async () => {
+    const created = await app.inject({
+      headers: auth(first),
+      method: 'POST',
+      payload: {
+        botDifficulty: 'beginner',
+        playerColor: 'white',
+        timeControlCode: 'untimed',
+      },
+      url: '/v1/matchmaking/bot-games',
+    });
+    expect(created.statusCode, created.body).toBe(201);
+    const game = created.json();
+
+    const [persisted] = await database.client<{ rated: boolean }[]>`
+      SELECT rated FROM games WHERE id = ${game.id}
+    `;
+    expect(persisted).toEqual({ rated: false });
+  });
+
+  it('rates the human but never the shared bot account when a bot game finishes', async () => {
+    const BOT_USER_ID = '00000000-0000-4000-8000-000000000b07';
+    const human = await createIdentity('phase5-bot-rating@example.com', 'phase5_bot_rating');
+    const created = await app.inject({
+      headers: auth(human),
+      method: 'POST',
+      payload: {
+        botDifficulty: 'expert',
+        playerColor: 'white',
+        timeControlCode: 'blitz-3-0',
+      },
+      url: '/v1/matchmaking/bot-games',
+    });
+    expect(created.statusCode, created.body).toBe(201);
+    const game = created.json();
+
+    const resigned = await app.inject({
+      headers: auth(human),
+      method: 'POST',
+      url: `/v1/games/${game.id}/resign`,
+    });
+    expect(resigned.statusCode, resigned.body).toBe(200);
+    expect(resigned.json()).toMatchObject({ result: 'black_win', status: 'finished' });
+
+    const [humanProfile] = await database.client<
+      { gamesCount: number; losses: number; rating: number }[]
+    >`
+      SELECT rating, games_count AS "gamesCount", losses
+      FROM rating_profiles
+      WHERE user_id = ${human.userId} AND pool = 'blitz'
+    `;
+    expect(humanProfile).toMatchObject({ gamesCount: 1, losses: 1 });
+    expect(humanProfile?.rating).toBeLessThan(1200);
+
+    const [botProfile] = await database.client<{ count: number }[]>`
+      SELECT count(*)::integer AS count FROM rating_profiles WHERE user_id = ${BOT_USER_ID}
+    `;
+    expect(botProfile?.count).toBe(0);
   });
 
   it('falls back to a same-rating bot when the human queue has no opponent', async () => {
