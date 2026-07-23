@@ -10,6 +10,8 @@ import type {
   FriendRequestsView,
   LeaderboardEntry,
   LessonVersion,
+  CreatePostInput,
+  Post,
   PublicProfile,
   SaveLessonInput,
   SendFriendRequestInput,
@@ -43,6 +45,8 @@ import type {
   TokenPair,
   UpdateMeInput,
   UploadAvatarInput,
+  UploadPostPhotoInput,
+  UploadPostPhotoResult,
 } from '@xadrez/contracts';
 
 import type { components } from './openapi';
@@ -259,6 +263,21 @@ export const api = {
     request<void>(`/friends/${userId}`, token, { method: 'DELETE' }),
   getPublicProfile: (username: string, token: string) =>
     request<PublicProfile>(`/users/${encodeURIComponent(username)}`, token),
+  listFeed: (token: string, before?: string) =>
+    request<Post[]>(`/feed${before ? `?before=${encodeURIComponent(before)}` : ''}`, token),
+  createPost: (input: CreatePostInput, token: string) =>
+    request<Post>('/posts', token, { method: 'POST', body: JSON.stringify(input) }),
+  uploadPostPhoto: (input: UploadPostPhotoInput, token: string) =>
+    request<UploadPostPhotoResult>('/posts/photo', token, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  deletePost: (postId: string, token: string) =>
+    request<void>(`/posts/${postId}`, token, { method: 'DELETE' }),
+  likePost: (postId: string, token: string) =>
+    request<Post>(`/posts/${postId}/like`, token, { method: 'POST' }),
+  unlikePost: (postId: string, token: string) =>
+    request<void>(`/posts/${postId}/like`, token, { method: 'DELETE' }),
   getLeaderboard: (pool: RatingPool, token: string) =>
     request<LeaderboardEntry[]>(`/ratings/${pool}/leaderboard?limit=100`, token),
   getRatings: (token: string) => request<RatingProfile[]>('/ratings/me', token),

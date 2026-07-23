@@ -11,6 +11,7 @@ const ALLOWED = new Map<string, string>([
 ]);
 
 export const MAX_AVATAR_BYTES = 512 * 1024;
+export const MAX_POST_PHOTO_BYTES = 2 * 1024 * 1024;
 
 @Injectable()
 export class StorageService {
@@ -47,6 +48,19 @@ export class StorageService {
     if (!extension) throw new Error('Unsupported image type');
     if (data.byteLength > MAX_AVATAR_BYTES) throw new Error('Image is too large');
     const objectName = `avatar-${ownerId}-${randomUUID()}.${extension}`;
+    await this.client.putObject(this.bucket, objectName, data, data.byteLength, {
+      'Content-Type': contentType,
+    });
+    return `${this.publicUrl.replace(/\/+$/, '')}/${objectName}`;
+  }
+
+  /** Store a feed post photo and return its public URL. */
+  async putPostPhoto(ownerId: string, contentType: string, data: Buffer): Promise<string> {
+    if (!this.client || !this.publicUrl) throw new Error('Object storage is not configured');
+    const extension = ALLOWED.get(contentType);
+    if (!extension) throw new Error('Unsupported image type');
+    if (data.byteLength > MAX_POST_PHOTO_BYTES) throw new Error('Image is too large');
+    const objectName = `post-${ownerId}-${randomUUID()}.${extension}`;
     await this.client.putObject(this.bucket, objectName, data, data.byteLength, {
       'Content-Type': contentType,
     });

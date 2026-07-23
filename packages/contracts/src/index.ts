@@ -1,4 +1,14 @@
 export {
+  createPostInputSchema,
+  postSchema,
+  uploadPostPhotoInputSchema,
+  uploadPostPhotoResultSchema,
+  type CreatePostInput,
+  type Post,
+  type UploadPostPhotoInput,
+  type UploadPostPhotoResult,
+} from './feed.js';
+export {
   friendRequestSchema,
   friendRequestsViewSchema,
   friendSchema,

@@ -7,6 +7,7 @@ import { validateApiEnv } from './config/env.js';
 import { CoursesModule } from './courses/courses.module.js';
 import { DatabaseModule } from './database/database.module.js';
 import { ExercisesModule } from './exercises/exercises.module.js';
+import { FeedModule } from './feed/feed.module.js';
 import { GamesModule } from './games/games.module.js';
 import { HealthController } from './health/health.controller.js';
 import { HealthService } from './health/health.service.js';
@@ -26,6 +27,7 @@ import { StorageModule } from './storage/storage.module.js';
     CoursesModule,
     DatabaseModule,
     ExercisesModule,
+    FeedModule,
     GamesModule,
     LessonRuntimeModule,
     MatchmakingModule,

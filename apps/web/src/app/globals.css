@@ -2182,3 +2182,118 @@ input:focus-visible {
   background: var(--red-bright);
   color: #1c1917;
 }
+
+.postComposer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+  background: var(--surface);
+  margin: 1rem 0;
+}
+.postComposer textarea {
+  resize: vertical;
+  min-height: 4.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 0.6rem 0.7rem;
+  font: inherit;
+}
+.postComposerActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.postComposerActions button[type='submit'] {
+  border: 0;
+  border-radius: 0.55rem;
+  background: var(--red);
+  color: #fff;
+  padding: 0.5rem 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.postComposerActions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.postPhotoPreview {
+  max-width: 100%;
+  max-height: 12rem;
+  border-radius: 0.6rem;
+  object-fit: cover;
+}
+.postList {
+  display: grid;
+  gap: 0.9rem;
+}
+.postCard {
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+  background: var(--surface);
+}
+.postCardHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+}
+.postCardHeader strong {
+  color: var(--text);
+}
+.postCardHeader time {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.postBody {
+  white-space: pre-wrap;
+  color: var(--text);
+  margin: 0 0 0.6rem;
+}
+.postCard img.postPhotoPreview {
+  margin-bottom: 0.6rem;
+}
+.postActions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.likeButton {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 0.35rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.likeButton[aria-pressed='true'] {
+  border-color: var(--red-bright);
+  color: var(--red-bright);
+}
+.likeButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.postActions .dangerAction {
+  border: 1px solid rgba(220, 38, 38, 0.5);
+  border-radius: 0.5rem;
+  background: var(--surface-2);
+  color: #f0a3a3;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.postActions .dangerAction:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

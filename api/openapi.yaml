@@ -308,6 +308,85 @@ paths:
               schema: {$ref: '#/components/schemas/PublicProfile'}
         '401': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
+  /feed:
+    get:
+      summary: List the viewer's feed (own posts plus accepted friends' posts)
+      operationId: listFeed
+      parameters:
+        - {name: before, in: query, required: false, schema: {type: string, format: date-time}}
+      responses:
+        '200':
+          description: Posts
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/Post'}}
+        '401': {$ref: '#/components/responses/Problem'}
+  /posts:
+    post:
+      summary: Create a post (text, photo, or both)
+      operationId: createPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreatePostInput'}
+      responses:
+        '201':
+          description: Created post
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Post'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /posts/photo:
+    post:
+      summary: Upload a post photo (base64 image) to object storage
+      operationId: uploadPostPhoto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UploadPostPhotoInput'}
+      responses:
+        '201':
+          description: Uploaded photo URL
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/UploadPostPhotoResult'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /posts/{postId}:
+    delete:
+      summary: Delete one of your own posts
+      operationId: deletePost
+      parameters:
+        - {name: postId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '204': {description: Deleted}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /posts/{postId}/like:
+    post:
+      summary: Like a post
+      operationId: likePost
+      parameters:
+        - {name: postId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '201':
+          description: Updated post
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Post'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+    delete:
+      summary: Remove your like from a post
+      operationId: unlikePost
+      parameters:
+        - {name: postId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '204': {description: Unliked}
+        '401': {$ref: '#/components/responses/Problem'}
   /metrics:
     get:
       summary: Expor métricas agregadas no formato Prometheus
@@ -1448,6 +1527,48 @@ components:
             properties:
               pool: {type: string, enum: [bullet, blitz, rapid, classical, correspondence]}
               rating: {type: integer}
+    Post:
+      type: object
+      required:
+        [
+          id,
+          authorId,
+          authorUsername,
+          authorDisplayName,
+          body,
+          photoUrl,
+          createdAt,
+          likeCount,
+          likedByMe,
+          mine,
+        ]
+      properties:
+        id: {type: string, format: uuid}
+        authorId: {type: string, format: uuid}
+        authorUsername: {type: string}
+        authorDisplayName: {type: string}
+        body: {type: [string, 'null']}
+        photoUrl: {type: [string, 'null']}
+        createdAt: {type: string, format: date-time}
+        likeCount: {type: integer}
+        likedByMe: {type: boolean}
+        mine: {type: boolean}
+    CreatePostInput:
+      type: object
+      properties:
+        body: {type: string, minLength: 1, maxLength: 2000}
+        photoUrl: {type: string, format: uri}
+    UploadPostPhotoInput:
+      type: object
+      required: [contentType, dataBase64]
+      properties:
+        contentType: {type: string, enum: [image/jpeg, image/png, image/webp]}
+        dataBase64: {type: string, minLength: 1, maxLength: 3000000}
+    UploadPostPhotoResult:
+      type: object
+      required: [photoUrl]
+      properties:
+        photoUrl: {type: string, format: uri}
     UpdateMeInput:
       type: object
       minProperties: 1
