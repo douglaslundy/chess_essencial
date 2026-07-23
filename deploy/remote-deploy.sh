@@ -50,6 +50,7 @@ append_value_if_missing() {
 
 append_value_if_missing AUTH_EXPOSE_VERIFICATION_TOKEN false
 append_value_if_missing DEMO_SEED_ENABLED false
+append_value_if_missing BOT_PERSONAS_ENABLED false
 append_secret_if_missing AUTH_ACCESS_SECRET
 append_secret_if_missing AUTH_REFRESH_SECRET
 append_secret_if_missing AUTH_VERIFICATION_SECRET
@@ -100,6 +101,11 @@ if [[ "${DEMO_SEED_ENABLED:-false}" == "true" ]]; then
   : "${DEMO_USER_PASSWORD:?DEMO_USER_PASSWORD is required when demo seed is enabled}"
   "${compose[@]}" run --rm --env DEMO_SEED_ENABLED=true --env DEMO_USER_PASSWORD \
     api pnpm --filter @xadrez/api db:seed-demo
+fi
+
+if [[ "${BOT_PERSONAS_ENABLED:-false}" == "true" ]]; then
+  "${compose[@]}" run --rm --env BOT_PERSONAS_ENABLED=true --env BOT_PERSONAS_COUNT \
+    api pnpm --filter @xadrez/api db:seed-bot-personas
 fi
 
 "${compose[@]}" up --detach --remove-orphans

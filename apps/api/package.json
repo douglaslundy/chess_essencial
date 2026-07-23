@@ -15,7 +15,8 @@
     "test": "vitest run --exclude dist/**",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "db:seed-demo": "tsx src/database/seed-demo.ts",
-    "db:import-lessons": "tsx src/database/import-lessons.ts"
+    "db:import-lessons": "tsx src/database/import-lessons.ts",
+    "db:seed-bot-personas": "tsx src/database/seed-bot-personas.ts"
   },
   "dependencies": {
     "@nestjs/common": "11.1.28",
