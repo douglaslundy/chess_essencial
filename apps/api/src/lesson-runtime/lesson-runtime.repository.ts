@@ -55,8 +55,10 @@ export class LessonRuntimeRepository {
   async lesson(userId: string, lessonId: string): Promise<LessonOverview> {
     await this.assertPrerequisites(userId, lessonId);
     const lesson = await this.snapshot(lessonId);
+    const context = await this.courseContext(lessonId);
     const first = lesson.steps[0]!;
     return {
+      courseSlug: context.courseSlug,
       estimatedMinutes: lesson.estimatedMinutes,
       firstStep: {
         bodyMd: first.bodyMd,
@@ -68,6 +70,7 @@ export class LessonRuntimeRepository {
       },
       lessonId,
       module: lesson.module,
+      nextLessonId: context.nextLessonId,
       title: lesson.title,
     };
   }
@@ -257,6 +260,33 @@ export class LessonRuntimeRepository {
       })),
       title: lesson.title,
     });
+  }
+
+  private async courseContext(
+    lessonId: string,
+  ): Promise<{ courseSlug: string; nextLessonId: string | null }> {
+    const [course] = await this.database.client<{ courseId: string; courseSlug: string }[]>`
+      SELECT course_modules.course_id AS "courseId", courses.slug::text AS "courseSlug"
+      FROM lessons
+      JOIN course_modules ON course_modules.id = lessons.module_id
+      JOIN courses ON courses.id = course_modules.course_id
+      WHERE lessons.id = ${lessonId}
+    `;
+    if (!course) throw new NotFoundException('Aula publicada não encontrada');
+    const [next] = await this.database.client<{ id: string }[]>`
+      WITH ordered AS (
+        SELECT lessons.id,
+               row_number() OVER (ORDER BY course_modules.position, lessons.position) AS rn
+        FROM lessons
+        JOIN course_modules ON course_modules.id = lessons.module_id
+        WHERE course_modules.course_id = ${course.courseId} AND lessons.status = 'published'
+      )
+      SELECT next_lesson.id
+      FROM ordered current_lesson
+      JOIN ordered next_lesson ON next_lesson.rn = current_lesson.rn + 1
+      WHERE current_lesson.id = ${lessonId}
+    `;
+    return { courseSlug: course.courseSlug, nextLessonId: next?.id ?? null };
   }
 
   private async assertPrerequisites(userId: string, lessonId: string) {

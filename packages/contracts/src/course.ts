@@ -75,6 +75,10 @@ export const courseDetailSchema = courseSummarySchema.extend({
   modules: z.array(courseModuleSchema),
 });
 
+export const courseProgressSchema = z.object({
+  completedLessonIds: z.array(z.string().uuid()),
+});
+
 export const lessonVersionSchema = z.object({
   content: interactiveLessonSchema,
   createdAt: z.string().datetime(),
@@ -84,6 +88,7 @@ export const lessonVersionSchema = z.object({
 });
 
 export type CourseDetail = z.infer<typeof courseDetailSchema>;
+export type CourseProgress = z.infer<typeof courseProgressSchema>;
 export type CourseSummary = z.infer<typeof courseSummarySchema>;
 export type InteractiveLesson = z.infer<typeof interactiveLessonSchema>;
 export type LessonVersion = z.infer<typeof lessonVersionSchema>;

@@ -867,6 +867,19 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/CourseDetail'}
         '404': {$ref: '#/components/responses/Problem'}
+  /courses/{slug}/progress:
+    get:
+      summary: Aulas já concluídas pelo usuário autenticado neste curso
+      operationId: getCourseProgress
+      parameters:
+        - {name: slug, in: path, required: true, schema: {type: string}}
+      responses:
+        '200':
+          description: Progresso do usuário no curso
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseProgress'}
+        '401': {$ref: '#/components/responses/Problem'}
   /courses/{courseId}/editor:
     get:
       summary: Abrir curso no editor
@@ -1278,13 +1291,15 @@ components:
         orientation: {type: [string, 'null'], enum: [white, black, null]}
     LessonOverview:
       type: object
-      required: [lessonId, title, module, estimatedMinutes, firstStep]
+      required: [lessonId, title, module, estimatedMinutes, firstStep, courseSlug, nextLessonId]
       properties:
         lessonId: {type: string, format: uuid}
         title: {type: string}
         module: {type: integer, minimum: 1, maximum: 10}
         estimatedMinutes: {type: integer, minimum: 1}
         firstStep: {$ref: '#/components/schemas/PublicLessonStep'}
+        courseSlug: {type: string}
+        nextLessonId: {type: [string, 'null'], format: uuid}
     StartLessonAttemptInput:
       type: object
       required: [lessonId]
@@ -1343,6 +1358,11 @@ components:
                   title: {type: string}
                   sourceVolume: {type: integer}
                   lessons: {type: array, items: {type: object}}
+    CourseProgress:
+      type: object
+      required: [completedLessonIds]
+      properties:
+        completedLessonIds: {type: array, items: {type: string, format: uuid}}
     InteractiveLesson:
       type: object
       required: [slug, title, module, sourcePages, estimatedMinutes, prerequisites, steps]

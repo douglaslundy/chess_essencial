@@ -15,6 +15,10 @@ export class CoursesService {
     return this.courses.getCourse(slug, true);
   }
 
+  getProgress(slug: string, userId: string) {
+    return this.courses.progress(slug, userId);
+  }
+
   getEditor(courseId: string, userId: string) {
     return this.courses.getEditor(courseId, userId);
   }

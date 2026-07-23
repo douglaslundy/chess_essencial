@@ -122,6 +122,8 @@ describeDatabase('lesson runtime database integration', () => {
     });
     expect(overview.statusCode, overview.body).toBe(200);
     expect(overview.json().firstStep.stepKey).toBe('boas-vindas');
+    expect(overview.json().courseSlug).toBe('xadrez-essencial');
+    expect(typeof overview.json().nextLessonId).toBe('string');
     expect(overview.body).not.toContain('expectedActions');
     expect(overview.body).not.toContain('mova-o-peao');
 
@@ -191,6 +193,24 @@ describeDatabase('lesson runtime database integration', () => {
       SELECT count(*)::integer AS count FROM lesson_attempt_actions WHERE attempt_id = ${attemptId}
     `;
     expect(ledger!.count).toBe(7);
+  });
+
+  it('lists the completed lesson in this course only for the student who finished it', async () => {
+    const mine = await app.inject({
+      headers: auth(),
+      method: 'GET',
+      url: '/v1/courses/xadrez-essencial/progress',
+    });
+    expect(mine.statusCode, mine.body).toBe(200);
+    expect(mine.json().completedLessonIds).toContain(lessonId);
+
+    const theirs = await app.inject({
+      headers: auth(otherToken),
+      method: 'GET',
+      url: '/v1/courses/xadrez-essencial/progress',
+    });
+    expect(theirs.statusCode, theirs.body).toBe(200);
+    expect(theirs.json().completedLessonIds).not.toContain(lessonId);
   });
 
   it('does not expose another user attempt', async () => {

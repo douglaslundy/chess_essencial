@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { interactiveLessonSchema, saveLessonInputSchema } from './course.js';
+import { courseProgressSchema, interactiveLessonSchema, saveLessonInputSchema } from './course.js';
 
 const lesson = {
   estimatedMinutes: 8,
@@ -38,5 +38,12 @@ describe('course contracts', () => {
 
   it('requires at least one source page', () => {
     expect(() => interactiveLessonSchema.parse({ ...lesson, sourcePages: [] })).toThrow();
+  });
+
+  it('validates a list of completed lesson ids', () => {
+    const uuid = '11111111-1111-4111-8111-111111111111';
+    expect(courseProgressSchema.parse({ completedLessonIds: [uuid] })).toEqual({
+      completedLessonIds: [uuid],
+    });
   });
 });

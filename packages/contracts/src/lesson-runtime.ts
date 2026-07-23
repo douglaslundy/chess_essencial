@@ -26,10 +26,12 @@ export const publicLessonStepSchema = z.object({
 });
 
 export const lessonOverviewSchema = z.object({
+  courseSlug: z.string(),
   estimatedMinutes: z.number().int().positive(),
   firstStep: publicLessonStepSchema,
   lessonId: z.string().uuid(),
   module: z.number().int().min(1).max(10),
+  nextLessonId: z.string().uuid().nullable(),
   title: z.string(),
 });
 

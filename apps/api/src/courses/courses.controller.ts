@@ -24,6 +24,12 @@ export class CoursesController {
   }
 
   @UseGuards(AccessTokenGuard)
+  @Get(':slug/progress')
+  getProgress(@Req() request: AuthenticatedRequest, @Param('slug') slug: string) {
+    return this.courses.getProgress(parseInput(slugSchema, slug), request.auth.userId);
+  }
+
+  @UseGuards(AccessTokenGuard)
   @Get(':courseId/editor')
   getEditor(@Req() request: AuthenticatedRequest, @Param('courseId') courseId: string) {
     return this.courses.getEditor(parseInput(idSchema, courseId), request.auth.userId);

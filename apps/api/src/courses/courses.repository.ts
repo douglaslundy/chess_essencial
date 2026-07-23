@@ -1,5 +1,6 @@
 import type {
   CourseDetail,
+  CourseProgress,
   CourseSummary,
   InteractiveLesson,
   SaveLessonInput,
@@ -111,6 +112,20 @@ export class CoursesRepository {
         title: module.title,
       })),
     };
+  }
+
+  async progress(slug: string, userId: string): Promise<CourseProgress> {
+    const rows = await this.database.client<{ lessonId: string }[]>`
+      SELECT DISTINCT lesson_attempts.lesson_id AS "lessonId"
+      FROM lesson_attempts
+      JOIN lessons ON lessons.id = lesson_attempts.lesson_id
+      JOIN course_modules ON course_modules.id = lessons.module_id
+      JOIN courses ON courses.id = course_modules.course_id
+      WHERE courses.slug::text = ${slug}
+        AND lesson_attempts.user_id = ${userId}
+        AND lesson_attempts.status = 'completed'
+    `;
+    return { completedLessonIds: rows.map((row) => row.lessonId) };
   }
 
   async getEditor(courseId: string, userId: string) {

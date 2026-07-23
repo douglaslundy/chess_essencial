@@ -1,6 +1,12 @@
 'use client';
 
-import type { LessonActionInput, LessonAttemptView, PublicLessonStep } from '@xadrez/contracts';
+import type {
+  LessonActionInput,
+  LessonAttemptView,
+  LessonOverview,
+  PublicLessonStep,
+} from '@xadrez/contracts';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { ChessBoard } from '@/components/game/chess-board';
@@ -12,6 +18,7 @@ const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 export function LessonPlayer({ lessonId }: { lessonId: string }) {
   const { theme: pieceTheme } = usePieceTheme();
   const [attempt, setAttempt] = useState<LessonAttemptView | null>(null);
+  const [overview, setOverview] = useState<LessonOverview | null>(null);
   // Result of a quiz/move action, held back until the learner clicks
   // "Continuar" so they always see the feedback before the step changes.
   const [pendingAttempt, setPendingAttempt] = useState<LessonAttemptView | null>(null);
@@ -27,6 +34,10 @@ export function LessonPlayer({ lessonId }: { lessonId: string }) {
       queueMicrotask(() => setMessage('Entre na sua conta para iniciar a aula.'));
       return;
     }
+    api
+      .getLesson(lessonId, token)
+      .then(setOverview)
+      .catch(() => undefined);
     api
       .startLessonAttempt(lessonId, token)
       .then((value) => {
@@ -145,6 +156,20 @@ export function LessonPlayer({ lessonId }: { lessonId: string }) {
         <section className="lessonComplete">
           <h2>Aula concluída</h2>
           <p>Nota: {attempt.score ?? 100}%</p>
+          <div className="lessonCompleteActions">
+            {overview?.nextLessonId ? (
+              <Link className="primaryAction" href={`/app/aula/${overview.nextLessonId}`}>
+                Próxima aula →
+              </Link>
+            ) : (
+              <p>Você concluiu a última aula deste curso.</p>
+            )}
+            {overview?.courseSlug ? (
+              <Link className="secondaryAction" href={`/app/cursos/${overview.courseSlug}`}>
+                Voltar ao curso
+              </Link>
+            ) : null}
+          </div>
         </section>
       ) : step ? (
         <section

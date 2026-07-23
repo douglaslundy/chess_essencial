@@ -2082,6 +2082,29 @@ input:focus-visible {
   background: #201e1b;
   padding: clamp(1rem, 3vw, 2rem);
 }
+.lessonCompleteActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.lessonCompleteActions .primaryAction,
+.lessonCompleteActions .secondaryAction {
+  border-radius: 0.55rem;
+  padding: 0.55rem 1.2rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.lessonCompleteActions .primaryAction {
+  background: var(--red);
+  color: #fff;
+}
+.lessonCompleteActions .secondaryAction {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+}
 .lessonStepCard > span {
   color: #d8b85f;
   font-size: 0.78rem;

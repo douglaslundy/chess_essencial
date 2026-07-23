@@ -11,6 +11,7 @@ import styles from '@/components/portal/portal-pages.module.css';
 export default function CourseDetailPage() {
   const params = useParams<{ slug: string }>();
   const [course, setCourse] = useState<CourseDetail | null>(null);
+  const [completedLessonIds, setCompletedLessonIds] = useState<Set<string>>(new Set());
   const [message, setMessage] = useState('Carregando aulas…');
 
   useEffect(() => {
@@ -23,7 +24,15 @@ export default function CourseDetailPage() {
       .catch((error: unknown) =>
         setMessage(error instanceof Error ? error.message : 'Não foi possível carregar o curso.'),
       );
+    const token = window.localStorage.getItem('xadrez.access_token');
+    if (!token) return;
+    api
+      .getCourseProgress(params.slug, token)
+      .then((progress) => setCompletedLessonIds(new Set(progress.completedLessonIds)))
+      .catch(() => undefined);
   }, [params.slug]);
+
+  const totalLessons = course?.modules.reduce((sum, module) => sum + module.lessons.length, 0) ?? 0;
 
   return (
     <main className={styles.page}>
@@ -34,6 +43,11 @@ export default function CourseDetailPage() {
         <span>Curso publicado</span>
         <h1>{course?.title ?? 'Aulas'}</h1>
         <p>{course?.description}</p>
+        {totalLessons > 0 ? (
+          <p>
+            {completedLessonIds.size}/{totalLessons} aulas concluídas
+          </p>
+        ) : null}
       </header>
       <p className={styles.status} role="status">
         {message}
@@ -46,13 +60,16 @@ export default function CourseDetailPage() {
               <h2>{module.title}</h2>
             </header>
             <div className={styles.lessonList}>
-              {module.lessons.map((lesson) => (
-                <Link href={`/app/aula/${lesson.id}`} key={lesson.id}>
-                  <span>{lesson.position}</span>
-                  <strong>{lesson.title}</strong>
-                  <small>{lesson.estimatedMinutes} min</small>
-                </Link>
-              ))}
+              {module.lessons.map((lesson) => {
+                const completed = completedLessonIds.has(lesson.id);
+                return (
+                  <Link href={`/app/aula/${lesson.id}`} key={lesson.id}>
+                    <span>{completed ? '✓' : lesson.position}</span>
+                    <strong>{lesson.title}</strong>
+                    <small>{completed ? 'Concluída' : `${lesson.estimatedMinutes} min`}</small>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         ))}

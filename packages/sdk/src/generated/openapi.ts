@@ -860,6 +860,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/courses/{slug}/progress': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Aulas já concluídas pelo usuário autenticado neste curso */
+    get: operations['getCourseProgress'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/courses/{courseId}/editor': {
     parameters: {
       query?: never;
@@ -1261,6 +1278,9 @@ export interface components {
       module: number;
       estimatedMinutes: number;
       firstStep: components['schemas']['PublicLessonStep'];
+      courseSlug: string;
+      /** Format: uuid */
+      nextLessonId: string | null;
     };
     StartLessonAttemptInput: {
       /** Format: uuid */
@@ -1318,6 +1338,9 @@ export interface components {
         sourceVolume: number;
         lessons: Record<string, never>[];
       }[];
+    };
+    CourseProgress: {
+      completedLessonIds: string[];
     };
     InteractiveLesson: {
       slug: string;
@@ -3319,6 +3342,29 @@ export interface operations {
         };
       };
       404: components['responses']['Problem'];
+    };
+  };
+  getCourseProgress: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        slug: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Progresso do usuário no curso */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CourseProgress'];
+        };
+      };
+      401: components['responses']['Problem'];
     };
   };
   getCourseEditor: {

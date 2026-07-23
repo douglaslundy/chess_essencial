@@ -4,6 +4,7 @@ import type {
   UpdateAdminUserStatusInput,
   CreateBotGameInput,
   CourseDetail,
+  CourseProgress,
   CourseSummary,
   Conversation,
   DirectMessage,
@@ -34,6 +35,7 @@ import type {
   GameState,
   LessonActionInput,
   LessonAttemptView,
+  LessonOverview,
   JoinQueueInput,
   LoginInput,
   PublicUser,
@@ -294,6 +296,10 @@ export const api = {
   getRatings: (token: string) => request<RatingProfile[]>('/ratings/me', token),
   listCourses: () => request<CourseSummary[]>('/courses'),
   getCourse: (slug: string) => request<CourseDetail>(`/courses/${encodeURIComponent(slug)}`),
+  getCourseProgress: (slug: string, token: string) =>
+    request<CourseProgress>(`/courses/${encodeURIComponent(slug)}/progress`, token),
+  getLesson: (lessonId: string, token: string) =>
+    request<LessonOverview>(`/lessons/${lessonId}`, token),
   startLessonAttempt: (lessonId: string, token: string) =>
     request<LessonAttemptView>('/lesson-attempts', token, {
       method: 'POST',
