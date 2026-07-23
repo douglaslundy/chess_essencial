@@ -46,6 +46,10 @@ export default function HomePage() {
           ))}
         </ul>
       </section>
+
+      <footer className="landingFooter">
+        <Link href="/regras">Regras da comunidade</Link>
+      </footer>
     </main>
   );
 }

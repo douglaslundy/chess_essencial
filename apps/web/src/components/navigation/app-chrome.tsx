@@ -19,6 +19,7 @@ const navigation = [
   { href: '/app/mensagens', label: 'Mensagens' },
   { href: '/app/feed', label: 'Feed' },
   { href: '/app/partida/demo', label: 'Tabuleiro demonstrativo' },
+  { href: '/regras', label: 'Regras da comunidade' },
 ] as const;
 
 const HEARTBEAT_INTERVAL_MS = 30_000;
