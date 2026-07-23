@@ -2941,7 +2941,7 @@ export interface operations {
       };
     };
     responses: {
-      /** @description Desafio pendente criado */
+      /** @description Desafio pendente criado; se o desafiado for um bot social */
       201: {
         headers: {
           [name: string]: unknown;
