@@ -170,6 +170,31 @@
   color: #64748b;
   font-size: 0.85rem;
 }
+.exerciseNav {
+  display: flex;
+  gap: 0.6rem;
+  margin: 0.35rem 0;
+}
+.exerciseNav button {
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  border-radius: 0.5rem;
+  background: var(--surface-2, #19191f);
+  color: var(--text, #f4f1eb);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.exerciseNav button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.reviewBanner {
+  margin: 0 0 0.5rem;
+  color: var(--gold, #d8b66c);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
 .fen {
   overflow-wrap: anywhere;
   background: #09090b;

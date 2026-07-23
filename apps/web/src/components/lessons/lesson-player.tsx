@@ -1,6 +1,6 @@
 'use client';
 
-import type { LessonActionInput, LessonAttemptView } from '@xadrez/contracts';
+import type { LessonActionInput, LessonAttemptView, PublicLessonStep } from '@xadrez/contracts';
 import { useEffect, useState } from 'react';
 
 import { ChessBoard } from '@/components/game/chess-board';
@@ -12,6 +12,12 @@ const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 export function LessonPlayer({ lessonId }: { lessonId: string }) {
   const { theme: pieceTheme } = usePieceTheme();
   const [attempt, setAttempt] = useState<LessonAttemptView | null>(null);
+  // Result of a quiz/move action, held back until the learner clicks
+  // "Continuar" so they always see the feedback before the step changes.
+  const [pendingAttempt, setPendingAttempt] = useState<LessonAttemptView | null>(null);
+  const [pendingFeedback, setPendingFeedback] = useState<string | null>(null);
+  const [stepHistory, setStepHistory] = useState<PublicLessonStep[]>([]);
+  const [viewingHistoryIndex, setViewingHistoryIndex] = useState<number | null>(null);
   const [answer, setAnswer] = useState('');
   const [message, setMessage] = useState('Carregando aula…');
 
@@ -37,12 +43,51 @@ export function LessonPlayer({ lessonId }: { lessonId: string }) {
     if (!token || !attempt) return;
     try {
       const value = await api.submitLessonAction(attempt.attemptId, action, token);
-      setAttempt(value);
-      setAnswer('');
-      setMessage(value.feedback ?? '');
+      if (action.type === 'continue') {
+        // Pure pagination: the click that triggered this already was the
+        // learner's deliberate confirmation, so advance immediately.
+        if (attempt.currentStep) setStepHistory((current) => [...current, attempt.currentStep!]);
+        setAttempt(value);
+        setAnswer('');
+        setMessage('');
+      } else {
+        // Quiz/move actions are implicit submissions with an evaluated
+        // result: hold the next step back until the learner acknowledges it.
+        setPendingAttempt(value);
+        setPendingFeedback(value.feedback ?? 'Registrado.');
+        setAnswer('');
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Não foi possível enviar a ação.');
     }
+  }
+
+  function acknowledgePending() {
+    if (!pendingAttempt) return;
+    if (attempt?.currentStep) setStepHistory((current) => [...current, attempt.currentStep!]);
+    setAttempt(pendingAttempt);
+    setPendingAttempt(null);
+    setPendingFeedback(null);
+  }
+
+  function viewPreviousStep() {
+    setStepHistory((current) => {
+      if (current.length === 0) return current;
+      setViewingHistoryIndex(current.length - 1);
+      return current;
+    });
+  }
+
+  function stepHistoryBack() {
+    setViewingHistoryIndex((index) => (index === null ? null : Math.max(0, index - 1)));
+  }
+
+  function stepHistoryForward() {
+    setViewingHistoryIndex((index) => {
+      if (index === null) return null;
+      if (index + 1 >= stepHistory.length) return null;
+      return index + 1;
+    });
   }
 
   if (!attempt) {
@@ -53,7 +98,10 @@ export function LessonPlayer({ lessonId }: { lessonId: string }) {
     );
   }
 
-  const step = attempt.currentStep;
+  const viewingHistory = viewingHistoryIndex !== null;
+  const step = viewingHistory ? stepHistory[viewingHistoryIndex]! : attempt.currentStep;
+  const readOnly = viewingHistory || Boolean(pendingAttempt);
+
   return (
     <main className="lessonPlayerPage">
       <header className="lessonHeader">
@@ -72,7 +120,28 @@ export function LessonPlayer({ lessonId }: { lessonId: string }) {
           }}
         />
       </div>
-      {attempt.status === 'completed' ? (
+      <div className="lessonStepNav">
+        <button
+          disabled={viewingHistory ? viewingHistoryIndex === 0 : stepHistory.length === 0}
+          onClick={viewingHistory ? stepHistoryBack : viewPreviousStep}
+          type="button"
+        >
+          ← Passo anterior
+        </button>
+        {viewingHistory ? (
+          <button onClick={stepHistoryForward} type="button">
+            {viewingHistoryIndex! + 1 < stepHistory.length
+              ? 'Próximo passo →'
+              : 'Voltar ao atual →'}
+          </button>
+        ) : null}
+      </div>
+      {viewingHistory ? (
+        <p className="lessonReviewBanner" role="status">
+          Revisando um passo já concluído.
+        </p>
+      ) : null}
+      {attempt.status === 'completed' && !viewingHistory ? (
         <section className="lessonComplete">
           <h2>Aula concluída</h2>
           <p>Nota: {attempt.score ?? 100}%</p>
@@ -85,7 +154,7 @@ export function LessonPlayer({ lessonId }: { lessonId: string }) {
           step.stepType === 'checkpoint' ||
           (step.stepType === 'quiz' && step.initialFen) ? (
             <ChessBoard
-              disabled={step.stepType === 'quiz'}
+              disabled={readOnly || step.stepType === 'quiz'}
               fen={step.initialFen ?? INITIAL_FEN}
               onMove={(uci) => void submit({ type: 'move', uci })}
               orientation={step.orientation ?? 'white'}
@@ -95,7 +164,7 @@ export function LessonPlayer({ lessonId }: { lessonId: string }) {
           <article className="lessonStepCard">
             <span>{step.stepType}</span>
             <p>{step.bodyMd}</p>
-            {step.stepType === 'quiz' ? (
+            {step.stepType === 'quiz' && !readOnly ? (
               <form
                 onSubmit={(event) => {
                   event.preventDefault();
@@ -111,7 +180,7 @@ export function LessonPlayer({ lessonId }: { lessonId: string }) {
                 </button>
               </form>
             ) : null}
-            {['text', 'explanation', 'summary'].includes(step.stepType) ? (
+            {['text', 'explanation', 'summary'].includes(step.stepType) && !readOnly ? (
               <button onClick={() => void submit({ type: 'continue' })} type="button">
                 Continuar
               </button>
@@ -121,6 +190,17 @@ export function LessonPlayer({ lessonId }: { lessonId: string }) {
             </p>
           </article>
         </section>
+      ) : null}
+      {pendingAttempt ? (
+        <div className="lessonResultOverlay" role="presentation">
+          <div aria-modal="true" className="lessonResultDialog" role="dialog">
+            <h2>Resultado registrado</h2>
+            <p>{pendingFeedback}</p>
+            <button onClick={acknowledgePending} type="button">
+              Continuar →
+            </button>
+          </div>
+        </div>
       ) : null}
     </main>
   );

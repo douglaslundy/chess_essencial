@@ -87,12 +87,16 @@ export function ExerciseTrainer({
   const [message, setMessage] = useState('Carregando exercícios…');
   const [startedAt, setStartedAt] = useState(0);
   const [boardLocked, setBoardLocked] = useState(false);
-  const [showRetryBanner, setShowRetryBanner] = useState(false);
   const [resultModal, setResultModal] = useState<'won' | 'lost' | null>(null);
   const [playerMoves, setPlayerMoves] = useState<string[]>([]);
   const [study, setStudy] = useState<ExerciseStudyContext | null>(null);
   const [studyOpen, setStudyOpen] = useState(true);
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
+  const [exerciseHistory, setExerciseHistory] = useState<
+    NonNullable<ExerciseTrainingView['currentExercise']>[]
+  >([]);
+  const [viewingExerciseAt, setViewingExerciseAt] = useState<number | null>(null);
+  const previousExerciseRef = useRef<ExerciseTrainingView['currentExercise'] | null>(null);
   const autoStarted = useRef(false);
   const announceSeq = useRef(0);
   const opponentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -185,7 +189,9 @@ export function ExerciseTrainer({
           window.localStorage.setItem(storageKey, value.sessionId);
         }
         resetAttemptUi();
-        setShowRetryBanner(false);
+        setExerciseHistory([]);
+        setViewingExerciseAt(null);
+        previousExerciseRef.current = null;
         setMessage(
           value.total ? 'Treino iniciado.' : 'Nenhum exercício disponível para este treino.',
         );
@@ -280,19 +286,14 @@ export function ExerciseTrainer({
       setTraining(attempt.training);
       resetAttemptUi();
       setLine('');
-      setShowRetryBanner(!attempt.correct);
-      setAnnouncement({
-        key: `attempt-${Date.now()}`,
-        text: attempt.correct ? 'Você conseguiu!' : 'Essa não era a jogada certa.',
-        tone: attempt.correct ? 'success' : 'danger',
-      });
-      setMessage(
-        attempt.correct
-          ? attempt.training?.status === 'completed'
-            ? 'Parabéns! Você concluiu todos os desafios.'
-            : `Correto. Próximo desafio liberado. Pontuação: ${attempt.score}.`
-          : 'Ainda não. Esse não era o lance certo.',
-      );
+      primeAudio();
+      if (attempt.correct) {
+        playVictorySound();
+        setResultModal('won');
+      } else {
+        playDefeatSound();
+        setResultModal('lost');
+      }
       if (!guided) setMetrics(await api.getExerciseMetrics(accessToken));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Falha ao avaliar tentativa.');
@@ -308,6 +309,37 @@ export function ExerciseTrainer({
   // the question so the student never answers blind.
   const showsStudy = Boolean(current && current.answerFormat === 'free_text');
   const currentId = current?.id ?? null;
+
+  // Whenever the live exercise actually changes (i.e. the previous one was
+  // solved), remember it so the learner can review it with "Anterior".
+  useEffect(() => {
+    const previous = previousExerciseRef.current;
+    if (previous && current && previous.id !== current.id) {
+      setExerciseHistory((history) => [...history, previous]);
+      setViewingExerciseAt(null);
+    }
+    previousExerciseRef.current = current ?? null;
+  }, [currentId]);
+
+  const viewedHistoryExercise =
+    viewingExerciseAt !== null ? exerciseHistory[viewingExerciseAt] : null;
+  const displayedExercise = viewedHistoryExercise ?? current;
+  const viewingHistory = viewedHistoryExercise !== null;
+
+  function viewPreviousExercise() {
+    if (exerciseHistory.length === 0) return;
+    setViewingExerciseAt((index) =>
+      index === null ? exerciseHistory.length - 1 : Math.max(0, index - 1),
+    );
+  }
+
+  function viewNextExercise() {
+    setViewingExerciseAt((index) => {
+      if (index === null) return null;
+      if (index + 1 >= exerciseHistory.length) return null;
+      return index + 1;
+    });
+  }
   useEffect(() => {
     let active = true;
     const accessToken = token();
@@ -350,7 +382,6 @@ export function ExerciseTrainer({
     )
       return;
     primeAudio();
-    setShowRetryBanner(false);
     try {
       const chess = new Chess(boardFen);
       const move = chess.move(uciToChessMove(uci));
@@ -579,23 +610,49 @@ export function ExerciseTrainer({
         {message}
       </p>
 
-      {current ? (
+      {displayedExercise ? (
         <section
           className={`${styles.training} ${guided ? styles.guidedTraining : ''}`}
           aria-label="Exercício atual"
         >
           <div className={styles.progress}>
-            Exercício {training.position} de {training.total}
+            Exercício {training?.position} de {training?.total}
           </div>
+          {exerciseHistory.length > 0 ? (
+            <div className={styles.exerciseNav}>
+              <button
+                disabled={viewingHistory ? viewingExerciseAt === 0 : false}
+                onClick={viewPreviousExercise}
+                type="button"
+              >
+                ← Exercício anterior
+              </button>
+              {viewingHistory ? (
+                <button onClick={viewNextExercise} type="button">
+                  {viewingExerciseAt !== null && viewingExerciseAt + 1 < exerciseHistory.length
+                    ? 'Próximo exercício →'
+                    : 'Voltar ao atual →'}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+          {viewingHistory ? (
+            <p className={styles.reviewBanner} role="status">
+              Revisando um exercício já resolvido.
+            </p>
+          ) : null}
           <span className={styles.badge}>
-            {current.positionType === 'illustrative_diagram'
+            {displayedExercise.positionType === 'illustrative_diagram'
               ? 'Diagrama ilustrativo'
-              : current.positionType === 'text_only'
+              : displayedExercise.positionType === 'text_only'
                 ? 'Exercício textual'
                 : 'Posição legal'}
           </span>
-          <h2>{current.title ?? `Exercício ${current.sourceNumber ?? ''}`}</h2>
-          {showsStudy && study && (study.teaching.length > 0 || study.sourcePages.length > 0) ? (
+          <h2>{displayedExercise.title ?? `Exercício ${displayedExercise.sourceNumber ?? ''}`}</h2>
+          {!viewingHistory &&
+          showsStudy &&
+          study &&
+          (study.teaching.length > 0 || study.sourcePages.length > 0) ? (
             <section className={styles.studyPanel} aria-label="Conteúdo de estudo">
               <button
                 aria-expanded={studyOpen}
@@ -627,102 +684,115 @@ export function ExerciseTrainer({
               ) : null}
             </section>
           ) : null}
-          <p>{current.promptMd}</p>
-          {boardFen ? (
-            <div className={styles.boardArea}>
-              <ChessBoard
-                disabled={
-                  current.positionType !== 'legal_position' ||
-                  boardLocked ||
-                  Boolean(boardHistory && boardHistory.index < boardHistory.moves.length)
-                }
-                fen={boardFen}
-                onMove={playBoardMove}
-                orientation="white"
-                pieceTheme={pieceTheme}
-              />
-              {current.positionType === 'legal_position' ? (
-                <div
-                  className={styles.boardControls}
-                  aria-label="Controles do histórico do exercício"
-                >
-                  <button
-                    className={styles.secondaryAction}
-                    disabled={!boardHistory || boardHistory.index === 0}
-                    onClick={() => moveBoardHistory(-1)}
-                    type="button"
-                  >
-                    ← Voltar lance
-                  </button>
-                  <button
-                    className={styles.secondaryAction}
-                    disabled={!boardHistory || boardHistory.index >= boardHistory.moves.length}
-                    onClick={() => moveBoardHistory(1)}
-                    type="button"
-                  >
-                    ↻ Repetir lance
-                  </button>
+          <p>{displayedExercise.promptMd}</p>
+          {viewingHistory
+            ? displayedExercise.fen && (
+                <div className={styles.boardArea}>
+                  <ChessBoard
+                    disabled
+                    fen={displayedExercise.fen}
+                    onMove={() => undefined}
+                    orientation="white"
+                    pieceTheme={pieceTheme}
+                  />
                 </div>
-              ) : null}
-              {!guided ? (
-                <details>
-                  <summary>Ver posição FEN</summary>
-                  <code className={styles.fen}>{current.fen}</code>
-                </details>
-              ) : null}
-            </div>
-          ) : (
+              )
+            : boardFen && (
+                <div className={styles.boardArea}>
+                  <ChessBoard
+                    disabled={
+                      current!.positionType !== 'legal_position' ||
+                      boardLocked ||
+                      Boolean(boardHistory && boardHistory.index < boardHistory.moves.length)
+                    }
+                    fen={boardFen}
+                    onMove={playBoardMove}
+                    orientation="white"
+                    pieceTheme={pieceTheme}
+                  />
+                  {current!.positionType === 'legal_position' ? (
+                    <div
+                      className={styles.boardControls}
+                      aria-label="Controles do histórico do exercício"
+                    >
+                      <button
+                        className={styles.secondaryAction}
+                        disabled={!boardHistory || boardHistory.index === 0}
+                        onClick={() => moveBoardHistory(-1)}
+                        type="button"
+                      >
+                        ← Voltar lance
+                      </button>
+                      <button
+                        className={styles.secondaryAction}
+                        disabled={!boardHistory || boardHistory.index >= boardHistory.moves.length}
+                        onClick={() => moveBoardHistory(1)}
+                        type="button"
+                      >
+                        ↻ Repetir lance
+                      </button>
+                    </div>
+                  ) : null}
+                  {!guided ? (
+                    <details>
+                      <summary>Ver posição FEN</summary>
+                      <code className={styles.fen}>{current!.fen}</code>
+                    </details>
+                  ) : null}
+                </div>
+              )}
+          {!viewingHistory && !boardFen ? (
             <p className={styles.textOnlyNotice}>
               Este exercício do livro não contém uma posição de tabuleiro associada.
             </p>
-          )}
-          {!guided && showRetryBanner ? (
-            <aside className={styles.incorrectFeedback}>
-              <span>Esse não era o lance certo.</span>
-              <button onClick={() => setShowRetryBanner(false)} type="button">
-                ↻ Tentar novamente
-              </button>
-            </aside>
           ) : null}
-          {hint ? (
+          {!viewingHistory && hint ? (
             <aside className={styles.feedback}>
               <strong>Dica:</strong> {hint}
             </aside>
           ) : null}
-          {solution ? (
+          {!viewingHistory && solution ? (
             <aside className={styles.feedback}>
               <strong>Solução:</strong> {solution.solutionMd}
             </aside>
           ) : null}
-          {!guided || !isPlayablePosition ? (
+          {!viewingHistory && (!guided || !isPlayablePosition) ? (
             <label className={styles.answer}>
-              {current.answerFormat === 'free_text'
+              {displayedExercise.answerFormat === 'free_text'
                 ? 'Resposta'
                 : 'Linha em UCI, separada por espaços'}
               <input
                 placeholder={
-                  current.answerFormat === 'free_text' ? 'Digite sua resposta' : 'e2e4 e7e5'
+                  displayedExercise.answerFormat === 'free_text'
+                    ? 'Digite sua resposta'
+                    : 'e2e4 e7e5'
                 }
                 onChange={(event) => setLine(event.target.value)}
                 value={line}
               />
             </label>
           ) : null}
-          <div className={styles.actions}>
-            {!guided || !isPlayablePosition ? (
-              <button className={styles.primaryAction} onClick={() => void submit()} type="button">
-                {guided ? 'Confirmar resposta' : 'Enviar tentativa'}
+          {!viewingHistory ? (
+            <div className={styles.actions}>
+              {!guided || !isPlayablePosition ? (
+                <button
+                  className={styles.primaryAction}
+                  onClick={() => void submit()}
+                  type="button"
+                >
+                  {guided ? 'Confirmar resposta' : 'Enviar tentativa'}
+                </button>
+              ) : null}
+              <button className={styles.secondaryAction} onClick={revealHint} type="button">
+                Pedir dica
               </button>
-            ) : null}
-            <button className={styles.secondaryAction} onClick={revealHint} type="button">
-              Pedir dica
-            </button>
-            {!guided ? (
-              <button className={styles.secondaryAction} onClick={revealSolution} type="button">
-                Ver solução
-              </button>
-            ) : null}
-          </div>
+              {!guided ? (
+                <button className={styles.secondaryAction} onClick={revealSolution} type="button">
+                  Ver solução
+                </button>
+              ) : null}
+            </div>
+          ) : null}
         </section>
       ) : training?.status === 'completed' ? (
         <section className={styles.training}>

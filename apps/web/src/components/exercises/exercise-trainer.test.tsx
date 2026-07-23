@@ -108,7 +108,7 @@ describe('ExerciseTrainer submission feedback', () => {
     vi.clearAllMocks();
   });
 
-  it('shows a success balloon after submitting a correct attempt', async () => {
+  it('opens the result modal with a continue button after a correct attempt', async () => {
     submitExerciseAttempt.mockResolvedValue({
       attemptId: '99000000-0000-4000-8000-000000000010',
       correct: true,
@@ -121,11 +121,11 @@ describe('ExerciseTrainer submission feedback', () => {
     fireEvent.change(screen.getByPlaceholderText('e2e4 e7e5'), { target: { value: 'e2e4' } });
     fireEvent.click(screen.getByRole('button', { name: 'Enviar tentativa' }));
 
-    expect(await screen.findByText(/Correto\. Próximo desafio liberado\./)).toBeTruthy();
-    expect(await screen.findByText('Você conseguiu!')).toBeTruthy();
+    expect(await screen.findByText('Você venceu!')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Próximo exercício/ })).toBeTruthy();
   });
 
-  it('shows a failure balloon after submitting an incorrect attempt', async () => {
+  it('opens the result modal with a retry button after an incorrect attempt', async () => {
     submitExerciseAttempt.mockResolvedValue({
       attemptId: '99000000-0000-4000-8000-000000000011',
       correct: false,
@@ -138,8 +138,8 @@ describe('ExerciseTrainer submission feedback', () => {
     fireEvent.change(screen.getByPlaceholderText('e2e4 e7e5'), { target: { value: 'e2e4' } });
     fireEvent.click(screen.getByRole('button', { name: 'Enviar tentativa' }));
 
-    expect(await screen.findByText('Ainda não. Esse não era o lance certo.')).toBeTruthy();
-    expect(await screen.findByText('Essa não era a jogada certa.')).toBeTruthy();
+    expect(await screen.findByText('Não foi dessa vez')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Tentar novamente/ })).toBeTruthy();
   });
 });
 
@@ -197,6 +197,39 @@ describe('ExerciseTrainer guided auto-grading modal', () => {
 
     expect(await screen.findByText('Não foi dessa vez')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Tentar novamente/ })).toBeTruthy();
+  });
+
+  it('lets the learner review the previous exercise after solving one', async () => {
+    const secondExercise = {
+      ...trainingView().currentExercise!,
+      id: '99000000-0000-4000-8000-000000000099',
+      promptMd: 'Segundo exercício da sessão.',
+    };
+    evaluateExerciseLine.mockResolvedValue({
+      status: 'solved',
+      opponentReply: null,
+      movesConfirmed: 1,
+      attempt: {
+        attemptId: '99000000-0000-4000-8000-000000000021',
+        correct: true,
+        hintsUsed: 0,
+        score: 100,
+        training: { ...trainingView(), currentExercise: secondExercise, position: 2 },
+      },
+    } satisfies EvaluateExerciseLineResult);
+
+    await renderGuided();
+    fireEvent.click(screen.getByRole('button', { name: 'play-board-move' }));
+    await screen.findByText('Você venceu!');
+    fireEvent.click(screen.getByRole('button', { name: /Próximo exercício/ }));
+
+    await screen.findByText('Segundo exercício da sessão.');
+    const previousButton = screen.getByRole('button', { name: /Exercício anterior/ });
+    expect(previousButton).toBeTruthy();
+
+    fireEvent.click(previousButton);
+    expect(await screen.findByText('Revisando um exercício já resolvido.')).toBeTruthy();
+    expect(screen.getByText('Jogue o melhor lance para as brancas.')).toBeTruthy();
   });
 });
 
