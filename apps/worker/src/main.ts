@@ -3,12 +3,14 @@ import postgres from 'postgres';
 
 import { runAutoAcceptFriendRequests } from './bots/auto-accept-job.js';
 import { runPresenceSchedule } from './bots/presence-job.js';
+import { runBotQueueJob } from './bots/queue-job.js';
 import { parseWorkerEnv } from './config/env.js';
 import { createHealthServer } from './health-server.js';
 import { createSystemWorker } from './system.worker.js';
 
 const PRESENCE_INTERVAL_MS = 60_000;
 const AUTO_ACCEPT_INTERVAL_MS = 10_000;
+const QUEUE_INTERVAL_MS = 30_000;
 
 const env = parseWorkerEnv(process.env);
 const worker = createSystemWorker(env.REDIS_URL);
@@ -40,11 +42,20 @@ const autoAcceptInterval = setInterval(() => {
   });
 }, AUTO_ACCEPT_INTERVAL_MS);
 
+const queueInterval = setInterval(() => {
+  runBotQueueJob(sql, redis).catch((error: unknown) => {
+    console.error('worker.bots.queue_failed', {
+      message: error instanceof Error ? error.message : String(error),
+    });
+  });
+}, QUEUE_INTERVAL_MS);
+
 healthServer.listen(env.WORKER_HEALTH_PORT, '0.0.0.0');
 
 async function shutdown() {
   clearInterval(presenceInterval);
   clearInterval(autoAcceptInterval);
+  clearInterval(queueInterval);
   healthServer.close();
   await worker.close();
   await redis.quit();

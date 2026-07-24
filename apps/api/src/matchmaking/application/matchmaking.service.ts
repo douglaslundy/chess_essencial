@@ -23,6 +23,12 @@ export class MatchmakingService {
       const game = await this.games.createBotGame(userId, input);
       return { ...result, gameId: game.id, status: 'matched' as const };
     }
+    // A no-op unless the matched candidate turned out to be an online bot
+    // persona sitting in the queue (see apps/worker/src/bots/queue-job.ts),
+    // which may now need to make the opening move.
+    if (result.status === 'matched' && result.gameId) {
+      await this.games.commitBotMoveIfNeeded(result.gameId);
+    }
     return result;
   }
 
