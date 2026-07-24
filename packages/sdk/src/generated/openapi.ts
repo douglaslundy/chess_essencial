@@ -1879,6 +1879,9 @@ export interface components {
     GamePlayer: {
       /** Format: uuid */
       userId: string;
+      username: string;
+      displayName: string;
+      avatarUrl: string | null;
       /** @enum {string} */
       color: 'white' | 'black';
       ratingBefore: number;

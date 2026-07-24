@@ -51,6 +51,12 @@ interface PlayerRow {
   userId: string;
 }
 
+interface PlayerStateRow extends PlayerRow {
+  avatarUrl: string | null;
+  displayName: string;
+  username: string;
+}
+
 export interface BotTurn {
   botUserId: string;
   currentFen: string;
@@ -1088,14 +1094,19 @@ export class GamesRepository {
     `;
     if (!game) throw new NotFoundException('Partida não encontrada');
 
-    const players = await query<PlayerRow[]>`
+    const players = await query<PlayerStateRow[]>`
       SELECT
-        user_id AS "userId",
-        color,
-        rating_before AS "ratingBefore"
+        game_players.user_id AS "userId",
+        game_players.color,
+        game_players.rating_before AS "ratingBefore",
+        users.username,
+        user_profiles.display_name AS "displayName",
+        user_profiles.avatar_url AS "avatarUrl"
       FROM game_players
-      WHERE game_id = ${gameId}
-      ORDER BY color DESC
+      JOIN users ON users.id = game_players.user_id
+      JOIN user_profiles ON user_profiles.user_id = game_players.user_id
+      WHERE game_players.game_id = ${gameId}
+      ORDER BY game_players.color DESC
     `;
 
     return {

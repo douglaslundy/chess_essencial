@@ -1967,9 +1967,12 @@ components:
       additionalProperties: false
     GamePlayer:
       type: object
-      required: [userId, color, ratingBefore]
+      required: [userId, username, displayName, avatarUrl, color, ratingBefore]
       properties:
         userId: {type: string, format: uuid}
+        username: {type: string}
+        displayName: {type: string}
+        avatarUrl: {type: [string, 'null']}
         color: {type: string, enum: [white, black]}
         ratingBefore: {type: integer}
       additionalProperties: false

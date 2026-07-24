@@ -116,8 +116,22 @@ function demoState(gameId: string): GameState {
     startedAt: new Date().toISOString(),
     finishedAt: null,
     players: [
-      { userId: '00000000-0000-4000-8000-000000000001', color: 'white', ratingBefore: 1524 },
-      { userId: '00000000-0000-4000-8000-000000000002', color: 'black', ratingBefore: 1587 },
+      {
+        avatarUrl: null,
+        color: 'white',
+        displayName: 'Você',
+        ratingBefore: 1524,
+        userId: '00000000-0000-4000-8000-000000000001',
+        username: 'demo_branco',
+      },
+      {
+        avatarUrl: null,
+        color: 'black',
+        displayName: 'Adversário (demo)',
+        ratingBefore: 1587,
+        userId: '00000000-0000-4000-8000-000000000002',
+        username: 'demo_preto',
+      },
     ],
   };
 }
@@ -424,7 +438,8 @@ export function GameRoom({ gameId }: { gameId: string }) {
 
       <aside className="playersColumn">
         <Player
-          color="black"
+          displayName={black?.displayName ?? 'Jogador preto'}
+          avatarUrl={black?.avatarUrl ?? null}
           rating={black?.ratingBefore ?? 0}
           active={state.sideToMove === 'black'}
           clock={displayedClock(state, 'black', serverOffset)}
@@ -450,7 +465,8 @@ export function GameRoom({ gameId }: { gameId: string }) {
           </div>
         ) : null}
         <Player
-          color="white"
+          displayName={white?.displayName ?? 'Jogador branco'}
+          avatarUrl={white?.avatarUrl ?? null}
           rating={white?.ratingBefore ?? 0}
           active={state.sideToMove === 'white'}
           clock={displayedClock(state, 'white', serverOffset)}
@@ -460,7 +476,11 @@ export function GameRoom({ gameId }: { gameId: string }) {
       <section className="boardColumn" aria-label="Área do tabuleiro">
         <div className="mobilePlayer">
           <Player
-            color={orientation === 'white' ? 'black' : 'white'}
+            displayName={
+              (orientation === 'white' ? black : white)?.displayName ??
+              (orientation === 'white' ? 'Jogador preto' : 'Jogador branco')
+            }
+            avatarUrl={(orientation === 'white' ? black : white)?.avatarUrl ?? null}
             rating={(orientation === 'white' ? black : white)?.ratingBefore ?? 0}
             active={state.sideToMove !== orientation}
             clock={displayedClock(state, orientation === 'white' ? 'black' : 'white', serverOffset)}
@@ -519,7 +539,11 @@ export function GameRoom({ gameId }: { gameId: string }) {
         ) : null}
         <div className="mobilePlayer">
           <Player
-            color={orientation}
+            displayName={
+              (orientation === 'white' ? white : black)?.displayName ??
+              (orientation === 'white' ? 'Jogador branco' : 'Jogador preto')
+            }
+            avatarUrl={(orientation === 'white' ? white : black)?.avatarUrl ?? null}
             rating={(orientation === 'white' ? white : black)?.ratingBefore ?? 0}
             active={state.sideToMove === orientation}
             clock={displayedClock(state, orientation, serverOffset)}
@@ -646,12 +670,14 @@ export function GameRoom({ gameId }: { gameId: string }) {
 }
 
 function Player({
-  color,
+  displayName,
+  avatarUrl,
   rating,
   active,
   clock,
 }: {
-  color: BoardOrientation;
+  displayName: string;
+  avatarUrl: string | null;
   rating: number;
   active: boolean;
   clock: number;
@@ -659,10 +685,15 @@ function Player({
   return (
     <article className={`playerCard ${active ? 'activePlayer' : ''}`}>
       <div className="playerAvatar" aria-hidden="true">
-        {color === 'white' ? 'B' : 'P'}
+        {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img alt="" className="playerAvatarImage" src={avatarUrl} />
+        ) : (
+          displayName.slice(0, 2).toUpperCase()
+        )}
       </div>
       <div className="playerMeta">
-        <strong>{color === 'white' ? 'Jogador branco' : 'Jogador preto'}</strong>
+        <strong>{displayName}</strong>
         <span>{rating} XE</span>
       </div>
       <time className="chessClock">{formatClock(clock)}</time>

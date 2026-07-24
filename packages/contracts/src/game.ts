@@ -46,6 +46,9 @@ export const gameStateSchema = z.object({
   players: z.array(
     z.object({
       userId: z.string().uuid(),
+      username: z.string(),
+      displayName: z.string(),
+      avatarUrl: z.string().nullable(),
       color: z.enum(['white', 'black']),
       ratingBefore: z.number().int(),
     }),
