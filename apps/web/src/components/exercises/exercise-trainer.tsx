@@ -49,7 +49,14 @@ function moveToUci(move: { from: string; promotion?: string | undefined; to: str
   return `${move.from}${move.to}${move.promotion ?? ''}`;
 }
 
-type ExerciseSource = 'all' | 'classic' | 'book';
+type ExerciseSource = 'all' | 'classic' | 'lichess' | 'book';
+
+// Each source filter (Todos/Clássicos/Livro) keeps its own session so
+// switching tabs and coming back resumes where the learner left off,
+// instead of starting a brand-new disposable batch every time.
+function sourceStorageKey(storageKey: string, src: ExerciseSource) {
+  return `${storageKey}:${src}`;
+}
 
 interface ExerciseTrainerProps {
   description?: string;
@@ -160,6 +167,7 @@ export function ExerciseTrainer({
     async (overrides?: { source?: ExerciseSource }) => {
       const accessToken = token();
       if (!accessToken) return;
+      const effectiveSource = overrides?.source ?? source;
       const search = filters(overrides);
       const parsedModule = search.get('module');
       try {
@@ -178,7 +186,7 @@ export function ExerciseTrainer({
                   }
                 : {}),
               ...(search.get('source')
-                ? { source: search.get('source') as 'classic' | 'book' }
+                ? { source: search.get('source') as 'classic' | 'lichess' | 'book' }
                 : {}),
             },
           },
@@ -186,7 +194,10 @@ export function ExerciseTrainer({
         );
         setTraining(value);
         if (guided) {
-          window.localStorage.setItem(storageKey, value.sessionId);
+          window.localStorage.setItem(
+            sourceStorageKey(storageKey, effectiveSource),
+            value.sessionId,
+          );
         }
         resetAttemptUi();
         setExerciseHistory([]);
@@ -199,39 +210,47 @@ export function ExerciseTrainer({
         setMessage(error instanceof Error ? error.message : 'Falha ao iniciar treino.');
       }
     },
-    [filters, guided, storageKey],
+    [filters, guided, source, storageKey],
+  );
+
+  const resumeOrStartSource = useCallback(
+    async (src: ExerciseSource) => {
+      const accessToken = token();
+      const key = sourceStorageKey(storageKey, src);
+      const savedSession = accessToken ? window.localStorage.getItem(key) : null;
+      if (accessToken && savedSession) {
+        try {
+          const saved = await api.getExerciseTraining(savedSession, accessToken);
+          setTraining(saved);
+          resetAttemptUi();
+          setExerciseHistory([]);
+          setViewingExerciseAt(null);
+          previousExerciseRef.current = null;
+          setMessage(
+            saved.status === 'completed'
+              ? 'Parabéns! Você concluiu todos os desafios.'
+              : 'Continuando de onde você parou.',
+          );
+          return;
+        } catch {
+          window.localStorage.removeItem(key);
+        }
+      }
+      await startTraining({ source: src });
+    },
+    [startTraining, storageKey],
   );
 
   useEffect(() => {
     if (!guided || autoStarted.current) return;
     autoStarted.current = true;
-    queueMicrotask(() => {
-      void (async () => {
-        const accessToken = token();
-        const savedSession = window.localStorage.getItem(storageKey);
-        if (accessToken && savedSession) {
-          try {
-            const saved = await api.getExerciseTraining(savedSession, accessToken);
-            setTraining(saved);
-            setStartedAt(Date.now());
-            setMessage(
-              saved.status === 'completed'
-                ? 'Parabéns! Você concluiu todos os desafios.'
-                : 'Continuando do último desafio liberado.',
-            );
-            return;
-          } catch {
-            window.localStorage.removeItem(storageKey);
-          }
-        }
-        await startTraining();
-      })();
-    });
-  }, [guided, startTraining, storageKey]);
+    // 'all' matches the source state's initial value.
+    queueMicrotask(() => void resumeOrStartSource('all'));
+  }, [guided, resumeOrStartSource]);
 
   function selectSource(next: ExerciseSource) {
     setSource(next);
-    void startTraining({ source: next });
+    void resumeOrStartSource(next);
   }
 
   useEffect(
@@ -264,7 +283,7 @@ export function ExerciseTrainer({
     }
   }
 
-  async function submit(submittedMoves?: string[]) {
+  async function submit(submittedMoves?: string[], selfAssessedCorrect?: boolean) {
     const accessToken = token();
     const exercise = training?.currentExercise;
     const submittedLine =
@@ -280,6 +299,7 @@ export function ExerciseTrainer({
           durationMs: Math.max(0, Date.now() - startedAt),
           submittedLine,
           trainingSessionId: training.sessionId,
+          ...(selfAssessedCorrect !== undefined ? { selfAssessedCorrect } : {}),
         },
         accessToken,
       );
@@ -550,7 +570,8 @@ export function ExerciseTrainer({
           {(
             [
               { label: 'Todos', value: 'all' },
-              { label: 'Clássicos', value: 'classic' },
+              { label: 'Mates clássicos', value: 'classic' },
+              { label: 'Banco Lichess', value: 'lichess' },
               { label: 'Livro', value: 'book' },
             ] as const
           ).map((option) => (
@@ -753,18 +774,25 @@ export function ExerciseTrainer({
           ) : null}
           {!viewingHistory && solution ? (
             <aside className={styles.feedback}>
-              <strong>Solução:</strong> {solution.solutionMd}
+              <strong>
+                {displayedExercise.answerFormat === 'free_text' ? 'Resposta do livro:' : 'Solução:'}
+              </strong>{' '}
+              {solution.solutionMd}
+              {displayedExercise.answerFormat === 'free_text' ? (
+                <p>Compare com o que você escreveu e diga se acertou a ideia.</p>
+              ) : null}
             </aside>
           ) : null}
           {!viewingHistory && (!guided || !isPlayablePosition) ? (
             <label className={styles.answer}>
               {displayedExercise.answerFormat === 'free_text'
-                ? 'Resposta'
+                ? 'Sua resposta'
                 : 'Linha em UCI, separada por espaços'}
               <input
+                disabled={Boolean(solution) && displayedExercise.answerFormat === 'free_text'}
                 placeholder={
                   displayedExercise.answerFormat === 'free_text'
-                    ? 'Digite sua resposta'
+                    ? 'Escreva sua resposta antes de ver o gabarito'
                     : 'e2e4 e7e5'
                 }
                 onChange={(event) => setLine(event.target.value)}
@@ -774,7 +802,35 @@ export function ExerciseTrainer({
           ) : null}
           {!viewingHistory ? (
             <div className={styles.actions}>
-              {!guided || !isPlayablePosition ? (
+              {displayedExercise.answerFormat === 'free_text' ? (
+                solution ? (
+                  <>
+                    <button
+                      className={styles.primaryAction}
+                      onClick={() => void submit(undefined, true)}
+                      type="button"
+                    >
+                      Acertei
+                    </button>
+                    <button
+                      className={styles.secondaryAction}
+                      onClick={() => void submit(undefined, false)}
+                      type="button"
+                    >
+                      Preciso revisar
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className={styles.primaryAction}
+                    disabled={!line.trim()}
+                    onClick={revealSolution}
+                    type="button"
+                  >
+                    Ver resposta do livro
+                  </button>
+                )
+              ) : !guided || !isPlayablePosition ? (
                 <button
                   className={styles.primaryAction}
                   onClick={() => void submit()}
@@ -786,7 +842,7 @@ export function ExerciseTrainer({
               <button className={styles.secondaryAction} onClick={revealHint} type="button">
                 Pedir dica
               </button>
-              {!guided ? (
+              {!guided && displayedExercise.answerFormat !== 'free_text' ? (
                 <button className={styles.secondaryAction} onClick={revealSolution} type="button">
                   Ver solução
                 </button>

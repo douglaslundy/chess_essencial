@@ -1242,7 +1242,7 @@ export interface components {
       lessonId?: string;
       positionType?: components['schemas']['ExercisePositionType'];
       /** @enum {string} */
-      source?: 'classic' | 'book';
+      source?: 'classic' | 'lichess' | 'book';
       /** @default 10 */
       limit: number;
     };
@@ -1266,6 +1266,7 @@ export interface components {
       trainingSessionId?: string;
       /** Format: uuid */
       lessonAttemptId?: string;
+      selfAssessedCorrect?: boolean;
     };
     ExerciseAttemptResult: {
       /** Format: uuid */
@@ -3738,7 +3739,7 @@ export interface operations {
         chapter?: number;
         lessonId?: string;
         positionType?: components['schemas']['ExercisePositionType'];
-        source?: 'classic' | 'book';
+        source?: 'classic' | 'lichess' | 'book';
         limit?: number;
         offset?: number;
       };

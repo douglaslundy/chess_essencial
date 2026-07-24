@@ -159,11 +159,23 @@ describeDatabase('exercise runtime database integration', () => {
     });
   });
 
-  it('evaluates free-text answers from the server reference', async () => {
+  it('requires self-assessment for free-text answers and records the verdict', async () => {
+    const missingVerdict = await app.inject({
+      headers: auth(),
+      method: 'POST',
+      payload: { durationMs: 500, submittedLine: ['My own words about the idea.'] },
+      url: `/v1/exercises/${textualExerciseId}/attempts`,
+    });
+    expect(missingVerdict.statusCode, missingVerdict.body).toBe(400);
+
     const response = await app.inject({
       headers: auth(),
       method: 'POST',
-      payload: { durationMs: 500, submittedLine: ['A reasoned answer.'] },
+      payload: {
+        durationMs: 500,
+        selfAssessedCorrect: true,
+        submittedLine: ['My own words about the idea.'],
+      },
       url: `/v1/exercises/${textualExerciseId}/attempts`,
     });
     expect(response.statusCode, response.body).toBe(201);

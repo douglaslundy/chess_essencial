@@ -29,5 +29,7 @@ pnpm --filter @xadrez/api db:rollback
 
 `0011_playable_challenges.down.sql` removes only the curated playable challenge catalog introduced by the matching up migration. User attempts are removed by the exercise foreign key cascade; imported book exercises remain untouched.
 
+`0024_resync_seed_demo_lesson_collision.down.sql` is a no-op: it clears a stale content-diff cache row so the next lesson import re-derives it automatically, there's nothing to restore.
+
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.

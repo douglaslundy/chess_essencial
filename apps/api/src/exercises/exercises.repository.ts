@@ -67,21 +67,10 @@ function lineIsLegal(exercise: AttemptExerciseRow, line: string[]) {
   }
 }
 
+// Only used for 'move_sequence' exercises; 'free_text' answers are graded by
+// the learner's own self-assessment (see attempt() below), since exact
+// string matching against open-ended prose is unwinnable.
 function answerIsCorrect(exercise: AttemptExerciseRow, submittedLine: string[]) {
-  if (exercise.answer_format === 'free_text') {
-    const submitted = submittedLine
-      .join(' ')
-      .normalize('NFKC')
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, ' ');
-    const expected = exercise.solution_md
-      .normalize('NFKC')
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, ' ');
-    return submitted === expected;
-  }
   if (!lineIsLegal(exercise, submittedLine)) return false;
   const submitted = normalizedLine(submittedLine);
   return exercise.solution_lines.some((solution) => {
@@ -123,7 +112,8 @@ export class ExercisesRepository {
          AND (${filter.positionType}::text IS NULL OR e.position_type = ${filter.positionType})
          AND (${filter.q}::text IS NULL OR concat_ws(' ', e.title, e.prompt_md, e.category, array_to_string(e.tags, ' ')) ILIKE '%' || ${filter.q} || '%')
          AND (${filter.source}::text IS NULL OR CASE ${filter.source}
-           WHEN 'classic' THEN 'classico' = ANY(e.tags)
+           WHEN 'classic' THEN 'classico' = ANY(e.tags) AND NOT ('lichess' = ANY(e.tags))
+           WHEN 'lichess' THEN 'lichess' = ANY(e.tags)
            WHEN 'book' THEN NOT ('classico' = ANY(e.tags)) AND NOT ('challenge' = ANY(e.tags))
            ELSE true END)
          AND (${filter.q}::text IS NOT NULL OR NOT ('challenge' = ANY(e.tags)))
@@ -145,7 +135,8 @@ export class ExercisesRepository {
          AND (${filter.positionType}::text IS NULL OR e.position_type = ${filter.positionType})
          AND (${filter.q}::text IS NULL OR concat_ws(' ', e.title, e.prompt_md, e.category, array_to_string(e.tags, ' ')) ILIKE '%' || ${filter.q} || '%')
          AND (${filter.source}::text IS NULL OR CASE ${filter.source}
-           WHEN 'classic' THEN 'classico' = ANY(e.tags)
+           WHEN 'classic' THEN 'classico' = ANY(e.tags) AND NOT ('lichess' = ANY(e.tags))
+           WHEN 'lichess' THEN 'lichess' = ANY(e.tags)
            WHEN 'book' THEN NOT ('classico' = ANY(e.tags)) AND NOT ('challenge' = ANY(e.tags))
            ELSE true END)
          AND (${filter.q}::text IS NOT NULL OR NOT ('challenge' = ANY(e.tags)))
@@ -193,7 +184,8 @@ export class ExercisesRepository {
                AND (${filter.positionType}::text IS NULL OR e.position_type = ${filter.positionType})
                AND (${filter.q}::text IS NULL OR concat_ws(' ', e.title, e.prompt_md, e.category, array_to_string(e.tags, ' ')) ILIKE '%' || ${filter.q} || '%')
                AND (${filter.source}::text IS NULL OR CASE ${filter.source}
-                 WHEN 'classic' THEN 'classico' = ANY(e.tags)
+                 WHEN 'classic' THEN 'classico' = ANY(e.tags) AND NOT ('lichess' = ANY(e.tags))
+                 WHEN 'lichess' THEN 'lichess' = ANY(e.tags)
                  WHEN 'book' THEN NOT ('classico' = ANY(e.tags)) AND NOT ('challenge' = ANY(e.tags))
                  ELSE true END)
                AND (${filter.q}::text IS NOT NULL OR NOT ('challenge' = ANY(e.tags)))
@@ -235,7 +227,7 @@ export class ExercisesRepository {
        WHERE s.id = ${sessionId} AND s.user_id = ${userId}
        GROUP BY s.id
     `;
-    if (!session) throw new NotFoundException('Training session not found');
+    if (!session) throw new NotFoundException('Sessão de treino não encontrada');
     const [current] = await sql<ExerciseRow[]>`
       SELECT e.id, e.source_number, e.module_number, e.chapter_number, e.title, e.prompt_md,
         COALESCE(e.import_metadata->>'answerFormat', 'move_sequence') AS answer_format, e.difficulty, e.category, e.fen, e.side_to_move, e.tags, e.position_type,
@@ -267,7 +259,7 @@ export class ExercisesRepository {
           ELSE ARRAY(SELECT generate_series(lower(e.source_pages), upper(e.source_pages) - 1)) END AS source_pages
         FROM exercises e WHERE e.id = ${exerciseId} AND e.status = 'published'
     `;
-    if (!exercise) throw new NotFoundException('Exercise not found');
+    if (!exercise) throw new NotFoundException('Exercício não encontrado');
 
     // The linked lesson (lowest position) that teaches this exercise supplies
     // the verified study text; its non-quiz steps are the teaching material and
@@ -286,11 +278,14 @@ export class ExercisesRepository {
        LIMIT 1
     `;
 
+    // 'quiz' and 'board_instruction' steps expect an interactive answer/move;
+    // this panel is read-only prose shown before the question, so only the
+    // passive teaching steps belong here.
     const teaching = lesson
       ? await sql<{ body_md: string; title: string | null }[]>`
           SELECT s.title, s.body_md
             FROM lesson_steps s
-           WHERE s.lesson_id = ${lesson.id} AND s.step_type <> 'quiz'
+           WHERE s.lesson_id = ${lesson.id} AND s.step_type NOT IN ('quiz', 'board_instruction')
            ORDER BY s.position
         `
       : [];
@@ -315,7 +310,7 @@ export class ExercisesRepository {
          AND i.hints_used < jsonb_array_length(e.hints)
        RETURNING e.hints, i.hints_used
     `;
-    if (!row) throw new NotFoundException('No hint is available for the current exercise');
+    if (!row) throw new NotFoundException('Nenhuma dica disponível para o exercício atual');
     return {
       hint: row.hints[row.hints_used - 1]!,
       hintNumber: row.hints_used,
@@ -332,7 +327,7 @@ export class ExercisesRepository {
          AND s.status = 'started' AND i.position = s.current_position AND e.id = i.exercise_id
        RETURNING e.solution_lines, e.solution_md
     `;
-    if (!row) throw new NotFoundException('Current exercise not found');
+    if (!row) throw new NotFoundException('Exercício atual não encontrado');
     return { solutionLines: row.solution_lines, solutionMd: row.solution_md };
   }
 
@@ -344,8 +339,20 @@ export class ExercisesRepository {
         e.solution_lines, e.solution_md, e.hints, '{}'::integer[] AS source_pages
         FROM exercises e WHERE e.id = ${exerciseId} AND e.status = 'published'
     `;
-    if (!exercise) throw new NotFoundException('Exercise not found');
-    const correct = answerIsCorrect(exercise, input.submittedLine);
+    if (!exercise) throw new NotFoundException('Exercício não encontrado');
+    // Free-text answers are open-ended prose ("explique em uma frase...");
+    // exact string matching against the book's model answer is essentially
+    // unwinnable, so the learner compares their own answer against the
+    // revealed solution and reports the verdict themselves.
+    if (exercise.answer_format === 'free_text' && input.selfAssessedCorrect === undefined) {
+      throw new BadRequestException(
+        'Autoavaliação obrigatória para exercícios de texto livre: revele a solução antes de responder',
+      );
+    }
+    const correct =
+      exercise.answer_format === 'free_text'
+        ? input.selfAssessedCorrect!
+        : answerIsCorrect(exercise, input.submittedLine);
 
     if (input.lessonAttemptId) {
       const [lessonAttempt] = await sql`
@@ -354,7 +361,7 @@ export class ExercisesRepository {
         WHERE la.id = ${input.lessonAttemptId} AND la.user_id = ${userId}
       `;
       if (!lessonAttempt)
-        throw new BadRequestException('Exercise is not linked to this lesson attempt');
+        throw new BadRequestException('Exercício não está vinculado a esta tentativa de aula');
     }
 
     const result = await sql.begin(async (transaction) => {
@@ -367,8 +374,7 @@ export class ExercisesRepository {
             AND s.status = 'started' AND i.position = s.current_position AND i.exercise_id = ${exerciseId}
           FOR UPDATE OF s, i
         `;
-        if (!item)
-          throw new BadRequestException('Exercise is not current in this training session');
+        if (!item) throw new BadRequestException('Exercício não é o atual nesta sessão de treino');
         hintsUsed = item.hints_used;
       }
       const score = correct ? Math.max(0, 100 - hintsUsed * 10) : 0;
@@ -418,7 +424,7 @@ export class ExercisesRepository {
          AND s.id = ${input.trainingSessionId} AND s.user_id = ${userId}
          AND s.status = 'started' AND i.position = s.current_position
     `;
-    if (!exercise) throw new NotFoundException('Exercise is not current in this training session');
+    if (!exercise) throw new NotFoundException('Exercício não é o atual nesta sessão de treino');
 
     const grade = gradePlayedMoves(exercise.solution_lines, input.playedMoves);
 

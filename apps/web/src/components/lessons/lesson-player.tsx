@@ -15,6 +15,15 @@ import { usePieceTheme } from '@/lib/piece-theme';
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
+const STEP_TYPE_LABEL: Record<PublicLessonStep['stepType'], string> = {
+  board_instruction: 'Movimente o tabuleiro',
+  checkpoint: 'Ponto de verificação',
+  explanation: 'Explicação',
+  quiz: 'Pergunta',
+  summary: 'Resumo',
+  text: 'Leitura',
+};
+
 export function LessonPlayer({ lessonId }: { lessonId: string }) {
   const { theme: pieceTheme } = usePieceTheme();
   const [attempt, setAttempt] = useState<LessonAttemptView | null>(null);
@@ -187,7 +196,7 @@ export function LessonPlayer({ lessonId }: { lessonId: string }) {
             />
           ) : null}
           <article className="lessonStepCard">
-            <span>{step.stepType}</span>
+            <span>{STEP_TYPE_LABEL[step.stepType]}</span>
             <p>{step.bodyMd}</p>
             {step.stepType === 'quiz' && !readOnly ? (
               <form

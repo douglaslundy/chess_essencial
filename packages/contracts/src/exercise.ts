@@ -17,7 +17,7 @@ export const exerciseSearchQuerySchema = z.object({
   offset: z.coerce.number().int().nonnegative().default(0),
   positionType: exercisePositionTypeSchema.optional(),
   q: z.string().trim().min(1).max(120).optional(),
-  source: z.enum(['classic', 'book']).optional(),
+  source: z.enum(['classic', 'lichess', 'book']).optional(),
 });
 
 export const exerciseSummarySchema = z.object({
@@ -64,6 +64,11 @@ export const exerciseTrainingViewSchema = z.object({
 export const submitExerciseAttemptInputSchema = z.object({
   durationMs: z.number().int().min(0).max(86_400_000),
   lessonAttemptId: z.string().uuid().optional(),
+  // Required when the exercise's answerFormat is 'free_text': the learner
+  // compares their own written answer against the revealed model answer and
+  // reports the verdict themselves, since open-ended prose can't be graded
+  // by exact string match.
+  selfAssessedCorrect: z.boolean().optional(),
   submittedLine: z.array(z.string().trim().min(2).max(20)).min(1).max(50),
   trainingSessionId: z.string().uuid().optional(),
 });

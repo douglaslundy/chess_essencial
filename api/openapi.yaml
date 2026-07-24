@@ -1064,7 +1064,7 @@ paths:
         - {name: chapter, in: query, schema: {type: integer, minimum: 1}}
         - {name: lessonId, in: query, schema: {type: string, format: uuid}}
         - {name: positionType, in: query, schema: {$ref: '#/components/schemas/ExercisePositionType'}}
-        - {name: source, in: query, schema: {type: string, enum: [classic, book]}}
+        - {name: source, in: query, schema: {type: string, enum: [classic, lichess, book]}}
         - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
         - {name: offset, in: query, schema: {type: integer, minimum: 0, default: 0}}
       responses:
@@ -1248,7 +1248,7 @@ components:
         chapter: {type: integer, minimum: 1}
         lessonId: {type: string, format: uuid}
         positionType: {$ref: '#/components/schemas/ExercisePositionType'}
-        source: {type: string, enum: [classic, book]}
+        source: {type: string, enum: [classic, lichess, book]}
         limit: {type: integer, minimum: 1, maximum: 50, default: 10}
     StartExerciseTrainingInput:
       type: object
@@ -1276,6 +1276,7 @@ components:
         durationMs: {type: integer, minimum: 0, maximum: 86400000}
         trainingSessionId: {type: string, format: uuid}
         lessonAttemptId: {type: string, format: uuid}
+        selfAssessedCorrect: {type: boolean}
     ExerciseAttemptResult:
       type: object
       required: [attemptId, correct, score, hintsUsed, training]

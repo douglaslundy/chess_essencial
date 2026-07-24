@@ -1,0 +1,3 @@
+-- No-op: the deleted lesson_versions snapshot is regenerated automatically
+-- the next time db:import-lessons runs, with the correct chapter 1 content.
+-- There is nothing meaningful to restore.
