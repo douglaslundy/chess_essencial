@@ -51,6 +51,10 @@ export class MatchmakingService {
     return result;
   }
 
+  listChallenges(userId: string) {
+    return this.matchmaking.listChallenges(userId);
+  }
+
   async respondChallenge(userId: string, challengeId: string, input: RespondChallengeInput) {
     const result = await this.matchmaking.respondChallenge(userId, challengeId, input);
     // A no-op unless the accepted opponent turned out to be a bot persona

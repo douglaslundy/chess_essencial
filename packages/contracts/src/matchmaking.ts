@@ -45,6 +45,24 @@ export const respondChallengeInputSchema = z.object({
   accept: z.boolean(),
 });
 
+export const directChallengeSchema = z.object({
+  id: z.string().uuid(),
+  counterpart: z.object({
+    displayName: z.string(),
+    userId: z.string().uuid(),
+    username: z.string(),
+  }),
+  challengerColor: z.enum(['white', 'black']).nullable(),
+  timeControlCode: timeControlCodeSchema,
+  createdAt: z.string().datetime(),
+  expiresAt: z.string().datetime(),
+});
+
+export const directChallengesViewSchema = z.object({
+  incoming: z.array(directChallengeSchema),
+  outgoing: z.array(directChallengeSchema),
+});
+
 export const queueStatusSchema = z.object({
   status: z.enum(['queued', 'matched']),
   pool: ratingPoolSchema,
@@ -64,3 +82,5 @@ export type JoinQueueInput = z.infer<typeof joinQueueInputSchema>;
 export type QueueStatus = z.infer<typeof queueStatusSchema>;
 export type RatingPool = z.infer<typeof ratingPoolSchema>;
 export type RespondChallengeInput = z.infer<typeof respondChallengeInputSchema>;
+export type DirectChallenge = z.infer<typeof directChallengeSchema>;
+export type DirectChallengesView = z.infer<typeof directChallengesViewSchema>;

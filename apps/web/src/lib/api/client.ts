@@ -5,6 +5,7 @@ import type {
   UpdateAdminUserStatusInput,
   CreateBotGameInput,
   CreateChallengeInput,
+  DirectChallengesView,
   CourseDetail,
   CourseProgress,
   CourseSummary,
@@ -424,6 +425,14 @@ export const api = {
       '/matchmaking/challenges',
       token,
       { method: 'POST', body: JSON.stringify(input) },
+    ),
+  listDirectChallenges: (token: string) =>
+    request<DirectChallengesView>('/matchmaking/challenges', token),
+  respondDirectChallenge: (challengeId: string, accept: boolean, token: string) =>
+    request<{ gameId?: string; id: string; status: 'accepted' | 'declined' }>(
+      `/matchmaking/challenges/${challengeId}/respond`,
+      token,
+      { method: 'POST', body: JSON.stringify({ accept }) },
     ),
   leaveQueue: (token: string) => request<void>('/matchmaking/queues', token, { method: 'DELETE' }),
   resign: (gameId: string, token: string) =>

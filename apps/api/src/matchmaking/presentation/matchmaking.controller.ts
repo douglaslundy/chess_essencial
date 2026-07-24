@@ -4,7 +4,7 @@ import {
   joinQueueInputSchema,
   respondChallengeInputSchema,
 } from '@xadrez/contracts';
-import { Body, Controller, Delete, HttpCode, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { z } from 'zod';
 
 import { AccessTokenGuard, type AuthenticatedRequest } from '../../auth/access-token.guard.js';
@@ -41,6 +41,11 @@ export class MatchmakingController {
       request.auth.userId,
       parseInput(createChallengeInputSchema, body),
     );
+  }
+
+  @Get('challenges')
+  listChallenges(@Req() request: AuthenticatedRequest) {
+    return this.matchmaking.listChallenges(request.auth.userId);
   }
 
   @Post('challenges/:challengeId/respond')
