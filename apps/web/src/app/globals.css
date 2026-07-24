@@ -2006,6 +2006,23 @@ input:focus-visible {
   background: #d8b85f;
   transition: width 0.25s ease;
 }
+.lessonCourseNav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.75rem 0;
+}
+.lessonCourseNav .secondaryAction {
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 0.45rem 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+}
 .lessonStepNav {
   display: flex;
   gap: 0.6rem;

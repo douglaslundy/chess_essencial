@@ -21,6 +21,11 @@ const sections = [
     title: 'Configuração de e-mail (SMTP)',
     description: 'Definir o servidor SMTP usado para verificação de conta e redefinição de senha.',
   },
+  {
+    href: '/app/admin/mercado-pago',
+    title: 'Configuração de pagamento (Mercado Pago)',
+    description: 'Chaves de acesso do Mercado Pago para processar pagamentos, sem redeploy.',
+  },
 ];
 
 export default function AdminHubPage() {

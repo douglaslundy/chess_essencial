@@ -124,6 +124,7 @@ describeDatabase('lesson runtime database integration', () => {
     expect(overview.json().firstStep.stepKey).toBe('boas-vindas');
     expect(overview.json().courseSlug).toBe('xadrez-essencial');
     expect(typeof overview.json().nextLessonId).toBe('string');
+    expect(typeof overview.json().previousLessonId).toBe('string');
     expect(overview.body).not.toContain('expectedActions');
     expect(overview.body).not.toContain('mova-o-peao');
 

@@ -40,6 +40,8 @@ import type {
   LessonOverview,
   JoinQueueInput,
   LoginInput,
+  MercadoPagoConnectionTestResult,
+  MercadoPagoSettings,
   PublicUser,
   QueueStatus,
   RatingPool,
@@ -52,6 +54,7 @@ import type {
   SendTestEmailInput,
   SmtpSettings,
   TokenPair,
+  UpdateMercadoPagoSettingsInput,
   UpdateSmtpSettingsInput,
   UpdateMeInput,
   UploadAvatarInput,
@@ -215,10 +218,14 @@ async function requestText(path: string, token: string): Promise<string> {
 }
 export const api = {
   register: (input: RegisterInput) =>
-    request<{ user: PublicUser; verificationToken?: string }>('/auth/register', undefined, {
-      method: 'POST',
-      body: JSON.stringify(input),
-    }),
+    request<{ emailSent: boolean; user: PublicUser; verificationToken?: string }>(
+      '/auth/register',
+      undefined,
+      {
+        method: 'POST',
+        body: JSON.stringify(input),
+      },
+    ),
   resendVerification: (input: ResendVerificationInput) =>
     request<void>('/auth/resend-verification', undefined, {
       method: 'POST',
@@ -374,6 +381,21 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(input),
     }),
+  adminGetMercadoPagoSettings: (token: string) =>
+    request<MercadoPagoSettings>('/admin/settings/mercado-pago', token),
+  adminUpdateMercadoPagoSettings: (input: UpdateMercadoPagoSettingsInput, token: string) =>
+    request<MercadoPagoSettings>('/admin/settings/mercado-pago', token, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    }),
+  adminTestMercadoPagoConnection: (token: string) =>
+    request<MercadoPagoConnectionTestResult>(
+      '/admin/settings/mercado-pago/test-connection',
+      token,
+      {
+        method: 'POST',
+      },
+    ),
   getExerciseMetrics: (token: string) => request<ExerciseMetrics>('/exercise-metrics', token),
   getHistory: (query: URLSearchParams, token: string) =>
     request<GameHistoryPage>(`/games?${query.toString()}`, token),

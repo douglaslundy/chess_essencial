@@ -9,11 +9,17 @@ export {
   type UploadPostPhotoResult,
 } from './feed.js';
 export {
+  mercadoPagoConnectionTestResultSchema,
+  mercadoPagoSettingsSchema,
   sendTestEmailInputSchema,
   smtpSettingsSchema,
+  updateMercadoPagoSettingsInputSchema,
   updateSmtpSettingsInputSchema,
+  type MercadoPagoConnectionTestResult,
+  type MercadoPagoSettings,
   type SendTestEmailInput,
   type SmtpSettings,
+  type UpdateMercadoPagoSettingsInput,
   type UpdateSmtpSettingsInput,
 } from './settings.js';
 export {

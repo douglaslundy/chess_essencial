@@ -32,6 +32,7 @@ export const lessonOverviewSchema = z.object({
   lessonId: z.string().uuid(),
   module: z.number().int().min(1).max(10),
   nextLessonId: z.string().uuid().nullable(),
+  previousLessonId: z.string().uuid().nullable(),
   title: z.string(),
 });
 

@@ -47,7 +47,9 @@ export default function AuthPage() {
         setMessage(
           result.verificationToken
             ? 'Conta confirmada no ambiente local. Faça login.'
-            : 'Cadastro criado. Confira seu e-mail para confirmar a conta.',
+            : result.emailSent
+              ? 'Cadastro criado. Confira seu e-mail para confirmar a conta.'
+              : 'Cadastro criado, mas não conseguimos enviar o e-mail de confirmação agora. Tente reenviar mais tarde ou fale com o suporte.',
         );
       } else {
         const result = await api.login({

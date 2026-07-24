@@ -554,6 +554,41 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/admin/settings/mercado-pago': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Mercado Pago payment settings (admin only) */
+    get: operations['adminGetMercadoPagoSettings'];
+    /** Update Mercado Pago payment settings (admin only) */
+    put: operations['adminUpdateMercadoPagoSettings'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/settings/mercado-pago/test-connection': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Verify the configured Mercado Pago access token (admin only) */
+    post: operations['adminTestMercadoPagoConnection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/admin/users/{userId}/status': {
     parameters: {
       query?: never;
@@ -1334,6 +1369,8 @@ export interface components {
       courseSlug: string;
       /** Format: uuid */
       nextLessonId: string | null;
+      /** Format: uuid */
+      previousLessonId: string | null;
     };
     StartLessonAttemptInput: {
       /** Format: uuid */
@@ -1534,6 +1571,22 @@ export interface components {
       /** Format: email */
       toEmail: string;
     };
+    MercadoPagoSettings: {
+      /** @enum {string} */
+      environment: 'sandbox' | 'production';
+      hasAccessToken: boolean;
+      publicKey: string | null;
+    };
+    UpdateMercadoPagoSettingsInput: {
+      accessToken?: string | null;
+      /** @enum {string} */
+      environment: 'sandbox' | 'production';
+      publicKey: string | null;
+    };
+    MercadoPagoConnectionTestResult: {
+      accountEmail: string | null;
+      connected: boolean;
+    };
     /** @enum {string} */
     ReportCategory: 'cheating' | 'harassment' | 'spam' | 'inappropriate_profile' | 'other';
     CreateReportInput:
@@ -1706,6 +1759,8 @@ export interface components {
       refreshTokenExpiresIn: number;
     };
     RegistrationResponse: {
+      /** @description False when the account was created but the verification email failed to send (e.g. SMTP not configured yet). */
+      emailSent: boolean;
       user: components['schemas']['PublicUser'];
       /** @description Presente somente quando a simulação local está habilitada. */
       verificationToken?: string;
@@ -2910,6 +2965,79 @@ export interface operations {
           'application/json': {
             sent: boolean;
           };
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      503: components['responses']['Problem'];
+    };
+  };
+  adminGetMercadoPagoSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Current Mercado Pago settings */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MercadoPagoSettings'];
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  adminUpdateMercadoPagoSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateMercadoPagoSettingsInput'];
+      };
+    };
+    responses: {
+      /** @description Updated Mercado Pago settings */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MercadoPagoSettings'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  adminTestMercadoPagoConnection: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Connection verified */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MercadoPagoConnectionTestResult'];
         };
       };
       400: components['responses']['Problem'];

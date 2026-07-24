@@ -1,10 +1,17 @@
-import type { SmtpSettings, UpdateSmtpSettingsInput } from '@xadrez/contracts';
-import { Injectable } from '@nestjs/common';
+import type {
+  MercadoPagoConnectionTestResult,
+  MercadoPagoSettings,
+  SmtpSettings,
+  UpdateMercadoPagoSettingsInput,
+  UpdateSmtpSettingsInput,
+} from '@xadrez/contracts';
+import { BadRequestException, Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { SettingsRepository } from './settings.repository.js';
 
 const SMTP_SETTINGS_KEY = 'smtp';
+const MERCADO_PAGO_SETTINGS_KEY = 'payment.mercado_pago';
 
 export interface StoredSmtpConfig {
   fromAddress: string;
@@ -14,6 +21,12 @@ export interface StoredSmtpConfig {
   port: number;
   secure: boolean;
   username: string | null;
+}
+
+export interface StoredMercadoPagoConfig {
+  accessToken: string | null;
+  environment: 'sandbox' | 'production';
+  publicKey: string | null;
 }
 
 @Injectable()
@@ -71,5 +84,52 @@ export class SettingsService {
       secure: url.searchParams.get('secure') === 'true',
       username: url.username ? decodeURIComponent(url.username) : null,
     };
+  }
+
+  async getMercadoPagoSettings(): Promise<MercadoPagoSettings> {
+    const stored = await this.settings.get<StoredMercadoPagoConfig>(MERCADO_PAGO_SETTINGS_KEY);
+    return {
+      environment: stored?.environment ?? 'sandbox',
+      hasAccessToken: Boolean(stored?.accessToken),
+      publicKey: stored?.publicKey ?? null,
+    };
+  }
+
+  async updateMercadoPagoSettings(
+    input: UpdateMercadoPagoSettingsInput,
+    userId: string,
+  ): Promise<MercadoPagoSettings> {
+    const existing = await this.settings.get<StoredMercadoPagoConfig>(MERCADO_PAGO_SETTINGS_KEY);
+    const next: StoredMercadoPagoConfig = {
+      accessToken: input.accessToken || existing?.accessToken || null,
+      environment: input.environment,
+      publicKey: input.publicKey,
+    };
+    await this.settings.set(MERCADO_PAGO_SETTINGS_KEY, next, userId);
+    return this.getMercadoPagoSettings();
+  }
+
+  async testMercadoPagoConnection(): Promise<MercadoPagoConnectionTestResult> {
+    const stored = await this.settings.get<StoredMercadoPagoConfig>(MERCADO_PAGO_SETTINGS_KEY);
+    if (!stored?.accessToken)
+      throw new BadRequestException('Configure o access token do Mercado Pago antes de testar.');
+    let response: Response;
+    try {
+      response = await fetch('https://api.mercadopago.com/users/me', {
+        headers: { Authorization: `Bearer ${stored.accessToken}` },
+      });
+    } catch (error) {
+      throw new ServiceUnavailableException(
+        error instanceof Error
+          ? `Não foi possível contatar o Mercado Pago: ${error.message}`
+          : 'Não foi possível contatar o Mercado Pago.',
+      );
+    }
+    if (!response.ok)
+      throw new ServiceUnavailableException(
+        `Mercado Pago recusou as credenciais (HTTP ${response.status}). Verifique o access token e o ambiente (sandbox/produção).`,
+      );
+    const body = (await response.json()) as { email?: string };
+    return { accountEmail: body.email ?? null, connected: true };
   }
 }

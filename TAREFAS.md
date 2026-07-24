@@ -108,7 +108,7 @@ Concluídos depois (todos deployados):
 
 Pendências restantes:
 
-- [ ] **Aulas — botão "aula anterior"/navegação prev/next entre aulas** (requer sequência exposta pela API).
+- [x] **Aulas — botão "aula anterior"/navegação prev/next entre aulas (2026-07-24).** API (`GET /v1/lessons/:id`) agora expõe `previousLessonId` além do já existente `nextLessonId`, calculado na mesma CTE ordenada por `course_modules.position, lessons.position` (`lesson-runtime.repository.ts`). Frontend (`lesson-player.tsx`) ganhou uma barra de navegação "← Aula anterior / Próxima aula →" visível durante toda a aula (antes só existia o link de próxima aula na tela de conclusão, que continua lá também).
 - [ ] **SMTP real:** UI de configuração pronta (ver acima); falta o usuário inserir credenciais SMTP reais em produção para os e-mails passarem a sair de fato.
 
 ### Lote 2 — rede social, bots, monetização (2026-07-22/23)
@@ -125,7 +125,9 @@ Ordem aprovada pelo usuário: A→I, com SMTP e config de pagamento inseridos no
 - [x] **Config de SMTP via UI** (ver seção acima) — inserida no meio da fila a pedido do usuário, concluída antes de retomar o lote 2.
 - [x] **Fix (2026-07-24): lote de bugs de exercícios/aulas.** Aula demo do seed.ts corrompendo o capítulo 1 real (colisão de vaga módulo1/posição1 + cache de diff do importador não detectava a sobrescrita externa; migration `0024`), exercícios do livro (todos `free_text`) exigindo bater o gabarito exato sem dica cadastrada — agora com autoavaliação (usuário revela a resposta do livro e marca se acertou), mensagens de erro do backend de exercícios em inglês traduzidas, painel de estudo não herda mais passos `board_instruction` sem tabuleiro, progressão de exercícios não reseta mais ao trocar de aba de origem, rótulo `board_instruction` cru traduzido na aula. Ver `PROGRESSO.md`.
 - [x] **Separar/filtrar exercícios "Clássicos" por origem (mates procedurais × 8.003 puzzles do Lichess) — 2026-07-24.** Usuário optou por estender o filtro de abas existente em vez de criar página nova. Nova 4ª aba "Banco Lichess" em `/app/exercicios` ao lado de "Todos/Mates clássicos/Livro"; backend (`source` no contrato `ExerciseSearchQuery`/`ExerciseTrainingFilters`, `api/openapi.yaml`) ganhou o valor `lichess` (`'lichess' = ANY(e.tags)`), e "Mates clássicos" agora exclui explicitamente quem tem a tag `lichess` (antes os dois lotes ficavam misturados sob `classico`). Reaproveita a correção de progressão por aba feita mais cedo na sessão.
-- [ ] **Config de plataforma de pagamento (Mercado Pago) via UI admin** — inserir/editar chaves sem redeploy; pendente, próximo item após SMTP.
+- [x] **Fix crítico (2026-07-24): cadastro público retornava 503 sempre que o e-mail de verificação falhava.** Descoberto ao criar uma conta a pedido do usuário: `register()` criava a linha do usuário e SÓ DEPOIS tentava enviar o e-mail de verificação — como o SMTP real de produção ainda não está configurado, `VerificationEmailService.send()` lança `ServiceUnavailableException` em produção, e como não havia `try/catch`, a requisição inteira falhava com 503 mesmo com a conta já criada no banco (ou seja, TODO cadastro novo no site estava falhando visivelmente enquanto parecia não ter feito nada). Corrigido: `register()` agora captura a falha de envio, retorna sucesso (201) com um novo campo `emailSent: boolean`, e a tela de cadastro mostra uma mensagem clara quando o e-mail não pôde ser enviado, em vez de um erro cru. Contrato (`RegistrationResponse`), `api/openapi.yaml`, `auth.service.ts` e `entrar/page.tsx` atualizados; teste novo em `auth.service.test.ts` cobre o caminho de falha de e-mail.
+- [x] **Incidente operacional (2026-07-24): conta `pedrolucasfacil@gmail.com` presa em "pendente" por causa do bug acima.** Usuário pediu pra eu criar essa conta; ela ficou travada (pendente, sem e-mail entregue) até o fix acima. Ativada manualmente em produção via `docker compose exec postgres psql` na VPS (mesmo UPDATE que `activateUser()` faria: `status='active'`, `email_verified_at=now()`), a pedido explícito do usuário ("faça diretamente no banco"). A conta real ficou com usuário `Pedro` (o próprio usuário se cadastrou pelo site enquanto eu diagnosticava, com um nome de usuário diferente do que tinha me passado). Uma conta de teste criada por engano durante o diagnóstico (`pedrolucas_x` / `pedrolucasfacil-status-check@gmail.com`) foi soft-deletada (`status='deleted'`) pelo mesmo caminho.
+- [x] **Config de plataforma de pagamento (Mercado Pago) via UI admin (2026-07-24).** Mesmo padrão do SMTP: `/app/admin/mercado-pago` (ambiente sandbox/produção, public key, access token mascarado — só mostra se está configurado, nunca o valor — e botão "Testar conexão" que confirma as credenciais direto na API do Mercado Pago via `GET /users/me`), backend `GET/PUT /admin/settings/mercado-pago` + `POST /admin/settings/mercado-pago/test-connection`, reaproveitando a tabela genérica `platform_settings` (chave `payment.mercado_pago`, sem migration nova). Cobre só a config de chaves — o checkout/integração de pagamento em si é a SP-I, ainda não iniciada.
 - [ ] **SP-F — Assinaturas/planos** (ainda não iniciado).
 - [ ] **SP-G — Códigos de indicação** (ainda não iniciado).
 - [ ] **SP-H — Dashboard admin com métricas** (ainda não iniciado).
@@ -140,3 +142,53 @@ Escolher a tecnologia e o escopo do primeiro aplicativo após as Fases 15 e 16.
 ### Gate de decisão
 
 Não iniciar sem aprovação explícita de tecnologia, plataformas alvo, distribuição e escopo do MVP mobile.
+
+## Fase 19 — Motor de xadrez real (pré-requisito compartilhado das Fases 20 e 21)
+
+### Objetivo
+
+Dar à plataforma uma fonte de avaliação de posição/lance forte o suficiente para classificar a qualidade de um lance (excelente/bom/imprecisão/erro/gafe/oportunidade perdida) e sugerir o melhor lance com justificativa — coisa que hoje NÃO existe no código.
+
+### Por que esta fase existe (achado da pesquisa de 2026-07-24)
+
+O único "avaliador" hoje é `packages/chess-domain/src/bot-move.ts` (`evaluate()`/`scoreMove()`/`selectBotMove()`): material + bônus de casas centrais + mobilidade, com no máximo 1 lance de profundidade de busca (usado só para o bot escolher uma jogada plausível por faixa de rating). Isso é suficiente para um adversário bot, mas raso demais para classificar lances ou explicar "por quê" um lance é bom — precisa de um motor de verdade (nível Stockfish), que não existe no projeto hoje (nenhum binário/WASM/cliente UCI em nenhum `package.json`, `compose.yml` ou `Dockerfile*`).
+
+Pontos a favor de fazer esta fase primeiro e separada: as Fases 20 (revisão de partida) e 21 (treinador) dependem exatamente da mesma capacidade (avaliar uma posição em centipawns e obter o melhor lance); construir isso uma vez, testado e isolado, evita duplicar integração de motor em dois lugares.
+
+### Gate de decisão — RESOLVIDO em 2026-07-24
+
+Decisão do usuário: **arquitetura híbrida**. Stockfish WASM no navegador para o aviso "rápido" do treinador durante a partida (precisa parecer instantâneo) + motor no servidor, em fila assíncrona no worker, para a revisão completa pós-partida (pode demorar alguns segundos sem problema). Sem custo fixo extra de servidor para a parte em tempo real; a parte assíncrona roda no worker existente.
+
+### Entregáveis
+
+- [x] Escolha de arquitetura registrada aqui (decisão do usuário, 2026-07-24: híbrida).
+- [ ] Integração do motor (avaliação de posição em centipawns + busca de melhor lance com profundidade configurável) — WASM no cliente (`apps/web`) + instância no worker (`apps/worker`) para o job assíncrono.
+- [ ] Definição explícita dos limiares de classificação de lance (perda de centipawns por faixa: excelente/bom/imprecisão/erro/gafe — mesmo espírito do lichess/chess.com) e do que conta como "oportunidade perdida" (havia um lance vencedor/muito melhor e o jogador não jogou).
+- [ ] Serviço/utilitário reaproveitável (`packages/chess-domain` ou novo pacote) exposto tanto para o job assíncrono do worker (Fase 20) quanto para checagem em tempo real (Fase 21).
+
+## Fase 20 — Revisão de partida pós-jogo (P1; depende da Fase 19)
+
+### Objetivo
+
+Ao final de cada partida, oferecer uma análise da partida inteira: resumo em duas colunas (eu × adversário) com contagem de lances por categoria (excelente, bom, imprecisão, erro, gafe, oportunidade perdida), e depois uma revisão lance a lance navegável.
+
+### Entregáveis
+
+- [ ] Job assíncrono no worker (`apps/worker`, seguindo o padrão já existente de `presence-job.ts`/`queue-job.ts` ou a fila BullMQ já conectada) que roda a análise completa de uma partida terminada a partir de `game_moves` (já persistido por lance) e grava o resultado por lance + o resumo agregado.
+- [ ] Novo endpoint(s) para buscar o resumo da análise de uma partida e os dados lance a lance.
+- [ ] Tela de resumo pós-partida com as duas colunas (eu × adversário) e as contagens por categoria.
+- [ ] Botão "Iniciar revisão" → navegação lance a lance no tabuleiro (reaproveitando o padrão de histórico/replay já usado no treinador de exercícios) com um balãozinho de texto por lance, resumindo a avaliação daquele lance.
+- [ ] Narração por voz (Web Speech API `SpeechSynthesisUtterance` no cliente — hoje inexistente no projeto) lendo a avaliação de cada lance durante a revisão, com opção de ligar/desligar.
+
+## Fase 21 — Jogar com o treinador (P1; depende da Fase 19)
+
+### Objetivo
+
+Um modo de partida contra bot onde a dificuldade do bot sempre acompanha o rating atual do jogador (nunca fixa), que pausa brevemente a partida para avisar quando o jogador faz um lance perigoso/gafe (com opção de desfazer e jogar de novo), e que tem uma opção de configuração "Sugerir lance" que, quando ativa, sugere o melhor lance e explica o porquê antes de cada jogada do usuário.
+
+### Entregáveis
+
+- [ ] Novo modo de partida "Treinador", reaproveitando a infraestrutura de bot já existente (`game_bots.target_rating`, `selectBotMove`) mas com `target_rating` sempre igual ao rating atual do jogador no pool da partida (não uma faixa fixa escolhida manualmente como hoje).
+- [ ] Checagem em tempo real (usando o motor da Fase 19) do lance que o jogador acabou de fazer; se classificado como gafe/erro grave, pausar a partida com um aviso e oferecer desfazer o lance.
+- [ ] Configuração por usuário "Sugerir lance" (em Meus dados/Configurações) — quando ativa, antes de cada lance do jogador (nas partidas de Treinador) mostra o melhor lance sugerido pelo motor com uma breve explicação do motivo.
+- [ ] Partidas de Treinador não devem contar para o rating oficial (mesmo espírito do modo sem tempo/demonstrativo já existente) — confirmar com o usuário se este é o comportamento esperado antes de implementar.

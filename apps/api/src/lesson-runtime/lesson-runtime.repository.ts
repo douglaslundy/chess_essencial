@@ -71,6 +71,7 @@ export class LessonRuntimeRepository {
       lessonId,
       module: lesson.module,
       nextLessonId: context.nextLessonId,
+      previousLessonId: context.previousLessonId,
       title: lesson.title,
     };
   }
@@ -264,7 +265,7 @@ export class LessonRuntimeRepository {
 
   private async courseContext(
     lessonId: string,
-  ): Promise<{ courseSlug: string; nextLessonId: string | null }> {
+  ): Promise<{ courseSlug: string; nextLessonId: string | null; previousLessonId: string | null }> {
     const [course] = await this.database.client<{ courseId: string; courseSlug: string }[]>`
       SELECT course_modules.course_id AS "courseId", courses.slug::text AS "courseSlug"
       FROM lessons
@@ -273,7 +274,9 @@ export class LessonRuntimeRepository {
       WHERE lessons.id = ${lessonId}
     `;
     if (!course) throw new NotFoundException('Aula publicada não encontrada');
-    const [next] = await this.database.client<{ id: string }[]>`
+    const [neighbors] = await this.database.client<
+      { nextId: string | null; previousId: string | null }[]
+    >`
       WITH ordered AS (
         SELECT lessons.id,
                row_number() OVER (ORDER BY course_modules.position, lessons.position) AS rn
@@ -281,12 +284,17 @@ export class LessonRuntimeRepository {
         JOIN course_modules ON course_modules.id = lessons.module_id
         WHERE course_modules.course_id = ${course.courseId} AND lessons.status = 'published'
       )
-      SELECT next_lesson.id
+      SELECT next_lesson.id AS "nextId", previous_lesson.id AS "previousId"
       FROM ordered current_lesson
-      JOIN ordered next_lesson ON next_lesson.rn = current_lesson.rn + 1
+      LEFT JOIN ordered next_lesson ON next_lesson.rn = current_lesson.rn + 1
+      LEFT JOIN ordered previous_lesson ON previous_lesson.rn = current_lesson.rn - 1
       WHERE current_lesson.id = ${lessonId}
     `;
-    return { courseSlug: course.courseSlug, nextLessonId: next?.id ?? null };
+    return {
+      courseSlug: course.courseSlug,
+      nextLessonId: neighbors?.nextId ?? null,
+      previousLessonId: neighbors?.previousId ?? null,
+    };
   }
 
   private async assertPrerequisites(userId: string, lessonId: string) {

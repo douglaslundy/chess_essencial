@@ -79,9 +79,24 @@ export class AuthService {
 
     await this.audit?.record(user.id, 'user.registered', 'user', user.id);
     const verificationToken = await this.signVerificationToken(user.id);
-    await this.verificationEmail.send({ email: user.email, token: verificationToken });
+    // The account row is already committed at this point — don't fail the
+    // whole registration if only the verification email couldn't be sent
+    // (e.g. SMTP not configured yet). The learner keeps a normal 'pending'
+    // account and can retry via resendVerification once SMTP is fixed,
+    // instead of getting an opaque 503 with no account to show for it.
+    let emailSent = true;
+    try {
+      await this.verificationEmail.send({ email: user.email, token: verificationToken });
+    } catch {
+      emailSent = false;
+      await this.audit?.record(user.id, 'user.verification_email_failed', 'user', user.id);
+    }
     const exposeToken = this.config.get<boolean>('AUTH_EXPOSE_VERIFICATION_TOKEN', false);
-    return { user: this.toPublicUser(user), ...(exposeToken ? { verificationToken } : {}) };
+    return {
+      emailSent,
+      user: this.toPublicUser(user),
+      ...(exposeToken ? { verificationToken } : {}),
+    };
   }
 
   async resendVerification(input: ResendVerificationInput) {

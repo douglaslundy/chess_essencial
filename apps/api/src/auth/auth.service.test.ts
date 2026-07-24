@@ -155,6 +155,30 @@ describe('AuthService security', () => {
     expect(verified.user.email).toBe('player@example.com');
   });
 
+  it('still creates the account when the verification email fails to send', async () => {
+    const failingEmailService = {
+      send: async () => {
+        throw new Error('SMTP not configured');
+      },
+      sendPasswordReset: async () => undefined,
+    } as unknown as VerificationEmailService;
+    const failingService = new AuthService(
+      config,
+      repository as unknown as UsersRepository,
+      failingEmailService,
+    );
+
+    const registered = await failingService.register({
+      displayName: 'Jogador Teste',
+      email: 'no-email@example.com',
+      password: 'correct horse battery staple',
+      username: 'no_email_test',
+    });
+
+    expect(registered.emailSent).toBe(false);
+    expect(repository.user).toMatchObject({ status: 'pending', username: 'no_email_test' });
+  });
+
   it('stores only the refresh hash, rotates it and revokes on reuse', async () => {
     const registered = await service.register({
       displayName: 'Jogador Teste',

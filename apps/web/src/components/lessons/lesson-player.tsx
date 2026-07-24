@@ -133,6 +133,20 @@ export function LessonPlayer({ lessonId }: { lessonId: string }) {
           {attempt.progress.completedSteps}/{attempt.progress.totalSteps}
         </span>
       </header>
+      <div className="lessonCourseNav" aria-label="Navegação entre aulas">
+        {overview?.previousLessonId ? (
+          <Link className="secondaryAction" href={`/app/aula/${overview.previousLessonId}`}>
+            ← Aula anterior
+          </Link>
+        ) : (
+          <span />
+        )}
+        {overview?.nextLessonId ? (
+          <Link className="secondaryAction" href={`/app/aula/${overview.nextLessonId}`}>
+            Próxima aula →
+          </Link>
+        ) : null}
+      </div>
       <div className="lessonProgress" aria-label="Progresso da aula">
         <span
           style={{

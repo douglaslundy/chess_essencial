@@ -1,4 +1,8 @@
-import { sendTestEmailInputSchema, updateSmtpSettingsInputSchema } from '@xadrez/contracts';
+import {
+  sendTestEmailInputSchema,
+  updateMercadoPagoSettingsInputSchema,
+  updateSmtpSettingsInputSchema,
+} from '@xadrez/contracts';
 import {
   BadRequestException,
   Body,
@@ -50,5 +54,21 @@ export class SettingsController {
       );
     }
     return { sent: true };
+  }
+
+  @Get('mercado-pago')
+  getMercadoPago() {
+    return this.settings.getMercadoPagoSettings();
+  }
+
+  @Put('mercado-pago')
+  updateMercadoPago(@Req() request: AuthenticatedRequest, @Body() body: unknown) {
+    const input = parseInput(updateMercadoPagoSettingsInputSchema, body);
+    return this.settings.updateMercadoPagoSettings(input, request.auth.userId);
+  }
+
+  @Post('mercado-pago/test-connection')
+  testMercadoPago() {
+    return this.settings.testMercadoPagoConnection();
   }
 }

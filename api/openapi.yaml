@@ -551,6 +551,49 @@ paths:
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '503': {$ref: '#/components/responses/Problem'}
+  /admin/settings/mercado-pago:
+    get:
+      summary: Get Mercado Pago payment settings (admin only)
+      operationId: adminGetMercadoPagoSettings
+      responses:
+        '200':
+          description: Current Mercado Pago settings
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MercadoPagoSettings'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+    put:
+      summary: Update Mercado Pago payment settings (admin only)
+      operationId: adminUpdateMercadoPagoSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateMercadoPagoSettingsInput'}
+      responses:
+        '200':
+          description: Updated Mercado Pago settings
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MercadoPagoSettings'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /admin/settings/mercado-pago/test-connection:
+    post:
+      summary: Verify the configured Mercado Pago access token (admin only)
+      operationId: adminTestMercadoPagoConnection
+      responses:
+        '200':
+          description: Connection verified
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MercadoPagoConnectionTestResult'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '503': {$ref: '#/components/responses/Problem'}
   /admin/users/{userId}/status:
     patch:
       summary: Change a user's status (admin only; delete is a reversible soft-delete)
@@ -1356,7 +1399,17 @@ components:
         orientation: {type: [string, 'null'], enum: [white, black, null]}
     LessonOverview:
       type: object
-      required: [lessonId, title, module, estimatedMinutes, firstStep, courseSlug, nextLessonId]
+      required:
+        [
+          lessonId,
+          title,
+          module,
+          estimatedMinutes,
+          firstStep,
+          courseSlug,
+          nextLessonId,
+          previousLessonId,
+        ]
       properties:
         lessonId: {type: string, format: uuid}
         title: {type: string}
@@ -1365,6 +1418,7 @@ components:
         firstStep: {$ref: '#/components/schemas/PublicLessonStep'}
         courseSlug: {type: string}
         nextLessonId: {type: [string, 'null'], format: uuid}
+        previousLessonId: {type: [string, 'null'], format: uuid}
     StartLessonAttemptInput:
       type: object
       required: [lessonId]
@@ -1612,6 +1666,27 @@ components:
       properties:
         toEmail: {type: string, format: email}
       additionalProperties: false
+    MercadoPagoSettings:
+      type: object
+      required: [environment, hasAccessToken, publicKey]
+      properties:
+        environment: {type: string, enum: [sandbox, production]}
+        hasAccessToken: {type: boolean}
+        publicKey: {type: [string, 'null']}
+    UpdateMercadoPagoSettingsInput:
+      type: object
+      required: [environment, publicKey]
+      properties:
+        accessToken: {type: [string, 'null'], minLength: 1, maxLength: 500}
+        environment: {type: string, enum: [sandbox, production]}
+        publicKey: {type: [string, 'null'], maxLength: 255}
+      additionalProperties: false
+    MercadoPagoConnectionTestResult:
+      type: object
+      required: [accountEmail, connected]
+      properties:
+        accountEmail: {type: [string, 'null']}
+        connected: {type: boolean}
     ReportCategory:
       type: string
       enum: [cheating, harassment, spam, inappropriate_profile, other]
@@ -1818,8 +1893,11 @@ components:
       additionalProperties: false
     RegistrationResponse:
       type: object
-      required: [user]
+      required: [emailSent, user]
       properties:
+        emailSent:
+          type: boolean
+          description: False when the account was created but the verification email failed to send (e.g. SMTP not configured yet).
         user:
           $ref: '#/components/schemas/PublicUser'
         verificationToken:
