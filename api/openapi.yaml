@@ -791,6 +791,16 @@ paths:
         '401': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
   /matchmaking/challenges:
+    get:
+      summary: Listar desafios diretos pendentes (recebidos e enviados)
+      operationId: listDirectChallenges
+      responses:
+        '200':
+          description: Desafios pendentes do usuário autenticado
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DirectChallengesView'}
+        '401': {$ref: '#/components/responses/Problem'}
     post:
       summary: Criar desafio direto
       operationId: createDirectChallenge
@@ -2115,6 +2125,28 @@ components:
       properties:
         accept: {type: boolean}
       additionalProperties: false
+    DirectChallenge:
+      type: object
+      required: [id, counterpart, challengerColor, timeControlCode, createdAt, expiresAt]
+      properties:
+        id: {type: string, format: uuid}
+        counterpart:
+          type: object
+          required: [userId, username, displayName]
+          properties:
+            userId: {type: string, format: uuid}
+            username: {type: string}
+            displayName: {type: string}
+        challengerColor: {type: [string, 'null'], enum: [white, black, null]}
+        timeControlCode: {type: string, enum: [bullet-1-0, bullet-2-1, blitz-3-0, blitz-3-2, rapid-10-0, rapid-15-10, classical-30-0, untimed]}
+        createdAt: {type: string, format: date-time}
+        expiresAt: {type: string, format: date-time}
+    DirectChallengesView:
+      type: object
+      required: [incoming, outgoing]
+      properties:
+        incoming: {type: array, items: {$ref: '#/components/schemas/DirectChallenge'}}
+        outgoing: {type: array, items: {$ref: '#/components/schemas/DirectChallenge'}}
     RatingProfile:
       type: object
       required: [pool, rating, gamesCount, wins, draws, losses, peakRating, provisional]

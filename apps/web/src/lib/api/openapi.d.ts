@@ -771,7 +771,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** Listar desafios diretos pendentes (recebidos e enviados) */
+    get: operations['listDirectChallenges'];
     put?: never;
     /** Criar desafio direto */
     post: operations['createDirectChallenge'];
@@ -1969,6 +1970,36 @@ export interface components {
     };
     RespondChallengeInput: {
       accept: boolean;
+    };
+    DirectChallenge: {
+      /** Format: uuid */
+      id: string;
+      counterpart: {
+        /** Format: uuid */
+        userId: string;
+        username: string;
+        displayName: string;
+      };
+      /** @enum {string|null} */
+      challengerColor: 'white' | 'black' | null;
+      /** @enum {string} */
+      timeControlCode:
+        | 'bullet-1-0'
+        | 'bullet-2-1'
+        | 'blitz-3-0'
+        | 'blitz-3-2'
+        | 'rapid-10-0'
+        | 'rapid-15-10'
+        | 'classical-30-0'
+        | 'untimed';
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      expiresAt: string;
+    };
+    DirectChallengesView: {
+      incoming: components['schemas']['DirectChallenge'][];
+      outgoing: components['schemas']['DirectChallenge'][];
     };
     RatingProfile: {
       pool: components['schemas']['RatingPool'];
@@ -3474,6 +3505,27 @@ export interface operations {
       400: components['responses']['Problem'];
       401: components['responses']['Problem'];
       404: components['responses']['Problem'];
+    };
+  };
+  listDirectChallenges: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Desafios pendentes do usuário autenticado */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DirectChallengesView'];
+        };
+      };
+      401: components['responses']['Problem'];
     };
   };
   createDirectChallenge: {

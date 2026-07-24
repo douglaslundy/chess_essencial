@@ -1,12 +1,14 @@
 'use client';
 
-import type { Friend, FriendRequestsView } from '@xadrez/contracts';
+import type { DirectChallengesView, Friend, FriendRequestsView } from '@xadrez/contracts';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
 import { api } from '@/lib/api/client';
 
 const emptyRequests: FriendRequestsView = { incoming: [], outgoing: [] };
+const emptyChallenges: DirectChallengesView = { incoming: [], outgoing: [] };
+const CHALLENGE_POLL_INTERVAL_MS = 5_000;
 
 function formatLastSeen(lastSeenAt: string | null) {
   if (!lastSeenAt) return 'nunca esteve online';
@@ -23,6 +25,7 @@ export default function FriendsPage() {
   const router = useRouter();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<FriendRequestsView>(emptyRequests);
+  const [challenges, setChallenges] = useState<DirectChallengesView>(emptyChallenges);
   const [username, setUsername] = useState('');
   const [message, setMessage] = useState('Carregando amigos…');
   const [busy, setBusy] = useState(false);
@@ -38,21 +41,38 @@ export default function FriendsPage() {
       return;
     }
     try {
-      const [friendList, requestList] = await Promise.all([
+      const [friendList, requestList, challengeList] = await Promise.all([
         api.listFriends(accessToken),
         api.listFriendRequests(accessToken),
+        api.listDirectChallenges(accessToken),
       ]);
       setFriends(friendList);
       setRequests(requestList);
+      setChallenges(challengeList);
       setMessage('');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Falha ao carregar amigos.');
     }
   }, []);
 
+  const loadChallenges = useCallback(async () => {
+    const accessToken = token();
+    if (!accessToken) return;
+    try {
+      setChallenges(await api.listDirectChallenges(accessToken));
+    } catch {
+      // Polling failure is silent; the next tick or a manual action will retry.
+    }
+  }, []);
+
   useEffect(() => {
     queueMicrotask(load);
   }, [load]);
+
+  useEffect(() => {
+    const interval = setInterval(() => void loadChallenges(), CHALLENGE_POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [loadChallenges]);
 
   async function sendRequest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -127,8 +147,27 @@ export default function FriendsPage() {
         return;
       }
       setMessage(`Desafio enviado para ${friend.displayName}.`);
+      await loadChallenges();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Não foi possível desafiar.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function respondToChallenge(challengeId: string, accept: boolean) {
+    const accessToken = token();
+    if (!accessToken) return;
+    setBusy(true);
+    try {
+      const result = await api.respondDirectChallenge(challengeId, accept, accessToken);
+      if (result.status === 'accepted' && result.gameId) {
+        router.push(`/app/partida/${result.gameId}`);
+        return;
+      }
+      await loadChallenges();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Não foi possível responder ao desafio.');
     } finally {
       setBusy(false);
     }
@@ -168,6 +207,52 @@ export default function FriendsPage() {
       </form>
 
       <p role="status">{message}</p>
+
+      {challenges.incoming.length > 0 ? (
+        <section aria-label="Desafios recebidos" className="cardGrid">
+          <h2>Desafios recebidos</h2>
+          <div className="adminUserTable" role="table">
+            {challenges.incoming.map((incomingChallenge) => (
+              <div className="adminUserRow" key={incomingChallenge.id} role="row">
+                <strong>{incomingChallenge.counterpart.displayName}</strong>
+                <span>@{incomingChallenge.counterpart.username}</span>
+                <div className="adminUserActions">
+                  <button
+                    disabled={busy}
+                    onClick={() => void respondToChallenge(incomingChallenge.id, true)}
+                    type="button"
+                  >
+                    Aceitar
+                  </button>
+                  <button
+                    className="dangerAction"
+                    disabled={busy}
+                    onClick={() => void respondToChallenge(incomingChallenge.id, false)}
+                    type="button"
+                  >
+                    Recusar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {challenges.outgoing.length > 0 ? (
+        <section aria-label="Desafios enviados">
+          <h2>Desafios enviados</h2>
+          <div className="adminUserTable" role="table">
+            {challenges.outgoing.map((outgoingChallenge) => (
+              <div className="adminUserRow" key={outgoingChallenge.id} role="row">
+                <strong>{outgoingChallenge.counterpart.displayName}</strong>
+                <span>@{outgoingChallenge.counterpart.username}</span>
+                <span>aguardando resposta…</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {requests.incoming.length > 0 ? (
         <section aria-label="Pedidos recebidos" className="cardGrid">

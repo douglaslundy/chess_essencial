@@ -34,6 +34,17 @@ interface QueueRow {
   userId: string;
 }
 
+interface ChallengeRow {
+  challengerColor: 'white' | 'black' | null;
+  counterpartDisplayName: string;
+  counterpartId: string;
+  counterpartUsername: string;
+  createdAt: Date | string;
+  expiresAt: Date | string;
+  id: string;
+  timeControlCode: TimeControlCode;
+}
+
 @Injectable()
 export class MatchmakingRepository {
   constructor(
@@ -224,6 +235,57 @@ export class MatchmakingRepository {
       accept: true,
     });
     return { ...created, ...accepted };
+  }
+
+  async listChallenges(userId: string) {
+    const sql = this.database.client;
+    const incoming = await sql<ChallengeRow[]>`
+      SELECT direct_challenges.id, u.id AS "counterpartId", u.username::text AS "counterpartUsername",
+             p.display_name AS "counterpartDisplayName", direct_challenges.challenger_color AS "challengerColor",
+             time_controls.code AS "timeControlCode", direct_challenges.created_at AS "createdAt",
+             direct_challenges.expires_at AS "expiresAt"
+      FROM direct_challenges
+      JOIN users u ON u.id = direct_challenges.challenger_id
+      JOIN user_profiles p ON p.user_id = u.id
+      JOIN game_time_controls time_controls ON time_controls.id = direct_challenges.time_control_id
+      WHERE direct_challenges.challenged_id = ${userId}
+        AND direct_challenges.status = 'pending'
+        AND direct_challenges.expires_at > now()
+      ORDER BY direct_challenges.created_at DESC
+    `;
+    const outgoing = await sql<ChallengeRow[]>`
+      SELECT direct_challenges.id, u.id AS "counterpartId", u.username::text AS "counterpartUsername",
+             p.display_name AS "counterpartDisplayName", direct_challenges.challenger_color AS "challengerColor",
+             time_controls.code AS "timeControlCode", direct_challenges.created_at AS "createdAt",
+             direct_challenges.expires_at AS "expiresAt"
+      FROM direct_challenges
+      JOIN users u ON u.id = direct_challenges.challenged_id
+      JOIN user_profiles p ON p.user_id = u.id
+      JOIN game_time_controls time_controls ON time_controls.id = direct_challenges.time_control_id
+      WHERE direct_challenges.challenger_id = ${userId}
+        AND direct_challenges.status = 'pending'
+        AND direct_challenges.expires_at > now()
+      ORDER BY direct_challenges.created_at DESC
+    `;
+    return {
+      incoming: incoming.map((row) => this.toDirectChallenge(row)),
+      outgoing: outgoing.map((row) => this.toDirectChallenge(row)),
+    };
+  }
+
+  private toDirectChallenge(row: ChallengeRow) {
+    return {
+      id: row.id,
+      counterpart: {
+        userId: row.counterpartId,
+        username: row.counterpartUsername,
+        displayName: row.counterpartDisplayName,
+      },
+      challengerColor: row.challengerColor,
+      timeControlCode: row.timeControlCode,
+      createdAt: new Date(row.createdAt).toISOString(),
+      expiresAt: new Date(row.expiresAt).toISOString(),
+    };
   }
 
   async respondChallenge(userId: string, challengeId: string, input: RespondChallengeInput) {
