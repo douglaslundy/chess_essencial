@@ -9,6 +9,14 @@ export {
   type UploadPostPhotoResult,
 } from './feed.js';
 export {
+  sendTestEmailInputSchema,
+  smtpSettingsSchema,
+  updateSmtpSettingsInputSchema,
+  type SendTestEmailInput,
+  type SmtpSettings,
+  type UpdateSmtpSettingsInput,
+} from './settings.js';
+export {
   conversationSchema,
   directMessageSchema,
   sendMessageInputSchema,

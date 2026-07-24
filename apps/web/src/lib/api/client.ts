@@ -49,7 +49,10 @@ import type {
   ReviewAnnotation,
   ReviewAnnotationInput,
   SendMessageInput,
+  SendTestEmailInput,
+  SmtpSettings,
   TokenPair,
+  UpdateSmtpSettingsInput,
   UpdateMeInput,
   UploadAvatarInput,
   UploadPostPhotoInput,
@@ -360,6 +363,17 @@ export const api = {
       body: JSON.stringify(input),
     }),
   adminGetBotStats: (token: string) => request<AdminBotStats>('/admin/bots/stats', token),
+  adminGetSmtpSettings: (token: string) => request<SmtpSettings>('/admin/settings/smtp', token),
+  adminUpdateSmtpSettings: (input: UpdateSmtpSettingsInput, token: string) =>
+    request<SmtpSettings>('/admin/settings/smtp', token, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    }),
+  adminSendSmtpTestEmail: (input: SendTestEmailInput, token: string) =>
+    request<{ sent: boolean }>('/admin/settings/smtp/test-email', token, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
   getExerciseMetrics: (token: string) => request<ExerciseMetrics>('/exercise-metrics', token),
   getHistory: (query: URLSearchParams, token: string) =>
     request<GameHistoryPage>(`/games?${query.toString()}`, token),

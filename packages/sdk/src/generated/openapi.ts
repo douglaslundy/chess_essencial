@@ -519,6 +519,41 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/admin/settings/smtp': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get SMTP settings (admin only) */
+    get: operations['adminGetSmtpSettings'];
+    /** Update SMTP settings (admin only) */
+    put: operations['adminUpdateSmtpSettings'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/settings/smtp/test-email': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Send a test email using the configured SMTP settings (admin only) */
+    post: operations['adminSendSmtpTestEmail'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/admin/users/{userId}/status': {
     parameters: {
       query?: never;
@@ -1473,6 +1508,30 @@ export interface components {
     UpdateAdminUserStatusInput: {
       /** @enum {string} */
       status: 'active' | 'suspended' | 'deleted';
+    };
+    SmtpSettings: {
+      /** Format: email */
+      fromAddress: string | null;
+      fromName: string | null;
+      hasPassword: boolean;
+      host: string | null;
+      port: number | null;
+      secure: boolean;
+      username: string | null;
+    };
+    UpdateSmtpSettingsInput: {
+      /** Format: email */
+      fromAddress: string;
+      fromName: string;
+      host: string;
+      password?: string | null;
+      port: number;
+      secure: boolean;
+      username?: string | null;
+    };
+    SendTestEmailInput: {
+      /** Format: email */
+      toEmail: string;
     };
     /** @enum {string} */
     ReportCategory: 'cheating' | 'harassment' | 'spam' | 'inappropriate_profile' | 'other';
@@ -2774,6 +2833,85 @@ export interface operations {
       };
       401: components['responses']['Problem'];
       403: components['responses']['Problem'];
+    };
+  };
+  adminGetSmtpSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Current SMTP settings */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SmtpSettings'];
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  adminUpdateSmtpSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateSmtpSettingsInput'];
+      };
+    };
+    responses: {
+      /** @description Updated SMTP settings */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SmtpSettings'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  adminSendSmtpTestEmail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SendTestEmailInput'];
+      };
+    };
+    responses: {
+      /** @description Test email sent */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            sent: boolean;
+          };
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      503: components['responses']['Problem'];
     };
   };
   adminUpdateUserStatus: {

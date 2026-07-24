@@ -16,6 +16,11 @@ const sections = [
     title: 'Bots sociais',
     description: 'Estatísticas das contas-bot: total, online agora, amizades e partidas.',
   },
+  {
+    href: '/app/admin/smtp',
+    title: 'Configuração de e-mail (SMTP)',
+    description: 'Definir o servidor SMTP usado para verificação de conta e redefinição de senha.',
+  },
 ];
 
 export default function AdminHubPage() {

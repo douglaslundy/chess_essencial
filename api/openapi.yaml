@@ -499,6 +499,58 @@ paths:
               schema: {$ref: '#/components/schemas/AdminBotStats'}
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
+  /admin/settings/smtp:
+    get:
+      summary: Get SMTP settings (admin only)
+      operationId: adminGetSmtpSettings
+      responses:
+        '200':
+          description: Current SMTP settings
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SmtpSettings'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+    put:
+      summary: Update SMTP settings (admin only)
+      operationId: adminUpdateSmtpSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateSmtpSettingsInput'}
+      responses:
+        '200':
+          description: Updated SMTP settings
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SmtpSettings'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /admin/settings/smtp/test-email:
+    post:
+      summary: Send a test email using the configured SMTP settings (admin only)
+      operationId: adminSendSmtpTestEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SendTestEmailInput'}
+      responses:
+        '200':
+          description: Test email sent
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [sent]
+                properties:
+                  sent: {type: boolean}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '503': {$ref: '#/components/responses/Problem'}
   /admin/users/{userId}/status:
     patch:
       summary: Change a user's status (admin only; delete is a reversible soft-delete)
@@ -1530,6 +1582,35 @@ components:
       required: [status]
       properties:
         status: {type: string, enum: [active, suspended, deleted]}
+    SmtpSettings:
+      type: object
+      required: [fromAddress, fromName, hasPassword, host, port, secure, username]
+      properties:
+        fromAddress: {type: [string, 'null'], format: email}
+        fromName: {type: [string, 'null']}
+        hasPassword: {type: boolean}
+        host: {type: [string, 'null']}
+        port: {type: [integer, 'null'], minimum: 1, maximum: 65535}
+        secure: {type: boolean}
+        username: {type: [string, 'null']}
+    UpdateSmtpSettingsInput:
+      type: object
+      required: [fromAddress, fromName, host, port, secure]
+      properties:
+        fromAddress: {type: string, format: email}
+        fromName: {type: string, minLength: 1, maxLength: 120}
+        host: {type: string, minLength: 1, maxLength: 255}
+        password: {type: [string, 'null'], minLength: 1, maxLength: 500}
+        port: {type: integer, minimum: 1, maximum: 65535}
+        secure: {type: boolean}
+        username: {type: [string, 'null'], maxLength: 255}
+      additionalProperties: false
+    SendTestEmailInput:
+      type: object
+      required: [toEmail]
+      properties:
+        toEmail: {type: string, format: email}
+      additionalProperties: false
     ReportCategory:
       type: string
       enum: [cheating, harassment, spam, inappropriate_profile, other]

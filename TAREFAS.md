@@ -85,9 +85,7 @@ Reduzir o tempo de release e completar retenção, restore e alertas operacionai
 
 ### Pendência aberta em 2026-07-22 (pós-deploy chess.dlsistemas.com.br)
 
-- O deploy em produção (VPS 144.91.92.70, atrás do Traefik) subiu com `SMTP_URL` **placeholder** (`smtp://user:password@smtp.placeholder.invalid:587`) em `/opt/chess/.env.vps` — e-mails de verificação de cadastro NÃO são enviados de verdade até isso ser resolvido.
-- Tarefa: criar uma página de configuração de SMTP via UX (host, porta, usuário, senha, remetente, TLS) na área `/app/admin` (já existe `/app/admin/curso`; role `admin` já existe em `schema.ts`), acessível a partir do fluxo de criação de usuário administrador. Persistir a configuração (não depender só de variável de ambiente estática) para permitir troca sem redeploy.
-- Depois que essa página existir e estiver validada em produção, remover o placeholder do `.env.vps` da VPS e migrar para a configuração via UI.
+- [x] **Config de SMTP via UI (2026-07-23).** `/app/admin/smtp` (form host/porta/usuário/senha/remetente/TLS + botão de e-mail de teste), backend `GET/PUT /admin/settings/smtp` + `POST /admin/settings/smtp/test-email`, persistido em nova tabela `platform_settings` (chave-valor, migration `0021_platform_settings`) — troca sem redeploy. Aproveitado para reescrever `verification-email.service.ts`: o cliente SMTP anterior era um socket TCP cru que NUNCA enviava `AUTH LOGIN`/`AUTH PLAIN`, ou seja, mesmo com credenciais reais configuradas, a autenticação sempre falharia contra qualquer provedor real (Gmail, SendGrid etc.) — provavelmente a causa raiz de "e-mails não chegam" relatado antes. Substituído por `nodemailer` (com AUTH/STARTTLS reais) em `apps/api/src/settings/mailer.ts`, mantendo fallback para a env var `SMTP_URL` legada quando não há linha no banco (CI/dev/Mailpit). Falta remover o placeholder de `.env.vps` na VPS depois que o usuário configurar credenciais SMTP reais via essa página.
 
 ### Lote grande de melhorias (2026-07-22) — 8 sub-projetos
 
@@ -111,8 +109,23 @@ Concluídos depois (todos deployados):
 Pendências restantes:
 
 - [ ] **Aulas — botão "aula anterior"/navegação prev/next entre aulas** (requer sequência exposta pela API).
-- [ ] **SP8+ — Admin:** gerenciar bots, regras da plataforma, config de SMTP via UX (ver pendência SMTP acima).
-- [ ] **SMTP real** ainda é placeholder em produção (e-mails de verificação não saem).
+- [ ] **SMTP real:** UI de configuração pronta (ver acima); falta o usuário inserir credenciais SMTP reais em produção para os e-mails passarem a sair de fato.
+
+### Lote 2 — rede social, bots, monetização (2026-07-22/23)
+
+Ordem aprovada pelo usuário: A→I, com SMTP e config de pagamento inseridos no meio a pedido do usuário. Todos os itens concluídos foram deployados via git-pull automático e verificados em produção.
+
+- [x] **SP-A — Núcleo social** (perfis públicos, amizades, bloqueios/denúncias, presença).
+- [x] **SP-B — Feed** (`/app/feed`, posts com foto via MinIO).
+- [x] **SP-C — Mensagens diretas** (`/app/mensagens`, só entre amigos).
+- [x] **SP-D — Página de Regras da comunidade** (`/regras`).
+- [x] **SP-E — 200 bots sociais** (contas reais indistinguíveis de usuários — decisão explícita do usuário —, nomes brasileiros masculinos/femininos com data de nascimento aleatória entre 18–65 anos, presença/amizade/partidas automáticas via worker, ativados em produção; ver `/app/admin/bots` para estatísticas).
+- [x] **Config de SMTP via UI** (ver seção acima) — inserida no meio da fila a pedido do usuário, concluída antes de retomar o lote 2.
+- [ ] **Config de plataforma de pagamento (Mercado Pago) via UI admin** — inserir/editar chaves sem redeploy; pendente, próximo item após SMTP.
+- [ ] **SP-F — Assinaturas/planos** (ainda não iniciado).
+- [ ] **SP-G — Códigos de indicação** (ainda não iniciado).
+- [ ] **SP-H — Dashboard admin com métricas** (ainda não iniciado).
+- [ ] **SP-I — Integração de pagamento Mercado Pago** (ainda não iniciado; depende da config de plataforma de pagamento acima).
 
 ## Fase 18 — Aplicativo mobile (P2; exige decisão)
 

@@ -18,6 +18,7 @@ import { ObservabilityModule } from './observability/observability.module.js';
 import { RatingsModule } from './ratings/ratings.module.js';
 import { RedisModule } from './redis/redis.module.js';
 import { SafetyModule } from './safety/safety.module.js';
+import { SettingsModule } from './settings/settings.module.js';
 import { SocialModule } from './social/social.module.js';
 import { StorageModule } from './storage/storage.module.js';
 
@@ -37,6 +38,7 @@ import { StorageModule } from './storage/storage.module.js';
     RatingsModule,
     RedisModule,
     SafetyModule,
+    SettingsModule,
     SocialModule,
     StorageModule,
     ConfigModule.forRoot({

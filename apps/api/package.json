@@ -39,6 +39,7 @@
     "ioredis": "5.11.1",
     "jose": "6.2.3",
     "minio": "8.0.6",
+    "nodemailer": "9.0.3",
     "postgres": "3.4.9",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
@@ -47,6 +48,7 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "@types/nodemailer": "8.0.1",
     "@types/ws": "8.18.1",
     "@xadrez/eslint-config": "workspace:*",
     "@xadrez/tsconfig": "workspace:*",
