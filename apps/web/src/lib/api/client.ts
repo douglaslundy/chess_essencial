@@ -42,6 +42,11 @@ import type {
   LoginInput,
   MercadoPagoConnectionTestResult,
   MercadoPagoSettings,
+  SaveSubscriptionPlanInput,
+  SubscriptionPlan,
+  SubscriptionPlanList,
+  UpdateSubscriptionPlanStatusInput,
+  UserSubscription,
   PublicUser,
   QueueStatus,
   RatingPool,
@@ -396,6 +401,28 @@ export const api = {
         method: 'POST',
       },
     ),
+  getMySubscription: (token: string) => request<UserSubscription>('/me/subscription', token),
+  adminListSubscriptionPlans: (token: string) =>
+    request<SubscriptionPlanList>('/admin/subscription-plans', token),
+  adminCreateSubscriptionPlan: (input: SaveSubscriptionPlanInput, token: string) =>
+    request<SubscriptionPlan>('/admin/subscription-plans', token, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  adminUpdateSubscriptionPlan: (planId: string, input: SaveSubscriptionPlanInput, token: string) =>
+    request<SubscriptionPlan>(`/admin/subscription-plans/${planId}`, token, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    }),
+  adminUpdateSubscriptionPlanStatus: (
+    planId: string,
+    input: UpdateSubscriptionPlanStatusInput,
+    token: string,
+  ) =>
+    request<SubscriptionPlan>(`/admin/subscription-plans/${planId}/status`, token, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    }),
   getExerciseMetrics: (token: string) => request<ExerciseMetrics>('/exercise-metrics', token),
   getHistory: (query: URLSearchParams, token: string) =>
     request<GameHistoryPage>(`/games?${query.toString()}`, token),

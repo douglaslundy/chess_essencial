@@ -175,6 +175,23 @@ export interface paths {
     patch: operations['updateMe'];
     trace?: never;
   };
+  '/me/subscription': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get the current user's active subscription, if any */
+    get: operations['getMySubscription'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/me/avatar': {
     parameters: {
       query?: never;
@@ -583,6 +600,58 @@ export interface paths {
     put?: never;
     /** Verify the configured Mercado Pago access token (admin only) */
     post: operations['adminTestMercadoPagoConnection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/subscription-plans': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List all subscription plans (admin only) */
+    get: operations['adminListSubscriptionPlans'];
+    put?: never;
+    /** Create a subscription plan (admin only) */
+    post: operations['adminCreateSubscriptionPlan'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/subscription-plans/{planId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** Update a subscription plan's name, price and feature limits (admin only) */
+    put: operations['adminUpdateSubscriptionPlan'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/subscription-plans/{planId}/status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** Activate or archive a subscription plan (admin only) */
+    put: operations['adminUpdateSubscriptionPlanStatus'];
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -1587,6 +1656,40 @@ export interface components {
       accountEmail: string | null;
       connected: boolean;
     };
+    PlanFeatureLimit: {
+      featureKey: string;
+      /** @description 0 means unlimited for this feature. */
+      dailyLimit: number;
+    };
+    SubscriptionPlan: {
+      /** Format: uuid */
+      id: string;
+      limits: components['schemas']['PlanFeatureLimit'][];
+      name: string;
+      priceCents: number;
+      slug: string;
+      /** @enum {string} */
+      status: 'active' | 'archived';
+    };
+    SubscriptionPlanList: {
+      items: components['schemas']['SubscriptionPlan'][];
+    };
+    SaveSubscriptionPlanInput: {
+      limits: components['schemas']['PlanFeatureLimit'][];
+      name: string;
+      priceCents: number;
+    };
+    UpdateSubscriptionPlanStatusInput: {
+      /** @enum {string} */
+      status: 'active' | 'archived';
+    };
+    UserSubscription: {
+      /** Format: date-time */
+      currentPeriodEnd: string | null;
+      plan: components['schemas']['SubscriptionPlan'] | null;
+      /** @enum {string|null} */
+      status: 'active' | 'canceled' | 'expired' | null;
+    };
     /** @enum {string} */
     ReportCategory: 'cheating' | 'harassment' | 'spam' | 'inappropriate_profile' | 'other';
     CreateReportInput:
@@ -2330,6 +2433,27 @@ export interface operations {
       401: components['responses']['Problem'];
     };
   };
+  getMySubscription: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Active subscription (all fields null when there is none) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UserSubscription'];
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
   uploadAvatar: {
     parameters: {
       query?: never;
@@ -3044,6 +3168,115 @@ export interface operations {
       401: components['responses']['Problem'];
       403: components['responses']['Problem'];
       503: components['responses']['Problem'];
+    };
+  };
+  adminListSubscriptionPlans: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Plans */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SubscriptionPlanList'];
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  adminCreateSubscriptionPlan: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SaveSubscriptionPlanInput'];
+      };
+    };
+    responses: {
+      /** @description Created plan */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SubscriptionPlan'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  adminUpdateSubscriptionPlan: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        planId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SaveSubscriptionPlanInput'];
+      };
+    };
+    responses: {
+      /** @description Updated plan */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SubscriptionPlan'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  adminUpdateSubscriptionPlanStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        planId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateSubscriptionPlanStatusInput'];
+      };
+    };
+    responses: {
+      /** @description Updated plan */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SubscriptionPlan'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
     };
   };
   adminUpdateUserStatus: {

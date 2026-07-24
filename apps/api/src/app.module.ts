@@ -21,6 +21,7 @@ import { SafetyModule } from './safety/safety.module.js';
 import { SettingsModule } from './settings/settings.module.js';
 import { SocialModule } from './social/social.module.js';
 import { StorageModule } from './storage/storage.module.js';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module.js';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { StorageModule } from './storage/storage.module.js';
     SettingsModule,
     SocialModule,
     StorageModule,
+    SubscriptionsModule,
     ConfigModule.forRoot({
       envFilePath: ['../../.env', '.env'],
       isGlobal: true,

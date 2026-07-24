@@ -186,6 +186,17 @@ paths:
                 $ref: '#/components/schemas/PublicUser'
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
+  /me/subscription:
+    get:
+      summary: Get the current user's active subscription, if any
+      operationId: getMySubscription
+      responses:
+        '200':
+          description: Active subscription (all fields null when there is none)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/UserSubscription'}
+        '401': {$ref: '#/components/responses/Problem'}
   /me/avatar:
     post:
       summary: Upload a profile avatar (base64 image) to object storage
@@ -594,6 +605,77 @@ paths:
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '503': {$ref: '#/components/responses/Problem'}
+  /admin/subscription-plans:
+    get:
+      summary: List all subscription plans (admin only)
+      operationId: adminListSubscriptionPlans
+      responses:
+        '200':
+          description: Plans
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SubscriptionPlanList'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+    post:
+      summary: Create a subscription plan (admin only)
+      operationId: adminCreateSubscriptionPlan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SaveSubscriptionPlanInput'}
+      responses:
+        '201':
+          description: Created plan
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SubscriptionPlan'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /admin/subscription-plans/{planId}:
+    put:
+      summary: Update a subscription plan's name, price and feature limits (admin only)
+      operationId: adminUpdateSubscriptionPlan
+      parameters:
+        - {name: planId, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SaveSubscriptionPlanInput'}
+      responses:
+        '200':
+          description: Updated plan
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SubscriptionPlan'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /admin/subscription-plans/{planId}/status:
+    put:
+      summary: Activate or archive a subscription plan (admin only)
+      operationId: adminUpdateSubscriptionPlanStatus
+      parameters:
+        - {name: planId, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateSubscriptionPlanStatusInput'}
+      responses:
+        '200':
+          description: Updated plan
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SubscriptionPlan'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
   /admin/users/{userId}/status:
     patch:
       summary: Change a user's status (admin only; delete is a reversible soft-delete)
@@ -1687,6 +1769,54 @@ components:
       properties:
         accountEmail: {type: [string, 'null']}
         connected: {type: boolean}
+    PlanFeatureLimit:
+      type: object
+      required: [featureKey, dailyLimit]
+      properties:
+        featureKey: {type: string}
+        dailyLimit:
+          type: integer
+          minimum: 0
+          description: 0 means unlimited for this feature.
+    SubscriptionPlan:
+      type: object
+      required: [id, limits, name, priceCents, slug, status]
+      properties:
+        id: {type: string, format: uuid}
+        limits: {type: array, items: {$ref: '#/components/schemas/PlanFeatureLimit'}}
+        name: {type: string}
+        priceCents: {type: integer, minimum: 0}
+        slug: {type: string}
+        status: {type: string, enum: [active, archived]}
+    SubscriptionPlanList:
+      type: object
+      required: [items]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/SubscriptionPlan'}}
+    SaveSubscriptionPlanInput:
+      type: object
+      required: [limits, name, priceCents]
+      properties:
+        limits: {type: array, items: {$ref: '#/components/schemas/PlanFeatureLimit'}}
+        name: {type: string, minLength: 2, maxLength: 120}
+        priceCents: {type: integer, minimum: 0}
+      additionalProperties: false
+    UpdateSubscriptionPlanStatusInput:
+      type: object
+      required: [status]
+      properties:
+        status: {type: string, enum: [active, archived]}
+      additionalProperties: false
+    UserSubscription:
+      type: object
+      required: [currentPeriodEnd, plan, status]
+      properties:
+        currentPeriodEnd: {type: [string, 'null'], format: date-time}
+        plan:
+          oneOf:
+            - {$ref: '#/components/schemas/SubscriptionPlan'}
+            - {type: 'null'}
+        status: {type: [string, 'null'], enum: [active, canceled, expired, null]}
     ReportCategory:
       type: string
       enum: [cheating, harassment, spam, inappropriate_profile, other]

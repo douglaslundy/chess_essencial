@@ -26,6 +26,11 @@ const sections = [
     title: 'Configuração de pagamento (Mercado Pago)',
     description: 'Chaves de acesso do Mercado Pago para processar pagamentos, sem redeploy.',
   },
+  {
+    href: '/app/admin/planos',
+    title: 'Planos de assinatura',
+    description: 'Criar planos, escolher recursos liberados e a quantidade diária de cada um.',
+  },
 ];
 
 export default function AdminHubPage() {

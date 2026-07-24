@@ -9,6 +9,25 @@ export {
   type UploadPostPhotoResult,
 } from './feed.js';
 export {
+  planFeatureCatalog,
+  planFeatureKeySchema,
+  planFeatureLimitSchema,
+  planFeatureUsageSchema,
+  saveSubscriptionPlanInputSchema,
+  subscriptionPlanListSchema,
+  subscriptionPlanSchema,
+  updateSubscriptionPlanStatusInputSchema,
+  userSubscriptionSchema,
+  type PlanFeatureKey,
+  type PlanFeatureLimit,
+  type PlanFeatureUsage,
+  type SaveSubscriptionPlanInput,
+  type SubscriptionPlan,
+  type SubscriptionPlanList,
+  type UpdateSubscriptionPlanStatusInput,
+  type UserSubscription,
+} from './subscriptions.js';
+export {
   mercadoPagoConnectionTestResultSchema,
   mercadoPagoSettingsSchema,
   sendTestEmailInputSchema,

@@ -16,6 +16,7 @@ import {
 import type { TransactionSql } from 'postgres';
 
 import { DatabaseService } from '../database/database.service.js';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service.js';
 
 interface AttemptRow {
   contentSnapshot: unknown;
@@ -50,7 +51,10 @@ interface StepRow {
 
 @Injectable()
 export class LessonRuntimeRepository {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly subscriptions: SubscriptionsService,
+  ) {}
 
   async lesson(userId: string, lessonId: string): Promise<LessonOverview> {
     await this.assertPrerequisites(userId, lessonId);
@@ -84,6 +88,11 @@ export class LessonRuntimeRepository {
       FROM lesson_attempts WHERE user_id = ${userId} AND lesson_id = ${lessonId} AND status = 'started'
     `;
     if (existing) return this.view(existing);
+    const entitlement = await this.subscriptions.checkEntitlement(userId, 'lessons_per_day');
+    if (!entitlement.allowed)
+      throw new ForbiddenException(
+        'Você atingiu o limite diário de aulas do seu plano. Volte amanhã ou assine um plano com mais acesso.',
+      );
     await this.assertPrerequisites(userId, lessonId);
     const snapshot = await this.snapshot(lessonId);
     const [lessonVersion] = await this.database.client<{ version: number }[]>`

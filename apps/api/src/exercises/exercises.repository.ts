@@ -5,9 +5,15 @@ import type {
   ExerciseTrainingFilters,
   SubmitExerciseAttemptInput,
 } from '@xadrez/contracts';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { DatabaseService } from '../database/database.service.js';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service.js';
 import { gradePlayedMoves } from './exercise-grader.js';
 
 type ExerciseRow = {
@@ -84,7 +90,10 @@ function answerIsCorrect(exercise: AttemptExerciseRow, submittedLine: string[]) 
 
 @Injectable()
 export class ExercisesRepository {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly subscriptions: SubscriptionsService,
+  ) {}
 
   private filters(query: ExerciseSearchQuery | ExerciseTrainingFilters) {
     return {
@@ -340,6 +349,11 @@ export class ExercisesRepository {
         FROM exercises e WHERE e.id = ${exerciseId} AND e.status = 'published'
     `;
     if (!exercise) throw new NotFoundException('Exercício não encontrado');
+    const entitlement = await this.subscriptions.checkEntitlement(userId, 'exercises_per_day');
+    if (!entitlement.allowed)
+      throw new ForbiddenException(
+        'Você atingiu o limite diário de exercícios do seu plano. Volte amanhã ou assine um plano com mais acesso.',
+      );
     // Free-text answers are open-ended prose ("explique em uma frase...");
     // exact string matching against the book's model answer is essentially
     // unwinnable, so the learner compares their own answer against the

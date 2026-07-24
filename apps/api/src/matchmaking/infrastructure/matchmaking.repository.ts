@@ -18,6 +18,7 @@ import {
 import type { TransactionSql } from 'postgres';
 
 import { DatabaseService } from '../../database/database.service.js';
+import { SubscriptionsService } from '../../subscriptions/subscriptions.service.js';
 
 interface TimeControlRow {
   code: TimeControlCode;
@@ -35,9 +36,17 @@ interface QueueRow {
 
 @Injectable()
 export class MatchmakingRepository {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly subscriptions: SubscriptionsService,
+  ) {}
 
   async join(userId: string, input: JoinQueueInput): Promise<QueueStatus> {
+    const entitlement = await this.subscriptions.checkEntitlement(userId, 'games_per_day');
+    if (!entitlement.allowed)
+      throw new ForbiddenException(
+        'Você atingiu o limite diário de partidas do seu plano. Volte amanhã ou assine um plano com mais acesso.',
+      );
     return this.database.client.begin(async (transaction) => {
       const timeControl = await this.timeControl(transaction, input.timeControlCode);
       await transaction`SELECT pg_advisory_xact_lock(hashtextextended(${`matchmaking:${timeControl.id}`}, 0))`;
