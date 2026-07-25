@@ -53,4 +53,8 @@ export class SubscriptionsService {
     const used = await this.repository.usageToday(userId, featureKey);
     return { allowed: used < limit.dailyLimit, featureKey, limit: limit.dailyLimit, used };
   }
+
+  grantTemporaryPlanIfNone(userId: string, planId: string, days: number) {
+    return this.repository.grantTemporaryPlanIfNone(userId, planId, days);
+  }
 }

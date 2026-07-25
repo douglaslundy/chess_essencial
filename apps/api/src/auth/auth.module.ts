@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { ReferralsController } from '../referrals/referrals.controller.js';
 import { UsersController } from '../users/users.controller.js';
 import { UsersModule } from '../users/users.module.js';
 import { AccessTokenGuard } from './access-token.guard.js';
@@ -9,7 +10,7 @@ import { VerificationEmailService } from './verification-email.service.js';
 
 @Module({
   imports: [UsersModule],
-  controllers: [AuthController, UsersController],
+  controllers: [AuthController, UsersController, ReferralsController],
   providers: [AccessTokenGuard, AuthService, VerificationEmailService],
   exports: [AccessTokenGuard, AuthService],
 })

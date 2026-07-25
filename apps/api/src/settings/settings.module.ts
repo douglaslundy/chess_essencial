@@ -9,6 +9,6 @@ import { SettingsService } from './settings.service.js';
 @Global()
 @Module({
   providers: [SettingsRepository, SettingsService],
-  exports: [SettingsService],
+  exports: [SettingsRepository, SettingsService],
 })
 export class SettingsModule {}

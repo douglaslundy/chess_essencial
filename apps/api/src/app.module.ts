@@ -16,6 +16,7 @@ import { MatchmakingModule } from './matchmaking/matchmaking.module.js';
 import { MessagesModule } from './messages/messages.module.js';
 import { ObservabilityModule } from './observability/observability.module.js';
 import { RatingsModule } from './ratings/ratings.module.js';
+import { ReferralsModule } from './referrals/referrals.module.js';
 import { RedisModule } from './redis/redis.module.js';
 import { SafetyModule } from './safety/safety.module.js';
 import { SettingsModule } from './settings/settings.module.js';
@@ -37,6 +38,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module.js';
     MessagesModule,
     ObservabilityModule,
     RatingsModule,
+    ReferralsModule,
     RedisModule,
     SafetyModule,
     SettingsModule,

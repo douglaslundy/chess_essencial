@@ -14,9 +14,17 @@ export default function AuthPage() {
   const [mode, setMode] = useState<Mode>('login');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const [referralCode, setReferralCode] = useState('');
 
   useEffect(() => {
-    const token = new URLSearchParams(window.location.search).get('verify');
+    const search = new URLSearchParams(window.location.search);
+    const ref = search.get('ref');
+    if (ref) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setReferralCode(ref);
+      setMode('register');
+    }
+    const token = search.get('verify');
     if (!token || verificationStarted.current) return;
     verificationStarted.current = true;
     setBusy(true);
@@ -41,6 +49,7 @@ export default function AuthPage() {
           email: String(data.get('email') ?? ''),
           password: String(data.get('password') ?? ''),
           username: String(data.get('username') ?? ''),
+          ...(referralCode.trim() ? { referralCode: referralCode.trim() } : {}),
         });
         if (result.verificationToken) await api.verifyEmail(result.verificationToken);
         setMode('login');
@@ -130,6 +139,13 @@ export default function AuthPage() {
               <label>
                 E-mail
                 <input autoComplete="email" name="email" required type="email" />
+              </label>
+              <label>
+                Código de indicação (opcional)
+                <input
+                  onChange={(event) => setReferralCode(event.target.value)}
+                  value={referralCode}
+                />
               </label>
             </>
           ) : (

@@ -43,9 +43,12 @@ import type {
   LoginInput,
   MercadoPagoConnectionTestResult,
   MercadoPagoSettings,
+  MyReferralInfo,
+  ReferralSettings,
   SaveSubscriptionPlanInput,
   SubscriptionPlan,
   SubscriptionPlanList,
+  UpdateReferralSettingsInput,
   UpdateSubscriptionPlanStatusInput,
   UserSubscription,
   PublicUser,
@@ -403,6 +406,14 @@ export const api = {
       },
     ),
   getMySubscription: (token: string) => request<UserSubscription>('/me/subscription', token),
+  getMyReferral: (token: string) => request<MyReferralInfo>('/me/referral', token),
+  adminGetReferralSettings: (token: string) =>
+    request<ReferralSettings>('/admin/referral-settings', token),
+  adminUpdateReferralSettings: (input: UpdateReferralSettingsInput, token: string) =>
+    request<ReferralSettings>('/admin/referral-settings', token, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    }),
   adminListSubscriptionPlans: (token: string) =>
     request<SubscriptionPlanList>('/admin/subscription-plans', token),
   adminCreateSubscriptionPlan: (input: SaveSubscriptionPlanInput, token: string) =>

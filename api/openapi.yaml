@@ -197,6 +197,17 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/UserSubscription'}
         '401': {$ref: '#/components/responses/Problem'}
+  /me/referral:
+    get:
+      summary: Get the current user's referral code and stats
+      operationId: getMyReferral
+      responses:
+        '200':
+          description: Referral code and stats
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MyReferralInfo'}
+        '401': {$ref: '#/components/responses/Problem'}
   /me/avatar:
     post:
       summary: Upload a profile avatar (base64 image) to object storage
@@ -676,6 +687,35 @@ paths:
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
+  /admin/referral-settings:
+    get:
+      summary: Get the referral reward configuration (admin only)
+      operationId: adminGetReferralSettings
+      responses:
+        '200':
+          description: Current referral settings
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ReferralSettings'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+    put:
+      summary: Update the referral reward configuration (admin only)
+      operationId: adminUpdateReferralSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateReferralSettingsInput'}
+      responses:
+        '200':
+          description: Updated referral settings
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ReferralSettings'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
   /admin/users/{userId}/status:
     patch:
       summary: Change a user's status (admin only; delete is a reversible soft-delete)
@@ -1636,6 +1676,7 @@ components:
         username: {type: string, minLength: 3, maxLength: 30}
         password: {type: string, minLength: 12}
         displayName: {type: string, minLength: 2, maxLength: 80}
+        referralCode: {type: string, minLength: 1, maxLength: 20}
     ResendVerificationInput:
       type: object
       required: [email]
@@ -1827,6 +1868,26 @@ components:
             - {$ref: '#/components/schemas/SubscriptionPlan'}
             - {type: 'null'}
         status: {type: [string, 'null'], enum: [active, canceled, expired, null]}
+    MyReferralInfo:
+      type: object
+      required: [code, rewardedCount, totalCount]
+      properties:
+        code: {type: string}
+        rewardedCount: {type: integer, minimum: 0}
+        totalCount: {type: integer, minimum: 0}
+    ReferralSettings:
+      type: object
+      required: [rewardDays, rewardPlanId]
+      properties:
+        rewardDays: {type: integer, minimum: 0}
+        rewardPlanId: {type: [string, 'null'], format: uuid}
+    UpdateReferralSettingsInput:
+      type: object
+      required: [rewardDays, rewardPlanId]
+      properties:
+        rewardDays: {type: integer, minimum: 0, maximum: 365}
+        rewardPlanId: {type: [string, 'null'], format: uuid}
+      additionalProperties: false
     ReportCategory:
       type: string
       enum: [cheating, harassment, spam, inappropriate_profile, other]

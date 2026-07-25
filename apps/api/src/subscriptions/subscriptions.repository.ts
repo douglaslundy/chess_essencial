@@ -147,6 +147,20 @@ export class SubscriptionsRepository {
   }
 
   /**
+   * Grants `planId` to `userId` for `days`, but only if they have no active
+   * subscription already — a promotional reward (e.g. referrals) must never
+   * downgrade or otherwise disturb an existing paid plan.
+   */
+  async grantTemporaryPlanIfNone(userId: string, planId: string, days: number): Promise<void> {
+    if (days <= 0) return;
+    await this.database.client`
+      INSERT INTO user_subscriptions (user_id, plan_id, status, current_period_end)
+      VALUES (${userId}, ${planId}, 'active', now() + make_interval(days => ${days}))
+      ON CONFLICT (user_id) WHERE status = 'active' DO NOTHING
+    `;
+  }
+
+  /**
    * Count of today's usage (UTC calendar day) for a gated feature. Reuses
    * existing tables — exercise/lesson/game attempts already carry a
    * timestamp and user link — instead of maintaining a separate counter

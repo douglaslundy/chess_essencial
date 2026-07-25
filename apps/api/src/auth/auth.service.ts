@@ -22,6 +22,7 @@ import { argon2id, hash as argonHash, verify as argonVerify } from 'argon2';
 import { SignJWT, errors as joseErrors, jwtVerify, type JWTPayload } from 'jose';
 
 import { AuditService } from '../observability/audit.service.js';
+import { ReferralsService } from '../referrals/referrals.service.js';
 import { UsersRepository, type IdentityUser } from '../users/users.repository.js';
 import { VerificationEmailService } from './verification-email.service.js';
 
@@ -48,6 +49,7 @@ export class AuthService {
     private readonly users: UsersRepository,
     private readonly verificationEmail: VerificationEmailService,
     @Optional() private readonly audit?: AuditService,
+    @Optional() private readonly referrals?: ReferralsService,
   ) {}
 
   async register(input: RegisterInput) {
@@ -78,6 +80,7 @@ export class AuthService {
     }
 
     await this.audit?.record(user.id, 'user.registered', 'user', user.id);
+    if (input.referralCode) await this.referrals?.attribute(input.referralCode, user.id);
     const verificationToken = await this.signVerificationToken(user.id);
     // The account row is already committed at this point — don't fail the
     // whole registration if only the verification email couldn't be sent
@@ -151,6 +154,7 @@ export class AuthService {
       throw new UnauthorizedException('Token de verificação inválido');
     }
     await this.audit?.record(user.id, 'user.email_verified', 'user', user.id);
+    await this.referrals?.rewardReferrerIfPending(user.id);
     return { user: this.toPublicUser(user) };
   }
 

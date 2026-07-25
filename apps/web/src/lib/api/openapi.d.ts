@@ -192,6 +192,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/me/referral': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get the current user's referral code and stats */
+    get: operations['getMyReferral'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/me/avatar': {
     parameters: {
       query?: never;
@@ -651,6 +668,24 @@ export interface paths {
     get?: never;
     /** Activate or archive a subscription plan (admin only) */
     put: operations['adminUpdateSubscriptionPlanStatus'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/referral-settings': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get the referral reward configuration (admin only) */
+    get: operations['adminGetReferralSettings'];
+    /** Update the referral reward configuration (admin only) */
+    put: operations['adminUpdateReferralSettings'];
     post?: never;
     delete?: never;
     options?: never;
@@ -1550,6 +1585,7 @@ export interface components {
       username: string;
       password: string;
       displayName: string;
+      referralCode?: string;
     };
     ResendVerificationInput: {
       /** Format: email */
@@ -1690,6 +1726,21 @@ export interface components {
       plan: components['schemas']['SubscriptionPlan'] | null;
       /** @enum {string|null} */
       status: 'active' | 'canceled' | 'expired' | null;
+    };
+    MyReferralInfo: {
+      code: string;
+      rewardedCount: number;
+      totalCount: number;
+    };
+    ReferralSettings: {
+      rewardDays: number;
+      /** Format: uuid */
+      rewardPlanId: string | null;
+    };
+    UpdateReferralSettingsInput: {
+      rewardDays: number;
+      /** Format: uuid */
+      rewardPlanId: string | null;
     };
     /** @enum {string} */
     ReportCategory: 'cheating' | 'harassment' | 'spam' | 'inappropriate_profile' | 'other';
@@ -2480,6 +2531,27 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['UserSubscription'];
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  getMyReferral: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Referral code and stats */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MyReferralInfo'];
         };
       };
       401: components['responses']['Problem'];
@@ -3308,6 +3380,55 @@ export interface operations {
       401: components['responses']['Problem'];
       403: components['responses']['Problem'];
       404: components['responses']['Problem'];
+    };
+  };
+  adminGetReferralSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Current referral settings */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReferralSettings'];
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  adminUpdateReferralSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateReferralSettingsInput'];
+      };
+    };
+    responses: {
+      /** @description Updated referral settings */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ReferralSettings'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
     };
   };
   adminUpdateUserStatus: {

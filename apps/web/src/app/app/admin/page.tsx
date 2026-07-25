@@ -31,6 +31,11 @@ const sections = [
     title: 'Planos de assinatura',
     description: 'Criar planos, escolher recursos liberados e a quantidade diária de cada um.',
   },
+  {
+    href: '/app/admin/indicacoes',
+    title: 'Programa de indicação',
+    description: 'Configurar a recompensa opcional de quem indica novos jogadores.',
+  },
 ];
 
 export default function AdminHubPage() {

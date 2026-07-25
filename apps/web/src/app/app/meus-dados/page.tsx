@@ -1,6 +1,6 @@
 'use client';
 
-import type { PublicUser, UpdateMeInput } from '@xadrez/contracts';
+import type { MyReferralInfo, PublicUser, UpdateMeInput } from '@xadrez/contracts';
 import { useEffect, useState, type FormEvent } from 'react';
 
 import { api } from '@/lib/api/client';
@@ -28,6 +28,9 @@ async function resizeToJpegBase64(file: File, size: number): Promise<string> {
 export default function MyDataPage() {
   const [user, setUser] = useState<PublicUser | null>(null);
   const [message, setMessage] = useState('Carregando seus dados…');
+  const [referral, setReferral] = useState<MyReferralInfo | null>(null);
+  const [referralLink, setReferralLink] = useState('');
+  const [referralMessage, setReferralMessage] = useState('');
   const { theme: pieceTheme, setTheme: setPieceTheme } = usePieceTheme();
   const themeOptions: { value: 'classic' | 'staunton_3d' | 'wood'; label: string }[] = [
     { label: 'Clássico', value: 'classic' },
@@ -51,8 +54,25 @@ export default function MyDataPage() {
             error instanceof Error ? error.message : 'Não foi possível carregar seus dados.',
           ),
         );
+      api
+        .getMyReferral(token)
+        .then((info) => {
+          setReferral(info);
+          setReferralLink(`${window.location.origin}/entrar?ref=${info.code}`);
+        })
+        .catch(() => undefined);
     });
   }, []);
+
+  async function copyReferralLink() {
+    if (!referralLink) return;
+    try {
+      await navigator.clipboard.writeText(referralLink);
+      setReferralMessage('Link copiado.');
+    } catch {
+      setReferralMessage(referralLink);
+    }
+  }
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -206,6 +226,35 @@ export default function MyDataPage() {
               </button>
             ))}
           </div>
+        </section>
+      ) : null}
+      {referral ? (
+        <section className={styles.formCard} aria-label="Indicações">
+          <h2>Convide amigos</h2>
+          <p>
+            Compartilhe seu código ou link para convidar amigos. {referral.rewardedCount} de{' '}
+            {referral.totalCount} indicação(ões) já confirmada(s).
+          </p>
+          <div className={styles.formGrid}>
+            <label className={styles.field}>
+              Seu código
+              <input disabled value={referral.code} />
+            </label>
+            <label className={styles.field}>
+              Link de convite
+              <input disabled value={referralLink} />
+            </label>
+          </div>
+          <button
+            className={styles.primaryButton}
+            onClick={() => void copyReferralLink()}
+            type="button"
+          >
+            Copiar link
+          </button>
+          <p className={styles.status} role="status">
+            {referralMessage}
+          </p>
         </section>
       ) : null}
     </main>

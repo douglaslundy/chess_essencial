@@ -12,6 +12,7 @@ export const registerInputSchema = z.object({
   username: usernameSchema,
   password: z.string().min(12).max(128),
   displayName: z.string().trim().min(2).max(80),
+  referralCode: z.string().trim().min(1).max(20).optional(),
 });
 
 export const resendVerificationInputSchema = z.object({
