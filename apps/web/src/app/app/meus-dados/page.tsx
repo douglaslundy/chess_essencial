@@ -40,7 +40,8 @@ export default function MyDataPage() {
     { label: 'Staunton 3D', value: 'staunton_3d' },
     { label: 'Madeira', value: 'wood' },
   ];
-  const { voiceName, setVoiceName } = useVoicePreference();
+  const { voiceName, setVoiceName, reviewNarrationEnabled, setReviewNarrationEnabled } =
+    useVoicePreference();
   const [voiceOptions, setVoiceOptions] = useState<VoiceOption[]>([]);
   const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
 
@@ -312,6 +313,14 @@ export default function MyDataPage() {
               ))}
             </div>
           )}
+          <label className={styles.checkbox}>
+            <input
+              checked={reviewNarrationEnabled}
+              onChange={(event) => setReviewNarrationEnabled(event.target.checked)}
+              type="checkbox"
+            />{' '}
+            Narrar os lances por voz no resumo/revisão pós-partida
+          </label>
         </section>
       ) : null}
       {referral ? (

@@ -36,6 +36,7 @@ interface QueueRow {
 
 interface ChallengeRow {
   challengerColor: 'white' | 'black' | null;
+  counterpartAvatarUrl: string | null;
   counterpartDisplayName: string;
   counterpartId: string;
   counterpartUsername: string;
@@ -256,7 +257,8 @@ export class MatchmakingRepository {
     const sql = this.database.client;
     const incoming = await sql<ChallengeRow[]>`
       SELECT direct_challenges.id, u.id AS "counterpartId", u.username::text AS "counterpartUsername",
-             p.display_name AS "counterpartDisplayName", direct_challenges.challenger_color AS "challengerColor",
+             p.display_name AS "counterpartDisplayName", p.avatar_url AS "counterpartAvatarUrl",
+             direct_challenges.challenger_color AS "challengerColor",
              time_controls.code AS "timeControlCode", direct_challenges.created_at AS "createdAt",
              direct_challenges.expires_at AS "expiresAt", direct_challenges.game_id AS "gameId"
       FROM direct_challenges
@@ -275,7 +277,8 @@ export class MatchmakingRepository {
     // moves away from 'pending'.
     const outgoing = await sql<ChallengeRow[]>`
       SELECT direct_challenges.id, u.id AS "counterpartId", u.username::text AS "counterpartUsername",
-             p.display_name AS "counterpartDisplayName", direct_challenges.challenger_color AS "challengerColor",
+             p.display_name AS "counterpartDisplayName", p.avatar_url AS "counterpartAvatarUrl",
+             direct_challenges.challenger_color AS "challengerColor",
              time_controls.code AS "timeControlCode", direct_challenges.created_at AS "createdAt",
              direct_challenges.expires_at AS "expiresAt", direct_challenges.game_id AS "gameId"
       FROM direct_challenges
@@ -321,6 +324,7 @@ export class MatchmakingRepository {
     return {
       id: row.id,
       counterpart: {
+        avatarUrl: row.counterpartAvatarUrl,
         userId: row.counterpartId,
         username: row.counterpartUsername,
         displayName: row.counterpartDisplayName,

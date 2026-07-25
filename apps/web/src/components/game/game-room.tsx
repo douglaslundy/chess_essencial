@@ -11,7 +11,7 @@ import { moveQualityLabel } from '@/components/history/move-narration';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { api, getRealtimeAccessToken, getStoredUserId } from '@/lib/api/client';
 import { useCoachEngine } from '@/lib/engine/use-coach-engine';
-import { formatUciSquares, toBrazilianSan } from '@/lib/notation';
+import { formatUciSquares, speakableSquares, toBrazilianSan } from '@/lib/notation';
 import { usePieceTheme } from '@/lib/piece-theme';
 import { GameSocket } from '@/lib/realtime/game-socket';
 import { speak } from '@/lib/speech';
@@ -171,6 +171,8 @@ export function GameRoom({ gameId }: { gameId: string }) {
     reason: string;
   } | null>(null);
   const [suggestMoveEnabled, setSuggestMoveEnabled] = useState(false);
+  const [assistedGameAvailable, setAssistedGameAvailable] = useState(false);
+  const [assistedColor, setAssistedColor] = useState<BoardOrientation | null>(null);
   const [pendingCoachMove, setPendingCoachMove] = useState<{
     quality: MoveQualityResult;
     uci: string;
@@ -189,6 +191,16 @@ export function GameRoom({ gameId }: { gameId: string }) {
     const timer = setInterval(() => tick((value) => value + 1), 200);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!isDemo) return;
+    const token = window.localStorage.getItem('xadrez.access_token');
+    if (!token) return;
+    api
+      .getAssistedGameSettings(token)
+      .then((settings) => setAssistedGameAvailable(settings.enabled))
+      .catch(() => undefined);
+  }, [isDemo]);
 
   useEffect(() => {
     if (isDemo) {
@@ -315,10 +327,16 @@ export function GameRoom({ gameId }: { gameId: string }) {
   const canMove =
     state.status === 'active' &&
     (isDemo || (connection === 'online' && myColor !== null && state.sideToMove === myColor));
+  // Assisted mode (demo board only): the player moves both sides, but the
+  // Treinador only speaks up for the color they picked, and only on that
+  // color's turn — everything else about the demo (free movement of either
+  // side, no server persistence) stays exactly as it already worked.
+  const assistedTurn = isDemo && assistedColor !== null && state.sideToMove === assistedColor;
+  const coachEnabled = isDemo ? assistedTurn : state.coachMode && canMove;
   const { checkCandidateMove, suggestion: coachSuggestion } = useCoachEngine({
-    enabled: !isDemo && state.coachMode && canMove,
+    enabled: coachEnabled,
     fen: state.currentFen,
-    suggestEnabled: suggestMoveEnabled,
+    suggestEnabled: isDemo ? true : suggestMoveEnabled,
   });
 
   const { voiceName } = useVoicePreference();
@@ -326,7 +344,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
   useEffect(() => {
     if (muted || !coachSuggestion) return;
     const text = formatCoachSuggestion(coachSuggestion);
-    if (text) speak(`Eu sugiro ${text}.`, { voiceName });
+    if (text) speak(speakableSquares(`Eu sugiro ${text}.`), { voiceName });
   }, [coachSuggestion, muted, voiceName]);
 
   useEffect(() => {
@@ -534,6 +552,31 @@ export function GameRoom({ gameId }: { gameId: string }) {
       </aside>
 
       <section className="boardColumn" aria-label="Área do tabuleiro">
+        {isDemo && assistedGameAvailable ? (
+          <div className="assistedGameBar" role="region" aria-label="Partida assistida">
+            {assistedColor === null ? (
+              <>
+                <span>Partida assistida: escolha sua cor para receber sugestões do Treinador.</span>
+                <button onClick={() => setAssistedColor('white')} type="button">
+                  Jogar de brancas
+                </button>
+                <button onClick={() => setAssistedColor('black')} type="button">
+                  Jogar de pretas
+                </button>
+              </>
+            ) : (
+              <>
+                <span>
+                  Partida assistida ativa: sugestões do Treinador para as{' '}
+                  {assistedColor === 'white' ? 'brancas' : 'pretas'}.
+                </span>
+                <button onClick={() => setAssistedColor(null)} type="button">
+                  Encerrar partida assistida
+                </button>
+              </>
+            )}
+          </div>
+        ) : null}
         <div className="mobilePlayer">
           <Player
             displayName={
@@ -608,7 +651,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
           />
         </div>
         <MoveAnnouncement announcement={announcement} />
-        {state.coachMode && canMove && coachSuggestion ? (
+        {coachEnabled && coachSuggestion ? (
           <p className="coachSuggestion" role="status">
             💡 Eu sugiro: {formatCoachSuggestion(coachSuggestion) ?? 'analisando…'}
           </p>

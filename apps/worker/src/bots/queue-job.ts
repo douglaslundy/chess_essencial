@@ -73,8 +73,12 @@ export async function runBotQueueJob(
   );
   if (eligible.length === 0) return { queued: 0, removed: removeResult.count };
 
+  // Bots queue for every active time control, including "Sem tempo"
+  // (unrated) — it's the default search option on /app/jogar, so excluding
+  // it here meant the platform's most common search path never matched a
+  // bot at all, even with plenty of bots online.
   const timeControls = await sql<TimeControlRow[]>`
-    SELECT id, pool FROM game_time_controls WHERE active = true AND code <> 'untimed'
+    SELECT id, pool FROM game_time_controls WHERE active = true
   `;
   if (timeControls.length === 0) return { queued: 0, removed: removeResult.count };
 

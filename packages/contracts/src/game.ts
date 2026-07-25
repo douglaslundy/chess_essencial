@@ -91,6 +91,7 @@ export const gameHistoryQuerySchema = z.object({
 });
 
 export const gameHistoryItemSchema = z.object({
+  coachMode: z.boolean(),
   color: z.enum(['white', 'black']),
   finishedAt: z.string().datetime().nullable(),
   id: z.string().uuid(),

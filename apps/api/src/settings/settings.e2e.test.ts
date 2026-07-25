@@ -30,6 +30,7 @@ describeDatabase('platform settings database integration', () => {
 
   afterAll(async () => {
     await database.client`DELETE FROM platform_settings WHERE key = 'payment.mercado_pago'`;
+    await database.client`DELETE FROM platform_settings WHERE key = 'features.assisted_game'`;
     await app.close();
   });
 
@@ -141,5 +142,52 @@ describeDatabase('platform settings database integration', () => {
       url: '/v1/admin/settings/mercado-pago/test-connection',
     });
     expect(response.statusCode, response.body).toBe(400);
+  });
+
+  it('defaults the assisted-game feature to disabled', async () => {
+    const response = await app.inject({
+      headers: auth(admin),
+      method: 'GET',
+      url: '/v1/admin/settings/assisted-game',
+    });
+    expect(response.statusCode, response.body).toBe(200);
+    expect(response.json()).toEqual({ enabled: false });
+  });
+
+  it('forbids non-admins from enabling the assisted-game feature, but any logged-in user can read it', async () => {
+    const write = await app.inject({
+      headers: auth(member),
+      method: 'PUT',
+      payload: { enabled: true },
+      url: '/v1/admin/settings/assisted-game',
+    });
+    expect(write.statusCode).toBe(403);
+
+    const read = await app.inject({
+      headers: auth(member),
+      method: 'GET',
+      url: '/v1/settings/assisted-game',
+    });
+    expect(read.statusCode, read.body).toBe(200);
+    expect(read.json()).toEqual({ enabled: false });
+  });
+
+  it('lets an admin enable the assisted-game feature, visible via the public endpoint', async () => {
+    const updated = await app.inject({
+      headers: auth(admin),
+      method: 'PUT',
+      payload: { enabled: true },
+      url: '/v1/admin/settings/assisted-game',
+    });
+    expect(updated.statusCode, updated.body).toBe(200);
+    expect(updated.json()).toEqual({ enabled: true });
+
+    const read = await app.inject({
+      headers: auth(member),
+      method: 'GET',
+      url: '/v1/settings/assisted-game',
+    });
+    expect(read.statusCode, read.body).toBe(200);
+    expect(read.json()).toEqual({ enabled: true });
   });
 });

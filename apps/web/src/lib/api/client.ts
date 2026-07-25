@@ -1,8 +1,10 @@
 import type {
   AdminBotStats,
   AdminMetrics,
+  AdminOnlineBot,
   AdminUser,
   AdminUserList,
+  AssistedGameSettings,
   UpdateAdminUserStatusInput,
   CreateBotGameInput,
   CreateChallengeInput,
@@ -67,6 +69,7 @@ import type {
   SendTestEmailInput,
   SmtpSettings,
   TokenPair,
+  UpdateAssistedGameSettingsInput,
   UpdateMercadoPagoSettingsInput,
   UpdateSmtpSettingsInput,
   UpdateMeInput,
@@ -383,6 +386,7 @@ export const api = {
       body: JSON.stringify(input),
     }),
   adminGetBotStats: (token: string) => request<AdminBotStats>('/admin/bots/stats', token),
+  adminListOnlineBots: (token: string) => request<AdminOnlineBot[]>('/admin/bots/online', token),
   adminGetMetrics: (token: string) => request<AdminMetrics>('/admin/metrics', token),
   adminGetSmtpSettings: (token: string) => request<SmtpSettings>('/admin/settings/smtp', token),
   adminUpdateSmtpSettings: (input: UpdateSmtpSettingsInput, token: string) =>
@@ -410,6 +414,15 @@ export const api = {
         method: 'POST',
       },
     ),
+  adminGetAssistedGameSettings: (token: string) =>
+    request<AssistedGameSettings>('/admin/settings/assisted-game', token),
+  adminUpdateAssistedGameSettings: (input: UpdateAssistedGameSettingsInput, token: string) =>
+    request<AssistedGameSettings>('/admin/settings/assisted-game', token, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    }),
+  getAssistedGameSettings: (token: string) =>
+    request<AssistedGameSettings>('/settings/assisted-game', token),
   listSubscriptionPlans: (token: string) =>
     request<SubscriptionPlanList>('/subscription-plans', token),
   getMySubscription: (token: string) => request<UserSubscription>('/me/subscription', token),

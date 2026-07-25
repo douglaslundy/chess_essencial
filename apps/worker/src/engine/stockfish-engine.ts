@@ -1,3 +1,4 @@
+import { ChessJsRules } from '@xadrez/chess-domain';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
@@ -35,6 +36,29 @@ export async function evaluatePosition(
   fen: string,
   options: EvaluateOptions = {},
 ): Promise<EngineEvaluation> {
+  // A position with no legal moves (checkmate, stalemate) has nothing to
+  // search: Stockfish never emits an `info ... score ...` line for it, just
+  // an immediate `bestmove (none)`, so scoreCp/mate would otherwise stay
+  // null and get silently treated as an even (0cp) position by classifyMove
+  // — turning the winning mating move into an apparent huge blunder. Report
+  // the objectively correct terminal evaluation instead of asking the
+  // engine to search a position it has nothing to say about.
+  const status = new ChessJsRules(fen).status();
+  if (status.isGameOver) {
+    // Reported from this FEN's side-to-move perspective, same convention as
+    // the engine's own scores: a draw is neutral (0); checkmate is the worst
+    // possible outcome for the mated side. A signed centipawn extreme (not
+    // `mate`) is used for checkmate because callers negate this value to
+    // flip perspective back to the mover — `mate: 0` has no sign to flip and
+    // would wrongly read as "mated" from either perspective.
+    return {
+      bestMove: null,
+      mate: null,
+      pv: [],
+      scoreCp: status.termination === 'checkmate' ? -100_000 : 0,
+    };
+  }
+
   const depth = options.depth ?? DEFAULT_DEPTH;
   const child = spawn(process.execPath, [ENGINE_PATH], {
     stdio: ['pipe', 'pipe', 'pipe'],

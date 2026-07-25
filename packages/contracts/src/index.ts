@@ -40,16 +40,20 @@ export {
   type UserSubscription,
 } from './subscriptions.js';
 export {
+  assistedGameSettingsSchema,
   mercadoPagoConnectionTestResultSchema,
   mercadoPagoSettingsSchema,
   sendTestEmailInputSchema,
   smtpSettingsSchema,
+  updateAssistedGameSettingsInputSchema,
   updateMercadoPagoSettingsInputSchema,
   updateSmtpSettingsInputSchema,
+  type AssistedGameSettings,
   type MercadoPagoConnectionTestResult,
   type MercadoPagoSettings,
   type SendTestEmailInput,
   type SmtpSettings,
+  type UpdateAssistedGameSettingsInput,
   type UpdateMercadoPagoSettingsInput,
   type UpdateSmtpSettingsInput,
 } from './settings.js';
@@ -78,6 +82,7 @@ export {
 export {
   adminBotStatsSchema,
   adminMetricsSchema,
+  adminOnlineBotSchema,
   adminUserListSchema,
   adminUserSchema,
   adminUserSearchQuerySchema,
@@ -85,6 +90,7 @@ export {
   updateAdminUserStatusInputSchema,
   type AdminBotStats,
   type AdminMetrics,
+  type AdminOnlineBot,
   type AdminUser,
   type AdminUserList,
   type AdminUserSearchQuery,

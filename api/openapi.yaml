@@ -558,6 +558,18 @@ paths:
               schema: {$ref: '#/components/schemas/AdminBotStats'}
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
+  /admin/bots/online:
+    get:
+      summary: Bot personas currently online (admin only)
+      operationId: adminListOnlineBots
+      responses:
+        '200':
+          description: Bot personas online right now
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/AdminOnlineBot'}}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
   /admin/metrics:
     get:
       summary: Aggregated platform metrics (admin only)
@@ -665,6 +677,46 @@ paths:
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '503': {$ref: '#/components/responses/Problem'}
+  /admin/settings/assisted-game:
+    get:
+      summary: Get whether "partida assistida" is enabled (admin only)
+      operationId: adminGetAssistedGameSettings
+      responses:
+        '200':
+          description: Current assisted-game feature setting
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AssistedGameSettings'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+    put:
+      summary: Enable or disable "partida assistida" (admin only)
+      operationId: adminUpdateAssistedGameSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateAssistedGameSettingsInput'}
+      responses:
+        '200':
+          description: Updated assisted-game feature setting
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AssistedGameSettings'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /settings/assisted-game:
+    get:
+      summary: Get whether "partida assistida" is currently enabled
+      operationId: getAssistedGameSettings
+      responses:
+        '200':
+          description: Current assisted-game feature setting
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AssistedGameSettings'}
+        '401': {$ref: '#/components/responses/Problem'}
   /admin/subscription-plans:
     get:
       summary: List all subscription plans (admin only)
@@ -1844,6 +1896,15 @@ components:
         onlineNow: {type: integer, minimum: 0}
         friendshipsCount: {type: integer, minimum: 0}
         gamesPlayed: {type: integer, minimum: 0}
+    AdminOnlineBot:
+      type: object
+      required: [userId, username, displayName, avatarUrl, targetRating]
+      properties:
+        userId: {type: string, format: uuid}
+        username: {type: string}
+        displayName: {type: string}
+        avatarUrl: {type: [string, 'null']}
+        targetRating: {type: integer}
     AdminMetrics:
       type: object
       required:
@@ -1932,6 +1993,17 @@ components:
       properties:
         accountEmail: {type: [string, 'null']}
         connected: {type: boolean}
+    AssistedGameSettings:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: {type: boolean}
+    UpdateAssistedGameSettingsInput:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: {type: boolean}
+      additionalProperties: false
     PlanFeatureLimit:
       type: object
       required: [featureKey, dailyLimit]
@@ -2049,19 +2121,21 @@ components:
         lastSeenAt: {type: [string, 'null'], format: date-time}
     Friend:
       type: object
-      required: [userId, username, displayName, presence]
+      required: [userId, username, displayName, avatarUrl, presence]
       properties:
         userId: {type: string, format: uuid}
         username: {type: string}
         displayName: {type: string}
+        avatarUrl: {type: [string, 'null']}
         presence: {$ref: '#/components/schemas/Presence'}
     FriendRequest:
       type: object
-      required: [userId, username, displayName, createdAt]
+      required: [userId, username, displayName, avatarUrl, createdAt]
       properties:
         userId: {type: string, format: uuid}
         username: {type: string}
         displayName: {type: string}
+        avatarUrl: {type: [string, 'null']}
         createdAt: {type: string, format: date-time}
     FriendRequestsView:
       type: object
@@ -2076,11 +2150,12 @@ components:
         username: {type: string, minLength: 3, maxLength: 30}
     PublicProfile:
       type: object
-      required: [userId, username, displayName, presence, friendshipStatus, ratings]
+      required: [userId, username, displayName, avatarUrl, presence, friendshipStatus, ratings]
       properties:
         userId: {type: string, format: uuid}
         username: {type: string}
         displayName: {type: string}
+        avatarUrl: {type: [string, 'null']}
         presence: {$ref: '#/components/schemas/Presence'}
         friendshipStatus:
           type: string
@@ -2132,6 +2207,7 @@ components:
           authorId,
           authorUsername,
           authorDisplayName,
+          authorAvatarUrl,
           body,
           photoUrl,
           createdAt,
@@ -2144,6 +2220,7 @@ components:
         authorId: {type: string, format: uuid}
         authorUsername: {type: string}
         authorDisplayName: {type: string}
+        authorAvatarUrl: {type: [string, 'null']}
         body: {type: [string, 'null']}
         photoUrl: {type: [string, 'null']}
         createdAt: {type: string, format: date-time}
@@ -2181,10 +2258,11 @@ components:
         boardTheme: {type: string, enum: [classic, staunton_3d, wood]}
         suggestMoveEnabled: {type: boolean, description: 'Modo Treinador: sugerir o melhor lance do motor antes de cada jogada'}
         voiceName: {type: [string, 'null'], maxLength: 200, description: 'Nome da SpeechSynthesisVoice preferida do navegador para a narração do Treinador; null usa a voz padrão'}
+        reviewNarrationEnabled: {type: boolean, description: 'Narrar por voz os lances no resumo/revisão pós-partida'}
       additionalProperties: false
     UserProfile:
       type: object
-      required: [displayName, avatarUrl, countryCode, timezone, locale, birthDate, bio, isProfilePublic, boardTheme, suggestMoveEnabled, voiceName]
+      required: [displayName, avatarUrl, countryCode, timezone, locale, birthDate, bio, isProfilePublic, boardTheme, suggestMoveEnabled, voiceName, reviewNarrationEnabled]
       properties:
         displayName: {type: string}
         avatarUrl: {type: [string, 'null']}
@@ -2197,6 +2275,7 @@ components:
         boardTheme: {type: string, enum: [classic, staunton_3d, wood]}
         suggestMoveEnabled: {type: boolean}
         voiceName: {type: [string, 'null']}
+        reviewNarrationEnabled: {type: boolean}
       additionalProperties: false
     PublicUser:
       type: object
@@ -2324,11 +2403,12 @@ components:
         id: {type: string, format: uuid}
         counterpart:
           type: object
-          required: [userId, username, displayName]
+          required: [userId, username, displayName, avatarUrl]
           properties:
             userId: {type: string, format: uuid}
             username: {type: string}
             displayName: {type: string}
+            avatarUrl: {type: [string, 'null']}
         challengerColor: {type: [string, 'null'], enum: [white, black, null]}
         timeControlCode: {type: string, enum: [bullet-1-0, bullet-2-1, blitz-3-0, blitz-3-2, rapid-10-0, rapid-15-10, classical-30-0, untimed]}
         createdAt: {type: string, format: date-time}
@@ -2437,7 +2517,7 @@ components:
       additionalProperties: false
     GameHistoryItem:
       type: object
-      required: [id, status, result, termination, pool, rated, color, timeControl, startedAt, finishedAt, opponent]
+      required: [id, status, result, termination, pool, rated, coachMode, color, timeControl, startedAt, finishedAt, opponent]
       properties:
         id: {type: string, format: uuid}
         status: {type: string}
@@ -2445,6 +2525,7 @@ components:
         termination: {type: string}
         pool: {$ref: '#/components/schemas/RatingPool'}
         rated: {type: boolean}
+        coachMode: {type: boolean}
         color: {type: string, enum: [white, black]}
         timeControl: {type: string}
         startedAt: {type: [string, 'null'], format: date-time}

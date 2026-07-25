@@ -95,6 +95,7 @@ interface MoveRow {
 }
 
 interface HistoryRow {
+  coachMode: boolean;
   color: 'white' | 'black';
   displayName: string;
   finishedAt: Date | string | null;
@@ -349,6 +350,7 @@ export class GamesRepository {
     `;
     const rows = await this.database.client<HistoryRow[]>`
       SELECT games.id, games.status, games.result, games.termination, games.rated,
+        games.coach_mode AS "coachMode",
         games.started_at AS "startedAt", games.finished_at AS "finishedAt", mine.color,
         controls.pool, controls.label AS "timeControl", opponent.user_id AS "opponentUserId",
         opponent.rating_before::integer AS "opponentRating", opponent_user.username::text AS username,
@@ -369,6 +371,7 @@ export class GamesRepository {
     `;
     return {
       items: rows.map((row) => ({
+        coachMode: row.coachMode,
         color: row.color,
         finishedAt: this.toIso(row.finishedAt),
         id: row.id,

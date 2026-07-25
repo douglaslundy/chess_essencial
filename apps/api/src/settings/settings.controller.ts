@@ -1,5 +1,6 @@
 import {
   sendTestEmailInputSchema,
+  updateAssistedGameSettingsInputSchema,
   updateMercadoPagoSettingsInputSchema,
   updateSmtpSettingsInputSchema,
 } from '@xadrez/contracts';
@@ -70,5 +71,16 @@ export class SettingsController {
   @Post('mercado-pago/test-connection')
   testMercadoPago() {
     return this.settings.testMercadoPagoConnection();
+  }
+
+  @Get('assisted-game')
+  getAssistedGame() {
+    return this.settings.getAssistedGameSettings();
+  }
+
+  @Put('assisted-game')
+  updateAssistedGame(@Req() request: AuthenticatedRequest, @Body() body: unknown) {
+    const input = parseInput(updateAssistedGameSettingsInputSchema, body);
+    return this.settings.updateAssistedGameSettings(input, request.auth.userId);
   }
 }

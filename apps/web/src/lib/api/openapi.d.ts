@@ -604,6 +604,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/admin/bots/online': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Bot personas currently online (admin only) */
+    get: operations['adminListOnlineBots'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/admin/metrics': {
     parameters: {
       query?: never;
@@ -685,6 +702,41 @@ export interface paths {
     put?: never;
     /** Verify the configured Mercado Pago access token (admin only) */
     post: operations['adminTestMercadoPagoConnection'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/settings/assisted-game': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get whether "partida assistida" is enabled (admin only) */
+    get: operations['adminGetAssistedGameSettings'];
+    /** Enable or disable "partida assistida" (admin only) */
+    put: operations['adminUpdateAssistedGameSettings'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/settings/assisted-game': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get whether "partida assistida" is currently enabled */
+    get: operations['getAssistedGameSettings'];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -1753,6 +1805,14 @@ export interface components {
       friendshipsCount: number;
       gamesPlayed: number;
     };
+    AdminOnlineBot: {
+      /** Format: uuid */
+      userId: string;
+      username: string;
+      displayName: string;
+      avatarUrl: string | null;
+      targetRating: number;
+    };
     AdminMetrics: {
       activeSubscriptionsByPlan: {
         count: number;
@@ -1812,6 +1872,12 @@ export interface components {
     MercadoPagoConnectionTestResult: {
       accountEmail: string | null;
       connected: boolean;
+    };
+    AssistedGameSettings: {
+      enabled: boolean;
+    };
+    UpdateAssistedGameSettingsInput: {
+      enabled: boolean;
     };
     PlanFeatureLimit: {
       featureKey: string;
@@ -1907,6 +1973,7 @@ export interface components {
       userId: string;
       username: string;
       displayName: string;
+      avatarUrl: string | null;
       presence: components['schemas']['Presence'];
     };
     FriendRequest: {
@@ -1914,6 +1981,7 @@ export interface components {
       userId: string;
       username: string;
       displayName: string;
+      avatarUrl: string | null;
       /** Format: date-time */
       createdAt: string;
     };
@@ -1929,6 +1997,7 @@ export interface components {
       userId: string;
       username: string;
       displayName: string;
+      avatarUrl: string | null;
       presence: components['schemas']['Presence'];
       /** @enum {string} */
       friendshipStatus: 'none' | 'pending_outgoing' | 'pending_incoming' | 'friends' | 'self';
@@ -1974,6 +2043,7 @@ export interface components {
       authorId: string;
       authorUsername: string;
       authorDisplayName: string;
+      authorAvatarUrl: string | null;
       body: string | null;
       photoUrl: string | null;
       /** Format: date-time */
@@ -2013,6 +2083,8 @@ export interface components {
       suggestMoveEnabled?: boolean;
       /** @description Nome da SpeechSynthesisVoice preferida do navegador para a narração do Treinador; null usa a voz padrão */
       voiceName?: string | null;
+      /** @description Narrar por voz os lances no resumo/revisão pós-partida */
+      reviewNarrationEnabled?: boolean;
     };
     UserProfile: {
       displayName: string;
@@ -2028,6 +2100,7 @@ export interface components {
       boardTheme: 'classic' | 'staunton_3d' | 'wood';
       suggestMoveEnabled: boolean;
       voiceName: string | null;
+      reviewNarrationEnabled: boolean;
     };
     PublicUser: {
       /** Format: uuid */
@@ -2169,6 +2242,7 @@ export interface components {
         userId: string;
         username: string;
         displayName: string;
+        avatarUrl: string | null;
       };
       /** @enum {string|null} */
       challengerColor: 'white' | 'black' | null;
@@ -2314,6 +2388,7 @@ export interface components {
       termination: string;
       pool: components['schemas']['RatingPool'];
       rated: boolean;
+      coachMode: boolean;
       /** @enum {string} */
       color: 'white' | 'black';
       timeControl: string;
@@ -3368,6 +3443,28 @@ export interface operations {
       403: components['responses']['Problem'];
     };
   };
+  adminListOnlineBots: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Bot personas online right now */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminOnlineBot'][];
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
   adminGetMetrics: {
     parameters: {
       query?: never;
@@ -3540,6 +3637,76 @@ export interface operations {
       401: components['responses']['Problem'];
       403: components['responses']['Problem'];
       503: components['responses']['Problem'];
+    };
+  };
+  adminGetAssistedGameSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Current assisted-game feature setting */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AssistedGameSettings'];
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  adminUpdateAssistedGameSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateAssistedGameSettingsInput'];
+      };
+    };
+    responses: {
+      /** @description Updated assisted-game feature setting */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AssistedGameSettings'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  getAssistedGameSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Current assisted-game feature setting */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AssistedGameSettings'];
+        };
+      };
+      401: components['responses']['Problem'];
     };
   };
   adminListSubscriptionPlans: {

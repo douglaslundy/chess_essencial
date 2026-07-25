@@ -50,9 +50,19 @@ export const mercadoPagoConnectionTestResultSchema = z.object({
   connected: z.boolean(),
 });
 
+export const assistedGameSettingsSchema = z.object({
+  enabled: z.boolean(),
+});
+
+export const updateAssistedGameSettingsInputSchema = z.object({
+  enabled: z.boolean(),
+});
+
+export type AssistedGameSettings = z.infer<typeof assistedGameSettingsSchema>;
 export type MercadoPagoConnectionTestResult = z.infer<typeof mercadoPagoConnectionTestResultSchema>;
 export type MercadoPagoSettings = z.infer<typeof mercadoPagoSettingsSchema>;
 export type SendTestEmailInput = z.infer<typeof sendTestEmailInputSchema>;
 export type SmtpSettings = z.infer<typeof smtpSettingsSchema>;
+export type UpdateAssistedGameSettingsInput = z.infer<typeof updateAssistedGameSettingsInputSchema>;
 export type UpdateMercadoPagoSettingsInput = z.infer<typeof updateMercadoPagoSettingsInputSchema>;
 export type UpdateSmtpSettingsInput = z.infer<typeof updateSmtpSettingsInputSchema>;

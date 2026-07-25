@@ -74,6 +74,43 @@ try {
     });
     process.stdout.write(`seed.bot_personas=${identities.length}\n`);
   }
+
+  // Backfill (every deploy, regardless of the branch above — this is what
+  // fixes bots seeded before this code existed): a bot's rating_profiles
+  // row got a "target" rating at creation but never any games behind it
+  // (games_count/wins/draws/losses all default to 0), which is nonsensical
+  // and immediately reveals the account as fake ("rating alto, 0 partidas,
+  // provisório"). Idempotent — only touches rows still at that default —
+  // so running it again once fixed is a no-op.
+  const staleBotRatings = await sql<{ id: string; rating: number }[]>`
+    SELECT rp.id, rp.rating
+    FROM rating_profiles rp
+    JOIN bot_personas bp ON bp.user_id = rp.user_id
+    WHERE rp.games_count = 0
+  `;
+  for (const row of staleBotRatings) {
+    const delta = row.rating - 1200;
+    // Real ladders match players against similarly-rated opponents, so a
+    // player's own win rate stays close to 50% regardless of their absolute
+    // rating — it's relative performance against peers, not an Elo expected
+    // score against a fixed baseline, which would (wrongly) push win rate to
+    // an unbelievable ~99% for a high-rated bot. Clamp to a believable band.
+    const winRate = Math.max(0.42, Math.min(0.62, 0.5 + delta / 4000));
+    const gamesCount = 40 + Math.floor(Math.abs(delta) / 8) + Math.floor(Math.random() * 30);
+    const draws = Math.round(gamesCount * 0.12);
+    const decisive = gamesCount - draws;
+    const wins = Math.round(decisive * winRate);
+    const losses = decisive - wins;
+    await sql`
+      UPDATE rating_profiles
+      SET games_count = ${gamesCount}, wins = ${wins}, draws = ${draws}, losses = ${losses},
+          provisional = false
+      WHERE id = ${row.id}
+    `;
+  }
+  if (staleBotRatings.length > 0) {
+    process.stdout.write(`seed.bot_personas.rating_backfill=${staleBotRatings.length}\n`);
+  }
 } finally {
   await sql.end({ timeout: 5 });
 }

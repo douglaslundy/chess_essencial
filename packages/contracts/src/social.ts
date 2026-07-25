@@ -6,6 +6,7 @@ export const presenceSchema = z.object({
 });
 
 export const friendSchema = z.object({
+  avatarUrl: z.string().nullable(),
   displayName: z.string(),
   presence: presenceSchema,
   userId: z.string().uuid(),
@@ -13,6 +14,7 @@ export const friendSchema = z.object({
 });
 
 export const friendRequestSchema = z.object({
+  avatarUrl: z.string().nullable(),
   createdAt: z.string().datetime(),
   displayName: z.string(),
   userId: z.string().uuid(),
@@ -29,6 +31,7 @@ export const sendFriendRequestInputSchema = z.object({
 });
 
 export const publicProfileSchema = z.object({
+  avatarUrl: z.string().nullable(),
   displayName: z.string(),
   friendshipStatus: z.enum(['none', 'pending_outgoing', 'pending_incoming', 'friends', 'self']),
   presence: presenceSchema,

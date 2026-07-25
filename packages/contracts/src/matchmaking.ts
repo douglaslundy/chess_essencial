@@ -52,6 +52,7 @@ export const respondChallengeInputSchema = z.object({
 export const directChallengeSchema = z.object({
   id: z.string().uuid(),
   counterpart: z.object({
+    avatarUrl: z.string().nullable(),
     displayName: z.string(),
     userId: z.string().uuid(),
     username: z.string(),

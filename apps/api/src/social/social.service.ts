@@ -41,6 +41,7 @@ export class SocialService {
     const friends = await this.social.listFriends(userId);
     const withOnline = await this.withPresence(friends);
     return withOnline.map((friend) => ({
+      avatarUrl: friend.avatarUrl,
       displayName: friend.displayName,
       presence: { lastSeenAt: friend.presence.lastSeenAt, online: friend.online },
       userId: friend.userId,
@@ -79,6 +80,7 @@ export class SocialService {
     const profile = await this.social.publicProfile(viewerId, username);
     const online = await this.isOnline(profile.userId);
     return {
+      avatarUrl: profile.avatarUrl,
       displayName: profile.displayName,
       friendshipStatus: profile.friendshipStatus,
       presence: { lastSeenAt: toIsoStringOrNull(profile.lastSeenAt), online },

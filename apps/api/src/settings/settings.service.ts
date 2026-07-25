@@ -1,7 +1,9 @@
 import type {
+  AssistedGameSettings,
   MercadoPagoConnectionTestResult,
   MercadoPagoSettings,
   SmtpSettings,
+  UpdateAssistedGameSettingsInput,
   UpdateMercadoPagoSettingsInput,
   UpdateSmtpSettingsInput,
 } from '@xadrez/contracts';
@@ -12,6 +14,7 @@ import { SettingsRepository } from './settings.repository.js';
 
 const SMTP_SETTINGS_KEY = 'smtp';
 const MERCADO_PAGO_SETTINGS_KEY = 'payment.mercado_pago';
+const ASSISTED_GAME_SETTINGS_KEY = 'features.assisted_game';
 
 export interface StoredSmtpConfig {
   fromAddress: string;
@@ -139,5 +142,18 @@ export class SettingsService {
       );
     const body = (await response.json()) as { email?: string };
     return { accountEmail: body.email ?? null, connected: true };
+  }
+
+  async getAssistedGameSettings(): Promise<AssistedGameSettings> {
+    const stored = await this.settings.get<AssistedGameSettings>(ASSISTED_GAME_SETTINGS_KEY);
+    return { enabled: stored?.enabled ?? false };
+  }
+
+  async updateAssistedGameSettings(
+    input: UpdateAssistedGameSettingsInput,
+    userId: string,
+  ): Promise<AssistedGameSettings> {
+    await this.settings.set(ASSISTED_GAME_SETTINGS_KEY, input, userId);
+    return this.getAssistedGameSettings();
   }
 }

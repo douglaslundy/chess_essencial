@@ -3,6 +3,7 @@
 import type { Post } from '@xadrez/contracts';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
+import { Avatar } from '@/components/ui/avatar';
 import { api } from '@/lib/api/client';
 
 // Resize an image file to a JPEG (max `size` px on the longer side) and
@@ -167,7 +168,10 @@ export default function FeedPage() {
         {posts.map((post) => (
           <article className="postCard" key={post.id}>
             <div className="postCardHeader">
-              <strong>{post.authorDisplayName}</strong>
+              <div className="postCardAuthor">
+                <Avatar avatarUrl={post.authorAvatarUrl} name={post.authorDisplayName} />
+                <strong>{post.authorDisplayName}</strong>
+              </div>
               <time dateTime={post.createdAt}>{formatPostDate(post.createdAt)}</time>
             </div>
             {post.body ? <p className="postBody">{post.body}</p> : null}

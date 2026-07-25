@@ -907,6 +907,20 @@ input:focus-visible {
   overflow: hidden;
 }
 
+.assistedGameBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.6rem 0.9rem;
+  margin-bottom: 0.6rem;
+  border: 1px solid var(--gold);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  font-size: 0.9rem;
+}
+
 .boardWithCoordinates {
   display: grid;
   width: min(100%, 46.5rem);
@@ -1277,6 +1291,15 @@ input:focus-visible {
 .adminHubCard span {
   color: var(--muted);
   font-size: 0.9rem;
+}
+.adminHubCardClickable {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.adminHubCardClickable[aria-expanded='true'] {
+  border-color: var(--gold);
 }
 .adminSearch {
   display: flex;
@@ -2010,9 +2033,21 @@ input:focus-visible {
   gap: 6px;
 }
 .reviewSummaryRow {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   font-size: 0.92rem;
+}
+.reviewSummaryRow span {
+  text-align: left;
+}
+.reviewSummaryRow strong {
+  text-align: center;
+}
+/* Left (mine) column: labels hug the left edge. Right (opponent) column:
+   labels hug the right edge, mirroring the left column. Numbers stay
+   centered in both, per the user's explicit layout request. */
+.reviewSummaryColumn:last-child .reviewSummaryRow span {
+  text-align: right;
 }
 .reviewSummaryRow strong {
   color: var(--text);
@@ -2046,10 +2081,6 @@ input:focus-visible {
   border-color: var(--success);
 }
 @media (max-width: 900px) {
-  .reviewSummaryColumns {
-    grid-template-columns: 1fr;
-  }
-
   .reviewPage {
     grid-template-columns: 1fr;
   }
@@ -2457,6 +2488,11 @@ input:focus-visible {
 }
 .postCardHeader strong {
   color: var(--text);
+}
+.postCardAuthor {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 .postCardHeader time {
   color: var(--muted);

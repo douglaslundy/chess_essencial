@@ -12,7 +12,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { describeMoveQuality, moveQualityLabel, narrateMove } from './move-narration';
 import { reviewEligibility, type ReviewEligibility } from './review-eligibility';
-import { ChessBoard } from '@/components/game/chess-board';
+import { ChessBoard, type BoardOrientation } from '@/components/game/chess-board';
 import { api, getStoredUserId } from '@/lib/api/client';
 import { formatUciSquares, toBrazilianSan } from '@/lib/notation';
 import { usePieceTheme } from '@/lib/piece-theme';
@@ -58,7 +58,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
   const [message, setMessage] = useState('Carregando revisão…');
   const [eligibility, setEligibility] = useState<ReviewEligibility | null>(null);
   const [view, setView] = useState<'summary' | 'moves'>('summary');
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [orientation, setOrientation] = useState<BoardOrientation>('white');
 
   useEffect(() => {
     const token = window.localStorage.getItem('xadrez.access_token');
@@ -84,7 +84,9 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
         setMoves(nextMoves);
         setAnnotations(nextAnnotations);
         setAnalysis(nextAnalysis);
-        setPly(nextMoves.length);
+        setPly(0);
+        const myPlayer = nextState.players.find((player) => player.userId === getStoredUserId());
+        if (myPlayer) setOrientation(myPlayer.color);
         setMessage('');
       })
       .catch((error: unknown) =>
@@ -95,27 +97,36 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
   const myUserId = getStoredUserId();
   const myColor = state?.players.find((player) => player.userId === myUserId)?.color ?? null;
   const opponentColor = myColor === 'white' ? 'black' : 'white';
+  const opponentName =
+    state?.players.find((player) => player.color === opponentColor)?.displayName || 'Bot';
   const currentMoveAnalysis = analysis?.moves.find((move) => move.ply === ply) ?? null;
   const summaryColumns: Array<{ color: 'white' | 'black'; label: string }> = myColor
     ? [
         { color: myColor, label: 'Eu' },
-        { color: opponentColor, label: 'Adversário' },
+        { color: opponentColor, label: opponentName },
       ]
     : [
         { color: 'white', label: 'Brancas' },
         { color: 'black', label: 'Pretas' },
       ];
 
-  const { voiceName } = useVoicePreference();
+  const { voiceName, reviewNarrationEnabled, setReviewNarrationEnabled } = useVoicePreference();
 
   useEffect(() => {
-    if (!voiceEnabled || !currentMoveAnalysis) return;
+    if (!reviewNarrationEnabled || !currentMoveAnalysis) return;
     speak(narrateMove(currentMoveAnalysis), { voiceName });
-  }, [currentMoveAnalysis, voiceEnabled, voiceName]);
+  }, [currentMoveAnalysis, reviewNarrationEnabled, voiceName]);
 
   useEffect(() => {
-    if (!voiceEnabled) stopSpeaking();
-  }, [voiceEnabled]);
+    if (!reviewNarrationEnabled) stopSpeaking();
+  }, [reviewNarrationEnabled]);
+
+  function startMoveByMoveReview() {
+    setView('moves');
+    if (reviewNarrationEnabled) {
+      speak('Olá, seja bem-vindo! Vamos revisar essa partida.', { voiceName });
+    }
+  }
 
   const current = annotations.find((item) => item.ply === ply);
   useEffect(() => {
@@ -210,7 +221,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
         <button
           className="primaryButton"
           disabled={moves.length === 0}
-          onClick={() => setView('moves')}
+          onClick={startMoveByMoveReview}
           type="button"
         >
           Iniciar revisão lance a lance
@@ -230,6 +241,12 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
           <button onClick={() => setView('summary')} type="button">
             Voltar ao resumo
           </button>
+          <button
+            onClick={() => setOrientation((current) => (current === 'white' ? 'black' : 'white'))}
+            type="button"
+          >
+            Virar tabuleiro
+          </button>
           <button onClick={exportPgn} type="button">
             Exportar PGN
           </button>
@@ -243,7 +260,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
             ply ? { from: moves[ply - 1]?.from ?? '', to: moves[ply - 1]?.to ?? '' } : undefined
           }
           onMove={() => undefined}
-          orientation="white"
+          orientation={orientation}
           pieceTheme={pieceTheme}
         />
         {highlight ? <p className="annotationPreview">Destaque: {highlight}</p> : null}
@@ -333,8 +350,8 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
           <strong>Minha avaliação</strong>
           <label className="voiceToggle">
             <input
-              checked={voiceEnabled}
-              onChange={(event) => setVoiceEnabled(event.target.checked)}
+              checked={reviewNarrationEnabled}
+              onChange={(event) => setReviewNarrationEnabled(event.target.checked)}
               type="checkbox"
             />
             Narrar lances por voz

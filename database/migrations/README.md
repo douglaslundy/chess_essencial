@@ -43,5 +43,7 @@ pnpm --filter @xadrez/api db:rollback
 
 `0030_voice_preference.down.sql` drops `user_profiles.voice_name`; nullable with no default, so its absence is indistinguishable from "use the browser's default voice" — nothing to preserve.
 
+`0031_review_narration_preference.down.sql` drops `user_profiles.review_narration_enabled`; defaults to false (narration off) both ways, nothing to preserve.
+
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.

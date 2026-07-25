@@ -37,6 +37,12 @@ const sections = [
     description: 'Configurar a recompensa opcional de quem indica novos jogadores.',
   },
   {
+    href: '/app/admin/recursos',
+    title: 'Recursos experimentais',
+    description:
+      'Ativar ou desativar recursos como a partida assistida do tabuleiro demonstrativo.',
+  },
+  {
     href: '/app/admin/metricas',
     title: 'Métricas',
     description: 'Usuários, partidas, exercícios, aulas, assinaturas e indicações em um só lugar.',

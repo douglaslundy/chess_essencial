@@ -7,6 +7,17 @@ import { useCallback, useEffect, useState } from 'react';
 import { reviewEligibility } from './review-eligibility';
 import { api } from '@/lib/api/client';
 
+function formatGameDate(isoDate: string | null) {
+  if (!isoDate) return null;
+  return new Date(isoDate).toLocaleString('pt-BR', {
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
 export function HistoryList() {
   const [history, setHistory] = useState<GameHistoryPage>({
     items: [],
@@ -96,6 +107,7 @@ export function HistoryList() {
             <article className="historyCard" key={game.id}>
               <div>
                 <strong>{game.opponent.displayName}</strong>
+                {game.coachMode ? <span className="adminBadge">Treinador</span> : null}
                 <span>
                   @{game.opponent.username} · {game.opponent.rating} XE
                 </span>
@@ -115,6 +127,12 @@ export function HistoryList() {
                         : 'Derrota'}
                   </dd>
                 </div>
+                {formatGameDate(game.finishedAt ?? game.startedAt) ? (
+                  <div>
+                    <dt>Data</dt>
+                    <dd>{formatGameDate(game.finishedAt ?? game.startedAt)}</dd>
+                  </div>
+                ) : null}
               </dl>
               {review.available ? (
                 <Link href={'/app/partidas/' + game.id + '/revisao'}>Revisar partida</Link>

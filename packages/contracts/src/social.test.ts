@@ -33,6 +33,7 @@ describe('social contracts', () => {
     const uuid = '11111111-1111-4111-8111-111111111111';
     expect(
       publicProfileSchema.parse({
+        avatarUrl: null,
         displayName: 'Player',
         friendshipStatus: 'friends',
         presence: { lastSeenAt: null, online: false },

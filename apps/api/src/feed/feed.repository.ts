@@ -4,6 +4,7 @@ import { toIsoString } from '../common/dates/to-iso-string.js';
 import { DatabaseService } from '../database/database.service.js';
 
 type PostRow = {
+  author_avatar_url: string | null;
   author_display_name: string;
   author_id: string;
   author_username: string;
@@ -36,7 +37,8 @@ export class FeedRepository {
     const sql = this.database.client;
     const rows = await sql<PostRow[]>`
       SELECT p.id, p.author_id, u.username::text AS author_username,
-             up.display_name AS author_display_name, p.body, p.photo_url, p.created_at,
+             up.display_name AS author_display_name, up.avatar_url AS author_avatar_url,
+             p.body, p.photo_url, p.created_at,
              (SELECT count(*)::integer FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
              EXISTS(
                SELECT 1 FROM post_likes pl WHERE pl.post_id = p.id AND pl.user_id = ${viewerId}
@@ -86,7 +88,8 @@ export class FeedRepository {
   private async getPost(viewerId: string, postId: string) {
     const [row] = await this.database.client<PostRow[]>`
       SELECT p.id, p.author_id, u.username::text AS author_username,
-             up.display_name AS author_display_name, p.body, p.photo_url, p.created_at,
+             up.display_name AS author_display_name, up.avatar_url AS author_avatar_url,
+             p.body, p.photo_url, p.created_at,
              (SELECT count(*)::integer FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
              EXISTS(
                SELECT 1 FROM post_likes pl WHERE pl.post_id = p.id AND pl.user_id = ${viewerId}
@@ -102,6 +105,7 @@ export class FeedRepository {
 
   private toPost(viewerId: string, row: PostRow) {
     return {
+      authorAvatarUrl: row.author_avatar_url,
       authorDisplayName: row.author_display_name,
       authorId: row.author_id,
       authorUsername: row.author_username,

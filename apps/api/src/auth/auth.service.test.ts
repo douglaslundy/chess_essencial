@@ -44,6 +44,7 @@ class FakeUsersRepository {
         displayName: input.displayName,
         isProfilePublic: true,
         locale: 'pt-BR',
+        reviewNarrationEnabled: false,
         suggestMoveEnabled: false,
         timezone: 'UTC',
         voiceName: null,

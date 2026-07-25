@@ -115,6 +115,29 @@ export class AdminRepository {
     };
   }
 
+  async listBotPersonas(): Promise<
+    Array<{
+      avatarUrl: string | null;
+      displayName: string;
+      targetRating: number;
+      userId: string;
+      username: string;
+    }>
+  > {
+    return this.database.client`
+      SELECT
+        bp.user_id AS "userId",
+        u.username::text AS username,
+        p.display_name AS "displayName",
+        p.avatar_url AS "avatarUrl",
+        bp.target_rating AS "targetRating"
+      FROM bot_personas bp
+      JOIN users u ON u.id = bp.user_id
+      JOIN user_profiles p ON p.user_id = bp.user_id
+      ORDER BY p.display_name
+    `;
+  }
+
   async metrics(): Promise<{
     activeSubscriptionsByPlan: { count: number; planName: string }[];
     exercisesSolvedTotal: number;

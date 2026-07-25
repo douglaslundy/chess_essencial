@@ -37,6 +37,14 @@ export const adminBotStatsSchema = z.object({
   total: z.number().int().nonnegative(),
 });
 
+export const adminOnlineBotSchema = z.object({
+  avatarUrl: z.string().nullable(),
+  displayName: z.string(),
+  targetRating: z.number().int(),
+  userId: z.string().uuid(),
+  username: z.string(),
+});
+
 export const adminMetricsSchema = z.object({
   activeSubscriptionsByPlan: z.array(
     z.object({ count: z.number().int().nonnegative(), planName: z.string() }),
@@ -52,6 +60,7 @@ export const adminMetricsSchema = z.object({
 });
 
 export type AdminBotStats = z.infer<typeof adminBotStatsSchema>;
+export type AdminOnlineBot = z.infer<typeof adminOnlineBotSchema>;
 export type AdminMetrics = z.infer<typeof adminMetricsSchema>;
 export type AdminUser = z.infer<typeof adminUserSchema>;
 export type AdminUserList = z.infer<typeof adminUserListSchema>;

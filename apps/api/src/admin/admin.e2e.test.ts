@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createApp } from '../bootstrap.js';
 import { DatabaseService } from '../database/database.service.js';
+import { RedisService } from '../redis/redis.service.js';
 
 const describeDatabase = process.env.RUN_DB_TESTS === 'true' ? describe : describe.skip;
 
@@ -13,6 +14,7 @@ interface Identity {
 describeDatabase('admin user management database integration', () => {
   let app: Awaited<ReturnType<typeof createApp>>;
   let database: DatabaseService;
+  let redis: RedisService;
   let admin: Identity;
   let member: Identity;
 
@@ -20,6 +22,7 @@ describeDatabase('admin user management database integration', () => {
     app = await createApp();
     await app.init();
     database = app.get(DatabaseService);
+    redis = app.get(RedisService);
     admin = await createIdentity('admin-user@example.com', 'admin_user');
     member = await createIdentity('member-user@example.com', 'member_user');
     await database.client`
@@ -164,5 +167,64 @@ describeDatabase('admin user management database integration', () => {
     const stats = after.json();
     expect(stats.total).toBe(baseline.total + 1);
     expect(stats.friendshipsCount).toBe(baseline.friendshipsCount + 1);
+  });
+
+  it('forbids non-admins from listing online bots', async () => {
+    const response = await app.inject({
+      headers: auth(member),
+      method: 'GET',
+      url: '/v1/admin/bots/online',
+    });
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('lists only the bot personas with an active presence key', async () => {
+    const [onlinePersona] = await database.client<{ id: string }[]>`
+      INSERT INTO users (email, username, password_hash, status, email_verified_at)
+      VALUES (
+        'admin-online-fixture-bot@bots.internal.xadrez.invalid', 'admin_online_fixture_bot',
+        '$argon2id$v=19$m=65536,t=3,p=4$tfY8w/jfpydVWz+cywI0jQ$EF4JyCThCB04ZUXOZG1g74Ufjwg2BGyiCh3F+L72MNM',
+        'active', now()
+      )
+      RETURNING id
+    `;
+    await database.client`
+      INSERT INTO user_profiles (user_id, display_name, timezone, locale)
+      VALUES (${onlinePersona!.id}, 'Online Fixture Bot', 'America/Sao_Paulo', 'pt-BR')
+    `;
+    await database.client`
+      INSERT INTO bot_personas (user_id, target_rating, online_windows)
+      VALUES (${onlinePersona!.id}, 1650, '[]'::jsonb)
+    `;
+    const [offlinePersona] = await database.client<{ id: string }[]>`
+      INSERT INTO users (email, username, password_hash, status, email_verified_at)
+      VALUES (
+        'admin-offline-fixture-bot@bots.internal.xadrez.invalid', 'admin_offline_fixture_bot',
+        '$argon2id$v=19$m=65536,t=3,p=4$tfY8w/jfpydVWz+cywI0jQ$EF4JyCThCB04ZUXOZG1g74Ufjwg2BGyiCh3F+L72MNM',
+        'active', now()
+      )
+      RETURNING id
+    `;
+    await database.client`
+      INSERT INTO user_profiles (user_id, display_name, timezone, locale)
+      VALUES (${offlinePersona!.id}, 'Offline Fixture Bot', 'America/Sao_Paulo', 'pt-BR')
+    `;
+    await database.client`
+      INSERT INTO bot_personas (user_id, target_rating, online_windows)
+      VALUES (${offlinePersona!.id}, 1650, '[]'::jsonb)
+    `;
+    await redis.client.set(`presence:${onlinePersona!.id}`, '1', 'EX', 90);
+
+    const response = await app.inject({
+      headers: auth(admin),
+      method: 'GET',
+      url: '/v1/admin/bots/online',
+    });
+    expect(response.statusCode, response.body).toBe(200);
+    const online: Array<{ userId: string }> = response.json();
+    expect(online.some((bot) => bot.userId === onlinePersona!.id)).toBe(true);
+    expect(online.some((bot) => bot.userId === offlinePersona!.id)).toBe(false);
+
+    await redis.client.del(`presence:${onlinePersona!.id}`);
   });
 });

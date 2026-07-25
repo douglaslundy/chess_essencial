@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { AuthModule } from '../auth/auth.module.js';
 import { ReferralsAdminController } from '../referrals/referrals-admin.controller.js';
+import { AssistedGameController } from '../settings/assisted-game.controller.js';
 import { SettingsController } from '../settings/settings.controller.js';
 import { SubscriptionsAdminController } from '../subscriptions/subscriptions-admin.controller.js';
 import { AdminController } from './admin.controller.js';
@@ -14,6 +15,7 @@ import { AdminService } from './admin.service.js';
   controllers: [
     AdminController,
     SettingsController,
+    AssistedGameController,
     SubscriptionsAdminController,
     ReferralsAdminController,
   ],

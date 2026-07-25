@@ -24,6 +24,11 @@ export class AdminController {
     return this.admin.getBotStats();
   }
 
+  @Get('bots/online')
+  listOnlineBots() {
+    return this.admin.listOnlineBots();
+  }
+
   @Get('metrics')
   getMetrics() {
     return this.admin.getMetrics();

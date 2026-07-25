@@ -78,6 +78,7 @@ export const userProfiles = pgTable('user_profiles', {
   boardTheme: boardThemeEnum('board_theme').notNull().default('classic'),
   suggestMoveEnabled: boolean('suggest_move_enabled').notNull().default(false),
   voiceName: text('voice_name'),
+  reviewNarrationEnabled: boolean('review_narration_enabled').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

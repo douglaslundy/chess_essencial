@@ -16,3 +16,31 @@ export function toBrazilianSan(san: string): string {
 export function formatUciSquares(uci: string): string {
   return `${uci.slice(0, 2)} → ${uci.slice(2, 4)}`;
 }
+
+// Bare "letter+digit" square tokens (e.g. "g6") have no natural pronunciation
+// in Portuguese, so some pt-BR speech-synthesis voices guess a nonsense word
+// instead of reading the letter name (observed: "g6" spoken as "grandma 6").
+// Spelling the file letter out removes the ambiguity.
+const FILE_NAME_PT: Record<string, string> = {
+  a: 'á',
+  b: 'bê',
+  c: 'cê',
+  d: 'dê',
+  e: 'é',
+  f: 'éfe',
+  g: 'gê',
+  h: 'agá',
+};
+
+/** Rewrites any square references in speech-bound text into a phonetically
+ * safe, spelled-out form, e.g. "g6" → "gê 6". Use for any string passed to
+ * speech synthesis; not for on-screen display. */
+export function speakableSquares(text: string): string {
+  return text
+    .replace(
+      /([a-h])([1-8])/g,
+      (_match, file: string, rank: string) => ` ${FILE_NAME_PT[file]} ${rank}`,
+    )
+    .replace(/\s+/g, ' ')
+    .trim();
+}

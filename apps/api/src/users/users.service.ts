@@ -62,6 +62,7 @@ export class UsersService {
         displayName: user.profile.displayName,
         isProfilePublic: user.profile.isProfilePublic,
         locale: user.profile.locale,
+        reviewNarrationEnabled: user.profile.reviewNarrationEnabled,
         suggestMoveEnabled: user.profile.suggestMoveEnabled,
         timezone: user.profile.timezone,
         voiceName: user.profile.voiceName,

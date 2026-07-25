@@ -9,6 +9,7 @@ import { toIsoString, toIsoStringOrNull } from '../common/dates/to-iso-string.js
 import { DatabaseService } from '../database/database.service.js';
 
 type FriendRow = {
+  avatar_url: string | null;
   display_name: string;
   last_seen_at: Date | string | null;
   user_id: string;
@@ -63,7 +64,7 @@ export class SocialRepository {
         VALUES (${requesterId}, ${target.id}, 'pending')
         RETURNING addressee_id, created_at
       )
-      SELECT u.id AS user_id, u.username::text, p.display_name, inserted.created_at
+      SELECT u.id AS user_id, u.username::text, p.display_name, p.avatar_url, inserted.created_at
         FROM inserted
         JOIN users u ON u.id = inserted.addressee_id
         JOIN user_profiles p ON p.user_id = u.id
@@ -117,7 +118,7 @@ export class SocialRepository {
   async listFriends(userId: string) {
     const sql = this.database.client;
     const rows = await sql<FriendRow[]>`
-      SELECT u.id AS user_id, u.username::text, p.display_name, u.last_seen_at
+      SELECT u.id AS user_id, u.username::text, p.display_name, p.avatar_url, u.last_seen_at
         FROM friendships f
         JOIN users u ON u.id = CASE WHEN f.requester_id = ${userId} THEN f.addressee_id ELSE f.requester_id END
         JOIN user_profiles p ON p.user_id = u.id
@@ -130,7 +131,7 @@ export class SocialRepository {
   async listRequests(userId: string) {
     const sql = this.database.client;
     const incoming = await sql<RequestRow[]>`
-      SELECT u.id AS user_id, u.username::text, p.display_name, f.created_at
+      SELECT u.id AS user_id, u.username::text, p.display_name, p.avatar_url, f.created_at
         FROM friendships f
         JOIN users u ON u.id = f.requester_id
         JOIN user_profiles p ON p.user_id = u.id
@@ -138,7 +139,7 @@ export class SocialRepository {
        ORDER BY f.created_at DESC
     `;
     const outgoing = await sql<RequestRow[]>`
-      SELECT u.id AS user_id, u.username::text, p.display_name, f.created_at
+      SELECT u.id AS user_id, u.username::text, p.display_name, p.avatar_url, f.created_at
         FROM friendships f
         JOIN users u ON u.id = f.addressee_id
         JOIN user_profiles p ON p.user_id = u.id
@@ -154,9 +155,15 @@ export class SocialRepository {
   async publicProfile(viewerId: string | null, username: string) {
     const sql = this.database.client;
     const [row] = await sql<
-      { display_name: string; id: string; last_seen_at: Date | string | null; username: string }[]
+      {
+        avatar_url: string | null;
+        display_name: string;
+        id: string;
+        last_seen_at: Date | string | null;
+        username: string;
+      }[]
     >`
-      SELECT u.id, u.username::text, p.display_name, u.last_seen_at
+      SELECT u.id, u.username::text, p.display_name, p.avatar_url, u.last_seen_at
         FROM users u JOIN user_profiles p ON p.user_id = u.id
        WHERE u.username = ${username} AND u.status = 'active'
     `;
@@ -182,6 +189,7 @@ export class SocialRepository {
       }
     }
     return {
+      avatarUrl: row.avatar_url,
       displayName: row.display_name,
       friendshipStatus,
       lastSeenAt: row.last_seen_at,
@@ -198,7 +206,7 @@ export class SocialRepository {
   private async friendRow(userId: string, otherId: string): Promise<FriendRow> {
     const sql = this.database.client;
     const [row] = await sql<FriendRow[]>`
-      SELECT u.id AS user_id, u.username::text, p.display_name, u.last_seen_at
+      SELECT u.id AS user_id, u.username::text, p.display_name, p.avatar_url, u.last_seen_at
         FROM users u JOIN user_profiles p ON p.user_id = u.id
        WHERE u.id = ${otherId}
     `;
@@ -208,6 +216,7 @@ export class SocialRepository {
 
   private toFriend(row: FriendRow) {
     return {
+      avatarUrl: row.avatar_url,
       displayName: row.display_name,
       presence: { lastSeenAt: toIsoStringOrNull(row.last_seen_at), online: false },
       userId: row.user_id,
@@ -217,6 +226,7 @@ export class SocialRepository {
 
   private toRequest(row: RequestRow) {
     return {
+      avatarUrl: row.avatar_url,
       createdAt: toIsoString(row.created_at),
       displayName: row.display_name,
       userId: row.user_id,

@@ -4,6 +4,7 @@ import type { DirectChallengesView, Friend, FriendRequestsView } from '@xadrez/c
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
+import { Avatar } from '@/components/ui/avatar';
 import { api } from '@/lib/api/client';
 
 const emptyRequests: FriendRequestsView = { incoming: [], outgoing: [] };
@@ -234,8 +235,14 @@ export default function FriendsPage() {
           <div className="adminUserTable" role="table">
             {challenges.incoming.map((incomingChallenge) => (
               <div className="adminUserRow" key={incomingChallenge.id} role="row">
-                <strong>{incomingChallenge.counterpart.displayName}</strong>
-                <span>@{incomingChallenge.counterpart.username}</span>
+                <div>
+                  <Avatar
+                    avatarUrl={incomingChallenge.counterpart.avatarUrl}
+                    name={incomingChallenge.counterpart.displayName}
+                  />
+                  <strong>{incomingChallenge.counterpart.displayName}</strong>{' '}
+                  <span>@{incomingChallenge.counterpart.username}</span>
+                </div>
                 <div className="adminUserActions">
                   <button
                     disabled={busy}
@@ -265,8 +272,14 @@ export default function FriendsPage() {
           <div className="adminUserTable" role="table">
             {challenges.outgoing.map((outgoingChallenge) => (
               <div className="adminUserRow" key={outgoingChallenge.id} role="row">
-                <strong>{outgoingChallenge.counterpart.displayName}</strong>
-                <span>@{outgoingChallenge.counterpart.username}</span>
+                <div>
+                  <Avatar
+                    avatarUrl={outgoingChallenge.counterpart.avatarUrl}
+                    name={outgoingChallenge.counterpart.displayName}
+                  />
+                  <strong>{outgoingChallenge.counterpart.displayName}</strong>{' '}
+                  <span>@{outgoingChallenge.counterpart.username}</span>
+                </div>
                 <span>aguardando resposta…</span>
                 <div className="adminUserActions">
                   <button
@@ -290,8 +303,10 @@ export default function FriendsPage() {
           <div className="adminUserTable" role="table">
             {requests.incoming.map((request) => (
               <div className="adminUserRow" key={request.userId} role="row">
-                <strong>{request.displayName}</strong>
-                <span>@{request.username}</span>
+                <div>
+                  <Avatar avatarUrl={request.avatarUrl} name={request.displayName} />
+                  <strong>{request.displayName}</strong> <span>@{request.username}</span>
+                </div>
                 <div className="adminUserActions">
                   <button
                     disabled={busy}
@@ -321,8 +336,10 @@ export default function FriendsPage() {
           <div className="adminUserTable" role="table">
             {requests.outgoing.map((request) => (
               <div className="adminUserRow" key={request.userId} role="row">
-                <strong>{request.displayName}</strong>
-                <span>@{request.username}</span>
+                <div>
+                  <Avatar avatarUrl={request.avatarUrl} name={request.displayName} />
+                  <strong>{request.displayName}</strong> <span>@{request.username}</span>
+                </div>
                 <div className="adminUserActions">
                   <button
                     disabled={busy}
@@ -344,6 +361,7 @@ export default function FriendsPage() {
           {friends.map((friend) => (
             <div className="adminUserRow" key={friend.userId} role="row">
               <div>
+                <Avatar avatarUrl={friend.avatarUrl} name={friend.displayName} />
                 <span
                   aria-hidden="true"
                   className={friend.presence.online ? 'onlineDot' : 'onlineDot offlineDot'}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatUciSquares, toBrazilianSan } from './notation';
+import { formatUciSquares, speakableSquares, toBrazilianSan } from './notation';
 
 describe('toBrazilianSan', () => {
   it('translates each piece letter except the bishop', () => {
@@ -35,5 +35,15 @@ describe('toBrazilianSan', () => {
 describe('formatUciSquares', () => {
   it('splits a UCI move into a readable square pair', () => {
     expect(formatUciSquares('e2e4')).toBe('e2 → e4');
+  });
+});
+
+describe('speakableSquares', () => {
+  it('spells out the file letter so speech synthesis reads it, not a guessed word', () => {
+    expect(speakableSquares('g6 para c6')).toBe('gê 6 para cê 6');
+  });
+
+  it('leaves text with no square references untouched', () => {
+    expect(speakableSquares('Eu sugiro roque pequeno')).toBe('Eu sugiro roque pequeno');
   });
 });
