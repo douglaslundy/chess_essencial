@@ -69,7 +69,10 @@ export const submitExerciseAttemptInputSchema = z.object({
   // reports the verdict themselves, since open-ended prose can't be graded
   // by exact string match.
   selfAssessedCorrect: z.boolean().optional(),
-  submittedLine: z.array(z.string().trim().min(2).max(20)).min(1).max(50),
+  // Each element is normally a single UCI move (short), but for a
+  // 'free_text' exercise the whole written answer is submitted as one
+  // element — needs to fit a real paragraph, not just a move token.
+  submittedLine: z.array(z.string().trim().min(1).max(4000)).min(1).max(50),
   trainingSessionId: z.string().uuid().optional(),
 });
 
