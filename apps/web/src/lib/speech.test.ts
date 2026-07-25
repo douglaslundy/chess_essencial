@@ -11,11 +11,14 @@ interface FakeSynth {
   speaking: boolean;
 }
 
-function installFakeSynth(voicesAvailable: boolean): FakeSynth {
+function installFakeSynth(
+  voicesAvailable: boolean,
+  voices: Array<{ lang: string; name: string }> = [{ lang: 'pt-BR', name: 'Default' }],
+): FakeSynth {
   const synth: FakeSynth = {
     addEventListener: vi.fn(),
     cancel: vi.fn(),
-    getVoices: vi.fn(() => (voicesAvailable ? [{ lang: 'pt-BR' }] : [])),
+    getVoices: vi.fn(() => (voicesAvailable ? voices : [])),
     pending: false,
     removeEventListener: vi.fn(),
     speak: vi.fn(),
@@ -110,5 +113,60 @@ describe('speak', () => {
     stopSpeaking();
 
     expect(synth.cancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the requested voice by name when it exists', async () => {
+    const synth = installFakeSynth(true, [
+      { lang: 'pt-BR', name: 'Camila' },
+      { lang: 'pt-BR', name: 'Daniel' },
+    ]);
+    const { speak } = await import('./speech');
+
+    await speak('Eu sugiro e2 → e4', { voiceName: 'Daniel' });
+
+    expect(synth.speak.mock.calls[0]?.[0]).toMatchObject({ voice: { name: 'Daniel' } });
+  });
+
+  it('falls back to the default voice when the requested name is unavailable', async () => {
+    const synth = installFakeSynth(true, [{ lang: 'pt-BR', name: 'Camila' }]);
+    const { speak } = await import('./speech');
+
+    await speak('texto', { voiceName: 'Voz Inexistente' });
+
+    expect(synth.speak.mock.calls[0]?.[0]).not.toHaveProperty('voice');
+  });
+});
+
+describe('getAvailableVoices', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    Reflect.deleteProperty(window, 'speechSynthesis');
+  });
+
+  it('returns [] when the Web Speech API is unavailable', async () => {
+    const { getAvailableVoices } = await import('./speech');
+    await expect(getAvailableVoices()).resolves.toEqual([]);
+  });
+
+  it('waits for the voice list then returns it', async () => {
+    const voices = [
+      { lang: 'pt-BR', name: 'Camila' },
+      { lang: 'pt-BR', name: 'Daniel' },
+    ];
+    const synth = installFakeSynth(false, voices);
+    const { getAvailableVoices } = await import('./speech');
+
+    const done = getAvailableVoices();
+    expect(synth.addEventListener).toHaveBeenCalledWith('voiceschanged', expect.any(Function));
+    const onVoicesChanged = synth.addEventListener.mock.calls[0]?.[1] as () => void;
+    synth.getVoices.mockReturnValue(voices);
+    onVoicesChanged();
+
+    await expect(done).resolves.toEqual(voices);
   });
 });

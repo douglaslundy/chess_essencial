@@ -93,8 +93,8 @@ describe('ChessBoard', () => {
     expect(formatClock(1_728_000_000)).toBe('∞');
   });
 
-  it('makes SAN notation explicit for beginners', () => {
-    expect(formatMove({ san: 'Nh3', from: 'f2', to: 'h3' } as GameMove)).toBe('Nh3 · cavalo f2→h3');
+  it('makes SAN notation explicit for beginners, in Brazilian notation', () => {
+    expect(formatMove({ san: 'Nh3', from: 'f2', to: 'h3' } as GameMove)).toBe('Ch3 · cavalo f2→h3');
   });
 
   it('renders classic SVG pieces by default', () => {

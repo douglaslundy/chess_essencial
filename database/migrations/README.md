@@ -41,5 +41,7 @@ pnpm --filter @xadrez/api db:rollback
 
 `0029_coach_mode.down.sql` drops the `games.coach_mode` and `user_profiles.suggest_move_enabled` columns; no historical data to preserve, both default to their pre-feature behavior (false).
 
+`0030_voice_preference.down.sql` drops `user_profiles.voice_name`; nullable with no default, so its absence is indistinguishable from "use the browser's default voice" — nothing to preserve.
+
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.

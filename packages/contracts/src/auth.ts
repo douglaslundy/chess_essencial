@@ -64,6 +64,7 @@ export const updateMeInputSchema = z
     isProfilePublic: z.boolean().optional(),
     boardTheme: z.enum(['classic', 'staunton_3d', 'wood']).optional(),
     suggestMoveEnabled: z.boolean().optional(),
+    voiceName: z.string().trim().max(200).nullable().optional(),
   })
   .refine((value) => Object.keys(value).length > 0, 'Informe ao menos uma configuração');
 
@@ -94,6 +95,7 @@ export const publicUserSchema = z.object({
     isProfilePublic: z.boolean(),
     boardTheme: z.enum(['classic', 'staunton_3d', 'wood']),
     suggestMoveEnabled: z.boolean(),
+    voiceName: z.string().nullable(),
   }),
 });
 

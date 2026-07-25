@@ -5,6 +5,9 @@ import { useEffect, useState, type FormEvent } from 'react';
 
 import { api } from '@/lib/api/client';
 import { usePieceTheme } from '@/lib/piece-theme';
+import { speak } from '@/lib/speech';
+import { useVoicePreference } from '@/lib/voice-preference';
+import { listVoiceOptions, type VoiceOption } from '@/lib/voices';
 import styles from '@/components/portal/portal-pages.module.css';
 
 // Resize an image file to a square-ish JPEG (max `size` px) and return base64
@@ -37,6 +40,15 @@ export default function MyDataPage() {
     { label: 'Staunton 3D', value: 'staunton_3d' },
     { label: 'Madeira', value: 'wood' },
   ];
+  const { voiceName, setVoiceName } = useVoicePreference();
+  const [voiceOptions, setVoiceOptions] = useState<VoiceOption[]>([]);
+  const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
+
+  useEffect(() => {
+    listVoiceOptions()
+      .then(setVoiceOptions)
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -111,6 +123,15 @@ export default function MyDataPage() {
       setMessage(
         error instanceof Error ? error.message : 'Não foi possível salvar essa configuração.',
       );
+    }
+  }
+
+  async function previewVoice(voice: VoiceOption) {
+    setPreviewingVoice(voice.name);
+    try {
+      await speak(`Olá, tudo bem? Eu sou ${voice.name}.`, { voiceName: voice.name });
+    } finally {
+      setPreviewingVoice(null);
     }
   }
 
@@ -244,8 +265,8 @@ export default function MyDataPage() {
         <section className={styles.formCard} aria-label="Treinador">
           <h2>Treinador</h2>
           <p>
-            Nas partidas contra o Treinador, mostra o melhor lance sugerido pelo motor antes de cada
-            uma das suas jogadas.
+            Nas partidas contra o Treinador, eu mostro o melhor lance que sugiro antes de cada uma
+            das suas jogadas.
           </p>
           <label className={styles.checkbox}>
             <input
@@ -255,6 +276,42 @@ export default function MyDataPage() {
             />{' '}
             Sugerir lance
           </label>
+        </section>
+      ) : null}
+      {user ? (
+        <section className={styles.formCard} aria-label="Voz do Treinador">
+          <h2>Voz do Treinador</h2>
+          <p>
+            Escolha a voz que uso para falar com você. Clique em &quot;Ouvir&quot; para testar antes
+            de escolher.
+          </p>
+          {voiceOptions.length === 0 ? (
+            <p className={styles.status} role="status">
+              Não encontrei vozes para prévia neste navegador. A narração ainda funciona com a voz
+              padrão do sistema.
+            </p>
+          ) : (
+            <div className={styles.formGrid}>
+              {voiceOptions.map((voice) => (
+                <label className={styles.checkbox} key={voice.name}>
+                  <input
+                    checked={(voiceName ?? voiceOptions[0]?.name) === voice.name}
+                    name="voiceName"
+                    onChange={() => setVoiceName(voice.name)}
+                    type="radio"
+                  />{' '}
+                  {voice.name}
+                  <button
+                    disabled={previewingVoice === voice.name}
+                    onClick={() => void previewVoice(voice)}
+                    type="button"
+                  >
+                    {previewingVoice === voice.name ? 'Ouvindo…' : 'Ouvir'}
+                  </button>
+                </label>
+              ))}
+            </div>
+          )}
         </section>
       ) : null}
       {referral ? (

@@ -26,13 +26,31 @@ function ensureVoicesLoaded(synth: SpeechSynthesis): Promise<void> {
   return voicesReady;
 }
 
-export async function speak(text: string, lang = 'pt-BR'): Promise<void> {
+/** Every voice the browser/OS currently offers, waiting first for the async voice list to finish loading. */
+export async function getAvailableVoices(): Promise<SpeechSynthesisVoice[]> {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return [];
+  const synth = window.speechSynthesis;
+  await ensureVoicesLoaded(synth);
+  return synth.getVoices();
+}
+
+export interface SpeakOptions {
+  lang?: string;
+  /** SpeechSynthesisVoice.name of a preferred voice; falls back to the browser default if not found. */
+  voiceName?: string | null;
+}
+
+export async function speak(text: string, options: SpeakOptions = {}): Promise<void> {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
   const synth = window.speechSynthesis;
   await ensureVoicesLoaded(synth);
 
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = lang;
+  utterance.lang = options.lang ?? 'pt-BR';
+  if (options.voiceName) {
+    const voice = synth.getVoices().find((candidate) => candidate.name === options.voiceName);
+    if (voice) utterance.voice = voice;
+  }
   currentUtterance = utterance;
   if (synth.speaking || synth.pending) {
     synth.cancel();

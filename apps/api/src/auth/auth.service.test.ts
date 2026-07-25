@@ -46,6 +46,7 @@ class FakeUsersRepository {
         locale: 'pt-BR',
         suggestMoveEnabled: false,
         timezone: 'UTC',
+        voiceName: null,
         updatedAt: now,
         userId: '018f47f4-7b2f-4d90-8a66-9abcdef01234',
       },

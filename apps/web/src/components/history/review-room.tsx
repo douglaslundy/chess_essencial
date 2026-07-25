@@ -14,16 +14,18 @@ import { describeMoveQuality, moveQualityLabel, narrateMove } from './move-narra
 import { reviewEligibility, type ReviewEligibility } from './review-eligibility';
 import { ChessBoard } from '@/components/game/chess-board';
 import { api, getStoredUserId } from '@/lib/api/client';
+import { formatUciSquares, toBrazilianSan } from '@/lib/notation';
 import { usePieceTheme } from '@/lib/piece-theme';
 import { speak, stopSpeaking } from '@/lib/speech';
+import { useVoicePreference } from '@/lib/voice-preference';
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
 const ANALYSIS_STATUS_LABEL: Record<GameAnalysis['status'], string> = {
   completed: 'Análise concluída.',
-  failed: 'Não foi possível concluir a análise desta partida.',
-  pending: 'A análise desta partida ainda está na fila do motor — tente novamente em instantes.',
-  processing: 'O motor está analisando esta partida agora — tente novamente em instantes.',
+  failed: 'Não consegui concluir a análise desta partida.',
+  pending: 'Ainda estou na fila para analisar esta partida — tente novamente em instantes.',
+  processing: 'Estou analisando esta partida agora — tente novamente em instantes.',
 };
 
 const QUALITY_ROWS: Array<{ key: keyof GameAnalysisQualityCounts; label: string }> = [
@@ -104,10 +106,12 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
         { color: 'black', label: 'Pretas' },
       ];
 
+  const { voiceName } = useVoicePreference();
+
   useEffect(() => {
     if (!voiceEnabled || !currentMoveAnalysis) return;
-    speak(narrateMove(currentMoveAnalysis));
-  }, [currentMoveAnalysis, voiceEnabled]);
+    speak(narrateMove(currentMoveAnalysis), { voiceName });
+  }, [currentMoveAnalysis, voiceEnabled, voiceName]);
 
   useEffect(() => {
     if (!voiceEnabled) stopSpeaking();
@@ -280,7 +284,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
               onClick={() => setPly(move.ply)}
               type="button"
             >
-              {move.ply}. {move.san}
+              {move.ply}. {toBrazilianSan(move.san)}
             </button>
           ))}
         </div>
@@ -325,8 +329,8 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
           Salvar anotação
         </button>
         <p role="status">{message}</p>
-        <section className="futureEvaluation" aria-label="Avaliação do motor">
-          <strong>Avaliação do motor</strong>
+        <section className="futureEvaluation" aria-label="Minha avaliação">
+          <strong>Minha avaliação</strong>
           <label className="voiceToggle">
             <input
               checked={voiceEnabled}
@@ -341,7 +345,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
               {currentMoveAnalysis.quality !== 'otimo' &&
               currentMoveAnalysis.quality !== 'excelente' &&
               currentMoveAnalysis.bestMoveUci ? (
-                <span>Motor sugere: {currentMoveAnalysis.bestMoveUci}</span>
+                <span>Eu sugiro: {formatUciSquares(currentMoveAnalysis.bestMoveUci)}</span>
               ) : null}
               {currentMoveAnalysis.missedWin ? (
                 <span>Havia uma oportunidade melhor nessa posição.</span>

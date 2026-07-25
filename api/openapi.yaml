@@ -2180,10 +2180,11 @@ components:
         isProfilePublic: {type: boolean}
         boardTheme: {type: string, enum: [classic, staunton_3d, wood]}
         suggestMoveEnabled: {type: boolean, description: 'Modo Treinador: sugerir o melhor lance do motor antes de cada jogada'}
+        voiceName: {type: [string, 'null'], maxLength: 200, description: 'Nome da SpeechSynthesisVoice preferida do navegador para a narração do Treinador; null usa a voz padrão'}
       additionalProperties: false
     UserProfile:
       type: object
-      required: [displayName, avatarUrl, countryCode, timezone, locale, birthDate, bio, isProfilePublic, boardTheme, suggestMoveEnabled]
+      required: [displayName, avatarUrl, countryCode, timezone, locale, birthDate, bio, isProfilePublic, boardTheme, suggestMoveEnabled, voiceName]
       properties:
         displayName: {type: string}
         avatarUrl: {type: [string, 'null']}
@@ -2195,6 +2196,7 @@ components:
         isProfilePublic: {type: boolean}
         boardTheme: {type: string, enum: [classic, staunton_3d, wood]}
         suggestMoveEnabled: {type: boolean}
+        voiceName: {type: [string, 'null']}
       additionalProperties: false
     PublicUser:
       type: object

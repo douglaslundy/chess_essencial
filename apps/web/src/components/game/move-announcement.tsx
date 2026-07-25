@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import styles from './move-announcement.module.css';
+import { toBrazilianSan } from '@/lib/notation';
 
 export type AnnouncementTone = 'neutral' | 'success' | 'danger';
 
@@ -21,7 +22,8 @@ export function describeImportantMove(move: {
 }): { text: string; tone: AnnouncementTone } | null {
   if (move.san.includes('#')) return { text: 'Xeque-mate!', tone: 'danger' };
   if (move.san.includes('+')) return { text: 'Xeque!', tone: 'danger' };
-  if (move.flags.promotion) return { text: `Promoção! ${move.san}`, tone: 'success' };
+  if (move.flags.promotion)
+    return { text: `Promoção! ${toBrazilianSan(move.san)}`, tone: 'success' };
   if (move.flags.castling) return { text: 'Roque', tone: 'neutral' };
   if (move.flags.capture) return { text: `Captura em ${move.to}`, tone: 'neutral' };
   return null;

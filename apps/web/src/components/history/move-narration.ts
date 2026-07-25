@@ -1,5 +1,7 @@
 import type { GameMoveAnalysis, MoveQuality } from '@xadrez/contracts';
 
+import { toBrazilianSan } from '@/lib/notation';
+
 export const moveQualityLabel: Record<MoveQuality, string> = {
   bom: 'Bom',
   erro: 'Erro',
@@ -25,9 +27,9 @@ export function describeMoveQuality(move: GameMoveAnalysis): string {
 /** Full sentence read aloud by the voice narration toggle. */
 export function narrateMove(move: GameMoveAnalysis): string {
   const label = moveQualityLabel[move.quality];
-  let sentence = `${move.san}: ${label}.`;
+  let sentence = `${toBrazilianSan(move.san)}: ${label}.`;
   if (move.quality !== 'otimo' && move.quality !== 'excelente' && move.bestMoveUci) {
-    sentence += ` O motor sugere ${speakableSquarePair(move.bestMoveUci)}.`;
+    sentence += ` Eu sugiro ${speakableSquarePair(move.bestMoveUci)}.`;
   }
   if (move.missedWin) sentence += ' Havia uma oportunidade melhor nessa posição.';
   return sentence;

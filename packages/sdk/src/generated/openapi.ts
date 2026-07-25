@@ -2011,6 +2011,8 @@ export interface components {
       boardTheme?: 'classic' | 'staunton_3d' | 'wood';
       /** @description Modo Treinador: sugerir o melhor lance do motor antes de cada jogada */
       suggestMoveEnabled?: boolean;
+      /** @description Nome da SpeechSynthesisVoice preferida do navegador para a narração do Treinador; null usa a voz padrão */
+      voiceName?: string | null;
     };
     UserProfile: {
       displayName: string;
@@ -2025,6 +2027,7 @@ export interface components {
       /** @enum {string} */
       boardTheme: 'classic' | 'staunton_3d' | 'wood';
       suggestMoveEnabled: boolean;
+      voiceName: string | null;
     };
     PublicUser: {
       /** Format: uuid */

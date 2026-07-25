@@ -34,17 +34,21 @@ describe('describeMoveQuality', () => {
 });
 
 describe('narrateMove', () => {
-  it('reads the move and its quality', () => {
-    expect(narrateMove(move({ quality: 'bom', san: 'Nf3' }))).toBe('Nf3: Bom.');
+  it('reads the move (translated to Brazilian notation) and its quality', () => {
+    expect(narrateMove(move({ quality: 'bom', san: 'Nf3' }))).toBe('Cf3: Bom.');
   });
 
-  it('suggests the engine best move for a weak move', () => {
+  it('suggests, in first person, an alternative for a weak move', () => {
     const sentence = narrateMove(move({ bestMoveUci: 'd2d4', quality: 'erro', san: 'a3' }));
-    expect(sentence).toBe('a3: Erro. O motor sugere d2 para d4.');
+    expect(sentence).toBe('a3: Erro. Eu sugiro d2 para d4.');
   });
 
   it('does not suggest an alternative for otimo/excelente moves even if bestMoveUci is set', () => {
     expect(narrateMove(move({ bestMoveUci: 'd2d4', quality: 'excelente' }))).toBe('e4: Excelente.');
+  });
+
+  it('translates the queen to "D" (Dama), not the English "Q"', () => {
+    expect(narrateMove(move({ quality: 'otimo', san: 'Qxe4+' }))).toBe('Dxe4+: Ótimo.');
   });
 
   it('mentions a missed winning opportunity', () => {

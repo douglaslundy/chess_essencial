@@ -8063,7 +8063,7 @@
       "module": 7,
       "chapter": 5,
       "chapter_title": "Sacrifício em h7 e padrões contra o roque",
-      "caption": "Depois de Bxh7+, o ataque só é correto se Qh5, mate ou recuperação material forem forçados. O padrão não substitui o cálculo.",
+      "caption": "Depois de Bxh7+, o ataque só é correto se Dh5, mate ou recuperação material forem forçados. O padrão não substitui o cálculo.",
       "position_type": "legal_position",
       "legal_for_play": true,
       "validation_issues": []
@@ -27146,7 +27146,7 @@
       "module_title": "Finais essenciais: conversão e defesa",
       "chapter": 12,
       "chapter_title": "Técnica prática de conversão e defesa",
-      "solution": "Kf4-e5, aproximando-se do centro e dos peões pretos.",
+      "solution": "Rf4-e5, aproximando-se do centro e dos peões pretos.",
       "id": "exercise-0630",
       "diagram_refs": [
         "diagram-150"
@@ -31784,7 +31784,7 @@
       "module_title": "Ataque ao rei, defesa e conversão da iniciativa",
       "chapter": 6,
       "chapter_title": "Sacrifícios em f7, f2 e rei exposto",
-      "solution": "Nxf7, bxf7+ ou pressão combinada em f7, apenas quando a coordenação for suficiente.",
+      "solution": "Cxf7, bxf7+ ou pressão combinada em f7, apenas quando a coordenação for suficiente.",
       "id": "exercise-0830",
       "diagram_refs": [],
       "positions": [],

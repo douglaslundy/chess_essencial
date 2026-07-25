@@ -26,14 +26,14 @@ describe('describeImportantMove', () => {
     ).toEqual({ text: 'Xeque!', tone: 'danger' });
   });
 
-  it('reports promotion', () => {
+  it('reports promotion, translated to Brazilian notation', () => {
     expect(
       describeImportantMove({
         san: 'e8=Q',
         to: 'e8',
         flags: { capture: false, castling: null, promotion: true },
       }),
-    ).toEqual({ text: 'Promoção! e8=Q', tone: 'success' });
+    ).toEqual({ text: 'Promoção! e8=D', tone: 'success' });
   });
 
   it('reports castling', () => {

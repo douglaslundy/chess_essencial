@@ -11,9 +11,11 @@ import { moveQualityLabel } from '@/components/history/move-narration';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { api, getRealtimeAccessToken, getStoredUserId } from '@/lib/api/client';
 import { useCoachEngine } from '@/lib/engine/use-coach-engine';
+import { formatUciSquares, toBrazilianSan } from '@/lib/notation';
 import { usePieceTheme } from '@/lib/piece-theme';
 import { GameSocket } from '@/lib/realtime/game-socket';
 import { speak } from '@/lib/speech';
+import { useVoicePreference } from '@/lib/voice-preference';
 import {
   isSoundMuted,
   playCaptureSound,
@@ -56,10 +58,8 @@ const terminationLabels: Record<GameState['termination'], string> = {
 
 function formatCoachSuggestion(suggestion: { bestMoveUci: string | null; mate: number | null }) {
   if (!suggestion.bestMoveUci) return null;
-  const from = suggestion.bestMoveUci.slice(0, 2);
-  const to = suggestion.bestMoveUci.slice(2, 4);
   const detail = suggestion.mate !== null ? `mate em ${Math.abs(suggestion.mate)}` : null;
-  return `${from} → ${to}${detail ? ` (${detail})` : ''}`;
+  return `${formatUciSquares(suggestion.bestMoveUci)}${detail ? ` (${detail})` : ''}`;
 }
 
 export function formatMove(move: GameMove) {
@@ -68,7 +68,7 @@ export function formatMove(move: GameMove) {
     ({ K: 'rei', Q: 'dama', R: 'torre', B: 'bispo', N: 'cavalo' } as Record<string, string>)[
       piece ?? ''
     ] ?? 'peão';
-  return `${move.san} · ${name} ${move.from}→${move.to}`;
+  return `${toBrazilianSan(move.san)} · ${name} ${move.from}→${move.to}`;
 }
 
 export function gameOutcomeFor(
@@ -321,19 +321,22 @@ export function GameRoom({ gameId }: { gameId: string }) {
     suggestEnabled: suggestMoveEnabled,
   });
 
+  const { voiceName } = useVoicePreference();
+
   useEffect(() => {
     if (muted || !coachSuggestion) return;
     const text = formatCoachSuggestion(coachSuggestion);
-    if (text) speak(`Sugestão: ${text}.`);
-  }, [coachSuggestion, muted]);
+    if (text) speak(`Eu sugiro ${text}.`, { voiceName });
+  }, [coachSuggestion, muted, voiceName]);
 
   useEffect(() => {
     if (muted || !pendingCoachMove) return;
     const { quality } = pendingCoachMove;
     speak(
-      `Atenção: esse lance parece ${moveQualityLabel[quality.quality].toLowerCase()}, com perda de ${quality.centipawnLoss} centipawns.${quality.missedWin ? ' Havia uma posição melhor.' : ''}`,
+      `Atenção: eu acho que esse lance é ${moveQualityLabel[quality.quality].toLowerCase()}, com perda de ${quality.centipawnLoss} centipawns.${quality.missedWin ? ' Havia uma posição melhor.' : ''}`,
+      { voiceName },
     );
-  }, [muted, pendingCoachMove]);
+  }, [muted, pendingCoachMove, voiceName]);
 
   const groupedMoves = useMemo(() => {
     const rows: Array<{ number: number; white?: GameMove; black?: GameMove }> = [];
@@ -607,7 +610,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
         <MoveAnnouncement announcement={announcement} />
         {state.coachMode && canMove && coachSuggestion ? (
           <p className="coachSuggestion" role="status">
-            💡 Sugestão do Treinador: {formatCoachSuggestion(coachSuggestion) ?? 'analisando…'}
+            💡 Eu sugiro: {formatCoachSuggestion(coachSuggestion) ?? 'analisando…'}
           </p>
         ) : null}
         <p className="gameMessage" role="status">
@@ -703,7 +706,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
         danger
         description={
           pendingCoachMove
-            ? `O Treinador classificou esse lance como ${moveQualityLabel[pendingCoachMove.quality.quality].toLowerCase()} (perda de ${pendingCoachMove.quality.centipawnLoss}cp)${pendingCoachMove.quality.missedWin ? ', deixando passar uma posição melhor' : ''}. Quer jogar mesmo assim?`
+            ? `Eu classifiquei esse lance como ${moveQualityLabel[pendingCoachMove.quality.quality].toLowerCase()} (perda de ${pendingCoachMove.quality.centipawnLoss}cp)${pendingCoachMove.quality.missedWin ? ', deixando passar uma posição melhor' : ''}. Quer jogar mesmo assim?`
             : ''
         }
         eyebrow="Treinador"

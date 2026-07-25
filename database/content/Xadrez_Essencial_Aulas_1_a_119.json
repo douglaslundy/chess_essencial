@@ -6349,7 +6349,7 @@
             "title": "Conceito central"
           },
           {
-            "bodyMd": "Na Italiana, o bispo em c4 mira f7 e o plano c2-c3 seguido de d2-d4 desafia o centro. Na Ruy Lopez, o bispo em b5 aumenta a pressão indireta sobre e5 e provoca decisões na ala da dama. O Diagrama 155 exige cálculo porque o centro aberto expõe reis e peças. Nos Diagramas 156 e 157, a posição fechada permite manobras como Nbd2-f1-g3 e expansão ...b5, ...c5. Trocas em e4/e5 podem produzir finais simétricos, nos quais a atividade decide. A Ruy Lopez também pode levar a finais com maioria branca na ala do rei e maioria preta na ala da dama.",
+            "bodyMd": "Na Italiana, o bispo em c4 mira f7 e o plano c2-c3 seguido de d2-d4 desafia o centro. Na Ruy Lopez, o bispo em b5 aumenta a pressão indireta sobre e5 e provoca decisões na ala da dama. O Diagrama 155 exige cálculo porque o centro aberto expõe reis e peças. Nos Diagramas 156 e 157, a posição fechada permite manobras como Cbd2-f1-g3 e expansão ...b5, ...c5. Trocas em e4/e5 podem produzir finais simétricos, nos quais a atividade decide. A Ruy Lopez também pode levar a finais com maioria branca na ala do rei e maioria preta na ala da dama.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -6367,7 +6367,7 @@
             "title": "Abertura: desenvolvimento e pressão"
           },
           {
-            "bodyMd": "O Diagrama 155 exige cálculo porque o centro aberto expõe reis e peças. Nos Diagramas 156 e 157, a posição fechada permite manobras como Nbd2-f1-g3 e expansão ...b5, ...c5. A ruptura d3-d4 ou d2-d4 deve ocorrer quando as peças brancas aproveitam as linhas abertas. As pretas respondem no centro ou atacam a base com ...c5. Final típico: maioria da ala do rei e bispos Trocas em e4/e5 podem produzir finais simétricos, nos quais a atividade decide. A Ruy Lopez também pode levar a finais com maioria branca na ala do rei e maioria preta na ala da dama. O bispo espanhol preservado pode ser forte em diagonais abertas; trocá-lo por um cavalo só é correto quando a estrutura ou a tática justificam.",
+            "bodyMd": "O Diagrama 155 exige cálculo porque o centro aberto expõe reis e peças. Nos Diagramas 156 e 157, a posição fechada permite manobras como Cbd2-f1-g3 e expansão ...b5, ...c5. A ruptura d3-d4 ou d2-d4 deve ocorrer quando as peças brancas aproveitam as linhas abertas. As pretas respondem no centro ou atacam a base com ...c5. Final típico: maioria da ala do rei e bispos Trocas em e4/e5 podem produzir finais simétricos, nos quais a atividade decide. A Ruy Lopez também pode levar a finais com maioria branca na ala do rei e maioria preta na ala da dama. O bispo espanhol preservado pode ser forte em diagonais abertas; trocá-lo por um cavalo só é correto quando a estrutura ou a tática justificam.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -6564,7 +6564,7 @@
             "title": "Conceito central"
           },
           {
-            "bodyMd": "Na variante do Avanço, as brancas ganham espaço e fecham o centro. A cadeia aponta para a ala do rei; a base d4 torna-se alvo de ...c5, ...Nc6 e ...Qb6. O Diagrama 162 mostra a segunda ruptura, ...f6. Ela ataca a ponta e5 e abre a coluna f, mas pode enfraquecer o rei. As brancas escolhem f2-f4, exf6 ou avanço e5-e6 conforme a posição. Na variante da troca, a simetria exige iniciativa. Na variante do Avanço, o bispo de casas claras preto pode ser limitado, mas torna-se útil se a estrutura se abre.",
+            "bodyMd": "Na variante do Avanço, as brancas ganham espaço e fecham o centro. A cadeia aponta para a ala do rei; a base d4 torna-se alvo de ...c5, ...Cc6 e ...Db6. O Diagrama 162 mostra a segunda ruptura, ...f6. Ela ataca a ponta e5 e abre a coluna f, mas pode enfraquecer o rei. As brancas escolhem f2-f4, exf6 ou avanço e5-e6 conforme a posição. Na variante da troca, a simetria exige iniciativa. Na variante do Avanço, o bispo de casas claras preto pode ser limitado, mas torna-se útil se a estrutura se abre.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -6573,7 +6573,7 @@
             "title": "Abertura Meio-jogo Final"
           },
           {
-            "bodyMd": "Na variante do Avanço, as brancas ganham espaço e fecham o centro. A cadeia aponta para a ala do rei; a base d4 torna-se alvo de ...c5, ...Nc6 e ...Qb6. As pretas aceitam menor espaço temporário para atacar a estrutura. O bispo de c8 exige plano: ...Bd7, ...b6-a6 ou troca por a6/b5.",
+            "bodyMd": "Na variante do Avanço, as brancas ganham espaço e fecham o centro. A cadeia aponta para a ala do rei; a base d4 torna-se alvo de ...c5, ...Cc6 e ...Db6. As pretas aceitam menor espaço temporário para atacar a estrutura. O bispo de c8 exige plano: ...Bd7, ...b6-a6 ou troca por a6/b5.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -6788,7 +6788,7 @@
             "title": "Abertura: d5 sob pressão"
           },
           {
-            "bodyMd": "Nos Diagramas 168 e 169, b2-b4-b5 ataca a cadeia a7-b7-c6-d5. O objetivo é criar c6 atrasado ou abrir linhas, não ganhar espaço sem alvo. As pretas respondem com atividade central, ...Ne4, ...g5 ou ataque no rei. A velocidade e a posição das peças decidem qual plano é mais urgente. Ataque de minoria O avanço só tem valor se criar um alvo que as peças possam alcançar. Final típico: alvo em c6 e maioria central Se as torres entram na coluna c ou b, c6 pode permanecer fraco. As pretas compensam com maioria central e possibilidade de ...c5. Trocas de peças favorecem as brancas quando preservam o alvo; trocas de peões podem aliviar as pretas. O final deve ser projetado antes do ataque de minoria.",
+            "bodyMd": "Nos Diagramas 168 e 169, b2-b4-b5 ataca a cadeia a7-b7-c6-d5. O objetivo é criar c6 atrasado ou abrir linhas, não ganhar espaço sem alvo. As pretas respondem com atividade central, ...Ce4, ...g5 ou ataque no rei. A velocidade e a posição das peças decidem qual plano é mais urgente. Ataque de minoria O avanço só tem valor se criar um alvo que as peças possam alcançar. Final típico: alvo em c6 e maioria central Se as torres entram na coluna c ou b, c6 pode permanecer fraco. As pretas compensam com maioria central e possibilidade de ...c5. Trocas de peças favorecem as brancas quando preservam o alvo; trocas de peões podem aliviar as pretas. O final deve ser projetado antes do ataque de minoria.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -7070,7 +7070,7 @@
             "title": "Conceito central"
           },
           {
-            "bodyMd": "Na Nimzo-Índia, ...Bb4 impede e2-e4 imediato e ameaça trocar em c3. As brancas escolhem desenvolvimento, a3 ou Qc2 conforme a estrutura desejada. O Diagrama 177 mostra peões c3-c4. Eles são alvos potenciais, mas controlam d5/e5, abrem a coluna b e sustentam e3-e4. A avaliação deve somar fraquezas e recursos. Trocas amplificam fraquezas estáticas, mas o par de bispos pode dominar um final aberto. O lado preto tenta fixar c4/c3; o lado branco busca criar um centro móvel.",
+            "bodyMd": "Na Nimzo-Índia, ...Bb4 impede e2-e4 imediato e ameaça trocar em c3. As brancas escolhem desenvolvimento, a3 ou Dc2 conforme a estrutura desejada. O Diagrama 177 mostra peões c3-c4. Eles são alvos potenciais, mas controlam d5/e5, abrem a coluna b e sustentam e3-e4. A avaliação deve somar fraquezas e recursos. Trocas amplificam fraquezas estáticas, mas o par de bispos pode dominar um final aberto. O lado preto tenta fixar c4/c3; o lado branco busca criar um centro móvel.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -7079,7 +7079,7 @@
             "title": "Abertura Meio-jogo Final"
           },
           {
-            "bodyMd": "Na Nimzo-Índia, ...Bb4 impede e2-e4 imediato e ameaça trocar em c3. As brancas escolhem desenvolvimento, a3 ou Qc2 conforme a estrutura desejada. Na Índia da Dama, ...b6 e ...Bb7 atacam e4 à distância, com desenvolvimento flexível e menor compromisso estrutural.",
+            "bodyMd": "Na Nimzo-Índia, ...Bb4 impede e2-e4 imediato e ameaça trocar em c3. As brancas escolhem desenvolvimento, a3 ou Dc2 conforme a estrutura desejada. Na Índia da Dama, ...b6 e ...Bb7 atacam e4 à distância, com desenvolvimento flexível e menor compromisso estrutural.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -7173,7 +7173,7 @@
             "title": "Conceito central"
           },
           {
-            "bodyMd": "1.c4 ataca d5 e prepara desenvolvimento por fianqueto. 1.Nf3 evita comprometer o peão d e reduz algumas respostas adversárias. No Diagrama 179, a simetria pode ser quebrada por d2-d4, b2-b3 ou uma ordem que permita iniciativa. No Diagrama 180, as brancas podem preparar c3-d4 ou atacar na ala do rei. As posições de flanco frequentemente conduzem a finais sem fraquezas graves, nos quais espaço, casas e atividade das peças pesam mais que material.",
+            "bodyMd": "1.c4 ataca d5 e prepara desenvolvimento por fianqueto. 1.Cf3 evita comprometer o peão d e reduz algumas respostas adversárias. No Diagrama 179, a simetria pode ser quebrada por d2-d4, b2-b3 ou uma ordem que permita iniciativa. No Diagrama 180, as brancas podem preparar c3-d4 ou atacar na ala do rei. As posições de flanco frequentemente conduzem a finais sem fraquezas graves, nos quais espaço, casas e atividade das peças pesam mais que material.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -7182,7 +7182,7 @@
             "title": "Abertura Meio-jogo Final"
           },
           {
-            "bodyMd": "1.c4 ataca d5 e prepara desenvolvimento por fianqueto. 1.Nf3 evita comprometer o peão d e reduz algumas respostas adversárias. A flexibilidade tem custo: adiar o centro exige saber qual estrutura será escolhida quando o adversário ocupar espaço.",
+            "bodyMd": "1.c4 ataca d5 e prepara desenvolvimento por fianqueto. 1.Cf3 evita comprometer o peão d e reduz algumas respostas adversárias. A flexibilidade tem custo: adiar o centro exige saber qual estrutura será escolhida quando o adversário ocupar espaço.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -7293,7 +7293,7 @@
             "title": "Abertura Meio-jogo Final"
           },
           {
-            "bodyMd": "Para cada sistema, registre sequência-base, desvios críticos, estrutura desejada, ruptura principal e peça problemática. A sequência serve como mapa, não como substituto da análise. Escolha sistemas compatíveis: com as brancas, uma resposta para ...e5, Siciliana, Francesa e CaroKann; com as pretas, uma defesa contra 1.e4 e uma família contra 1.d4/1.c4/1.Nf3. Ficha mínima Sequência-base; estrutura; ruptura; pior peça; plano de ambos os lados; final típico; desvio crítico.",
+            "bodyMd": "Para cada sistema, registre sequência-base, desvios críticos, estrutura desejada, ruptura principal e peça problemática. A sequência serve como mapa, não como substituto da análise. Escolha sistemas compatíveis: com as brancas, uma resposta para ...e5, Siciliana, Francesa e CaroKann; com as pretas, uma defesa contra 1.e4 e uma família contra 1.d4/1.c4/1.Cf3. Ficha mínima Sequência-base; estrutura; ruptura; pior peça; plano de ambos os lados; final típico; desvio crítico.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -7302,7 +7302,7 @@
             "title": "Abertura: ficha de sistema"
           },
           {
-            "bodyMd": "A partida a seguir foi composta para ensino e usa uma estrutura italiana. Ela não representa uma partida histórica. O objetivo é acompanhar a mudança de perguntas ao longo das fases. 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 4.c3 Nf6 5.d3 d6 6.O-O O-O 7.Re1 a6 8.Bb3 Ba7 9.h3 h6 10.Nbd2 Re8 11.Nf1 Be6 12.Bc2 d5 13.exd5 Bxd5 14.Ng3 Qd7 15.Be3 Bxe3 16.Rxe3 Rad8 17.Qe2 Qd6 18.Re1 Nd7 19.d4 exd4 20.cxd4 Rxe3 21.Qxe3 Nf6 22.Nf5 Qd7 23.Ne5 Nxe5 24.dxe5 Ne4 25.Bxe4 Bxe4 26.Qxe4. Lances 1-12: desenvolvimento e preparação de d4. Lances 12-18: resolução central e coordenação das torres. Lances 19-26: simplificação calculada, criação do peão e5 e transição para posição técnica com atividade.",
+            "bodyMd": "A partida a seguir foi composta para ensino e usa uma estrutura italiana. Ela não representa uma partida histórica. O objetivo é acompanhar a mudança de perguntas ao longo das fases. 1.e4 e5 2.Cf3 Cc6 3.Bc4 Bc5 4.c3 Cf6 5.d3 d6 6.O-O O-O 7.Te1 a6 8.Bb3 Ba7 9.h3 h6 10.Cbd2 Te8 11.Cf1 Be6 12.Bc2 d5 13.exd5 Bxd5 14.Cg3 Dd7 15.Be3 Bxe3 16.Txe3 Tad8 17.De2 Dd6 18.Te1 Cd7 19.d4 exd4 20.cxd4 Txe3 21.Dxe3 Cf6 22.Cf5 Dd7 23.Ce5 Cxe5 24.dxe5 Ce4 25.Bxe4 Bxe4 26.Dxe4. Lances 1-12: desenvolvimento e preparação de d4. Lances 12-18: resolução central e coordenação das torres. Lances 19-26: simplificação calculada, criação do peão e5 e transição para posição técnica com atividade.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -7826,7 +7826,7 @@
             "title": "Conceito central"
           },
           {
-            "bodyMd": "A formação clássica inclui bispo em d3, cavalo em f3, dama com acesso a h5 e ausência de defensor eficaz em f6. O centro deve impedir contra-ataque imediato. Depois de Bxh7+ Kxh7, verifique Ng5+, Qh5, Qxf7 e as casas g8, g6 e h6. Calcule também a recusa do sacrifício e as defesas com ...Bxg5 ou ...Kg8. O defensor pode impedir o padrão antes do sacrifício: controlar g5, criar casa f8, trocar o bispo de d3 ou atacar o centro.",
+            "bodyMd": "A formação clássica inclui bispo em d3, cavalo em f3, dama com acesso a h5 e ausência de defensor eficaz em f6. O centro deve impedir contra-ataque imediato. Depois de Bxh7+ Rxh7, verifique Cg5+, Dh5, Dxf7 e as casas g8, g6 e h6. Calcule também a recusa do sacrifício e as defesas com ...Bxg5 ou ...Rg8. O defensor pode impedir o padrão antes do sacrifício: controlar g5, criar casa f8, trocar o bispo de d3 ou atacar o centro.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -7844,7 +7844,7 @@
             "title": "Abertura: montar a configuração"
           },
           {
-            "bodyMd": "Depois de Bxh7+ Kxh7, verifique Ng5+, Qh5, Qxf7 e as casas g8, g6 e h6. Calcule também a recusa do sacrifício e as defesas com ...Bxg5 ou ...Kg8. O Diagrama 194 mostra a posição crítica: o ataque precisa produzir mate, recuperação de material ou vantagem decisiva. Uma avaliação vaga de iniciativa é insuficiente. Padrão não é prova Bxh7+ exige cálculo das fugas, recusas e trocas. A semelhança visual apenas gera um candidato.",
+            "bodyMd": "Depois de Bxh7+ Rxh7, verifique Cg5+, Dh5, Dxf7 e as casas g8, g6 e h6. Calcule também a recusa do sacrifício e as defesas com ...Bxg5 ou ...Rg8. O Diagrama 194 mostra a posição crítica: o ataque precisa produzir mate, recuperação de material ou vantagem decisiva. Uma avaliação vaga de iniciativa é insuficiente. Padrão não é prova Bxh7+ exige cálculo das fugas, recusas e trocas. A semelhança visual apenas gera um candidato.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -7938,7 +7938,7 @@
             "title": "Conceito central"
           },
           {
-            "bodyMd": "Pressão de bispo e cavalo sobre f7 força o defensor a desenvolver com precisão. O atacante deve evitar movimentos repetidos de dama que perdem tempos. Nos Diagramas 196 e 197, a compensação está em desenvolvimento, rei exposto e peças pretas descoordenadas. Calcule até uma posição estável, não apenas até o primeiro xeque. O Diagrama 198 mostra uma regra simples: responder à pressão com desenvolvimento. ...Nf6 e ...Bg7 protegem e simultaneamente preparam o roque.",
+            "bodyMd": "Pressão de bispo e cavalo sobre f7 força o defensor a desenvolver com precisão. O atacante deve evitar movimentos repetidos de dama que perdem tempos. Nos Diagramas 196 e 197, a compensação está em desenvolvimento, rei exposto e peças pretas descoordenadas. Calcule até uma posição estável, não apenas até o primeiro xeque. O Diagrama 198 mostra uma regra simples: responder à pressão com desenvolvimento. ...Cf6 e ...Bg7 protegem e simultaneamente preparam o roque.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -7965,7 +7965,7 @@
             "title": "Meio-jogo: compensação concreta"
           },
           {
-            "bodyMd": "O Diagrama 198 mostra uma regra simples: responder à pressão com desenvolvimento. ...Nf6 e ...Bg7 protegem e simultaneamente preparam o roque. Defesas passivas, como mover repetidamente o rei ou um peão, podem manter a fraqueza. A melhor defesa adiciona uma peça ao jogo.",
+            "bodyMd": "O Diagrama 198 mostra uma regra simples: responder à pressão com desenvolvimento. ...Cf6 e ...Bg7 protegem e simultaneamente preparam o roque. Defesas passivas, como mover repetidamente o rei ou um peão, podem manter a fraqueza. A melhor defesa adiciona uma peça ao jogo.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -8572,7 +8572,7 @@
             "title": "Conceito central"
           },
           {
-            "bodyMd": "A sequência a seguir foi composta para ensino: 1.e4 e5 2.Nf3 Nc6 3.Bc4 Nf6 4.d3 Be7 5.O-O O-O 6.Re1 d6 7.c3 h6 8.Nbd2 Re8 9.Nf1 Bf8 10.Ng3 Be6 11.Bb5 a6 12.Ba4 b5 13.Bc2 d5 14.exd5 Bxd5. 15.d4 exd4 16.Rxe8 Qxe8 17.Nxd4 Nxd4 18.cxd4 Bd6 19.Nf5 Be4 20.Nxd6 cxd6 21.Bxe4 Qxe4 22.Be3 Rc8 23.Rc1 Rxc1 24.Qxc1. Semana 1: reproduza os 30 diagramas e nomeie condição, ruptura e defesa. Semana 2: resolva exercícios 771-836 sem mover peças. Semana 3: jogue posições de ataque e defesa com cores alternadas. Semana 4: analise cinco partidas próprias com o protocolo A-L-V-O.",
+            "bodyMd": "A sequência a seguir foi composta para ensino: 1.e4 e5 2.Cf3 Cc6 3.Bc4 Cf6 4.d3 Be7 5.O-O O-O 6.Te1 d6 7.c3 h6 8.Cbd2 Te8 9.Cf1 Bf8 10.Cg3 Be6 11.Bb5 a6 12.Ba4 b5 13.Bc2 d5 14.exd5 Bxd5. 15.d4 exd4 16.Txe8 Dxe8 17.Cxd4 Cxd4 18.cxd4 Bd6 19.Cf5 Be4 20.Cxd6 cxd6 21.Bxe4 Dxe4 22.Be3 Tc8 23.Tc1 Txc1 24.Dxc1. Semana 1: reproduza os 30 diagramas e nomeie condição, ruptura e defesa. Semana 2: resolva exercícios 771-836 sem mover peças. Semana 3: jogue posições de ataque e defesa com cores alternadas. Semana 4: analise cinco partidas próprias com o protocolo A-L-V-O.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -8581,7 +8581,7 @@
             "title": "Abertura Meio-jogo Final"
           },
           {
-            "bodyMd": "A sequência a seguir foi composta para ensino: 1.e4 e5 2.Nf3 Nc6 3.Bc4 Nf6 4.d3 Be7 5.O-O O-O 6.Re1 d6 7.c3 h6 8.Nbd2 Re8 9.Nf1 Bf8 10.Ng3 Be6 11.Bb5 a6 12.Ba4 b5 13.Bc2 d5 14.exd5 Bxd5. Abertura: ambos os lados completam o desenvolvimento. O avanço ...h6 cria um gancho potencial, mas as brancas não atacam antes de resolver o centro. A-L-V-O Avaliar; Localizar; Verificar; Ordenar. Use o protocolo antes de todo sacrifício e de toda defesa crítica.",
+            "bodyMd": "A sequência a seguir foi composta para ensino: 1.e4 e5 2.Cf3 Cc6 3.Bc4 Cf6 4.d3 Be7 5.O-O O-O 6.Te1 d6 7.c3 h6 8.Cbd2 Te8 9.Cf1 Bf8 10.Cg3 Be6 11.Bb5 a6 12.Ba4 b5 13.Bc2 d5 14.exd5 Bxd5. Abertura: ambos os lados completam o desenvolvimento. O avanço ...h6 cria um gancho potencial, mas as brancas não atacam antes de resolver o centro. A-L-V-O Avaliar; Localizar; Verificar; Ordenar. Use o protocolo antes de todo sacrifício e de toda defesa crítica.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -8590,7 +8590,7 @@
             "title": "Abertura: partida didática composta"
           },
           {
-            "bodyMd": "15.d4 exd4 16.Rxe8 Qxe8 17.Nxd4 Nxd4 18.cxd4 Bd6 19.Nf5 Be4 20.Nxd6 cxd6 21.Bxe4 Qxe4 22.Be3 Rc8 23.Rc1 Rxc1 24.Qxc1. As brancas usam o centro para ganhar tempos, trocam atacantes e convertem a iniciativa em estrutura superior. Não há mate; há transição consciente para posição técnica.",
+            "bodyMd": "15.d4 exd4 16.Rxe8 Dxe8 17.Cxd4 Cxd4 18.cxd4 Bd6 19.Cf5 Be4 20.Cxd6 cxd6 21.Bxe4 Dxe4 22.Be3 Rc8 23.Rc1 Rxc1 24.Dxc1. As brancas usam o centro para ganhar tempos, trocam atacantes e convertem a iniciativa em estrutura superior. Não há mate; há transição consciente para posição técnica.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -9887,7 +9887,7 @@
             "title": "Conceito central"
           },
           {
-            "bodyMd": "Partida didática: 1.d4 d5 2.c4 e6 3.Nc3 Nf6 4.cxd5 exd5 5.Bg5 Be7 6.e3 O-O 7.Bd3 Nbd7 8.Qc2 Re8 9.Nge2 Nf8 10.O-O c6 11.Rab1 a5 12.a3 Bd6. 13.b4 axb4 14.axb4 Ng6 15.b5 Bd7 16.bxc6 bxc6 17.Na4 h6 18.Bxf6 Qxf6 19.Nc5 Bxc5 20.Qxc5 Nh4 21.Rb7 Bf5 22.Bxf5 Qxf5 23.Ng3 Qg6 24.Rc1 Re6 25.Rc7 Ra2 26.Rxc6. 26...Rxc6 27.Qxc6 Qxc6 28.Rxc6 Ra1+ 29.Nf1. O Diagrama 240 mostra a transição: as brancas têm vantagem material, mas ainda precisam neutralizar a torre ativa e ativar o rei.",
+            "bodyMd": "Partida didática: 1.d4 d5 2.c4 e6 3.Cc3 Cf6 4.cxd5 exd5 5.Bg5 Be7 6.e3 O-O 7.Bd3 Cbd7 8.Dc2 Te8 9.Cge2 Cf8 10.O-O c6 11.Tab1 a5 12.a3 Bd6. 13.b4 axb4 14.axb4 Cg6 15.b5 Bd7 16.bxc6 bxc6 17.Ca4 h6 18.Bxf6 Dxf6 19.Cc5 Bxc5 20.Dxc5 Ch4 21.Tb7 Bf5 22.Bxf5 Dxf5 23.Cg3 Dg6 24.Tc1 Te6 25.Tc7 Ta2 26.Txc6. 26...Txc6 27.Dxc6 Dxc6 28.Txc6 Ta1+ 29.Cf1. O Diagrama 240 mostra a transição: as brancas têm vantagem material, mas ainda precisam neutralizar a torre ativa e ativar o rei.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -9896,7 +9896,7 @@
             "title": "Abertura Meio-jogo Final"
           },
           {
-            "bodyMd": "Partida didática: 1.d4 d5 2.c4 e6 3.Nc3 Nf6 4.cxd5 exd5 5.Bg5 Be7 6.e3 O-O 7.Bd3 Nbd7 8.Qc2 Re8 9.Nge2 Nf8 10.O-O c6 11.Rab1 a5 12.a3 Bd6. A estrutura Carlsbad é reconhecida, mas a execução não é automática. As brancas preparam b4-b5; as pretas centralizam e buscam atividade antes que a minoria crie uma fraqueza.",
+            "bodyMd": "Partida didática: 1.d4 d5 2.c4 e6 3.Cc3 Cf6 4.cxd5 exd5 5.Bg5 Be7 6.e3 O-O 7.Bd3 Cbd7 8.Dc2 Te8 9.Cge2 Cf8 10.O-O c6 11.Tab1 a5 12.a3 Bd6. A estrutura Carlsbad é reconhecida, mas a execução não é automática. As brancas preparam b4-b5; as pretas centralizam e buscam atividade antes que a minoria crie uma fraqueza.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],
@@ -9905,7 +9905,7 @@
             "title": "Abertura: estrutura conhecida e decisão própria"
           },
           {
-            "bodyMd": "13.b4 axb4 14.axb4 Ng6 15.b5 Bd7 16.bxc6 bxc6 17.Na4 h6 18.Bxf6 Qxf6 19.Nc5 Bxc5 20.Qxc5 Nh4 21.Rb7 Bf5 22.Bxf5 Qxf5 23.Ng3 Qg6 24.Rc1 Re6 25.Rc7 Ra2 26.Rxc6. As decisões críticas são 15.b5, 18.Bxf6 e 26.Rxc6. O plano de minoria cria c6; as trocas eliminam defensores; a invasão só ocorre depois de a posição estar coordenada. Final: resultado, revisão e ciclo de quatro semanas 26...Rxc6 27.Qxc6 Qxc6 28.Rxc6 Ra1+ 29.Nf1. O Diagrama 240 mostra a transição: as brancas têm vantagem material, mas ainda precisam neutralizar a torre ativa e ativar o rei. Semana 1: analisar duas partidas sem motor. Semana 2: verificar com ferramenta e classificar erros. Semana 3: treinar dez posições críticas no relógio. Semana 4: jogar partidas de teste e revisar se o erro recorrente diminuiu. Ciclo mensal Jogar; registrar; analisar; verificar; treinar posições; testar novamente. Meça a recorrência do erro, não apenas o resultado das partidas.",
+            "bodyMd": "13.b4 axb4 14.axb4 Cg6 15.b5 Bd7 16.bxc6 bxc6 17.Ca4 h6 18.Bxf6 Dxf6 19.Cc5 Bxc5 20.Dxc5 Ch4 21.Rb7 Bf5 22.Bxf5 Dxf5 23.Cg3 Dg6 24.Rc1 Re6 25.Rc7 Ra2 26.Rxc6. As decisões críticas são 15.b5, 18.Bxf6 e 26.Rxc6. O plano de minoria cria c6; as trocas eliminam defensores; a invasão só ocorre depois de a posição estar coordenada. Final: resultado, revisão e ciclo de quatro semanas 26...Rxc6 27.Dxc6 Dxc6 28.Rxc6 Ra1+ 29.Cf1. O Diagrama 240 mostra a transição: as brancas têm vantagem material, mas ainda precisam neutralizar a torre ativa e ativar o rei. Semana 1: analisar duas partidas sem motor. Semana 2: verificar com ferramenta e classificar erros. Semana 3: treinar dez posições críticas no relógio. Semana 4: jogar partidas de teste e revisar se o erro recorrente diminuiu. Ciclo mensal Jogar; registrar; analisar; verificar; treinar posições; testar novamente. Meça a recorrência do erro, não apenas o resultado das partidas.",
             "expectedActions": [],
             "feedback": {},
             "nextStepRules": [],

@@ -421,6 +421,7 @@ export class AuthService {
         locale: user.profile.locale,
         suggestMoveEnabled: user.profile.suggestMoveEnabled,
         timezone: user.profile.timezone,
+        voiceName: user.profile.voiceName,
       },
       status: user.status,
       username: user.username,
