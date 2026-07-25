@@ -13,6 +13,7 @@ import { api, getRealtimeAccessToken, getStoredUserId } from '@/lib/api/client';
 import { useCoachEngine } from '@/lib/engine/use-coach-engine';
 import { usePieceTheme } from '@/lib/piece-theme';
 import { GameSocket } from '@/lib/realtime/game-socket';
+import { speak } from '@/lib/speech';
 import {
   isSoundMuted,
   playCaptureSound,
@@ -319,6 +320,21 @@ export function GameRoom({ gameId }: { gameId: string }) {
     fen: state.currentFen,
     suggestEnabled: suggestMoveEnabled,
   });
+
+  useEffect(() => {
+    if (muted || !coachSuggestion) return;
+    const text = formatCoachSuggestion(coachSuggestion);
+    if (text) speak(`Sugestão: ${text}.`);
+  }, [coachSuggestion, muted]);
+
+  useEffect(() => {
+    if (muted || !pendingCoachMove) return;
+    const { quality } = pendingCoachMove;
+    speak(
+      `Atenção: esse lance parece ${moveQualityLabel[quality.quality].toLowerCase()}, com perda de ${quality.centipawnLoss} centipawns.${quality.missedWin ? ' Havia uma posição melhor.' : ''}`,
+    );
+  }, [muted, pendingCoachMove]);
+
   const groupedMoves = useMemo(() => {
     const rows: Array<{ number: number; white?: GameMove; black?: GameMove }> = [];
     for (const move of moves) {

@@ -15,6 +15,7 @@ import { reviewEligibility, type ReviewEligibility } from './review-eligibility'
 import { ChessBoard } from '@/components/game/chess-board';
 import { api, getStoredUserId } from '@/lib/api/client';
 import { usePieceTheme } from '@/lib/piece-theme';
+import { speak, stopSpeaking } from '@/lib/speech';
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
@@ -104,11 +105,13 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
       ];
 
   useEffect(() => {
-    if (!voiceEnabled || !currentMoveAnalysis || typeof window === 'undefined') return;
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(new SpeechSynthesisUtterance(narrateMove(currentMoveAnalysis)));
+    if (!voiceEnabled || !currentMoveAnalysis) return;
+    speak(narrateMove(currentMoveAnalysis));
   }, [currentMoveAnalysis, voiceEnabled]);
+
+  useEffect(() => {
+    if (!voiceEnabled) stopSpeaking();
+  }, [voiceEnabled]);
 
   const current = annotations.find((item) => item.ply === ply);
   useEffect(() => {
