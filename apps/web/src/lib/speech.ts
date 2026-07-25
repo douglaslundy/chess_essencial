@@ -1,18 +1,39 @@
-// Web Speech API wrapper with fixes for two long-standing browser quirks:
-// (1) some engines silently drop an utterance queued right after cancel()
-//     in the same tick, so a pending cancel gets a short delay before the
-//     next speak(); (2) a SpeechSynthesisUtterance with no surviving
-//     reference can get garbage-collected mid-speech, cutting audio off —
-//     keeping one module-level reference prevents that.
+// Web Speech API wrapper with fixes for three long-standing browser quirks:
+// (1) the voice list loads asynchronously (getVoices() returns [] until the
+//     browser fires 'voiceschanged'), and calling speak() before that is
+//     silently dropped on some Chromium versions — no error, just no
+//     audio, which is exactly what looks like "nothing happens"; (2) some
+//     engines silently drop an utterance queued right after cancel() in the
+//     same tick, so a pending cancel gets a short delay before the next
+//     speak(); (3) a SpeechSynthesisUtterance with no surviving reference
+//     can get garbage-collected mid-speech, cutting audio off — keeping one
+//     module-level reference prevents that.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept alive on purpose, see above
 let currentUtterance: SpeechSynthesisUtterance | null = null;
+let voicesReady: Promise<void> | null = null;
 
-export function speak(text: string, lang = 'pt-BR'): void {
+function ensureVoicesLoaded(synth: SpeechSynthesis): Promise<void> {
+  if (synth.getVoices().length > 0) return Promise.resolve();
+  voicesReady ??= new Promise((resolve) => {
+    const onVoicesChanged = () => {
+      synth.removeEventListener('voiceschanged', onVoicesChanged);
+      resolve();
+    };
+    synth.addEventListener('voiceschanged', onVoicesChanged);
+    // Some platforms never fire voiceschanged at all — don't block forever.
+    setTimeout(resolve, 1000);
+  });
+  return voicesReady;
+}
+
+export async function speak(text: string, lang = 'pt-BR'): Promise<void> {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  const synth = window.speechSynthesis;
+  await ensureVoicesLoaded(synth);
+
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = lang;
   currentUtterance = utterance;
-  const synth = window.speechSynthesis;
   if (synth.speaking || synth.pending) {
     synth.cancel();
     setTimeout(() => synth.speak(utterance), 50);
