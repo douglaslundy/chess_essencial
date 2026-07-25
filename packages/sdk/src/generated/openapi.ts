@@ -885,6 +885,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/matchmaking/challenges/{challengeId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Cancelar desafio direto enviado (só o desafiante pode) */
+    delete: operations['cancelDirectChallenge'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/matchmaking/challenges/{challengeId}/respond': {
     parameters: {
       query?: never;
@@ -2139,6 +2156,11 @@ export interface components {
       createdAt: string;
       /** Format: date-time */
       expiresAt: string;
+      /**
+       * Format: uuid
+       * @description Preenchido quando o desafio foi aceito recentemente, para o desafiante entrar na partida
+       */
+      gameId: string | null;
     };
     DirectChallengesView: {
       incoming: components['schemas']['DirectChallenge'][];
@@ -3851,6 +3873,30 @@ export interface operations {
         content?: never;
       };
       400: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+      409: components['responses']['Problem'];
+    };
+  };
+  cancelDirectChallenge: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        challengeId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Desafio cancelado */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components['responses']['Problem'];
       403: components['responses']['Problem'];
       404: components['responses']['Problem'];
       409: components['responses']['Problem'];

@@ -41,6 +41,7 @@ interface ChallengeRow {
   counterpartUsername: string;
   createdAt: Date | string;
   expiresAt: Date | string;
+  gameId: string | null;
   id: string;
   timeControlCode: TimeControlCode;
 }
@@ -201,9 +202,23 @@ export class MatchmakingRepository {
       `;
       if (blocked) throw new ForbiddenException('Desafio não permitido');
 
+      // Nobody actively expires a challenge that neither side ever responds
+      // to (the challenged user's UI hides it once expiresAt passes, so
+      // there's no "decline" click to flip its status away from 'pending').
+      // Without this sweep, a stale row would keep 'status = pending'
+      // forever and permanently block new challenges between this pair,
+      // both via the check below and via the DB's partial unique index
+      // (uq_direct_challenges_pending_pair).
+      await transaction`
+        UPDATE direct_challenges SET status = 'expired', resolved_at = now()
+        WHERE status = 'pending' AND expires_at <= now()
+          AND ((challenger_id = ${userId} AND challenged_id = ${input.challengedUserId})
+            OR (challenger_id = ${input.challengedUserId} AND challenged_id = ${userId}))
+      `;
+
       const [pending] = await transaction<{ id: string }[]>`
         SELECT id FROM direct_challenges
-        WHERE status = 'pending'
+        WHERE status = 'pending' AND expires_at > now()
           AND ((challenger_id = ${userId} AND challenged_id = ${input.challengedUserId})
             OR (challenger_id = ${input.challengedUserId} AND challenged_id = ${userId}))
         FOR UPDATE
@@ -243,7 +258,7 @@ export class MatchmakingRepository {
       SELECT direct_challenges.id, u.id AS "counterpartId", u.username::text AS "counterpartUsername",
              p.display_name AS "counterpartDisplayName", direct_challenges.challenger_color AS "challengerColor",
              time_controls.code AS "timeControlCode", direct_challenges.created_at AS "createdAt",
-             direct_challenges.expires_at AS "expiresAt"
+             direct_challenges.expires_at AS "expiresAt", direct_challenges.game_id AS "gameId"
       FROM direct_challenges
       JOIN users u ON u.id = direct_challenges.challenger_id
       JOIN user_profiles p ON p.user_id = u.id
@@ -253,24 +268,53 @@ export class MatchmakingRepository {
         AND direct_challenges.expires_at > now()
       ORDER BY direct_challenges.created_at DESC
     `;
+    // Outgoing also includes challenges accepted in the last minute (with
+    // their resulting gameId) so the challenger's poll loop can detect the
+    // acceptance and follow the opponent into the game, instead of the
+    // challenge just silently vanishing from the list once its status
+    // moves away from 'pending'.
     const outgoing = await sql<ChallengeRow[]>`
       SELECT direct_challenges.id, u.id AS "counterpartId", u.username::text AS "counterpartUsername",
              p.display_name AS "counterpartDisplayName", direct_challenges.challenger_color AS "challengerColor",
              time_controls.code AS "timeControlCode", direct_challenges.created_at AS "createdAt",
-             direct_challenges.expires_at AS "expiresAt"
+             direct_challenges.expires_at AS "expiresAt", direct_challenges.game_id AS "gameId"
       FROM direct_challenges
       JOIN users u ON u.id = direct_challenges.challenged_id
       JOIN user_profiles p ON p.user_id = u.id
       JOIN game_time_controls time_controls ON time_controls.id = direct_challenges.time_control_id
       WHERE direct_challenges.challenger_id = ${userId}
-        AND direct_challenges.status = 'pending'
-        AND direct_challenges.expires_at > now()
+        AND (
+          (direct_challenges.status = 'pending' AND direct_challenges.expires_at > now())
+          OR (direct_challenges.status = 'accepted' AND direct_challenges.resolved_at > now() - interval '1 minute')
+        )
       ORDER BY direct_challenges.created_at DESC
     `;
     return {
       incoming: incoming.map((row) => this.toDirectChallenge(row)),
       outgoing: outgoing.map((row) => this.toDirectChallenge(row)),
     };
+  }
+
+  async cancelChallenge(userId: string, challengeId: string) {
+    return this.database.client.begin(async (transaction) => {
+      const [challenge] = await transaction<{ challengerId: string; status: string }[]>`
+        SELECT challenger_id AS "challengerId", status
+        FROM direct_challenges
+        WHERE id = ${challengeId}
+        FOR UPDATE
+      `;
+      if (!challenge) throw new NotFoundException('Desafio não encontrado');
+      if (challenge.challengerId !== userId) {
+        throw new ForbiddenException('Desafio pertence a outro usuário');
+      }
+      if (challenge.status !== 'pending') {
+        throw new ConflictException('Desafio não está mais pendente');
+      }
+      await transaction`
+        UPDATE direct_challenges SET status = 'cancelled', resolved_at = now()
+        WHERE id = ${challengeId}
+      `;
+    });
   }
 
   private toDirectChallenge(row: ChallengeRow) {
@@ -285,6 +329,7 @@ export class MatchmakingRepository {
       timeControlCode: row.timeControlCode,
       createdAt: new Date(row.createdAt).toISOString(),
       expiresAt: new Date(row.expiresAt).toISOString(),
+      gameId: row.gameId,
     };
   }
 

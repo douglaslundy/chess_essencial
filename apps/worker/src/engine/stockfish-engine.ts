@@ -78,7 +78,9 @@ export async function evaluatePosition(
         if (settled) return;
         settled = true;
         clearTimeout(timeout);
-        reject(new Error(`Motor de xadrez encerrou inesperadamente (código ${code}): ${stderrOutput}`));
+        reject(
+          new Error(`Motor de xadrez encerrou inesperadamente (código ${code}): ${stderrOutput}`),
+        );
       });
 
       child.stderr.on('data', (chunk: Buffer) => {

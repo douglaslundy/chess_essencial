@@ -145,14 +145,128 @@ describeDatabase('direct challenge between two real users', () => {
       expect(state.json().id).toBe(acceptedBody.gameId);
     }
 
-    // The resolved challenge no longer shows up as pending for either side,
-    // and — since it's no longer "pending" — a fresh challenge is allowed.
+    // The resolved challenge no longer shows up as pending for either side...
+    const bobViewAfter = await app.inject({
+      headers: auth(bob),
+      method: 'GET',
+      url: '/v1/matchmaking/challenges',
+    });
+    expect(bobViewAfter.json()).toEqual({ incoming: [], outgoing: [] });
+
+    // ...but the CHALLENGER briefly still sees it under "outgoing", now with
+    // the resulting gameId, so a polling UI can detect the acceptance and
+    // follow the opponent straight into the game instead of just seeing the
+    // challenge disappear with no way to know what happened to it.
     const aliceViewAfter = await app.inject({
       headers: auth(alice),
       method: 'GET',
       url: '/v1/matchmaking/challenges',
     });
-    expect(aliceViewAfter.json()).toEqual({ incoming: [], outgoing: [] });
+    expect(aliceViewAfter.json()).toMatchObject({
+      incoming: [],
+      outgoing: [{ id: challenge.id, gameId: acceptedBody.gameId }],
+    });
+
+    // A fresh challenge is allowed now that this one is resolved.
+    await database.client`UPDATE direct_challenges SET status = 'declined' WHERE id = ${challenge.id}`;
+  });
+
+  it('unblocks a new challenge once a never-answered one has expired (root cause of the "phantom pending challenge" bug)', async () => {
+    const created = await app.inject({
+      headers: auth(alice),
+      method: 'POST',
+      payload: {
+        challengedUserId: bob.userId,
+        challengerColor: null,
+        timeControlCode: 'blitz-3-0',
+      },
+      url: '/v1/matchmaking/challenges',
+    });
+    expect(created.statusCode, created.body).toBe(201);
+    const challenge = created.json();
+
+    // Nobody ever responds before it expires — backdate it the same way
+    // real time passing would, without waiting 10 real minutes in the test.
+    await database.client`
+      UPDATE direct_challenges SET expires_at = now() - interval '1 minute'
+      WHERE id = ${challenge.id}
+    `;
+
+    // The challenged user's list correctly hides the expired challenge...
+    const bobView = await app.inject({
+      headers: auth(bob),
+      method: 'GET',
+      url: '/v1/matchmaking/challenges',
+    });
+    expect(bobView.json()).toEqual({ incoming: [], outgoing: [] });
+
+    // ...but before the fix, creating a new challenge between the same pair
+    // (in either direction) still failed with 409, because the stale row
+    // was never actively flipped out of 'pending'.
+    const retried = await app.inject({
+      headers: auth(bob),
+      method: 'POST',
+      payload: {
+        challengedUserId: alice.userId,
+        challengerColor: null,
+        timeControlCode: 'blitz-3-0',
+      },
+      url: '/v1/matchmaking/challenges',
+    });
+    expect(retried.statusCode, retried.body).toBe(201);
+    await database.client`UPDATE direct_challenges SET status = 'declined' WHERE id = ${retried.json().id}`;
+  });
+
+  it('lets the challenger cancel their own pending outgoing challenge', async () => {
+    const created = await app.inject({
+      headers: auth(alice),
+      method: 'POST',
+      payload: {
+        challengedUserId: bob.userId,
+        challengerColor: null,
+        timeControlCode: 'blitz-3-0',
+      },
+      url: '/v1/matchmaking/challenges',
+    });
+    expect(created.statusCode, created.body).toBe(201);
+    const challenge = created.json();
+
+    // The challenged user can't cancel someone else's challenge...
+    const forbidden = await app.inject({
+      headers: auth(bob),
+      method: 'DELETE',
+      url: `/v1/matchmaking/challenges/${challenge.id}`,
+    });
+    expect(forbidden.statusCode, forbidden.body).toBe(403);
+
+    // ...but the challenger can.
+    const cancelled = await app.inject({
+      headers: auth(alice),
+      method: 'DELETE',
+      url: `/v1/matchmaking/challenges/${challenge.id}`,
+    });
+    expect(cancelled.statusCode, cancelled.body).toBe(204);
+
+    const bobView = await app.inject({
+      headers: auth(bob),
+      method: 'GET',
+      url: '/v1/matchmaking/challenges',
+    });
+    expect(bobView.json()).toEqual({ incoming: [], outgoing: [] });
+
+    // Cancelling frees the pair to challenge again right away.
+    const retried = await app.inject({
+      headers: auth(alice),
+      method: 'POST',
+      payload: {
+        challengedUserId: bob.userId,
+        challengerColor: null,
+        timeControlCode: 'blitz-3-0',
+      },
+      url: '/v1/matchmaking/challenges',
+    });
+    expect(retried.statusCode, retried.body).toBe(201);
+    await database.client`UPDATE direct_challenges SET status = 'declined' WHERE id = ${retried.json().id}`;
   });
 
   it('lets the challenged user decline, which frees both sides to challenge again', async () => {

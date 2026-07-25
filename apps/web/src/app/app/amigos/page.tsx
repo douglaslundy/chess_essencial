@@ -59,11 +59,17 @@ export default function FriendsPage() {
     const accessToken = token();
     if (!accessToken) return;
     try {
-      setChallenges(await api.listDirectChallenges(accessToken));
+      const view = await api.listDirectChallenges(accessToken);
+      setChallenges(view);
+      // An outgoing challenge we sent was just accepted — the opponent is
+      // already in the game, so follow them there instead of leaving this
+      // tab stuck on "aguardando resposta…" forever.
+      const acceptedOutgoing = view.outgoing.find((entry) => entry.gameId);
+      if (acceptedOutgoing?.gameId) router.push(`/app/partida/${acceptedOutgoing.gameId}`);
     } catch {
       // Polling failure is silent; the next tick or a manual action will retry.
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     queueMicrotask(load);
@@ -173,6 +179,20 @@ export default function FriendsPage() {
     }
   }
 
+  async function cancelChallenge(challengeId: string) {
+    const accessToken = token();
+    if (!accessToken) return;
+    setBusy(true);
+    try {
+      await api.cancelDirectChallenge(challengeId, accessToken);
+      await loadChallenges();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Não foi possível cancelar o desafio.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function remove(friend: Friend) {
     const accessToken = token();
     if (!accessToken) return;
@@ -248,6 +268,16 @@ export default function FriendsPage() {
                 <strong>{outgoingChallenge.counterpart.displayName}</strong>
                 <span>@{outgoingChallenge.counterpart.username}</span>
                 <span>aguardando resposta…</span>
+                <div className="adminUserActions">
+                  <button
+                    className="dangerAction"
+                    disabled={busy}
+                    onClick={() => void cancelChallenge(outgoingChallenge.id)}
+                    type="button"
+                  >
+                    Cancelar
+                  </button>
+                </div>
               </div>
             ))}
           </div>

@@ -56,6 +56,7 @@ export const directChallengeSchema = z.object({
   timeControlCode: timeControlCodeSchema,
   createdAt: z.string().datetime(),
   expiresAt: z.string().datetime(),
+  gameId: z.string().uuid().nullable(),
 });
 
 export const directChallengesViewSchema = z.object({

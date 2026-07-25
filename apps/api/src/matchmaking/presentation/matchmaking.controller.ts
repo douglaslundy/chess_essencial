@@ -58,6 +58,18 @@ export class MatchmakingController {
     return this.matchmaking.listChallenges(request.auth.userId);
   }
 
+  @Delete('challenges/:challengeId')
+  @HttpCode(204)
+  async cancelChallenge(
+    @Req() request: AuthenticatedRequest,
+    @Param('challengeId') challengeId: string,
+  ) {
+    await this.matchmaking.cancelChallenge(
+      request.auth.userId,
+      parseInput(z.string().uuid(), challengeId),
+    );
+  }
+
   @Post('challenges/:challengeId/respond')
   respondChallenge(
     @Req() request: AuthenticatedRequest,

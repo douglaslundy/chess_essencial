@@ -483,6 +483,8 @@ export const api = {
       token,
       { method: 'POST', body: JSON.stringify({ accept }) },
     ),
+  cancelDirectChallenge: (challengeId: string, token: string) =>
+    request<void>(`/matchmaking/challenges/${challengeId}`, token, { method: 'DELETE' }),
   leaveQueue: (token: string) => request<void>('/matchmaking/queues', token, { method: 'DELETE' }),
   resign: (gameId: string, token: string) =>
     request<GameState>(`/games/${gameId}/resign`, token, { method: 'POST' }),
