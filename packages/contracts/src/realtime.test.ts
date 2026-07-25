@@ -44,6 +44,7 @@ describe('realtime contracts', () => {
         state: {
           activeClockStartedAt: timestamp,
           blackClockMs: 180000,
+          coachMode: false,
           currentFen: 'startpos',
           finishedAt: null,
           id: '018f47f4-7b2f-4d90-8a66-a00000000004',

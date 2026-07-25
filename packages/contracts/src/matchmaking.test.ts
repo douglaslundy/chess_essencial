@@ -40,6 +40,7 @@ describe('matchmaking contracts', () => {
       }),
     ).toEqual({
       botDifficulty: 'advanced',
+      coachMode: false,
       playerColor: 'black',
       timeControlCode: 'rapid-10-0',
     });
