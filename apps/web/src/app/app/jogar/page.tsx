@@ -28,6 +28,15 @@ const controls: Array<{ code: TimeControlCode; label: string; detail: string; po
   },
 ];
 
+const controlPools: [string, typeof controls][] = Array.from(
+  controls.reduce((pools, control) => {
+    const group = pools.get(control.pool) ?? [];
+    group.push(control);
+    pools.set(control.pool, group);
+    return pools;
+  }, new Map<string, typeof controls>()),
+);
+
 export default function PlayPage() {
   const router = useRouter();
   const [selected, setSelected] = useState<TimeControlCode>('untimed');
@@ -148,10 +157,14 @@ export default function PlayPage() {
               onChange={(event) => setSelected(event.target.value as TimeControlCode)}
               value={selected}
             >
-              {controls.map((control) => (
-                <option key={control.code} value={control.code}>
-                  {control.pool} · {control.label} — {control.detail}
-                </option>
+              {controlPools.map(([pool, poolControls]) => (
+                <optgroup key={pool} label={pool}>
+                  {poolControls.map((control) => (
+                    <option key={control.code} value={control.code}>
+                      {control.label} · {control.detail}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </label>

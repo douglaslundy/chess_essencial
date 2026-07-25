@@ -503,8 +503,7 @@ input:focus-visible {
 }
 
 .primaryCard span,
-.secondaryCard span,
-.timeCard span {
+.secondaryCard span {
   color: var(--gold);
   font-size: 0.75rem;
   font-weight: 800;
@@ -596,37 +595,38 @@ input:focus-visible {
 }
 
 .timeControls {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.8rem;
-}
-
-.timeCard {
-  display: grid;
-  min-height: 10rem;
-  align-content: end;
-  gap: 0.35rem;
+  grid-column: 1 / -1;
+  padding: 1.1rem;
   border: 1px solid var(--border);
   border-radius: 1rem;
   background: var(--surface);
-  padding: 1.1rem;
-  text-align: left;
-  cursor: pointer;
 }
 
-.timeCard:hover,
-.selectedTime {
-  border-color: rgba(255, 42, 47, 0.7);
-  background: linear-gradient(145deg, rgba(209, 14, 23, 0.24), var(--surface));
+.timeControls label {
+  display: grid;
+  gap: 0.4rem;
+  color: var(--text);
+  font-weight: 700;
 }
 
-.timeCard strong {
-  font-family: Georgia, serif;
-  font-size: var(--font-card-title);
+.timeControls select {
+  width: 100%;
+  padding: 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 500;
 }
 
-.timeCard small {
-  color: var(--muted);
+.timeControls optgroup {
+  font-weight: 800;
+  color: var(--gold);
+}
+
+.timeControls option {
+  color: var(--text);
+  font-weight: 500;
 }
 
 .queueCard {
@@ -1605,14 +1605,6 @@ input:focus-visible {
     display: block;
   }
 
-  .timeControls {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .timeCard {
-    min-height: 7.5rem;
-  }
-
   .queueCard {
     min-height: 19rem;
   }
@@ -1667,10 +1659,6 @@ input:focus-visible {
 }
 
 @media (max-width: 390px) {
-  .timeControls {
-    grid-template-columns: 1fr;
-  }
-
   .playerMeta strong {
     max-width: 8rem;
     overflow: hidden;
