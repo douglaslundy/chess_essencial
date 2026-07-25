@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { basename, resolve } from 'node:path';
 
-const EXPECTED_SHA256 = '0036682cf778eab9a87bb2691cddd942f85b12bd8f5b485c595c9efe74f8b369';
+const EXPECTED_SHA256 = '6592fa8e3159df5e633818fc2011797e80a3b4649e52b0a006d0fb855a49fada';
 const sourcePath = resolve(
   process.argv[2] ?? 'database/content/Xadrez_Essencial_Exercicios_1_a_1298.json',
 );
