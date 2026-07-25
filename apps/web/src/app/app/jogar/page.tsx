@@ -30,7 +30,7 @@ const controls: Array<{ code: TimeControlCode; label: string; detail: string; po
 
 export default function PlayPage() {
   const router = useRouter();
-  const [selected, setSelected] = useState<TimeControlCode>('rapid-10-0');
+  const [selected, setSelected] = useState<TimeControlCode>('untimed');
   const [opponent, setOpponent] = useState<'human' | 'bot'>('human');
   const [difficulty, setDifficulty] = useState<BotDifficulty>('matched');
   const [playerColor, setPlayerColor] = useState<PlayerColorPreference>('random');
@@ -99,27 +99,16 @@ export default function PlayPage() {
       </header>
       <section className="playGrid">
         <div className="botPreferences">
-          <fieldset>
-            <legend>Adversário</legend>
-            <label>
-              <input
-                checked={opponent === 'human'}
-                name="opponent"
-                onChange={() => setOpponent('human')}
-                type="radio"
-              />
-              Buscar adversário online
-            </label>
-            <label>
-              <input
-                checked={opponent === 'bot'}
-                name="opponent"
-                onChange={() => setOpponent('bot')}
-                type="radio"
-              />
-              Jogar contra o bot
-            </label>
-          </fieldset>
+          <label>
+            Adversário
+            <select
+              onChange={(event) => setOpponent(event.target.value as 'human' | 'bot')}
+              value={opponent}
+            >
+              <option value="human">Buscar adversário online</option>
+              <option value="bot">Jogar contra o bot</option>
+            </select>
+          </label>
           {opponent === 'bot' ? (
             <>
               <label>
@@ -152,21 +141,20 @@ export default function PlayPage() {
             <p>A busca procura somente outra pessoa. O bot nunca será iniciado automaticamente.</p>
           )}
         </div>
-        <div className="timeControls" role="radiogroup" aria-label="Controle de tempo">
-          {controls.map((control) => (
-            <button
-              aria-checked={selected === control.code}
-              className={selected === control.code ? 'timeCard selectedTime' : 'timeCard'}
-              key={control.code}
-              onClick={() => setSelected(control.code)}
-              role="radio"
-              type="button"
+        <div className="timeControls">
+          <label>
+            Controle de tempo
+            <select
+              onChange={(event) => setSelected(event.target.value as TimeControlCode)}
+              value={selected}
             >
-              <span>{control.pool}</span>
-              <strong>{control.label}</strong>
-              <small>{control.detail}</small>
-            </button>
-          ))}
+              {controls.map((control) => (
+                <option key={control.code} value={control.code}>
+                  {control.pool} · {control.label} — {control.detail}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
         <aside className="queueCard">
           <span className="queueIcon" aria-hidden="true">

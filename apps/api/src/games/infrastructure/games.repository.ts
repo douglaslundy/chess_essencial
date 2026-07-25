@@ -439,7 +439,7 @@ export class GamesRepository {
       await transaction`SELECT pg_advisory_xact_lock(hashtextextended(${gameId}, 0))`;
       const state = await this.getStateInTransaction(transaction, gameId, userId);
       if (lastKnownVersion > state.version) {
-        throw new ConflictException('Client version is ahead of the server');
+        throw new ConflictException('Versão do cliente está à frente do servidor');
       }
       const rows = await transaction<MoveRow[]>`
         SELECT
@@ -611,7 +611,8 @@ export class GamesRepository {
       const [databaseClock] = await transaction<{ now: Date | string }[]>`
         SELECT clock_timestamp() AS now
       `;
-      if (!databaseClock) throw new InternalServerErrorException('Database clock unavailable');
+      if (!databaseClock)
+        throw new InternalServerErrorException('Relógio do banco de dados indisponível');
       const receivedAt = new Date(databaseClock.now);
       const result = player.color === 'white' ? 'black_win' : 'white_win';
       const history = await transaction<{ uci: string }[]>`
@@ -701,7 +702,8 @@ export class GamesRepository {
         const [databaseClock] = await transaction<{ now: Date | string }[]>`
           SELECT clock_timestamp() AS now
         `;
-        if (!databaseClock) throw new InternalServerErrorException('Database clock unavailable');
+        if (!databaseClock)
+          throw new InternalServerErrorException('Relógio do banco de dados indisponível');
         const receivedAt = new Date(databaseClock.now);
         await transaction`
           UPDATE game_draw_offers
@@ -761,7 +763,7 @@ export class GamesRepository {
         VALUES (${gameId}, ${userId})
         RETURNING id
       `;
-      if (!offer) throw new InternalServerErrorException('Draw offer was not persisted');
+      if (!offer) throw new InternalServerErrorException('Oferta de empate não foi persistida');
       await transaction`
         INSERT INTO outbox_events (aggregate_type, aggregate_id, event_type, payload)
         VALUES (
@@ -859,7 +861,8 @@ export class GamesRepository {
       const [databaseClock] = await transaction<{ now: Date | string }[]>`
         SELECT clock_timestamp() AS now
       `;
-      if (!databaseClock) throw new InternalServerErrorException('Database clock unavailable');
+      if (!databaseClock)
+        throw new InternalServerErrorException('Relógio do banco de dados indisponível');
       const receivedAt = new Date(databaseClock.now);
       const activeClockStartedAt = game.activeClockStartedAt
         ? new Date(game.activeClockStartedAt)
@@ -1050,7 +1053,7 @@ export class GamesRepository {
         state: await this.getStateInTransaction(transaction, gameId, userId),
       };
     });
-    if (!outcome) throw new ConflictException('Move received after timeout');
+    if (!outcome) throw new ConflictException('Lance recebido após o tempo esgotar');
     return outcome;
   }
 

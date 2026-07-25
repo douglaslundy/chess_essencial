@@ -82,7 +82,7 @@ export class MatchmakingRepository {
         SELECT user_id AS "userId", rating, enqueued_at AS "enqueuedAt"
         FROM matchmaking_queue WHERE user_id = ${userId}
       `;
-      if (!self) throw new ConflictException('Queue entry was not persisted');
+      if (!self) throw new ConflictException('Entrada na fila não foi registrada');
       const selfEnqueuedAt = new Date(self.enqueuedAt);
       const selfRange = Math.min(
         800,
@@ -173,7 +173,7 @@ export class MatchmakingRepository {
 
   async createChallenge(userId: string, input: CreateChallengeInput) {
     if (userId === input.challengedUserId) {
-      throw new BadRequestException('Players must be different');
+      throw new BadRequestException('Os jogadores devem ser diferentes');
     }
 
     const created = await this.database.client.begin(async (transaction) => {
@@ -181,7 +181,7 @@ export class MatchmakingRepository {
       const [challenged] = await transaction<{ id: string }[]>`
         SELECT id FROM users WHERE id = ${input.challengedUserId} AND status = 'active'
       `;
-      if (!challenged) throw new NotFoundException('Active challenged user not found');
+      if (!challenged) throw new NotFoundException('Usuário desafiado ativo não encontrado');
 
       const [blocked] = await transaction<{ present: boolean }[]>`
         SELECT true AS present
@@ -199,7 +199,7 @@ export class MatchmakingRepository {
           WHERE user_id = ${input.challengedUserId} AND allow_challenges = false
         )
       `;
-      if (blocked) throw new ForbiddenException('Challenge is not allowed');
+      if (blocked) throw new ForbiddenException('Desafio não permitido');
 
       const [pending] = await transaction<{ id: string }[]>`
         SELECT id FROM direct_challenges
@@ -208,7 +208,7 @@ export class MatchmakingRepository {
             OR (challenger_id = ${input.challengedUserId} AND challenged_id = ${userId}))
         FOR UPDATE
       `;
-      if (pending) throw new ConflictException('A pending challenge already exists');
+      if (pending) throw new ConflictException('Já existe um desafio pendente entre vocês');
 
       const challengeId = randomUUID();
       const expiresAt = new Date(Date.now() + 10 * 60_000);
@@ -307,19 +307,19 @@ export class MatchmakingRepository {
         WHERE id = ${challengeId}
         FOR UPDATE
       `;
-      if (!challenge) throw new NotFoundException('Challenge not found');
+      if (!challenge) throw new NotFoundException('Desafio não encontrado');
       if (challenge.challengedId !== userId) {
-        throw new ForbiddenException('Challenge belongs to another user');
+        throw new ForbiddenException('Desafio pertence a outro usuário');
       }
       if (challenge.status !== 'pending') {
-        throw new ConflictException('Challenge is no longer pending');
+        throw new ConflictException('Desafio não está mais pendente');
       }
       if (new Date(challenge.expiresAt).getTime() <= Date.now()) {
         await transaction`
           UPDATE direct_challenges SET status = 'expired', resolved_at = now()
           WHERE id = ${challengeId}
         `;
-        throw new ConflictException('Challenge expired');
+        throw new ConflictException('Desafio expirado');
       }
 
       if (!input.accept) {
@@ -335,7 +335,7 @@ export class MatchmakingRepository {
         FROM game_time_controls
         WHERE id = ${challenge.timeControlId} AND active = true
       `;
-      if (!timeControl) throw new ConflictException('Time control is no longer active');
+      if (!timeControl) throw new ConflictException('Controle de tempo não está mais ativo');
       const challengerColor = challenge.challengerColor ?? (randomInt(2) === 0 ? 'white' : 'black');
       const gameId = await this.createGame(
         transaction,
@@ -363,7 +363,7 @@ export class MatchmakingRepository {
       FROM game_time_controls
       WHERE code = ${code} AND active = true
     `;
-    if (!row) throw new NotFoundException('Time control not found');
+    if (!row) throw new NotFoundException('Controle de tempo não encontrado');
     return row;
   }
 
@@ -371,7 +371,7 @@ export class MatchmakingRepository {
     const [activeUser] = await transaction<{ id: string }[]>`
       SELECT id FROM users WHERE id = ${userId} AND status = 'active'
     `;
-    if (!activeUser) throw new ForbiddenException('Active user required');
+    if (!activeUser) throw new ForbiddenException('Usuário ativo obrigatório');
     const [profile] = await transaction<{ rating: number }[]>`
       SELECT rating FROM rating_profiles
       WHERE user_id = ${userId} AND pool = ${pool}::rating_pool
@@ -413,7 +413,8 @@ export class MatchmakingRepository {
       SELECT id FROM users
       WHERE id IN (${creatorUserId}, ${opponentUserId}) AND status = 'active'
     `;
-    if (activeUsers.length !== 2) throw new ConflictException('Both players must be active');
+    if (activeUsers.length !== 2)
+      throw new ConflictException('Ambos os jogadores devem estar ativos');
 
     const gameId = randomUUID();
     const currentFen = new ChessJsRules().fen();
