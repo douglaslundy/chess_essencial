@@ -602,31 +602,113 @@ input:focus-visible {
   background: var(--surface);
 }
 
-.timeControls label {
-  display: grid;
-  gap: 0.4rem;
+.timeControlsLabel {
+  display: block;
+  margin-bottom: 0.4rem;
   color: var(--text);
   font-weight: 700;
 }
 
-.timeControls select {
+.groupedListbox {
+  position: relative;
+}
+
+.groupedListboxButton {
+  display: flex;
   width: 100%;
-  padding: 0.7rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.7rem 0.9rem;
   border: 1px solid var(--border);
   border-radius: 0.65rem;
   background: var(--bg);
   color: var(--text);
-  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+}
+.groupedListboxButton:hover {
+  background: var(--surface-2);
 }
 
-.timeControls optgroup {
+.groupedListboxValue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.groupedListboxValue strong {
+  font-weight: 700;
+}
+.groupedListboxValue span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.groupedListboxCaret {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.groupedListboxPanel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  z-index: 40;
+  max-height: min(24rem, 60vh);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: var(--surface);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+}
+
+.groupedListboxGroup {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.groupedListboxGroupLabel {
+  display: block;
+  padding: 0.3rem 0.6rem 0.2rem;
+  font-size: 0.72rem;
   font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: var(--gold);
 }
 
-.timeControls option {
+.groupedListboxOption {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  gap: 0.5rem;
+  border: 0;
+  border-radius: 0.55rem;
+  background: transparent;
   color: var(--text);
+  padding: 0.55rem 0.6rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.groupedListboxOption span {
+  color: var(--muted);
+  font-size: 0.82rem;
   font-weight: 500;
+}
+.groupedListboxOption:hover {
+  background: var(--surface-2);
+}
+.groupedListboxOption[aria-selected='true'] {
+  background: var(--surface-2);
+  box-shadow: inset 2px 0 0 var(--gold);
 }
 
 .queueCard {

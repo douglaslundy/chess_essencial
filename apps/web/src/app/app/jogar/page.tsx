@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import type { BotDifficulty, PlayerColorPreference, TimeControlCode } from '@xadrez/contracts';
 
+import { GroupedListbox } from '@/components/ui/grouped-listbox';
 import { api } from '@/lib/api/client';
 
 const controls: Array<{ code: TimeControlCode; label: string; detail: string; pool: string }> = [
@@ -28,14 +29,14 @@ const controls: Array<{ code: TimeControlCode; label: string; detail: string; po
   },
 ];
 
-const controlPools: [string, typeof controls][] = Array.from(
+const controlPools = Array.from(
   controls.reduce((pools, control) => {
     const group = pools.get(control.pool) ?? [];
-    group.push(control);
+    group.push({ detail: control.detail, label: control.label, value: control.code });
     pools.set(control.pool, group);
     return pools;
-  }, new Map<string, typeof controls>()),
-);
+  }, new Map<string, Array<{ detail: string; label: string; value: TimeControlCode }>>()),
+).map(([label, options]) => ({ label, options }));
 
 export default function PlayPage() {
   const router = useRouter();
@@ -151,23 +152,13 @@ export default function PlayPage() {
           )}
         </div>
         <div className="timeControls">
-          <label>
-            Controle de tempo
-            <select
-              onChange={(event) => setSelected(event.target.value as TimeControlCode)}
-              value={selected}
-            >
-              {controlPools.map(([pool, poolControls]) => (
-                <optgroup key={pool} label={pool}>
-                  {poolControls.map((control) => (
-                    <option key={control.code} value={control.code}>
-                      {control.label} · {control.detail}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          </label>
+          <span className="timeControlsLabel">Controle de tempo</span>
+          <GroupedListbox
+            ariaLabel="Controle de tempo"
+            groups={controlPools}
+            onChange={setSelected}
+            value={selected}
+          />
         </div>
         <aside className="queueCard">
           <span className="queueIcon" aria-hidden="true">
