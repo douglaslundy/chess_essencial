@@ -186,6 +186,17 @@ paths:
                 $ref: '#/components/schemas/PublicUser'
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
+  /subscription-plans:
+    get:
+      summary: List active subscription plans (public catalog)
+      operationId: listActiveSubscriptionPlans
+      responses:
+        '200':
+          description: Active plans
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SubscriptionPlanList'}
+        '401': {$ref: '#/components/responses/Problem'}
   /me/subscription:
     get:
       summary: Get the current user's active subscription, if any
@@ -196,6 +207,32 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/UserSubscription'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /me/subscription/checkout:
+    post:
+      summary: Start a Mercado Pago checkout for a subscription plan
+      operationId: createSubscriptionCheckout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateCheckoutInput'}
+      responses:
+        '200':
+          description: Checkout URL to redirect the payer to
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CheckoutResult'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '503': {$ref: '#/components/responses/Problem'}
+  /webhooks/mercado-pago:
+    post:
+      summary: Mercado Pago payment/subscription webhook (called by Mercado Pago, not the app)
+      operationId: receiveMercadoPagoWebhook
+      security: []
+      responses:
+        '200': {description: Notification processed}
         '401': {$ref: '#/components/responses/Problem'}
   /me/referral:
     get:
@@ -1844,10 +1881,11 @@ components:
       additionalProperties: false
     MercadoPagoSettings:
       type: object
-      required: [environment, hasAccessToken, publicKey]
+      required: [environment, hasAccessToken, hasWebhookSecret, publicKey]
       properties:
         environment: {type: string, enum: [sandbox, production]}
         hasAccessToken: {type: boolean}
+        hasWebhookSecret: {type: boolean}
         publicKey: {type: [string, 'null']}
     UpdateMercadoPagoSettingsInput:
       type: object
@@ -1856,6 +1894,7 @@ components:
         accessToken: {type: [string, 'null'], minLength: 1, maxLength: 500}
         environment: {type: string, enum: [sandbox, production]}
         publicKey: {type: [string, 'null'], maxLength: 255}
+        webhookSecret: {type: [string, 'null'], minLength: 1, maxLength: 500}
       additionalProperties: false
     MercadoPagoConnectionTestResult:
       type: object
@@ -1901,6 +1940,17 @@ components:
       properties:
         status: {type: string, enum: [active, archived]}
       additionalProperties: false
+    CreateCheckoutInput:
+      type: object
+      required: [planId]
+      properties:
+        planId: {type: string, format: uuid}
+      additionalProperties: false
+    CheckoutResult:
+      type: object
+      required: [checkoutUrl]
+      properties:
+        checkoutUrl: {type: string, format: uri}
     UserSubscription:
       type: object
       required: [currentPeriodEnd, plan, status]

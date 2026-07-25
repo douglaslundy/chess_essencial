@@ -27,6 +27,7 @@ export interface StoredMercadoPagoConfig {
   accessToken: string | null;
   environment: 'sandbox' | 'production';
   publicKey: string | null;
+  webhookSecret: string | null;
 }
 
 @Injectable()
@@ -91,6 +92,7 @@ export class SettingsService {
     return {
       environment: stored?.environment ?? 'sandbox',
       hasAccessToken: Boolean(stored?.accessToken),
+      hasWebhookSecret: Boolean(stored?.webhookSecret),
       publicKey: stored?.publicKey ?? null,
     };
   }
@@ -104,9 +106,15 @@ export class SettingsService {
       accessToken: input.accessToken || existing?.accessToken || null,
       environment: input.environment,
       publicKey: input.publicKey,
+      webhookSecret: input.webhookSecret || existing?.webhookSecret || null,
     };
     await this.settings.set(MERCADO_PAGO_SETTINGS_KEY, next, userId);
     return this.getMercadoPagoSettings();
+  }
+
+  /** Used by the checkout/webhook flow (SP-I); never exposed over the API. */
+  async resolveActiveMercadoPagoConfig(): Promise<StoredMercadoPagoConfig | null> {
+    return this.settings.get<StoredMercadoPagoConfig>(MERCADO_PAGO_SETTINGS_KEY);
   }
 
   async testMercadoPagoConnection(): Promise<MercadoPagoConnectionTestResult> {

@@ -60,6 +60,15 @@ export class SubscriptionsRepository {
     return this.withLimits(plans);
   }
 
+  /** Public-facing catalog for the checkout page — active plans only. */
+  async listActivePlans(): Promise<PlanWithLimits[]> {
+    const plans = await this.database.client<PlanRow[]>`
+      SELECT id, name, slug, status, price_cents AS "priceCents"
+        FROM subscription_plans WHERE status = 'active' ORDER BY price_cents
+    `;
+    return this.withLimits(plans);
+  }
+
   async getPlanById(planId: string): Promise<PlanWithLimits | null> {
     const [plan] = await this.database.client<PlanRow[]>`
       SELECT id, name, slug, status, price_cents AS "priceCents"
@@ -157,6 +166,69 @@ export class SubscriptionsRepository {
       INSERT INTO user_subscriptions (user_id, plan_id, status, current_period_end)
       VALUES (${userId}, ${planId}, 'active', now() + make_interval(days => ${days}))
       ON CONFLICT (user_id) WHERE status = 'active' DO NOTHING
+    `;
+  }
+
+  /**
+   * Starts a checkout: creates a 'pending' row (the row's own id becomes the
+   * Mercado Pago `external_reference`) so the webhook can find it later.
+   * Any previous pending row for this user is discarded first — only the
+   * most recent checkout attempt matters.
+   */
+  async createPendingSubscription(userId: string, planId: string): Promise<string> {
+    return this.database.client.begin(async (transaction) => {
+      await transaction`
+        DELETE FROM user_subscriptions WHERE user_id = ${userId} AND status = 'pending'
+      `;
+      const [row] = await transaction<{ id: string }[]>`
+        INSERT INTO user_subscriptions (user_id, plan_id, status)
+        VALUES (${userId}, ${planId}, 'pending')
+        RETURNING id
+      `;
+      if (!row) throw new Error('Assinatura pendente não foi criada');
+      return row.id;
+    });
+  }
+
+  async attachMercadoPagoId(subscriptionId: string, mercadoPagoSubscriptionId: string) {
+    await this.database.client`
+      UPDATE user_subscriptions SET mercado_pago_subscription_id = ${mercadoPagoSubscriptionId},
+        updated_at = now()
+      WHERE id = ${subscriptionId}
+    `;
+  }
+
+  /** Called by the webhook once Mercado Pago confirms the preapproval. */
+  async activateSubscription(
+    externalReference: string,
+    mercadoPagoSubscriptionId: string,
+    currentPeriodEnd: Date | null,
+  ): Promise<{ planId: string; userId: string } | null> {
+    return this.database.client.begin(async (transaction) => {
+      const [pending] = await transaction<{ planId: string; userId: string }[]>`
+        SELECT user_id AS "userId", plan_id AS "planId" FROM user_subscriptions
+         WHERE id = ${externalReference} AND status = 'pending'
+         FOR UPDATE
+      `;
+      if (!pending) return null;
+      await transaction`
+        UPDATE user_subscriptions s SET status = 'canceled', updated_at = now()
+         WHERE s.user_id = ${pending.userId} AND s.status = 'active'
+      `;
+      await transaction`
+        UPDATE user_subscriptions SET status = 'active',
+          mercado_pago_subscription_id = ${mercadoPagoSubscriptionId},
+          current_period_end = ${currentPeriodEnd}, updated_at = now()
+         WHERE id = ${externalReference}
+      `;
+      return pending;
+    });
+  }
+
+  async cancelSubscriptionByMercadoPagoId(mercadoPagoSubscriptionId: string): Promise<void> {
+    await this.database.client`
+      UPDATE user_subscriptions SET status = 'canceled', updated_at = now()
+       WHERE mercado_pago_subscription_id = ${mercadoPagoSubscriptionId} AND status = 'active'
     `;
   }
 

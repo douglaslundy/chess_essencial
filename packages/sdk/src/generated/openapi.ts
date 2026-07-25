@@ -175,6 +175,23 @@ export interface paths {
     patch: operations['updateMe'];
     trace?: never;
   };
+  '/subscription-plans': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List active subscription plans (public catalog) */
+    get: operations['listActiveSubscriptionPlans'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/me/subscription': {
     parameters: {
       query?: never;
@@ -186,6 +203,40 @@ export interface paths {
     get: operations['getMySubscription'];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/me/subscription/checkout': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Start a Mercado Pago checkout for a subscription plan */
+    post: operations['createSubscriptionCheckout'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/webhooks/mercado-pago': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Mercado Pago payment/subscription webhook (called by Mercado Pago, not the app) */
+    post: operations['receiveMercadoPagoWebhook'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1712,6 +1763,7 @@ export interface components {
       /** @enum {string} */
       environment: 'sandbox' | 'production';
       hasAccessToken: boolean;
+      hasWebhookSecret: boolean;
       publicKey: string | null;
     };
     UpdateMercadoPagoSettingsInput: {
@@ -1719,6 +1771,7 @@ export interface components {
       /** @enum {string} */
       environment: 'sandbox' | 'production';
       publicKey: string | null;
+      webhookSecret?: string | null;
     };
     MercadoPagoConnectionTestResult: {
       accountEmail: string | null;
@@ -1750,6 +1803,14 @@ export interface components {
     UpdateSubscriptionPlanStatusInput: {
       /** @enum {string} */
       status: 'active' | 'archived';
+    };
+    CreateCheckoutInput: {
+      /** Format: uuid */
+      planId: string;
+    };
+    CheckoutResult: {
+      /** Format: uri */
+      checkoutUrl: string;
     };
     UserSubscription: {
       /** Format: date-time */
@@ -2546,6 +2607,27 @@ export interface operations {
       401: components['responses']['Problem'];
     };
   };
+  listActiveSubscriptionPlans: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Active plans */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SubscriptionPlanList'];
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
   getMySubscription: {
     parameters: {
       query?: never;
@@ -2563,6 +2645,52 @@ export interface operations {
         content: {
           'application/json': components['schemas']['UserSubscription'];
         };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  createSubscriptionCheckout: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateCheckoutInput'];
+      };
+    };
+    responses: {
+      /** @description Checkout URL to redirect the payer to */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CheckoutResult'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      503: components['responses']['Problem'];
+    };
+  };
+  receiveMercadoPagoWebhook: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Notification processed */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       401: components['responses']['Problem'];
     };

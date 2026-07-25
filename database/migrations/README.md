@@ -33,6 +33,8 @@ pnpm --filter @xadrez/api db:rollback
 
 `0026_referrals.down.sql` drops the referrals table and the `referral_code` column; no historical data to preserve yet.
 
+`0027_subscription_checkout.down.sql` deletes any `pending` (not-yet-confirmed) subscription rows before restoring the narrower status check — active/canceled/expired history is preserved.
+
 `0024_resync_seed_demo_lesson_collision.down.sql` is a no-op: it clears a stale content-diff cache row so the next lesson import re-derives it automatically, there's nothing to restore.
 
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões

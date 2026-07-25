@@ -18,6 +18,7 @@ const navigation = [
   { href: '/app/amigos', label: 'Amigos' },
   { href: '/app/mensagens', label: 'Mensagens' },
   { href: '/app/feed', label: 'Feed' },
+  { href: '/app/planos', label: 'Planos' },
   { href: '/app/partida/demo', label: 'Tabuleiro demonstrativo' },
   { href: '/regras', label: 'Regras da comunidade' },
 ] as const;

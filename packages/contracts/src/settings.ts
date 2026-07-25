@@ -27,13 +27,14 @@ export const sendTestEmailInputSchema = z.object({
   toEmail: z.string().trim().email(),
 });
 
-// The access token is never returned by the API once set — only whether one
-// is configured. Admins re-enter it to change it; leaving it blank on update
-// keeps the previously stored value. The public key is not secret but is
-// still admin-only for now since checkout isn't built yet (SP-I).
+// The access token and webhook secret are never returned by the API once
+// set — only whether one is configured. Admins re-enter them to change;
+// leaving them blank on update keeps the previously stored value. The
+// public key is not secret but is still admin-only for now.
 export const mercadoPagoSettingsSchema = z.object({
   environment: z.enum(['sandbox', 'production']),
   hasAccessToken: z.boolean(),
+  hasWebhookSecret: z.boolean(),
   publicKey: z.string().nullable(),
 });
 
@@ -41,6 +42,7 @@ export const updateMercadoPagoSettingsInputSchema = z.object({
   accessToken: z.string().trim().min(1).max(500).nullable().optional(),
   environment: z.enum(['sandbox', 'production']),
   publicKey: z.string().trim().max(255).nullable(),
+  webhookSecret: z.string().trim().min(1).max(500).nullable().optional(),
 });
 
 export const mercadoPagoConnectionTestResultSchema = z.object({

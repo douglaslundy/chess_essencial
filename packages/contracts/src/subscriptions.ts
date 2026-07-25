@@ -63,6 +63,16 @@ export const planFeatureUsageSchema = z.object({
   used: z.number().int().min(0),
 });
 
+export const createCheckoutInputSchema = z.object({
+  planId: z.string().uuid(),
+});
+
+export const checkoutResultSchema = z.object({
+  checkoutUrl: z.string().url(),
+});
+
+export type CheckoutResult = z.infer<typeof checkoutResultSchema>;
+export type CreateCheckoutInput = z.infer<typeof createCheckoutInputSchema>;
 export type PlanFeatureKey = z.infer<typeof planFeatureKeySchema>;
 export type PlanFeatureLimit = z.infer<typeof planFeatureLimitSchema>;
 export type PlanFeatureUsage = z.infer<typeof planFeatureUsageSchema>;

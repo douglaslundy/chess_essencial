@@ -36,6 +36,7 @@ export default function AdminMercadoPagoPage() {
     if (!token) return;
     const data = new FormData(event.currentTarget);
     const accessToken = String(data.get('accessToken') ?? '').trim();
+    const webhookSecret = String(data.get('webhookSecret') ?? '').trim();
     setMessage('Salvando…');
     try {
       const updated = await api.adminUpdateMercadoPagoSettings(
@@ -43,6 +44,7 @@ export default function AdminMercadoPagoPage() {
           accessToken: accessToken || null,
           environment: String(data.get('environment') ?? 'sandbox') as 'sandbox' | 'production',
           publicKey: String(data.get('publicKey') ?? '').trim() || null,
+          webhookSecret: webhookSecret || null,
         },
         token,
       );
@@ -103,7 +105,17 @@ export default function AdminMercadoPagoPage() {
               Access token {settings.hasAccessToken ? '(deixe em branco para manter o atual)' : ''}
               <input name="accessToken" type="password" />
             </label>
+            <label className={styles.field}>
+              Webhook secret{' '}
+              {settings.hasWebhookSecret ? '(deixe em branco para manter o atual)' : ''}
+              <input name="webhookSecret" type="password" />
+            </label>
           </div>
+          <p>
+            Configure a URL de notificação no painel do Mercado Pago apontando para{' '}
+            <code>/v1/webhooks/mercado-pago</code> e cole aqui a chave secreta gerada lá — sem ela,
+            as confirmações de pagamento são recusadas por segurança.
+          </p>
           <button className={styles.primaryButton} type="submit">
             Salvar configuração
           </button>

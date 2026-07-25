@@ -46,6 +46,8 @@ import type {
   MercadoPagoSettings,
   MyReferralInfo,
   ReferralSettings,
+  CheckoutResult,
+  CreateCheckoutInput,
   SaveSubscriptionPlanInput,
   SubscriptionPlan,
   SubscriptionPlanList,
@@ -407,7 +409,14 @@ export const api = {
         method: 'POST',
       },
     ),
+  listSubscriptionPlans: (token: string) =>
+    request<SubscriptionPlanList>('/subscription-plans', token),
   getMySubscription: (token: string) => request<UserSubscription>('/me/subscription', token),
+  createSubscriptionCheckout: (input: CreateCheckoutInput, token: string) =>
+    request<CheckoutResult>('/me/subscription/checkout', token, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
   getMyReferral: (token: string) => request<MyReferralInfo>('/me/referral', token),
   adminGetReferralSettings: (token: string) =>
     request<ReferralSettings>('/admin/referral-settings', token),
