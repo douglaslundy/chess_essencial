@@ -20,7 +20,7 @@ export class MatchmakingService {
     const result = await this.matchmaking.join(userId, input);
     if (result.status === 'queued' && input.fallbackToBot) {
       await this.matchmaking.leave(userId);
-      const game = await this.games.createBotGame(userId, input);
+      const game = await this.games.createBotGame(userId, { ...input, coachMode: false });
       return { ...result, gameId: game.id, status: 'matched' as const };
     }
     // A no-op unless the matched candidate turned out to be an online bot

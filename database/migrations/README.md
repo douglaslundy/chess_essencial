@@ -39,5 +39,7 @@ pnpm --filter @xadrez/api db:rollback
 
 `0028_game_analysis.down.sql` drops the engine post-game analysis tables entirely — derived data, recomputable by re-running the worker's analysis job, nothing to preserve.
 
+`0029_coach_mode.down.sql` drops the `games.coach_mode` and `user_profiles.suggest_move_enabled` columns; no historical data to preserve, both default to their pre-feature behavior (false).
+
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.

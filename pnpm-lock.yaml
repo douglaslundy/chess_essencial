@@ -168,6 +168,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@xadrez/chess-domain':
+        specifier: workspace:*
+        version: link:../../packages/chess-domain
       '@xadrez/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts

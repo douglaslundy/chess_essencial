@@ -1,3 +1,5 @@
 import nextConfig from '@xadrez/eslint-config/next';
 
-export default nextConfig;
+const config = [{ ignores: ['public/engine/**'] }, ...nextConfig];
+
+export default config;

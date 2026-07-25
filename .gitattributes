@@ -1,2 +1,3 @@
 database/content/*.json text eol=lf
 apps/worker/vendor/** -text
+apps/web/public/engine/** -text

@@ -102,6 +102,18 @@ export default function MyDataPage() {
     }
   }
 
+  async function toggleSuggestMove(enabled: boolean) {
+    const token = window.localStorage.getItem('xadrez.access_token');
+    if (!token || !user) return;
+    try {
+      setUser(await api.updateMe({ suggestMoveEnabled: enabled }, token));
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : 'Não foi possível salvar essa configuração.',
+      );
+    }
+  }
+
   async function onAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -226,6 +238,23 @@ export default function MyDataPage() {
               </button>
             ))}
           </div>
+        </section>
+      ) : null}
+      {user ? (
+        <section className={styles.formCard} aria-label="Treinador">
+          <h2>Treinador</h2>
+          <p>
+            Nas partidas contra o Treinador, mostra o melhor lance sugerido pelo motor antes de cada
+            uma das suas jogadas.
+          </p>
+          <label className={styles.checkbox}>
+            <input
+              checked={user.profile.suggestMoveEnabled}
+              onChange={(event) => void toggleSuggestMove(event.target.checked)}
+              type="checkbox"
+            />{' '}
+            Sugerir lance
+          </label>
         </section>
       ) : null}
       {referral ? (

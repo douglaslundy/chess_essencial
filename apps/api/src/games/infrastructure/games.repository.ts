@@ -34,6 +34,7 @@ import { calculateClockTransition, effectiveClockMs } from '../domain/game-clock
 interface GameRow {
   activeClockStartedAt: Date | string | null;
   blackClockMs: number;
+  coachMode: boolean;
   delayMs?: number;
   incrementMs?: number;
   currentFen: string;
@@ -256,8 +257,14 @@ export class GamesRepository {
         WHERE user_id = ${userId} AND pool = ${timeControl.pool}::rating_pool
       `;
       const userRating = profile?.rating ?? 1200;
+      // Treinador mode always matches the bot to the player's own rating —
+      // any explicit difficulty picked client-side is ignored — and never
+      // touches the official rating, regardless of the time control's own
+      // rated flag (same spirit as the existing untimed/demo mode).
+      const botDifficulty = input.coachMode ? 'matched' : input.botDifficulty;
       const targetRating =
-        input.botDifficulty === 'matched' ? userRating : difficultyRatings[input.botDifficulty];
+        botDifficulty === 'matched' ? userRating : difficultyRatings[botDifficulty];
+      const rated = input.coachMode ? false : timeControl.rated;
       const playerColor =
         input.playerColor === 'random'
           ? randomInt(2) === 0
@@ -268,11 +275,11 @@ export class GamesRepository {
 
       await transaction`
         INSERT INTO games (
-          id, status, result, termination, time_control_id, rated,
+          id, status, result, termination, time_control_id, rated, coach_mode,
           initial_fen, current_fen, side_to_move, white_clock_ms,
           black_clock_ms, active_clock_started_at, started_at
         ) VALUES (
-          ${gameId}, 'active', 'none', 'none', ${timeControl.id}, ${timeControl.rated},
+          ${gameId}, 'active', 'none', 'none', ${timeControl.id}, ${rated}, ${input.coachMode},
           'startpos', ${initialFen}, 'white', ${timeControl.initialMs},
           ${timeControl.initialMs}, now(), now()
         )
@@ -285,14 +292,14 @@ export class GamesRepository {
       `;
       await transaction`
         INSERT INTO game_bots (game_id, bot_user_id, difficulty, target_rating)
-        VALUES (${gameId}, ${BOT_USER_ID}, ${input.botDifficulty}, ${targetRating})
+        VALUES (${gameId}, ${BOT_USER_ID}, ${botDifficulty}, ${targetRating})
       `;
       await transaction`
         INSERT INTO outbox_events (aggregate_type, aggregate_id, event_type, payload)
         VALUES (
           'game', ${gameId}, 'game.bot_created',
           ${JSON.stringify({
-            botDifficulty: input.botDifficulty,
+            botDifficulty,
             gameId,
             playerColor,
             targetRating,
@@ -1122,6 +1129,7 @@ export class GamesRepository {
         games.initial_fen AS "initialFen",
         games.current_fen AS "currentFen",
         games.side_to_move AS "sideToMove",
+        games.coach_mode AS "coachMode",
         games.version::integer AS version,
         games.white_clock_ms::integer AS "whiteClockMs",
         games.black_clock_ms::integer AS "blackClockMs",
@@ -1156,6 +1164,7 @@ export class GamesRepository {
     return {
       activeClockStartedAt: this.toIso(game.activeClockStartedAt),
       blackClockMs: game.blackClockMs,
+      coachMode: game.coachMode,
       currentFen: game.currentFen,
       finishedAt: this.toIso(game.finishedAt),
       id: game.id,

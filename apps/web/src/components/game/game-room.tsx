@@ -1,13 +1,16 @@
 'use client';
 
+import type { MoveQualityResult } from '@xadrez/chess-domain';
 import type { GameMove, GameState } from '@xadrez/contracts';
 import { Chess } from 'chess.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { ChessBoard, type BoardOrientation } from './chess-board';
 import { MoveAnnouncement, describeImportantMove, type Announcement } from './move-announcement';
+import { moveQualityLabel } from '@/components/history/move-narration';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { api, getRealtimeAccessToken, getStoredUserId } from '@/lib/api/client';
+import { useCoachEngine } from '@/lib/engine/use-coach-engine';
 import { usePieceTheme } from '@/lib/piece-theme';
 import { GameSocket } from '@/lib/realtime/game-socket';
 import {
@@ -49,6 +52,14 @@ const terminationLabels: Record<GameState['termination'], string> = {
   stalemate: 'por afogamento',
   timeout: 'por tempo esgotado',
 };
+
+function formatCoachSuggestion(suggestion: { bestMoveUci: string | null; mate: number | null }) {
+  if (!suggestion.bestMoveUci) return null;
+  const from = suggestion.bestMoveUci.slice(0, 2);
+  const to = suggestion.bestMoveUci.slice(2, 4);
+  const detail = suggestion.mate !== null ? `mate em ${Math.abs(suggestion.mate)}` : null;
+  return `${from} → ${to}${detail ? ` (${detail})` : ''}`;
+}
 
 export function formatMove(move: GameMove) {
   const piece = move.san.match(/^[KQRBN]/)?.[0];
@@ -109,6 +120,7 @@ function demoState(gameId: string): GameState {
     termination: 'none',
     currentFen: initialFen,
     sideToMove: 'white',
+    coachMode: false,
     version: 0,
     whiteClockMs: 600000,
     blackClockMs: 600000,
@@ -157,6 +169,11 @@ export function GameRoom({ gameId }: { gameId: string }) {
     outcome: 'win' | 'loss' | 'draw';
     reason: string;
   } | null>(null);
+  const [suggestMoveEnabled, setSuggestMoveEnabled] = useState(false);
+  const [pendingCoachMove, setPendingCoachMove] = useState<{
+    quality: MoveQualityResult;
+    uci: string;
+  } | null>(null);
   const previousStatusRef = useRef(state.status);
 
   useEffect(() => {
@@ -186,11 +203,12 @@ export function GameRoom({ gameId }: { gameId: string }) {
     queueMicrotask(() => {
       if (active) setConnection('connecting');
     });
-    Promise.all([api.getGame(gameId, token), api.getMoves(gameId, token)])
-      .then(([nextState, nextMoves]) => {
+    Promise.all([api.getGame(gameId, token), api.getMoves(gameId, token), api.getMe(token)])
+      .then(([nextState, nextMoves, myProfile]) => {
         if (!active) return;
         setState(nextState);
         setMoves(nextMoves);
+        setSuggestMoveEnabled(myProfile.profile.suggestMoveEnabled);
         const me = getStoredUserId();
         const player = nextState.players.find((item) => item.userId === me);
         if (player) {
@@ -296,6 +314,11 @@ export function GameRoom({ gameId }: { gameId: string }) {
   const canMove =
     state.status === 'active' &&
     (isDemo || (connection === 'online' && myColor !== null && state.sideToMove === myColor));
+  const { checkCandidateMove, suggestion: coachSuggestion } = useCoachEngine({
+    enabled: !isDemo && state.coachMode && canMove,
+    fen: state.currentFen,
+    suggestEnabled: suggestMoveEnabled,
+  });
   const groupedMoves = useMemo(() => {
     const rows: Array<{ number: number; white?: GameMove; black?: GameMove }> = [];
     for (const move of moves) {
@@ -346,6 +369,24 @@ export function GameRoom({ gameId }: { gameId: string }) {
     } finally {
       setResigning(false);
     }
+  }
+
+  function sendMove(uci: string) {
+    socketRef.current?.submitMove(uci);
+    setMessage('Lance enviado. Aguardando confirmação do servidor…');
+  }
+
+  // Treinador mode: grade the candidate move client-side (fast, shallow
+  // engine check) before it ever reaches the server. Nothing is applied
+  // optimistically by ChessBoard (it's fully driven by the fen prop), so
+  // declining here has nothing to undo — the move was simply never sent.
+  async function handleCoachMove(uci: string) {
+    const quality = await checkCandidateMove(uci).catch(() => null);
+    if (quality && (quality.quality === 'gafe' || quality.quality === 'erro')) {
+      setPendingCoachMove({ quality, uci });
+      return;
+    }
+    sendMove(uci);
   }
 
   function playDemoMove(uci: string) {
@@ -504,10 +545,8 @@ export function GameRoom({ gameId }: { gameId: string }) {
           onMove={(uci) => {
             primeAudio();
             if (isDemo) playDemoMove(uci);
-            else {
-              socketRef.current?.submitMove(uci);
-              setMessage('Lance enviado. Aguardando confirmação do servidor…');
-            }
+            else if (state.coachMode) void handleCoachMove(uci);
+            else sendMove(uci);
           }}
           orientation={orientation}
           pieceTheme={pieceTheme}
@@ -550,6 +589,11 @@ export function GameRoom({ gameId }: { gameId: string }) {
           />
         </div>
         <MoveAnnouncement announcement={announcement} />
+        {state.coachMode && canMove && coachSuggestion ? (
+          <p className="coachSuggestion" role="status">
+            💡 Sugestão do Treinador: {formatCoachSuggestion(coachSuggestion) ?? 'analisando…'}
+          </p>
+        ) : null}
         <p className="gameMessage" role="status">
           {message}
         </p>
@@ -636,6 +680,24 @@ export function GameRoom({ gameId }: { gameId: string }) {
         onConfirm={confirmResignation}
         open={resignDialogOpen}
         title="Desistir da partida?"
+      />
+      <ConfirmDialog
+        cancelLabel="Escolher outro lance"
+        confirmLabel="Jogar assim mesmo"
+        danger
+        description={
+          pendingCoachMove
+            ? `O Treinador classificou esse lance como ${moveQualityLabel[pendingCoachMove.quality.quality].toLowerCase()} (perda de ${pendingCoachMove.quality.centipawnLoss}cp)${pendingCoachMove.quality.missedWin ? ', deixando passar uma posição melhor' : ''}. Quer jogar mesmo assim?`
+            : ''
+        }
+        eyebrow="Treinador"
+        onCancel={() => setPendingCoachMove(null)}
+        onConfirm={() => {
+          if (pendingCoachMove) sendMove(pendingCoachMove.uci);
+          setPendingCoachMove(null);
+        }}
+        open={pendingCoachMove !== null}
+        title="Tem certeza desse lance?"
       />
       {resultModal ? (
         <div className="gameResultOverlay" role="presentation">

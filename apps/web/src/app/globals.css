@@ -1402,6 +1402,18 @@ input:focus-visible {
   cursor: pointer;
 }
 
+.coachSuggestion {
+  margin: 0.7rem 0 0;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--gold);
+  border-radius: 0.6rem;
+  background: rgba(216, 182, 108, 0.12);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 650;
+  text-align: center;
+}
+
 .gameMessage {
   min-height: 1.4rem;
   margin: 0.7rem 0 0;

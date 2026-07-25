@@ -25,3 +25,4 @@ pnpm-lock.yaml
 /testing/
 apps/web/next-env.d.ts
 apps/worker/vendor/
+apps/web/public/engine/

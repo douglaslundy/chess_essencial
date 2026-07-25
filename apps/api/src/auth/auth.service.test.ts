@@ -44,6 +44,7 @@ class FakeUsersRepository {
         displayName: input.displayName,
         isProfilePublic: true,
         locale: 'pt-BR',
+        suggestMoveEnabled: false,
         timezone: 'UTC',
         updatedAt: now,
         userId: '018f47f4-7b2f-4d90-8a66-9abcdef01234',

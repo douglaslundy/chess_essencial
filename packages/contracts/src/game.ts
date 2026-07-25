@@ -37,6 +37,7 @@ export const gameStateSchema = z.object({
   ]),
   currentFen: z.string(),
   sideToMove: z.enum(['white', 'black']),
+  coachMode: z.boolean(),
   version: z.number().int().nonnegative(),
   whiteClockMs: z.number().int().nonnegative(),
   blackClockMs: z.number().int().nonnegative(),

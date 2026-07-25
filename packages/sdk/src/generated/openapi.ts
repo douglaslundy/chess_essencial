@@ -2009,6 +2009,8 @@ export interface components {
       isProfilePublic?: boolean;
       /** @enum {string} */
       boardTheme?: 'classic' | 'staunton_3d' | 'wood';
+      /** @description Modo Treinador: sugerir o melhor lance do motor antes de cada jogada */
+      suggestMoveEnabled?: boolean;
     };
     UserProfile: {
       displayName: string;
@@ -2022,6 +2024,7 @@ export interface components {
       isProfilePublic: boolean;
       /** @enum {string} */
       boardTheme: 'classic' | 'staunton_3d' | 'wood';
+      suggestMoveEnabled: boolean;
     };
     PublicUser: {
       /** Format: uuid */
@@ -2106,6 +2109,11 @@ export interface components {
         | 'untimed';
       botDifficulty?: components['schemas']['BotDifficulty'];
       playerColor?: components['schemas']['PlayerColorPreference'];
+      /**
+       * @description Modo Treinador: ignora botDifficulty (sempre casa com o rating do jogador) e nunca conta para o rating oficial
+       * @default false
+       */
+      coachMode: boolean;
     };
     QueueStatus: {
       /** @enum {string} */
@@ -2283,6 +2291,7 @@ export interface components {
       currentFen: string;
       /** @enum {string} */
       sideToMove: 'white' | 'black';
+      coachMode: boolean;
       version: number;
       whiteClockMs: number;
       blackClockMs: number;

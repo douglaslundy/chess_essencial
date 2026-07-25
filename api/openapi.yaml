@@ -2179,10 +2179,11 @@ components:
         bio: {type: [string, 'null'], maxLength: 500}
         isProfilePublic: {type: boolean}
         boardTheme: {type: string, enum: [classic, staunton_3d, wood]}
+        suggestMoveEnabled: {type: boolean, description: 'Modo Treinador: sugerir o melhor lance do motor antes de cada jogada'}
       additionalProperties: false
     UserProfile:
       type: object
-      required: [displayName, avatarUrl, countryCode, timezone, locale, birthDate, bio, isProfilePublic, boardTheme]
+      required: [displayName, avatarUrl, countryCode, timezone, locale, birthDate, bio, isProfilePublic, boardTheme, suggestMoveEnabled]
       properties:
         displayName: {type: string}
         avatarUrl: {type: [string, 'null']}
@@ -2193,6 +2194,7 @@ components:
         bio: {type: [string, 'null']}
         isProfilePublic: {type: boolean}
         boardTheme: {type: string, enum: [classic, staunton_3d, wood]}
+        suggestMoveEnabled: {type: boolean}
       additionalProperties: false
     PublicUser:
       type: object
@@ -2282,6 +2284,10 @@ components:
         timeControlCode: {type: string, enum: [bullet-1-0, bullet-2-1, blitz-3-0, blitz-3-2, rapid-10-0, rapid-15-10, classical-30-0, untimed]}
         botDifficulty: {$ref: '#/components/schemas/BotDifficulty'}
         playerColor: {$ref: '#/components/schemas/PlayerColorPreference'}
+        coachMode:
+          type: boolean
+          default: false
+          description: 'Modo Treinador: ignora botDifficulty (sempre casa com o rating do jogador) e nunca conta para o rating oficial'
       additionalProperties: false
     QueueStatus:
       type: object
@@ -2404,7 +2410,7 @@ components:
       additionalProperties: false
     GameState:
       type: object
-      required: [id, status, result, termination, currentFen, sideToMove, version, whiteClockMs, blackClockMs, activeClockStartedAt, startedAt, finishedAt, players]
+      required: [id, status, result, termination, currentFen, sideToMove, coachMode, version, whiteClockMs, blackClockMs, activeClockStartedAt, startedAt, finishedAt, players]
       properties:
         id: {type: string, format: uuid}
         status: {type: string, enum: [created, waiting, active, finished, aborted]}
@@ -2414,6 +2420,7 @@ components:
           enum: [checkmate, resignation, timeout, stalemate, repetition, fifty_move, insufficient_material, agreement, abandonment, admin, none]
         currentFen: {type: string}
         sideToMove: {type: string, enum: [white, black]}
+        coachMode: {type: boolean}
         version: {type: integer, minimum: 0}
         whiteClockMs: {type: integer, minimum: 0}
         blackClockMs: {type: integer, minimum: 0}

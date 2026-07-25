@@ -26,6 +26,10 @@ export const createBotGameInputSchema = z.object({
   botDifficulty: botDifficultySchema.default('matched'),
   playerColor: playerColorPreferenceSchema.default('random'),
   timeControlCode: timeControlCodeSchema,
+  // Treinador mode: bot strength always matches the player's own rating
+  // (server ignores botDifficulty and forces 'matched') and the game never
+  // counts toward the official rating, regardless of the time control.
+  coachMode: z.boolean().default(false),
 });
 
 export const joinQueueInputSchema = z.object({

@@ -41,7 +41,7 @@ const controlPools = Array.from(
 export default function PlayPage() {
   const router = useRouter();
   const [selected, setSelected] = useState<TimeControlCode>('untimed');
-  const [opponent, setOpponent] = useState<'human' | 'bot'>('human');
+  const [opponent, setOpponent] = useState<'human' | 'bot' | 'coach'>('human');
   const [difficulty, setDifficulty] = useState<BotDifficulty>('matched');
   const [playerColor, setPlayerColor] = useState<PlayerColorPreference>('random');
   const [status, setStatus] = useState<'idle' | 'searching' | 'error'>('idle');
@@ -56,15 +56,22 @@ export default function PlayPage() {
     }
     setStatus('searching');
     setMessage(
-      opponent === 'bot'
-        ? 'Preparando um adversário controlado pelo servidor…'
-        : 'Verificando se existe um adversário compatível online…',
+      opponent === 'coach'
+        ? 'Preparando o Treinador no seu nível…'
+        : opponent === 'bot'
+          ? 'Preparando um adversário controlado pelo servidor…'
+          : 'Verificando se existe um adversário compatível online…',
     );
     try {
       const result =
-        opponent === 'bot'
+        opponent === 'bot' || opponent === 'coach'
           ? await api.createBotGame(
-              { botDifficulty: difficulty, playerColor, timeControlCode: selected },
+              {
+                botDifficulty: opponent === 'coach' ? 'matched' : difficulty,
+                coachMode: opponent === 'coach',
+                playerColor,
+                timeControlCode: selected,
+              },
               token,
             )
           : await api.joinQueue(
@@ -112,41 +119,50 @@ export default function PlayPage() {
           <label>
             Adversário
             <select
-              onChange={(event) => setOpponent(event.target.value as 'human' | 'bot')}
+              onChange={(event) => setOpponent(event.target.value as 'human' | 'bot' | 'coach')}
               value={opponent}
             >
               <option value="human">Buscar adversário online</option>
               <option value="bot">Jogar contra o bot</option>
+              <option value="coach">Treinador (dicas e avisos)</option>
             </select>
           </label>
           {opponent === 'bot' ? (
-            <>
-              <label>
-                Dificuldade do bot
-                <select
-                  onChange={(event) => setDifficulty(event.target.value as BotDifficulty)}
-                  value={difficulty}
-                >
-                  <option value="matched">Mesmo rating que o meu</option>
-                  <option value="beginner">Iniciante · 800</option>
-                  <option value="intermediate">Intermediário · 1200</option>
-                  <option value="advanced">Avançado · 1600</option>
-                  <option value="expert">Especialista · 2000</option>
-                </select>
-              </label>
-              <label>
-                Quero jogar com
-                <select
-                  onChange={(event) => setPlayerColor(event.target.value as PlayerColorPreference)}
-                  value={playerColor}
-                >
-                  <option value="random">Cor aleatória</option>
-                  <option value="white">Peças brancas</option>
-                  <option value="black">Peças pretas</option>
-                </select>
-              </label>
-              <p>Partidas contra o bot não alteram o rating Xadrez Essencial.</p>
-            </>
+            <label>
+              Dificuldade do bot
+              <select
+                onChange={(event) => setDifficulty(event.target.value as BotDifficulty)}
+                value={difficulty}
+              >
+                <option value="matched">Mesmo rating que o meu</option>
+                <option value="beginner">Iniciante · 800</option>
+                <option value="intermediate">Intermediário · 1200</option>
+                <option value="advanced">Avançado · 1600</option>
+                <option value="expert">Especialista · 2000</option>
+              </select>
+            </label>
+          ) : null}
+          {opponent === 'bot' || opponent === 'coach' ? (
+            <label>
+              Quero jogar com
+              <select
+                onChange={(event) => setPlayerColor(event.target.value as PlayerColorPreference)}
+                value={playerColor}
+              >
+                <option value="random">Cor aleatória</option>
+                <option value="white">Peças brancas</option>
+                <option value="black">Peças pretas</option>
+              </select>
+            </label>
+          ) : null}
+          {opponent === 'coach' ? (
+            <p>
+              O bot do Treinador sempre joga no seu rating atual, avisa antes de um lance muito ruim
+              (com opção de escolher outro) e pode sugerir o melhor lance, se você ativar em Meus
+              dados. Partidas do Treinador nunca alteram o rating Xadrez Essencial.
+            </p>
+          ) : opponent === 'bot' ? (
+            <p>Partidas contra o bot não alteram o rating Xadrez Essencial.</p>
           ) : (
             <p>A busca procura somente outra pessoa. O bot nunca será iniciado automaticamente.</p>
           )}
@@ -175,7 +191,11 @@ export default function PlayPage() {
             </button>
           ) : (
             <button className="primaryButton" onClick={search} type="button">
-              {opponent === 'bot' ? 'Jogar contra o bot' : 'Buscar adversário'}
+              {opponent === 'coach'
+                ? 'Jogar com o Treinador'
+                : opponent === 'bot'
+                  ? 'Jogar contra o bot'
+                  : 'Buscar adversário'}
             </button>
           )}
           {status === 'searching' ? <div className="searchPulse" aria-hidden="true" /> : null}

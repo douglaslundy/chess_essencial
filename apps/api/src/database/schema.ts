@@ -76,6 +76,7 @@ export const userProfiles = pgTable('user_profiles', {
   allowChallenges: boolean('allow_challenges').notNull().default(true),
   allowFriendRequests: boolean('allow_friend_requests').notNull().default(true),
   boardTheme: boardThemeEnum('board_theme').notNull().default('classic'),
+  suggestMoveEnabled: boolean('suggest_move_enabled').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -114,6 +115,7 @@ export const games = pgTable('games', {
     .notNull()
     .references(() => gameTimeControls.id),
   rated: boolean('rated').notNull(),
+  coachMode: boolean('coach_mode').notNull().default(false),
   initialFen: text('initial_fen').notNull().default('startpos'),
   currentFen: text('current_fen').notNull(),
   sideToMove: colorSideEnum('side_to_move').notNull().default('white'),

@@ -138,6 +138,35 @@ describeDatabase('matchmaking and rating database integration', () => {
     });
   });
 
+  it('coach mode always matches the bot to the player rating and is never rated, regardless of difficulty or time control', async () => {
+    const student = await createIdentity('phase5-coach@example.com', 'phase5_coach');
+
+    const created = await app.inject({
+      headers: auth(student),
+      method: 'POST',
+      payload: {
+        botDifficulty: 'expert', // must be ignored — coach mode always matches the player's rating
+        coachMode: true,
+        playerColor: 'white',
+        timeControlCode: 'blitz-3-0', // normally rated, but not for coach mode
+      },
+      url: '/v1/matchmaking/bot-games',
+    });
+    expect(created.statusCode, created.body).toBe(201);
+    const game = created.json();
+    expect(game.coachMode).toBe(true);
+
+    const [persisted] = await database.client<
+      { difficulty: string; rated: boolean; targetRating: number }[]
+    >`
+      SELECT games.rated, game_bots.difficulty, game_bots.target_rating AS "targetRating"
+      FROM games
+      JOIN game_bots ON game_bots.game_id = games.id
+      WHERE games.id = ${game.id}
+    `;
+    expect(persisted).toEqual({ difficulty: 'matched', rated: false, targetRating: 1200 });
+  });
+
   it('leaves an untimed bot game unrated', async () => {
     const created = await app.inject({
       headers: auth(first),
