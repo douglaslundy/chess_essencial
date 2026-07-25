@@ -114,4 +114,60 @@ export class AdminRepository {
       total: personas.length,
     };
   }
+
+  async metrics(): Promise<{
+    activeSubscriptionsByPlan: { count: number; planName: string }[];
+    exercisesSolvedTotal: number;
+    gamesPlayedToday: number;
+    gamesPlayedTotal: number;
+    lessonsCompletedTotal: number;
+    newUsersLast7Days: number;
+    referralsRewarded: number;
+    referralsTotal: number;
+    totalUsers: number;
+  }> {
+    const sql = this.database.client;
+    const [users] = await sql<{ count: number }[]>`
+      SELECT count(*)::integer AS count FROM users WHERE status = 'active'
+    `;
+    const [newUsers] = await sql<{ count: number }[]>`
+      SELECT count(*)::integer AS count FROM users
+       WHERE status = 'active' AND created_at >= now() - interval '7 days'
+    `;
+    const [games] = await sql<{ today: number; total: number }[]>`
+      SELECT count(*)::integer AS total,
+        count(*) FILTER (WHERE created_at >= date_trunc('day', now()))::integer AS today
+      FROM games
+    `;
+    const [exercises] = await sql<{ count: number }[]>`
+      SELECT count(*)::integer AS count FROM exercise_attempts WHERE correct = true
+    `;
+    const [lessons] = await sql<{ count: number }[]>`
+      SELECT count(*)::integer AS count FROM lesson_attempts WHERE status = 'completed'
+    `;
+    const subscriptionsByPlan = await sql<{ count: number; planName: string }[]>`
+      SELECT p.name AS "planName", count(*)::integer AS count
+      FROM user_subscriptions s
+      JOIN subscription_plans p ON p.id = s.plan_id
+      WHERE s.status = 'active'
+      GROUP BY p.name
+      ORDER BY p.name
+    `;
+    const [referrals] = await sql<{ rewarded: number; total: number }[]>`
+      SELECT count(*)::integer AS total,
+        count(*) FILTER (WHERE status = 'rewarded')::integer AS rewarded
+      FROM referrals
+    `;
+    return {
+      activeSubscriptionsByPlan: subscriptionsByPlan,
+      exercisesSolvedTotal: exercises?.count ?? 0,
+      gamesPlayedToday: games?.today ?? 0,
+      gamesPlayedTotal: games?.total ?? 0,
+      lessonsCompletedTotal: lessons?.count ?? 0,
+      newUsersLast7Days: newUsers?.count ?? 0,
+      referralsRewarded: referrals?.rewarded ?? 0,
+      referralsTotal: referrals?.total ?? 0,
+      totalUsers: users?.count ?? 0,
+    };
+  }
 }

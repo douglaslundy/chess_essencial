@@ -73,12 +73,14 @@ export {
 } from './social.js';
 export {
   adminBotStatsSchema,
+  adminMetricsSchema,
   adminUserListSchema,
   adminUserSchema,
   adminUserSearchQuerySchema,
   adminUserStatusSchema,
   updateAdminUserStatusInputSchema,
   type AdminBotStats,
+  type AdminMetrics,
   type AdminUser,
   type AdminUserList,
   type AdminUserSearchQuery,

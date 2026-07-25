@@ -553,6 +553,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/admin/metrics': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Aggregated platform metrics (admin only) */
+    get: operations['adminGetMetrics'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/admin/settings/smtp': {
     parameters: {
       query?: never;
@@ -1648,6 +1665,20 @@ export interface components {
       onlineNow: number;
       friendshipsCount: number;
       gamesPlayed: number;
+    };
+    AdminMetrics: {
+      activeSubscriptionsByPlan: {
+        count: number;
+        planName: string;
+      }[];
+      exercisesSolvedTotal: number;
+      gamesPlayedToday: number;
+      gamesPlayedTotal: number;
+      lessonsCompletedTotal: number;
+      newUsersLast7Days: number;
+      referralsRewarded: number;
+      referralsTotal: number;
+      totalUsers: number;
     };
     UpdateAdminUserStatusInput: {
       /** @enum {string} */
@@ -3115,6 +3146,28 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['AdminBotStats'];
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  adminGetMetrics: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Platform metrics */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminMetrics'];
         };
       };
       401: components['responses']['Problem'];

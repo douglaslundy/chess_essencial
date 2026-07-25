@@ -36,6 +36,11 @@ const sections = [
     title: 'Programa de indicação',
     description: 'Configurar a recompensa opcional de quem indica novos jogadores.',
   },
+  {
+    href: '/app/admin/metricas',
+    title: 'Métricas',
+    description: 'Usuários, partidas, exercícios, aulas, assinaturas e indicações em um só lugar.',
+  },
 ];
 
 export default function AdminHubPage() {

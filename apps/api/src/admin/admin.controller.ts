@@ -24,6 +24,11 @@ export class AdminController {
     return this.admin.getBotStats();
   }
 
+  @Get('metrics')
+  getMetrics() {
+    return this.admin.getMetrics();
+  }
+
   @Patch('users/:userId/status')
   updateUserStatus(
     @Req() request: AuthenticatedRequest,

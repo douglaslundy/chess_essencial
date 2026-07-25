@@ -1,5 +1,6 @@
 import type {
   AdminBotStats,
+  AdminMetrics,
   AdminUserSearchQuery,
   UpdateAdminUserStatusInput,
 } from '@xadrez/contracts';
@@ -38,5 +39,9 @@ export class AdminService {
       onlineNow,
       total: stats.total,
     };
+  }
+
+  getMetrics(): Promise<AdminMetrics> {
+    return this.admin.metrics();
   }
 }

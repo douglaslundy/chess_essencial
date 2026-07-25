@@ -521,6 +521,18 @@ paths:
               schema: {$ref: '#/components/schemas/AdminBotStats'}
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
+  /admin/metrics:
+    get:
+      summary: Aggregated platform metrics (admin only)
+      operationId: adminGetMetrics
+      responses:
+        '200':
+          description: Platform metrics
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AdminMetrics'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
   /admin/settings/smtp:
     get:
       summary: Get SMTP settings (admin only)
@@ -1765,6 +1777,37 @@ components:
         onlineNow: {type: integer, minimum: 0}
         friendshipsCount: {type: integer, minimum: 0}
         gamesPlayed: {type: integer, minimum: 0}
+    AdminMetrics:
+      type: object
+      required:
+        [
+          activeSubscriptionsByPlan,
+          exercisesSolvedTotal,
+          gamesPlayedToday,
+          gamesPlayedTotal,
+          lessonsCompletedTotal,
+          newUsersLast7Days,
+          referralsRewarded,
+          referralsTotal,
+          totalUsers,
+        ]
+      properties:
+        activeSubscriptionsByPlan:
+          type: array
+          items:
+            type: object
+            required: [count, planName]
+            properties:
+              count: {type: integer, minimum: 0}
+              planName: {type: string}
+        exercisesSolvedTotal: {type: integer, minimum: 0}
+        gamesPlayedToday: {type: integer, minimum: 0}
+        gamesPlayedTotal: {type: integer, minimum: 0}
+        lessonsCompletedTotal: {type: integer, minimum: 0}
+        newUsersLast7Days: {type: integer, minimum: 0}
+        referralsRewarded: {type: integer, minimum: 0}
+        referralsTotal: {type: integer, minimum: 0}
+        totalUsers: {type: integer, minimum: 0}
     UpdateAdminUserStatusInput:
       type: object
       required: [status]

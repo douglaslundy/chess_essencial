@@ -1,5 +1,6 @@
 import type {
   AdminBotStats,
+  AdminMetrics,
   AdminUser,
   AdminUserList,
   UpdateAdminUserStatusInput,
@@ -379,6 +380,7 @@ export const api = {
       body: JSON.stringify(input),
     }),
   adminGetBotStats: (token: string) => request<AdminBotStats>('/admin/bots/stats', token),
+  adminGetMetrics: (token: string) => request<AdminMetrics>('/admin/metrics', token),
   adminGetSmtpSettings: (token: string) => request<SmtpSettings>('/admin/settings/smtp', token),
   adminUpdateSmtpSettings: (input: UpdateSmtpSettingsInput, token: string) =>
     request<SmtpSettings>('/admin/settings/smtp', token, {
