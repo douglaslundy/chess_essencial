@@ -34,6 +34,7 @@ import type {
   ExerciseTrainingView,
   StartExerciseTrainingInput,
   SubmitExerciseAttemptInput,
+  GameAnalysis,
   GameHistoryPage,
   GameMove,
   GameState,
@@ -459,6 +460,8 @@ export const api = {
     }),
   getGame: (gameId: string, token: string) => request<GameState>(`/games/${gameId}`, token),
   getMoves: (gameId: string, token: string) => request<GameMove[]>(`/games/${gameId}/moves`, token),
+  getGameAnalysis: (gameId: string, token: string) =>
+    request<GameAnalysis>(`/games/${gameId}/analysis`, token),
   joinQueue: (input: JoinQueueInput, token: string) =>
     request<QueueStatus>('/matchmaking/queues', token, {
       method: 'POST',

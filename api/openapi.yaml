@@ -991,6 +991,21 @@ paths:
                 $ref: '#/components/schemas/GameState'
         '401': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
+  /games/{gameId}/analysis:
+    parameters:
+      - $ref: '#/components/parameters/GameId'
+    get:
+      summary: Buscar a análise de motor (por lance + resumo agregado) de uma partida
+      operationId: getGameAnalysis
+      responses:
+        '200':
+          description: Status da análise, resumo por jogador e dados lance a lance
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GameAnalysis'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
   /games/{gameId}/moves:
     parameters:
       - $ref: '#/components/parameters/GameId'
@@ -2465,6 +2480,46 @@ components:
         accepted: {type: boolean}
         offerId: {type: string, format: uuid}
         state: {$ref: '#/components/schemas/GameState'}
+    MoveQuality: {type: string, enum: [otimo, excelente, bom, imprecisao, erro, gafe]}
+    GameMoveAnalysis:
+      type: object
+      required: [ply, color, san, uci, scoreBeforeCp, mateBefore, scoreAfterCp, mateAfter, bestMoveUci, centipawnLoss, quality, missedWin]
+      properties:
+        ply: {type: integer, minimum: 1}
+        color: {type: string, enum: [white, black]}
+        san: {type: string}
+        uci: {type: string}
+        scoreBeforeCp: {type: [integer, 'null']}
+        mateBefore: {type: [integer, 'null']}
+        scoreAfterCp: {type: [integer, 'null']}
+        mateAfter: {type: [integer, 'null']}
+        bestMoveUci: {type: [string, 'null']}
+        centipawnLoss: {type: integer}
+        quality: {$ref: '#/components/schemas/MoveQuality'}
+        missedWin: {type: boolean}
+    GameAnalysisQualityCounts:
+      type: object
+      required: [otimo, excelente, bom, imprecisao, erro, gafe, missedWin]
+      properties:
+        otimo: {type: integer, minimum: 0}
+        excelente: {type: integer, minimum: 0}
+        bom: {type: integer, minimum: 0}
+        imprecisao: {type: integer, minimum: 0}
+        erro: {type: integer, minimum: 0}
+        gafe: {type: integer, minimum: 0}
+        missedWin: {type: integer, minimum: 0}
+    GameAnalysis:
+      type: object
+      required: [status, summary, moves]
+      properties:
+        status: {type: string, enum: [pending, processing, completed, failed]}
+        summary:
+          type: [object, 'null']
+          required: [white, black]
+          properties:
+            white: {$ref: '#/components/schemas/GameAnalysisQualityCounts'}
+            black: {$ref: '#/components/schemas/GameAnalysisQualityCounts'}
+        moves: {type: array, items: {$ref: '#/components/schemas/GameMoveAnalysis'}}
     GameMove:
       type: object
       required: [id, ply, color, clientMoveId, uci, san, from, to, promotion, fenBefore, fenAfter, flags, committedAt]

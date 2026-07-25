@@ -1,6 +1,7 @@
 import { Redis } from 'ioredis';
 import postgres from 'postgres';
 
+import { runGameAnalysisJob } from './analysis/game-analysis-job.js';
 import { runAutoAcceptFriendRequests } from './bots/auto-accept-job.js';
 import { runPresenceSchedule } from './bots/presence-job.js';
 import { runBotQueueJob } from './bots/queue-job.js';
@@ -11,6 +12,7 @@ import { createSystemWorker } from './system.worker.js';
 const PRESENCE_INTERVAL_MS = 60_000;
 const AUTO_ACCEPT_INTERVAL_MS = 10_000;
 const QUEUE_INTERVAL_MS = 30_000;
+const ANALYSIS_INTERVAL_MS = 30_000;
 
 const env = parseWorkerEnv(process.env);
 const worker = createSystemWorker(env.REDIS_URL);
@@ -50,12 +52,21 @@ const queueInterval = setInterval(() => {
   });
 }, QUEUE_INTERVAL_MS);
 
+const analysisInterval = setInterval(() => {
+  runGameAnalysisJob(sql).catch((error: unknown) => {
+    console.error('worker.analysis.game_analysis_failed', {
+      message: error instanceof Error ? error.message : String(error),
+    });
+  });
+}, ANALYSIS_INTERVAL_MS);
+
 healthServer.listen(env.WORKER_HEALTH_PORT, '0.0.0.0');
 
 async function shutdown() {
   clearInterval(presenceInterval);
   clearInterval(autoAcceptInterval);
   clearInterval(queueInterval);
+  clearInterval(analysisInterval);
   healthServer.close();
   await worker.close();
   await redis.quit();

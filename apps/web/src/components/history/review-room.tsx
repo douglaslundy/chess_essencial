@@ -1,15 +1,39 @@
 'use client';
 
-import type { GameMove, GameState, ReviewAnnotation } from '@xadrez/contracts';
+import type {
+  GameAnalysis,
+  GameAnalysisQualityCounts,
+  GameMove,
+  GameState,
+  ReviewAnnotation,
+} from '@xadrez/contracts';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
+import { describeMoveQuality, moveQualityLabel, narrateMove } from './move-narration';
 import { reviewEligibility, type ReviewEligibility } from './review-eligibility';
 import { ChessBoard } from '@/components/game/chess-board';
-import { api } from '@/lib/api/client';
+import { api, getStoredUserId } from '@/lib/api/client';
 import { usePieceTheme } from '@/lib/piece-theme';
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+
+const ANALYSIS_STATUS_LABEL: Record<GameAnalysis['status'], string> = {
+  completed: 'Análise concluída.',
+  failed: 'Não foi possível concluir a análise desta partida.',
+  pending: 'A análise desta partida ainda está na fila do motor — tente novamente em instantes.',
+  processing: 'O motor está analisando esta partida agora — tente novamente em instantes.',
+};
+
+const QUALITY_ROWS: Array<{ key: keyof GameAnalysisQualityCounts; label: string }> = [
+  { key: 'otimo', label: moveQualityLabel.otimo },
+  { key: 'excelente', label: moveQualityLabel.excelente },
+  { key: 'bom', label: moveQualityLabel.bom },
+  { key: 'imprecisao', label: moveQualityLabel.imprecisao },
+  { key: 'erro', label: moveQualityLabel.erro },
+  { key: 'gafe', label: moveQualityLabel.gafe },
+  { key: 'missedWin', label: 'Oportunidades perdidas' },
+];
 
 export interface FutureEvaluation {
   centipawns?: number;
@@ -22,6 +46,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
   const [state, setState] = useState<GameState | null>(null);
   const [moves, setMoves] = useState<GameMove[]>([]);
   const [annotations, setAnnotations] = useState<ReviewAnnotation[]>([]);
+  const [analysis, setAnalysis] = useState<GameAnalysis | null>(null);
   const [ply, setPly] = useState(0);
   const [comment, setComment] = useState('');
   const [highlight, setHighlight] = useState('');
@@ -29,6 +54,8 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
   const [arrowTo, setArrowTo] = useState('');
   const [message, setMessage] = useState('Carregando revisão…');
   const [eligibility, setEligibility] = useState<ReviewEligibility | null>(null);
+  const [view, setView] = useState<'summary' | 'moves'>('summary');
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
 
   useEffect(() => {
     const token = window.localStorage.getItem('xadrez.access_token');
@@ -46,12 +73,14 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
           setMessage(nextEligibility.reason);
           return;
         }
-        const [nextMoves, nextAnnotations] = await Promise.all([
+        const [nextMoves, nextAnnotations, nextAnalysis] = await Promise.all([
           api.getMoves(gameId, token),
           api.getReviewAnnotations(gameId, token),
+          api.getGameAnalysis(gameId, token),
         ]);
         setMoves(nextMoves);
         setAnnotations(nextAnnotations);
+        setAnalysis(nextAnalysis);
         setPly(nextMoves.length);
         setMessage('');
       })
@@ -59,6 +88,27 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
         setMessage(error instanceof Error ? error.message : 'Falha ao carregar revisão.'),
       );
   }, [gameId]);
+
+  const myUserId = getStoredUserId();
+  const myColor = state?.players.find((player) => player.userId === myUserId)?.color ?? null;
+  const opponentColor = myColor === 'white' ? 'black' : 'white';
+  const currentMoveAnalysis = analysis?.moves.find((move) => move.ply === ply) ?? null;
+  const summaryColumns: Array<{ color: 'white' | 'black'; label: string }> = myColor
+    ? [
+        { color: myColor, label: 'Eu' },
+        { color: opponentColor, label: 'Adversário' },
+      ]
+    : [
+        { color: 'white', label: 'Brancas' },
+        { color: 'black', label: 'Pretas' },
+      ];
+
+  useEffect(() => {
+    if (!voiceEnabled || !currentMoveAnalysis || typeof window === 'undefined') return;
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(new SpeechSynthesisUtterance(narrateMove(currentMoveAnalysis)));
+  }, [currentMoveAnalysis, voiceEnabled]);
 
   const current = annotations.find((item) => item.ply === ply);
   useEffect(() => {
@@ -122,6 +172,46 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
     );
   }
 
+  if (view === 'summary') {
+    return (
+      <main className="reviewSummaryPage">
+        <header className="reviewHeader">
+          <div>
+            <span className="eyebrow">Revisão</span>
+            <h1>Resumo da partida</h1>
+          </div>
+          <Link href="/app/partidas">Voltar ao histórico</Link>
+        </header>
+        <p role="status">{message || ANALYSIS_STATUS_LABEL[analysis?.status ?? 'pending']}</p>
+        {analysis?.summary ? (
+          <section className="reviewSummaryColumns">
+            {summaryColumns.map(({ color, label }) => (
+              <div className="reviewSummaryColumn" key={color}>
+                <h2>{label}</h2>
+                <div className="reviewSummaryRows">
+                  {QUALITY_ROWS.map((row) => (
+                    <div className="reviewSummaryRow" key={row.key}>
+                      <span>{row.label}</span>
+                      <strong>{analysis.summary![color][row.key]}</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </section>
+        ) : null}
+        <button
+          className="primaryButton"
+          disabled={moves.length === 0}
+          onClick={() => setView('moves')}
+          type="button"
+        >
+          Iniciar revisão lance a lance
+        </button>
+      </main>
+    );
+  }
+
   return (
     <main className="reviewPage">
       <header className="reviewHeader">
@@ -129,9 +219,14 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
           <span className="eyebrow">Revisão</span>
           <h1>Partida lance a lance</h1>
         </div>
-        <button onClick={exportPgn} type="button">
-          Exportar PGN
-        </button>
+        <div className="reviewHeaderActions">
+          <button onClick={() => setView('summary')} type="button">
+            Voltar ao resumo
+          </button>
+          <button onClick={exportPgn} type="button">
+            Exportar PGN
+          </button>
+        </div>
       </header>
       <section className="reviewBoard">
         <ChessBoard
@@ -227,9 +322,31 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
           Salvar anotação
         </button>
         <p role="status">{message}</p>
-        <section className="futureEvaluation" aria-label="Avaliação futura">
-          <strong>Avaliação da engine</strong>
-          <span>Interface reservada; nenhuma engine é executada nesta fase.</span>
+        <section className="futureEvaluation" aria-label="Avaliação do motor">
+          <strong>Avaliação do motor</strong>
+          <label className="voiceToggle">
+            <input
+              checked={voiceEnabled}
+              onChange={(event) => setVoiceEnabled(event.target.checked)}
+              type="checkbox"
+            />
+            Narrar lances por voz
+          </label>
+          {currentMoveAnalysis ? (
+            <div className="moveBubble" data-quality={currentMoveAnalysis.quality}>
+              <strong>{describeMoveQuality(currentMoveAnalysis)}</strong>
+              {currentMoveAnalysis.quality !== 'otimo' &&
+              currentMoveAnalysis.quality !== 'excelente' &&
+              currentMoveAnalysis.bestMoveUci ? (
+                <span>Motor sugere: {currentMoveAnalysis.bestMoveUci}</span>
+              ) : null}
+              {currentMoveAnalysis.missedWin ? (
+                <span>Havia uma oportunidade melhor nessa posição.</span>
+              ) : null}
+            </div>
+          ) : (
+            <span>{ANALYSIS_STATUS_LABEL[analysis?.status ?? 'pending']}</span>
+          )}
         </section>
       </aside>
     </main>

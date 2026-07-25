@@ -6,9 +6,12 @@ import type {
   CreateBotGameInput,
   BotDifficulty,
   DrawOfferAction,
+  GameAnalysis,
+  GameAnalysisQualityCounts,
   GameHistoryPage,
   GameHistoryQuery,
   GameMove,
+  GameMoveAnalysis,
   GameState,
   ReviewAnnotation,
   ReviewAnnotationInput,
@@ -446,6 +449,30 @@ export class GamesRepository {
       ORDER BY ply
     `;
     return rows.map((row) => this.mapMove(row));
+  }
+
+  async getAnalysis(gameId: string, userId: string): Promise<GameAnalysis> {
+    await this.assertPlayer(gameId, userId);
+    const [analysis] = await this.database.client<{ status: GameAnalysis['status'] }[]>`
+      SELECT status FROM game_analyses WHERE game_id = ${gameId}
+    `;
+    const status = analysis?.status ?? 'pending';
+    const rows = await this.database.client<
+      Array<Omit<GameMoveAnalysis, 'ply'> & { ply: number | string }>
+    >`
+      SELECT
+        gm.ply, gm.color, gm.san, gm.uci,
+        gma.score_before_cp AS "scoreBeforeCp", gma.mate_before AS "mateBefore",
+        gma.score_after_cp AS "scoreAfterCp", gma.mate_after AS "mateAfter",
+        gma.best_move_uci AS "bestMoveUci", gma.centipawn_loss AS "centipawnLoss",
+        gma.quality, gma.missed_win AS "missedWin"
+      FROM game_move_analyses gma
+      JOIN game_moves gm ON gm.game_id = gma.game_id AND gm.ply = gma.ply
+      WHERE gma.game_id = ${gameId}
+      ORDER BY gma.ply
+    `;
+    const moves = rows.map((row) => ({ ...row, ply: Number(row.ply) }));
+    return { moves, status, summary: status === 'completed' ? summarizeAnalysis(moves) : null };
   }
 
   async realtimeSnapshot(gameId: string, userId: string, lastKnownVersion: number) {
@@ -1156,4 +1183,24 @@ export class GamesRepository {
       committedAt: this.toIso(row.committedAt) ?? new Date(0).toISOString(),
     };
   }
+}
+
+function emptyQualityCounts(): GameAnalysisQualityCounts {
+  return { bom: 0, erro: 0, excelente: 0, gafe: 0, imprecisao: 0, missedWin: 0, otimo: 0 };
+}
+
+function summarizeAnalysis(moves: GameMoveAnalysis[]): {
+  white: GameAnalysisQualityCounts;
+  black: GameAnalysisQualityCounts;
+} {
+  const summary: Record<'white' | 'black', GameAnalysisQualityCounts> = {
+    black: emptyQualityCounts(),
+    white: emptyQualityCounts(),
+  };
+  for (const move of moves) {
+    const counts = summary[move.color];
+    counts[move.quality] += 1;
+    if (move.missedWin) counts.missedWin += 1;
+  }
+  return summary;
 }

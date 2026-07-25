@@ -151,6 +151,48 @@ export const drawOfferActionSchema = z.object({
   state: gameStateSchema,
 });
 
+export const moveQualitySchema = z.enum([
+  'otimo',
+  'excelente',
+  'bom',
+  'imprecisao',
+  'erro',
+  'gafe',
+]);
+
+export const gameMoveAnalysisSchema = z.object({
+  ply: z.number().int().positive(),
+  color: z.enum(['white', 'black']),
+  san: z.string(),
+  uci: z.string(),
+  scoreBeforeCp: z.number().int().nullable(),
+  mateBefore: z.number().int().nullable(),
+  scoreAfterCp: z.number().int().nullable(),
+  mateAfter: z.number().int().nullable(),
+  bestMoveUci: z.string().nullable(),
+  centipawnLoss: z.number().int(),
+  quality: moveQualitySchema,
+  missedWin: z.boolean(),
+});
+
+export const gameAnalysisQualityCountsSchema = z.object({
+  otimo: z.number().int().nonnegative(),
+  excelente: z.number().int().nonnegative(),
+  bom: z.number().int().nonnegative(),
+  imprecisao: z.number().int().nonnegative(),
+  erro: z.number().int().nonnegative(),
+  gafe: z.number().int().nonnegative(),
+  missedWin: z.number().int().nonnegative(),
+});
+
+export const gameAnalysisSchema = z.object({
+  status: z.enum(['pending', 'processing', 'completed', 'failed']),
+  summary: z
+    .object({ white: gameAnalysisQualityCountsSchema, black: gameAnalysisQualityCountsSchema })
+    .nullable(),
+  moves: z.array(gameMoveAnalysisSchema),
+});
+
 export type CreateGameInput = z.infer<typeof createGameInputSchema>;
 export type GameHistoryItem = z.infer<typeof gameHistoryItemSchema>;
 export type GameHistoryPage = z.infer<typeof gameHistoryPageSchema>;
@@ -161,3 +203,7 @@ export type SubmitMoveInput = z.infer<typeof submitMoveInputSchema>;
 export type GameState = z.infer<typeof gameStateSchema>;
 export type GameMove = z.infer<typeof gameMoveSchema>;
 export type DrawOfferAction = z.infer<typeof drawOfferActionSchema>;
+export type MoveQuality = z.infer<typeof moveQualitySchema>;
+export type GameMoveAnalysis = z.infer<typeof gameMoveAnalysisSchema>;
+export type GameAnalysisQualityCounts = z.infer<typeof gameAnalysisQualityCountsSchema>;
+export type GameAnalysis = z.infer<typeof gameAnalysisSchema>;

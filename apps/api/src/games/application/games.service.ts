@@ -49,6 +49,10 @@ export class GamesService {
     return this.games.getState(gameId, userId);
   }
 
+  getAnalysis(gameId: string, userId: string) {
+    return this.games.getAnalysis(gameId, userId);
+  }
+
   listMoves(gameId: string, userId: string) {
     return this.games.listMoves(gameId, userId);
   }

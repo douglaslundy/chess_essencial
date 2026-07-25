@@ -1,6 +1,7 @@
 import { ChessJsRules } from '@xadrez/chess-domain';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../bootstrap.js';
+import { DatabaseService } from '../database/database.service.js';
 
 const describeDatabase = process.env.RUN_DB_TESTS === 'true' ? describe : describe.skip;
 interface Identity {
@@ -146,6 +147,57 @@ describeDatabase('games database integration', () => {
     });
     expect(pgn.statusCode).toBe(200);
     expect(pgn.body).toContain('Qh4#');
+  });
+
+  it('returns the engine analysis for a finished game once the worker has processed it', async () => {
+    const pending = await app.inject({
+      headers: auth(white),
+      method: 'GET',
+      url: `/v1/games/${gameId}/analysis`,
+    });
+    expect(pending.statusCode, pending.body).toBe(200);
+    expect(pending.json()).toEqual({ moves: [], status: 'pending', summary: null });
+
+    // Simulates the worker's analysis job having already run, without
+    // spawning a real Stockfish subprocess here — this only verifies the
+    // API layer surfaces what's in the database (see
+    // apps/worker/src/analysis/game-analysis-job.test.ts for the job itself).
+    const database = app.get(DatabaseService);
+    await database.client`
+      INSERT INTO game_analyses (game_id, status, engine_depth, completed_at)
+      VALUES (${gameId}, 'completed', 14, now())
+    `;
+    await database.client`
+      INSERT INTO game_move_analyses (
+        game_id, ply, color, score_before_cp, mate_before, score_after_cp, mate_after,
+        best_move_uci, centipawn_loss, quality, missed_win
+      ) VALUES
+        (${gameId}, 1, 'white', 20, null, 15, null, 'e2e4', 5, 'otimo', false),
+        (${gameId}, 4, 'black', -400, null, null, 1, null, 0, 'otimo', false)
+    `;
+
+    const completed = await app.inject({
+      headers: auth(black),
+      method: 'GET',
+      url: `/v1/games/${gameId}/analysis`,
+    });
+    expect(completed.statusCode, completed.body).toBe(200);
+    expect(completed.json()).toMatchObject({
+      status: 'completed',
+      summary: {
+        white: { bom: 0, erro: 0, excelente: 0, gafe: 0, imprecisao: 0, missedWin: 0, otimo: 1 },
+        black: { bom: 0, erro: 0, excelente: 0, gafe: 0, imprecisao: 0, missedWin: 0, otimo: 1 },
+      },
+    });
+    expect(completed.json().moves).toHaveLength(2);
+
+    const outsider = await createIdentity('analysis-outsider@example.com', 'game_analysis_out');
+    const forbidden = await app.inject({
+      headers: auth(outsider),
+      method: 'GET',
+      url: `/v1/games/${gameId}/analysis`,
+    });
+    expect(forbidden.statusCode).toBe(403);
   });
 
   it('lists paginated history and persists private review annotations', async () => {

@@ -58,6 +58,11 @@ export class GamesController {
     return this.gamesService.listMoves(parseInput(gameIdSchema, gameId), request.auth.userId);
   }
 
+  @Get(':gameId/analysis')
+  getAnalysis(@Req() request: AuthenticatedRequest, @Param('gameId') gameId: string) {
+    return this.gamesService.getAnalysis(parseInput(gameIdSchema, gameId), request.auth.userId);
+  }
+
   @Post(':gameId/moves')
   commitMove(
     @Req() request: AuthenticatedRequest,

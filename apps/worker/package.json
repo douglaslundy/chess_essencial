@@ -12,6 +12,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@xadrez/chess-domain": "workspace:*",
     "bullmq": "5.80.5",
     "ioredis": "5.11.1",
     "postgres": "3.4.9",

@@ -1968,7 +1968,76 @@ input:focus-visible {
 .futureEvaluation strong {
   color: var(--text);
 }
+.reviewHeaderActions {
+  display: flex;
+  gap: 10px;
+}
+.reviewSummaryPage {
+  display: grid;
+  gap: 20px;
+  max-width: 760px;
+}
+.reviewSummaryColumns {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr 1fr;
+}
+.reviewSummaryColumn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+}
+.reviewSummaryColumn h2 {
+  color: var(--gold);
+  font-size: 1.05rem;
+  margin: 0 0 10px;
+}
+.reviewSummaryRows {
+  display: grid;
+  gap: 6px;
+}
+.reviewSummaryRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.92rem;
+}
+.reviewSummaryRow strong {
+  color: var(--text);
+}
+.voiceToggle {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  font-weight: 500;
+  gap: 8px;
+}
+.moveBubble {
+  background: rgba(216, 182, 108, 0.1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+}
+.moveBubble strong {
+  color: var(--text);
+}
+.moveBubble[data-quality='gafe'] {
+  border-color: var(--danger);
+}
+.moveBubble[data-quality='erro'] {
+  border-color: var(--warning);
+}
+.moveBubble[data-quality='otimo'],
+.moveBubble[data-quality='excelente'] {
+  border-color: var(--success);
+}
 @media (max-width: 900px) {
+  .reviewSummaryColumns {
+    grid-template-columns: 1fr;
+  }
+
   .reviewPage {
     grid-template-columns: 1fr;
   }

@@ -229,6 +229,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@xadrez/chess-domain':
+        specifier: workspace:*
+        version: link:../../packages/chess-domain
       bullmq:
         specifier: 5.80.5
         version: 5.80.5

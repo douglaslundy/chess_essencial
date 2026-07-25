@@ -37,5 +37,7 @@ pnpm --filter @xadrez/api db:rollback
 
 `0024_resync_seed_demo_lesson_collision.down.sql` is a no-op: it clears a stale content-diff cache row so the next lesson import re-derives it automatically, there's nothing to restore.
 
+`0028_game_analysis.down.sql` drops the engine post-game analysis tables entirely — derived data, recomputable by re-running the worker's analysis job, nothing to preserve.
+
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.

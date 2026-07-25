@@ -956,6 +956,25 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/games/{gameId}/analysis': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        gameId: components['parameters']['GameId'];
+      };
+      cookie?: never;
+    };
+    /** Buscar a análise de motor (por lance + resumo agregado) de uma partida */
+    get: operations['getGameAnalysis'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/games/{gameId}/moves': {
     parameters: {
       query?: never;
@@ -2323,6 +2342,41 @@ export interface components {
       /** Format: uuid */
       offerId: string;
       state: components['schemas']['GameState'];
+    };
+    /** @enum {string} */
+    MoveQuality: 'otimo' | 'excelente' | 'bom' | 'imprecisao' | 'erro' | 'gafe';
+    GameMoveAnalysis: {
+      ply: number;
+      /** @enum {string} */
+      color: 'white' | 'black';
+      san: string;
+      uci: string;
+      scoreBeforeCp: number | null;
+      mateBefore: number | null;
+      scoreAfterCp: number | null;
+      mateAfter: number | null;
+      bestMoveUci: string | null;
+      centipawnLoss: number;
+      quality: components['schemas']['MoveQuality'];
+      missedWin: boolean;
+    };
+    GameAnalysisQualityCounts: {
+      otimo: number;
+      excelente: number;
+      bom: number;
+      imprecisao: number;
+      erro: number;
+      gafe: number;
+      missedWin: number;
+    };
+    GameAnalysis: {
+      /** @enum {string} */
+      status: 'pending' | 'processing' | 'completed' | 'failed';
+      summary: {
+        white: components['schemas']['GameAnalysisQualityCounts'];
+        black: components['schemas']['GameAnalysisQualityCounts'];
+      } | null;
+      moves: components['schemas']['GameMoveAnalysis'][];
     };
     GameMove: {
       id: number;
@@ -4006,6 +4060,31 @@ export interface operations {
         };
       };
       401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  getGameAnalysis: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        gameId: components['parameters']['GameId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Status da análise, resumo por jogador e dados lance a lance */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GameAnalysis'];
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
       404: components['responses']['Problem'];
     };
   };
