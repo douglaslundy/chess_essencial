@@ -330,6 +330,12 @@ export class MatchmakingRepository {
         return { id: challengeId, status: 'declined' };
       }
 
+      const entitlement = await this.subscriptions.checkEntitlement(userId, 'games_per_day');
+      if (!entitlement.allowed)
+        throw new ForbiddenException(
+          'Você atingiu o limite diário de partidas do seu plano. Volte amanhã ou assine um plano com mais acesso.',
+        );
+
       const [timeControl] = await transaction<TimeControlRow[]>`
         SELECT id, code, pool, initial_ms AS "initialMs", rated
         FROM game_time_controls

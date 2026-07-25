@@ -25,6 +25,7 @@ import {
 import type { TransactionSql } from 'postgres';
 
 import { DatabaseService } from '../../database/database.service.js';
+import { SubscriptionsService } from '../../subscriptions/subscriptions.service.js';
 import { calculateClockTransition, effectiveClockMs } from '../domain/game-clock.js';
 
 interface GameRow {
@@ -117,12 +118,20 @@ interface ReviewAnnotationRow {
 }
 @Injectable()
 export class GamesRepository {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly subscriptions: SubscriptionsService,
+  ) {}
 
   async create(creatorUserId: string, input: CreateGameInput): Promise<GameState> {
     if (creatorUserId === input.opponentUserId) {
       throw new BadRequestException('Os jogadores devem ser diferentes');
     }
+    const entitlement = await this.subscriptions.checkEntitlement(creatorUserId, 'games_per_day');
+    if (!entitlement.allowed)
+      throw new ForbiddenException(
+        'Você atingiu o limite diário de partidas do seu plano. Volte amanhã ou assine um plano com mais acesso.',
+      );
 
     const gameId = randomUUID();
     const initialPosition = new ChessJsRules();
@@ -216,6 +225,11 @@ export class GamesRepository {
   }
 
   async createBotGame(userId: string, input: CreateBotGameInput): Promise<GameState> {
+    const entitlement = await this.subscriptions.checkEntitlement(userId, 'games_per_day');
+    if (!entitlement.allowed)
+      throw new ForbiddenException(
+        'Você atingiu o limite diário de partidas do seu plano. Volte amanhã ou assine um plano com mais acesso.',
+      );
     const gameId = randomUUID();
     const initialFen = new ChessJsRules().fen();
 
