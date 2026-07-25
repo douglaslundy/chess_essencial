@@ -165,9 +165,9 @@ Decisão do usuário: **arquitetura híbrida**. Stockfish WASM no navegador para
 ### Entregáveis
 
 - [x] Escolha de arquitetura registrada aqui (decisão do usuário, 2026-07-24: híbrida).
-- [ ] Integração do motor (avaliação de posição em centipawns + busca de melhor lance com profundidade configurável) — WASM no cliente (`apps/web`) + instância no worker (`apps/worker`) para o job assíncrono.
-- [ ] Definição explícita dos limiares de classificação de lance (perda de centipawns por faixa: excelente/bom/imprecisão/erro/gafe — mesmo espírito do lichess/chess.com) e do que conta como "oportunidade perdida" (havia um lance vencedor/muito melhor e o jogador não jogou).
-- [ ] Serviço/utilitário reaproveitável (`packages/chess-domain` ou novo pacote) exposto tanto para o job assíncrono do worker (Fase 20) quanto para checagem em tempo real (Fase 21).
+- [x] Integração do motor no lado servidor: `apps/worker/vendor/stockfish/` vendoriza o Stockfish 18 Lite (WASM single-thread, ~7MB, NNUE `nn-9067e33176e8.nnue`, GPL-3.0, baixado das releases de `nmrugg/stockfish.js`), rodado como subprocesso via `apps/worker/src/engine/stockfish-engine.ts` (`evaluatePosition(fen, {depth})` fala UCI puro por stdin/stdout — o `.js` foi renomeado para `.cjs` porque o worker é `"type":"module"` e o bundle usa `require`). Testado de ponta a ponta (posição inicial + mate em 1) em `stockfish-engine.test.ts`. **Pendente**: instância WASM no cliente (`apps/web`) — adiada para quando a Fase 21 ("Sugerir lance") de fato precisar dela, para não construir infraestrutura sem consumidor.
+- [x] Limiares de classificação de lance definidos e implementados em `packages/chess-domain/src/move-quality.ts` (`classifyMove`): perda de centipawns ≤10 ótimo, ≤20 excelente, ≤50 bom, ≤100 imprecisão, ≤300 erro, >300 gafe (mate tratado como ±100000cp). "Oportunidade perdida" = perda ≥150cp com a posição resultante ainda não perdida (≥-50cp) — flag independente da categoria de qualidade, inclusive combinável com "gafe" (ex.: abriu mão de mate forçado mas seguiu claramente melhor). Testado em `move-quality.test.ts`.
+- [x] Serviço/utilitário reaproveitável: classificação pura em `@xadrez/chess-domain` (consumível tanto pelo job assíncrono do worker quanto por uma futura checagem em tempo real no cliente); avaliação de posição hoje só no lado servidor (`apps/worker`) — ver nota acima sobre o lado cliente.
 
 ## Fase 20 — Revisão de partida pós-jogo (P1; depende da Fase 19)
 

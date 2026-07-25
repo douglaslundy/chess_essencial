@@ -1,1 +1,2 @@
 database/content/*.json text eol=lf
+apps/worker/vendor/** -text

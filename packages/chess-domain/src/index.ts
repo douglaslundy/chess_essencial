@@ -7,6 +7,7 @@ export {
   hasCheckingMove,
   isPlayableStart,
 } from './mate-solver.js';
+export { classifyMove } from './move-quality.js';
 export { IllegalMoveError, InvalidFenError, InvalidUciError } from './errors.js';
 export type {
   AppliedMove,
@@ -17,3 +18,4 @@ export type {
   PositionStatus,
   TerminationReason,
 } from './types.js';
+export type { MoveQuality, MoveQualityInput, MoveQualityResult } from './move-quality.js';

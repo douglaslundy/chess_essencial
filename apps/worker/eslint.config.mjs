@@ -1,3 +1,3 @@
 import baseConfig from '@xadrez/eslint-config';
 
-export default baseConfig;
+export default [{ ignores: ['vendor/**'] }, ...baseConfig];
