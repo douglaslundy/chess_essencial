@@ -74,7 +74,7 @@ describeDatabase('exercise runtime database integration', () => {
         solution_md, difficulty, category, fen, side_to_move, solution_lines, hints,
         tags, status, position_type
       ) VALUES (
-        'phase-18-theme-integration', 1301, 1, 1, 'Tema de teste', 'Encontre o lance.',
+        'phase-18-theme-integration', 1303, 1, 1, 'Tema de teste', 'Encontre o lance.',
         'e2e4', 'beginner', 'theme_test', '8/8/8/8/8/8/4P3/4K2k w - - 0 1', 'white',
         '[ ["e2e4"] ]'::jsonb, '[]'::jsonb,
         ARRAY['challenge', 'tema_teste_e2e'], 'published', 'legal_position'
