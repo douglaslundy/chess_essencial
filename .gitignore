@@ -12,3 +12,4 @@ coverage/
 .deploy/
 .DS_Store
 helper_files/
+.claude/worktrees/
