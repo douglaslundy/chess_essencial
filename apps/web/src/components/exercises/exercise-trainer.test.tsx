@@ -162,7 +162,7 @@ describe('ExerciseTrainer guided auto-grading modal', () => {
     await screen.findByText('Jogue o melhor lance para as brancas.');
   }
 
-  it('opens a victory modal when the played line is solved', async () => {
+  it('opens a victory modal when the played line is solved, then shows the batch-completed screen once dismissed', async () => {
     evaluateExerciseLine.mockResolvedValue({
       status: 'solved',
       opponentReply: null,
@@ -172,7 +172,7 @@ describe('ExerciseTrainer guided auto-grading modal', () => {
         correct: true,
         hintsUsed: 0,
         score: 100,
-        training: { ...trainingView(), completed: 1, status: 'completed' },
+        training: { ...trainingView(), completed: 1, currentExercise: null, status: 'completed' },
       },
     } satisfies EvaluateExerciseLineResult);
 
@@ -180,7 +180,10 @@ describe('ExerciseTrainer guided auto-grading modal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'play-board-move' }));
 
     expect(await screen.findByText('Você venceu!')).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Próximo exercício/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Próximo exercício/ }));
+
+    expect(await screen.findByText('Treino concluído')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Próximo desafio/ })).toBeTruthy();
   });
 
   it('offers a way to fetch a fresh batch once every challenge in the current one is solved', async () => {
@@ -214,6 +217,33 @@ describe('ExerciseTrainer guided auto-grading modal', () => {
 
     expect(await screen.findByText('Não foi dessa vez')).toBeTruthy();
     expect(screen.getByRole('button', { name: /Tentar novamente/ })).toBeTruthy();
+  });
+
+  it('offers a retry button (not the raw browser error) when grading the move fails over the network, and recovers on retry', async () => {
+    nextBoardMove = 'e2e4';
+    evaluateExerciseLine.mockRejectedValueOnce(new TypeError('Load failed'));
+
+    await renderGuided();
+    fireEvent.click(screen.getByRole('button', { name: 'play-board-move' }));
+
+    const retryButton = await screen.findByRole('button', { name: /Tentar avaliar novamente/ });
+    expect(screen.queryByText('Load failed')).toBeNull();
+
+    evaluateExerciseLine.mockResolvedValueOnce({
+      status: 'solved',
+      opponentReply: null,
+      movesConfirmed: 1,
+      attempt: {
+        attemptId: '99000000-0000-4000-8000-000000000022',
+        correct: true,
+        hintsUsed: 0,
+        score: 100,
+        training: { ...trainingView(), completed: 1, currentExercise: null, status: 'completed' },
+      },
+    } satisfies EvaluateExerciseLineResult);
+    fireEvent.click(retryButton);
+
+    expect(await screen.findByText('Você venceu!')).toBeTruthy();
   });
 
   it('lets the learner review the previous exercise after solving one', async () => {

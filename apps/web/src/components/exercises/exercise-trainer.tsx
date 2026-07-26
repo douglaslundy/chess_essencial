@@ -107,6 +107,8 @@ export function ExerciseTrainer({
   const autoStarted = useRef(false);
   const announceSeq = useRef(0);
   const opponentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingEvaluationRef = useRef<Parameters<typeof evaluatePlayedLine> | null>(null);
+  const [evaluationFailed, setEvaluationFailed] = useState(false);
   const [boardHistory, setBoardHistory] = useState<{
     exerciseId: string;
     index: number;
@@ -140,6 +142,8 @@ export function ExerciseTrainer({
     setStartedAt(Date.now());
     setBoardLocked(false);
     setPlayerMoves([]);
+    setEvaluationFailed(false);
+    pendingEvaluationRef.current = null;
   }
 
   const load = useCallback(async () => {
@@ -437,7 +441,9 @@ export function ExerciseTrainer({
         const played = [...playerMoves, canonical];
         setPlayerMoves(played);
         setBoardLocked(true);
+        setEvaluationFailed(false);
         setMessage('Avaliando sua jogada…');
+        pendingEvaluationRef.current = [played, current, chess.fen(), moves, positions];
         void evaluatePlayedLine(played, current, chess.fen(), moves, positions);
       }
     } catch {
@@ -503,10 +509,24 @@ export function ExerciseTrainer({
           setMessage('Não foi possível reproduzir a resposta automática.');
         }
       }, 450);
-    } catch (error) {
+    } catch {
+      // The browser's own fetch() rejection text ("Load failed", "Failed to
+      // fetch") is not a message we ever want to show verbatim; the move
+      // itself was fine, only the grading request dropped, so a retry (not
+      // a "wrong answer") is the correct recovery.
       setBoardLocked(false);
-      setMessage(error instanceof Error ? error.message : 'Falha ao avaliar a jogada.');
+      setEvaluationFailed(true);
+      setMessage('Não foi possível avaliar sua jogada agora. Verifique sua conexão.');
     }
+  }
+
+  function retryEvaluation() {
+    const pending = pendingEvaluationRef.current;
+    if (!pending) return;
+    setEvaluationFailed(false);
+    setBoardLocked(true);
+    setMessage('Avaliando sua jogada…');
+    void evaluatePlayedLine(...pending);
   }
 
   function closeResultModalAndAdvance() {
@@ -753,6 +773,15 @@ export function ExerciseTrainer({
                         ↻ Repetir lance
                       </button>
                     </div>
+                  ) : null}
+                  {evaluationFailed ? (
+                    <button
+                      className={styles.primaryAction}
+                      onClick={retryEvaluation}
+                      type="button"
+                    >
+                      🔄 Tentar avaliar novamente
+                    </button>
                   ) : null}
                   {!guided ? (
                     <details>
