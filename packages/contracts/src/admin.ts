@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const adminUserStatusSchema = z.enum(['pending', 'active', 'suspended', 'deleted']);
 
 export const adminUserSchema = z.object({
+  avatarUrl: z.string().nullable(),
   createdAt: z.string().datetime(),
   displayName: z.string().nullable(),
   email: z.string(),

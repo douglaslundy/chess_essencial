@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
 import { reviewEligibility } from './review-eligibility';
+import { Avatar } from '@/components/ui/avatar';
 import { api } from '@/lib/api/client';
 
 function formatGameDate(isoDate: string | null) {
@@ -107,6 +108,7 @@ export function HistoryList() {
             <article className="historyCard" key={game.id}>
               <div className="historyCardHeader">
                 <div className="historyCardTitle">
+                  <Avatar avatarUrl={game.opponent.avatarUrl} name={game.opponent.displayName} />
                   <strong>{game.opponent.displayName}</strong>
                   {game.coachMode ? <span className="adminBadge">Treinador</span> : null}
                 </div>

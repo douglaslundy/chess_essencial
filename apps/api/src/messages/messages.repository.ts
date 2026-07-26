@@ -4,6 +4,7 @@ import { toIsoString, toIsoStringOrNull } from '../common/dates/to-iso-string.js
 import { DatabaseService } from '../database/database.service.js';
 
 type ConversationRow = {
+  avatar_url: string | null;
   display_name: string;
   last_body: string | null;
   last_created_at: Date | string | null;
@@ -41,7 +42,7 @@ export class MessagesRepository {
   async listConversations(userId: string) {
     const sql = this.database.client;
     const rows = await sql<ConversationRow[]>`
-      SELECT u.id AS user_id, u.username::text, up.display_name, u.last_seen_at,
+      SELECT u.id AS user_id, u.username::text, up.display_name, up.avatar_url, u.last_seen_at,
              last_msg.body AS last_body, last_msg.created_at AS last_created_at,
              last_msg.sender_id AS last_sender_id, COALESCE(unread.count, 0) AS unread_count
       FROM friendships f
@@ -64,6 +65,7 @@ export class MessagesRepository {
       ORDER BY last_msg.created_at DESC NULLS LAST, up.display_name
     `;
     return rows.map((row) => ({
+      avatarUrl: row.avatar_url,
       displayName: row.display_name,
       lastMessage: row.last_created_at
         ? {

@@ -265,6 +265,7 @@ export class RatingsRepository {
     return this.database.client`
       SELECT row_number() OVER (ORDER BY rating_profiles.rating DESC, rating_profiles.games_count DESC, rating_profiles.user_id)::integer AS rank,
              rating_profiles.user_id AS "userId", users.username::text, user_profiles.display_name AS "displayName",
+             user_profiles.avatar_url AS "avatarUrl",
              rating_profiles.rating, rating_profiles.games_count AS "gamesCount", rating_profiles.provisional
       FROM rating_profiles
       JOIN users ON users.id = rating_profiles.user_id

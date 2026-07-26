@@ -1873,12 +1873,13 @@ components:
       additionalProperties: false
     AdminUser:
       type: object
-      required: [id, username, email, displayName, status, isAdmin, createdAt]
+      required: [id, username, email, displayName, avatarUrl, status, isAdmin, createdAt]
       properties:
         id: {type: string, format: uuid}
         username: {type: string}
         email: {type: string}
         displayName: {type: [string, 'null']}
+        avatarUrl: {type: [string, 'null']}
         status: {type: string, enum: [pending, active, suspended, deleted]}
         isAdmin: {type: boolean}
         createdAt: {type: string, format: date-time}
@@ -2185,11 +2186,12 @@ components:
         body: {type: string, minLength: 1, maxLength: 2000}
     Conversation:
       type: object
-      required: [userId, username, displayName, presence, lastMessage, unreadCount]
+      required: [userId, username, displayName, avatarUrl, presence, lastMessage, unreadCount]
       properties:
         userId: {type: string, format: uuid}
         username: {type: string}
         displayName: {type: string}
+        avatarUrl: {type: [string, 'null']}
         presence: {$ref: '#/components/schemas/Presence'}
         lastMessage:
           type: [object, 'null']
@@ -2453,12 +2455,13 @@ components:
       additionalProperties: false
     LeaderboardEntry:
       type: object
-      required: [rank, userId, username, displayName, rating, gamesCount, provisional]
+      required: [rank, userId, username, displayName, avatarUrl, rating, gamesCount, provisional]
       properties:
         rank: {type: integer, minimum: 1}
         userId: {type: string, format: uuid}
         username: {type: string}
         displayName: {type: string}
+        avatarUrl: {type: [string, 'null']}
         rating: {type: integer}
         gamesCount: {type: integer, minimum: 0}
         provisional: {type: boolean}
@@ -2532,10 +2535,11 @@ components:
         finishedAt: {type: [string, 'null'], format: date-time}
         opponent:
           type: object
-          required: [userId, username, displayName, rating]
+          required: [userId, username, displayName, avatarUrl, rating]
           properties:
             userId: {type: string, format: uuid}
             username: {type: string}
+            avatarUrl: {type: [string, 'null']}
             displayName: {type: string}
             rating: {type: integer}
     GameHistoryPage:

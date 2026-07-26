@@ -3,6 +3,7 @@
 import type { Conversation, DirectMessage } from '@xadrez/contracts';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
+import { Avatar } from '@/components/ui/avatar';
 import { api } from '@/lib/api/client';
 
 function formatMessageTime(createdAt: string) {
@@ -100,6 +101,7 @@ export default function MessagesPage() {
                 onClick={() => void openConversation(conversation)}
                 type="button"
               >
+                <Avatar avatarUrl={conversation.avatarUrl} name={conversation.displayName} />
                 <span
                   aria-hidden="true"
                   className={conversation.presence.online ? 'onlineDot' : 'onlineDot offlineDot'}
@@ -119,7 +121,10 @@ export default function MessagesPage() {
         <section aria-label="Conversa selecionada" className="messageThread">
           {selected ? (
             <>
-              <h2>{selected.displayName}</h2>
+              <div className="messageThreadHeader">
+                <Avatar avatarUrl={selected.avatarUrl} name={selected.displayName} />
+                <h2>{selected.displayName}</h2>
+              </div>
               <div className="messageList">
                 {messages.map((item) => (
                   <p

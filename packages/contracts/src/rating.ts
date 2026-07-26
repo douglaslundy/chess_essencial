@@ -34,6 +34,7 @@ export const leaderboardEntrySchema = z.object({
   userId: z.string().uuid(),
   username: z.string(),
   displayName: z.string(),
+  avatarUrl: z.string().nullable(),
   rating: z.number().int(),
   gamesCount: z.number().int().nonnegative(),
   provisional: z.boolean(),

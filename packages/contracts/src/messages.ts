@@ -12,6 +12,7 @@ export const directMessageSchema = z.object({
 });
 
 export const conversationSchema = z.object({
+  avatarUrl: z.string().nullable(),
   displayName: z.string(),
   lastMessage: z
     .object({

@@ -3,6 +3,7 @@
 import type { LeaderboardEntry, RatingPool } from '@xadrez/contracts';
 import { useEffect, useState } from 'react';
 
+import { Avatar } from '@/components/ui/avatar';
 import { api } from '@/lib/api/client';
 import styles from '@/components/portal/portal-pages.module.css';
 
@@ -94,9 +95,12 @@ export default function RankingPage() {
         {entries.map((entry) => (
           <div className={styles.tableRow} key={entry.userId}>
             <strong>#{entry.rank}</strong>
-            <span>
-              {entry.displayName}
-              <small>@{entry.username}</small>
+            <span className={styles.playerCell}>
+              <Avatar avatarUrl={entry.avatarUrl} name={entry.displayName} />
+              <span>
+                {entry.displayName}
+                <small>@{entry.username}</small>
+              </span>
             </span>
             <strong>{entry.rating}</strong>
             <span>

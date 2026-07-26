@@ -96,6 +96,7 @@ export const gameHistoryItemSchema = z.object({
   finishedAt: z.string().datetime().nullable(),
   id: z.string().uuid(),
   opponent: z.object({
+    avatarUrl: z.string().nullable(),
     displayName: z.string(),
     rating: z.number().int(),
     userId: z.string().uuid(),
@@ -195,6 +196,22 @@ export const gameAnalysisSchema = z.object({
   moves: z.array(gameMoveAnalysisSchema),
 });
 
+export const gameNarrationKeyMomentSchema = z.object({
+  ply: z.number().int().positive(),
+  color: z.enum(['white', 'black']),
+  san: z.string(),
+  quality: moveQualitySchema,
+  narrative: z.string(),
+});
+
+export const gameNarrationSchema = z.object({
+  status: z.enum(['pending', 'processing', 'completed', 'failed']),
+  summary: z.string().nullable(),
+  keyMoments: z.array(gameNarrationKeyMomentSchema),
+  patterns: z.array(z.string()),
+  studyPlan: z.array(z.string()),
+});
+
 export type CreateGameInput = z.infer<typeof createGameInputSchema>;
 export type GameHistoryItem = z.infer<typeof gameHistoryItemSchema>;
 export type GameHistoryPage = z.infer<typeof gameHistoryPageSchema>;
@@ -209,3 +226,5 @@ export type MoveQuality = z.infer<typeof moveQualitySchema>;
 export type GameMoveAnalysis = z.infer<typeof gameMoveAnalysisSchema>;
 export type GameAnalysisQualityCounts = z.infer<typeof gameAnalysisQualityCountsSchema>;
 export type GameAnalysis = z.infer<typeof gameAnalysisSchema>;
+export type GameNarrationKeyMoment = z.infer<typeof gameNarrationKeyMomentSchema>;
+export type GameNarration = z.infer<typeof gameNarrationSchema>;

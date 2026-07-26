@@ -1789,6 +1789,7 @@ export interface components {
       username: string;
       email: string;
       displayName: string | null;
+      avatarUrl: string | null;
       /** @enum {string} */
       status: 'pending' | 'active' | 'suspended' | 'deleted';
       isAdmin: boolean;
@@ -2027,6 +2028,7 @@ export interface components {
       userId: string;
       username: string;
       displayName: string;
+      avatarUrl: string | null;
       presence: components['schemas']['Presence'];
       lastMessage: {
         body: string;
@@ -2306,6 +2308,7 @@ export interface components {
       userId: string;
       username: string;
       displayName: string;
+      avatarUrl: string | null;
       rating: number;
       gamesCount: number;
       provisional: boolean;
@@ -2400,6 +2403,7 @@ export interface components {
         /** Format: uuid */
         userId: string;
         username: string;
+        avatarUrl: string | null;
         displayName: string;
         rating: number;
       };

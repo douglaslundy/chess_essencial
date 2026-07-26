@@ -5,6 +5,7 @@ import { toIsoString } from '../common/dates/to-iso-string.js';
 import { DatabaseService } from '../database/database.service.js';
 
 type AdminUserRow = {
+  avatar_url: string | null;
   created_at: Date | string;
   display_name: string | null;
   email: string;
@@ -16,6 +17,7 @@ type AdminUserRow = {
 
 function toAdminUser(row: AdminUserRow) {
   return {
+    avatarUrl: row.avatar_url,
     createdAt: toIsoString(row.created_at),
     displayName: row.display_name,
     email: row.email,
@@ -41,7 +43,7 @@ export class AdminRepository {
     `;
     const rows = await sql<AdminUserRow[]>`
       SELECT u.id, u.email, u.username, u.status, u.created_at,
-        p.display_name,
+        p.display_name, p.avatar_url,
         EXISTS (SELECT 1 FROM user_roles r WHERE r.user_id = u.id AND r.role = 'admin') AS is_admin
         FROM users u
         LEFT JOIN user_profiles p ON p.user_id = u.id

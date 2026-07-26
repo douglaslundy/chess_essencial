@@ -98,6 +98,7 @@ interface HistoryRow {
   coachMode: boolean;
   color: 'white' | 'black';
   displayName: string;
+  opponentAvatarUrl: string | null;
   finishedAt: Date | string | null;
   id: string;
   opponentRating: number;
@@ -354,7 +355,8 @@ export class GamesRepository {
         games.started_at AS "startedAt", games.finished_at AS "finishedAt", mine.color,
         controls.pool, controls.label AS "timeControl", opponent.user_id AS "opponentUserId",
         opponent.rating_before::integer AS "opponentRating", opponent_user.username::text AS username,
-        opponent_profile.display_name AS "displayName"
+        opponent_profile.display_name AS "displayName",
+        opponent_profile.avatar_url AS "opponentAvatarUrl"
       FROM games
       JOIN game_players mine ON mine.game_id = games.id AND mine.user_id = ${userId}
       JOIN game_players opponent ON opponent.game_id = games.id AND opponent.user_id <> ${userId}
@@ -376,6 +378,7 @@ export class GamesRepository {
         finishedAt: this.toIso(row.finishedAt),
         id: row.id,
         opponent: {
+          avatarUrl: row.opponentAvatarUrl,
           displayName: row.displayName,
           rating: row.opponentRating,
           userId: row.opponentUserId,

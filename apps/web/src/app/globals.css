@@ -2050,8 +2050,11 @@ input:focus-visible {
   padding: 16px;
 }
 .reviewSummaryColumn h2 {
+  align-items: center;
   color: var(--gold);
+  display: flex;
   font-size: 1.05rem;
+  gap: 0.5rem;
   margin: 0 0 10px;
 }
 .reviewSummaryRows {
@@ -2617,6 +2620,14 @@ input:focus-visible {
   font-size: 0.75rem;
   font-weight: 700;
   padding: 0.1rem 0.5rem;
+}
+.messageThreadHeader {
+  align-items: center;
+  display: flex;
+  gap: 0.6rem;
+}
+.messageThreadHeader h2 {
+  margin: 0;
 }
 .messageThread {
   display: flex;

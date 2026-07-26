@@ -7,8 +7,14 @@ interface FakeRow {
   userId: string;
 }
 
-function fakeSql(rows: FakeRow[]) {
-  return (() => Promise.resolve(rows)) as never;
+function fakeSql(
+  rows: FakeRow[],
+  onQuery?: (strings: TemplateStringsArray, values: unknown[]) => void,
+) {
+  return ((strings: TemplateStringsArray, ...values: unknown[]) => {
+    onQuery?.(strings, values);
+    return Promise.resolve(rows);
+  }) as never;
 }
 
 function fakePipeline() {
@@ -58,6 +64,27 @@ describe('runPresenceSchedule', () => {
     await runPresenceSchedule(sql, redis, now);
 
     expect(calls).toEqual([{ args: ['presence:bot-1', '1', 'EX', 90], op: 'set' }]);
+  });
+
+  it('touches users.last_seen_at for bots currently online, not for offline ones', async () => {
+    const { pipeline } = fakePipeline();
+    const redis = { pipeline: () => pipeline } as never;
+    const queries: unknown[][] = [];
+    const sql = fakeSql(
+      [
+        { onlineWindows: [{ endMinute: 700, startMinute: 600 }], userId: 'online-bot' },
+        { onlineWindows: [{ endMinute: 100, startMinute: 0 }], userId: 'offline-bot' },
+      ],
+      (_strings, values) => queries.push(values),
+    );
+    const now = new Date(Date.UTC(2026, 0, 1, 10, 50));
+
+    await runPresenceSchedule(sql, redis, now);
+
+    // First call is the SELECT (no bind values); second is the UPDATE with
+    // only the online bot's id, never the offline one's.
+    expect(queries).toHaveLength(2);
+    expect(queries[1]).toEqual([['online-bot']]);
   });
 
   it('does nothing when there are no bot personas', async () => {

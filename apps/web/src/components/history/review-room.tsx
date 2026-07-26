@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { describeMoveQuality, moveQualityLabel, narrateMove } from './move-narration';
 import { reviewEligibility, type ReviewEligibility } from './review-eligibility';
 import { ChessBoard, type BoardOrientation } from '@/components/game/chess-board';
+import { Avatar } from '@/components/ui/avatar';
 import { api, getStoredUserId } from '@/lib/api/client';
 import { formatUciSquares, toBrazilianSan } from '@/lib/notation';
 import { usePieceTheme } from '@/lib/piece-theme';
@@ -100,14 +101,20 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
   const opponentName =
     state?.players.find((player) => player.color === opponentColor)?.displayName || 'Bot';
   const currentMoveAnalysis = analysis?.moves.find((move) => move.ply === ply) ?? null;
-  const summaryColumns: Array<{ color: 'white' | 'black'; label: string }> = myColor
+  const avatarForColor = (color: 'white' | 'black') =>
+    state?.players.find((player) => player.color === color)?.avatarUrl ?? null;
+  const summaryColumns: Array<{
+    avatarUrl: string | null;
+    color: 'white' | 'black';
+    label: string;
+  }> = myColor
     ? [
-        { color: myColor, label: 'Eu' },
-        { color: opponentColor, label: opponentName },
+        { avatarUrl: avatarForColor(myColor), color: myColor, label: 'Eu' },
+        { avatarUrl: avatarForColor(opponentColor), color: opponentColor, label: opponentName },
       ]
     : [
-        { color: 'white', label: 'Brancas' },
-        { color: 'black', label: 'Pretas' },
+        { avatarUrl: avatarForColor('white'), color: 'white', label: 'Brancas' },
+        { avatarUrl: avatarForColor('black'), color: 'black', label: 'Pretas' },
       ];
 
   const { voiceName, reviewNarrationEnabled, setReviewNarrationEnabled } = useVoicePreference();
@@ -203,9 +210,12 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
         <p role="status">{message || ANALYSIS_STATUS_LABEL[analysis?.status ?? 'pending']}</p>
         {analysis?.summary ? (
           <section className="reviewSummaryColumns">
-            {summaryColumns.map(({ color, label }) => (
+            {summaryColumns.map(({ avatarUrl, color, label }) => (
               <div className="reviewSummaryColumn" key={color}>
-                <h2>{label}</h2>
+                <h2>
+                  <Avatar avatarUrl={avatarUrl} name={label} />
+                  {label}
+                </h2>
                 <div className="reviewSummaryRows">
                   {QUALITY_ROWS.map((row) => (
                     <div className="reviewSummaryRow" key={row.key}>

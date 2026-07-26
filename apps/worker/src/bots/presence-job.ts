@@ -30,6 +30,7 @@ export async function runPresenceSchedule(
   const minuteOfDay = now.getUTCHours() * 60 + now.getUTCMinutes();
 
   const pipeline = redis.pipeline();
+  const onlineUserIds: string[] = [];
   let online = 0;
   let offline = 0;
   for (const row of rows) {
@@ -39,6 +40,7 @@ export async function runPresenceSchedule(
         : row.onlineWindows;
     if (isWithinSchedule(windows, minuteOfDay)) {
       pipeline.set(presenceKey(row.userId), '1', 'EX', PRESENCE_TTL_SECONDS);
+      onlineUserIds.push(row.userId);
       online += 1;
     } else {
       pipeline.del(presenceKey(row.userId));
@@ -46,5 +48,14 @@ export async function runPresenceSchedule(
     }
   }
   if (rows.length > 0) await pipeline.exec();
+  // Real users get users.last_seen_at touched on every /presence/heartbeat
+  // call; bots never make that HTTP call, so without this their column
+  // stays NULL forever and friends see "nunca esteve online" even for a bot
+  // that was online moments ago (formatLastSeen's null fallback).
+  if (onlineUserIds.length > 0) {
+    await sql`
+      UPDATE users SET last_seen_at = now() WHERE id = ANY(${onlineUserIds})
+    `;
+  }
   return { offline, online };
 }

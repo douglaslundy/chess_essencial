@@ -3,6 +3,7 @@
 import type { AdminUser } from '@xadrez/contracts';
 import { useCallback, useEffect, useState } from 'react';
 
+import { Avatar } from '@/components/ui/avatar';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { api } from '@/lib/api/client';
 
@@ -84,6 +85,7 @@ export default function AdminUsersPage() {
         {users.map((user) => (
           <div className="adminUserRow" role="row" key={user.id}>
             <div>
+              <Avatar avatarUrl={user.avatarUrl} name={user.displayName ?? user.username} />
               <strong>{user.username}</strong>
               {user.isAdmin ? <span className="adminBadge">admin</span> : null}
               <span className="adminUserEmail">{user.email}</span>
