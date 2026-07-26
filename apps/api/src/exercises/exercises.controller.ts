@@ -23,6 +23,11 @@ export class ExercisesController {
     return this.exercises.search(parseInput(exerciseSearchQuerySchema, query));
   }
 
+  @Get('exercises/challenge-themes')
+  listChallengeThemes(@Req() request: AuthenticatedRequest) {
+    return this.exercises.listChallengeThemes(request.auth.userId);
+  }
+
   @Post('exercise-training-sessions')
   startTraining(@Req() request: AuthenticatedRequest, @Body() body: unknown) {
     return this.exercises.startTraining(

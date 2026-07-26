@@ -1398,6 +1398,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/exercises/challenge-themes': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List catalogued challenge themes with remaining counts for the current user */
+    get: operations['listChallengeThemes'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/exercises/{exerciseId}/attempts': {
     parameters: {
       query?: never;
@@ -1577,8 +1594,13 @@ export interface components {
       positionType?: components['schemas']['ExercisePositionType'];
       /** @enum {string} */
       source?: 'classic' | 'lichess' | 'book';
+      theme?: string;
       /** @default 10 */
       limit: number;
+    };
+    ExerciseTheme: {
+      theme: string;
+      count: number;
     };
     StartExerciseTrainingInput: {
       filters: components['schemas']['ExerciseTrainingFilters'];
@@ -4903,6 +4925,7 @@ export interface operations {
         lessonId?: string;
         positionType?: components['schemas']['ExercisePositionType'];
         source?: 'classic' | 'lichess' | 'book';
+        theme?: string;
         limit?: number;
         offset?: number;
       };
@@ -4922,6 +4945,26 @@ export interface operations {
         };
       };
       400: components['responses']['Problem'];
+    };
+  };
+  listChallengeThemes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Themes with at least one unsolved challenge exercise */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExerciseTheme'][];
+        };
+      };
     };
   };
   submitExerciseAttempt: {

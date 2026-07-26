@@ -33,6 +33,7 @@ import type {
   ExerciseSearchResult,
   ExerciseSolution,
   ExerciseStudyContext,
+  ExerciseTheme,
   ExerciseTrainingView,
   StartExerciseTrainingInput,
   SubmitExerciseAttemptInput,
@@ -354,6 +355,8 @@ export const api = {
     request(`/courses/${courseId}/publish`, token, { method: 'POST' }),
   searchExercises: (query: URLSearchParams, token: string) =>
     request<ExerciseSearchResult>(`/exercises?${query.toString()}`, token),
+  listChallengeThemes: (token: string) =>
+    request<ExerciseTheme[]>('/exercises/challenge-themes', token),
   startExerciseTraining: (input: StartExerciseTrainingInput, token: string) =>
     request<ExerciseTrainingView>('/exercise-training-sessions', token, {
       method: 'POST',

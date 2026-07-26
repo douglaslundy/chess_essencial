@@ -107,6 +107,7 @@ export class ExercisesRepository {
       positionType: query.positionType ?? null,
       q: query.q ?? null,
       source: query.source ?? null,
+      theme: query.theme ?? null,
     };
   }
 
@@ -128,6 +129,7 @@ export class ExercisesRepository {
            WHEN 'book' THEN NOT ('classico' = ANY(e.tags)) AND NOT ('challenge' = ANY(e.tags))
            ELSE true END)
          AND (${filter.q}::text IS NOT NULL OR NOT ('challenge' = ANY(e.tags)))
+         AND (${filter.theme}::text IS NULL OR ${filter.theme} = ANY(e.tags))
          AND (${filter.lessonId}::uuid IS NULL OR EXISTS (
            SELECT 1 FROM lesson_exercises le WHERE le.exercise_id = e.id AND le.lesson_id = ${filter.lessonId}
          ))
@@ -152,6 +154,7 @@ export class ExercisesRepository {
            WHEN 'book' THEN NOT ('classico' = ANY(e.tags)) AND NOT ('challenge' = ANY(e.tags))
            ELSE true END)
          AND (${filter.q}::text IS NOT NULL OR NOT ('challenge' = ANY(e.tags)))
+         AND (${filter.theme}::text IS NULL OR ${filter.theme} = ANY(e.tags))
          AND (${filter.lessonId}::uuid IS NULL OR EXISTS (
            SELECT 1 FROM lesson_exercises le WHERE le.exercise_id = e.id AND le.lesson_id = ${filter.lessonId}
          ))
@@ -164,6 +167,26 @@ export class ExercisesRepository {
       offset: query.offset,
       total: count?.total ?? 0,
     };
+  }
+
+  // Themes are catalogued tags (e.g. "garfo", "mate_em_dois") shared by both
+  // the hand-curated and the Lichess-imported challenge exercises; structural
+  // tags that only describe provenance, not tactical content, are excluded.
+  async listChallengeThemes(userId: string) {
+    const sql = this.database.client;
+    const rows = await sql<{ count: number; tag: string }[]>`
+      SELECT tag, count(*)::integer AS count
+        FROM exercises e, unnest(e.tags) AS tag
+       WHERE e.status = 'published' AND 'challenge' = ANY(e.tags)
+         AND tag NOT IN ('challenge', 'lichess', 'classico')
+         AND NOT EXISTS (
+           SELECT 1 FROM exercise_attempts a
+            WHERE a.exercise_id = e.id AND a.user_id = ${userId} AND a.correct = true
+         )
+       GROUP BY tag
+       ORDER BY count DESC, tag
+    `;
+    return rows.map((row) => ({ count: row.count, theme: row.tag }));
   }
 
   async startTraining(userId: string, filters: ExerciseTrainingFilters) {
@@ -201,6 +224,7 @@ export class ExercisesRepository {
                  WHEN 'book' THEN NOT ('classico' = ANY(e.tags)) AND NOT ('challenge' = ANY(e.tags))
                  ELSE true END)
                AND (${filter.q}::text IS NOT NULL OR NOT ('challenge' = ANY(e.tags)))
+         AND (${filter.theme}::text IS NULL OR ${filter.theme} = ANY(e.tags))
                AND NOT EXISTS (
                  SELECT 1 FROM exercise_attempts a
                   WHERE a.exercise_id = e.id AND a.user_id = ${userId} AND a.correct = true

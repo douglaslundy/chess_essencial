@@ -72,11 +72,13 @@ const submitExerciseAttempt = vi.fn();
 const evaluateExerciseLine = vi.fn();
 const getExerciseTraining = vi.fn();
 const getExerciseStudy = vi.fn();
+const listChallengeThemes = vi.fn();
 
 vi.mock('@/lib/api/client', () => ({
   api: {
     getExerciseMetrics: (...args: unknown[]) => getExerciseMetrics(...args),
     getExerciseTraining: (...args: unknown[]) => getExerciseTraining(...args),
+    listChallengeThemes: (...args: unknown[]) => listChallengeThemes(...args),
     revealExerciseHint: vi.fn(),
     revealExerciseSolution: vi.fn(),
     searchExercises: (...args: unknown[]) => searchExercises(...args),
@@ -150,6 +152,7 @@ describe('ExerciseTrainer guided auto-grading modal', () => {
     nextBoardMove = 'e2e4';
     getExerciseMetrics.mockResolvedValue(emptyMetrics);
     startExerciseTraining.mockResolvedValue(trainingView());
+    listChallengeThemes.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -162,6 +165,35 @@ describe('ExerciseTrainer guided auto-grading modal', () => {
     render(<ExerciseTrainer guided />);
     await screen.findByText('Jogue o melhor lance para as brancas.');
   }
+
+  it('lets the learner pick a catalogued theme, starting a fresh themed batch', async () => {
+    listChallengeThemes.mockResolvedValue([
+      { count: 343, theme: 'garfo' },
+      { count: 1206, theme: 'mate_em_dois' },
+    ]);
+    render(<ExerciseTrainer guided showThemeFilter />);
+    await screen.findByText('Jogue o melhor lance para as brancas.');
+
+    const select = await screen.findByLabelText('Tema tático');
+    expect(screen.getByRole('option', { name: 'Garfo (343)' })).toBeTruthy();
+
+    const secondExercise = {
+      ...trainingView().currentExercise!,
+      id: '99000000-0000-4000-8000-000000000030',
+      promptMd: 'Encontre o garfo.',
+    };
+    startExerciseTraining.mockResolvedValueOnce({
+      ...trainingView(),
+      currentExercise: secondExercise,
+    });
+    fireEvent.change(select, { target: { value: 'garfo' } });
+
+    await screen.findByText('Encontre o garfo.');
+    expect(startExerciseTraining).toHaveBeenLastCalledWith(
+      expect.objectContaining({ filters: expect.objectContaining({ theme: 'garfo' }) }),
+      'test-token',
+    );
+  });
 
   it('offers a hint button when the exercise has hints', async () => {
     await renderGuided();

@@ -47,5 +47,7 @@ pnpm --filter @xadrez/api db:rollback
 
 `0032_game_narrations.down.sql` drops `game_narrations` (derived data, recomputable by re-running the worker's narration job) and `move_narration_cache` (a reusable cross-game cache, safe to lose and rebuild on demand).
 
+`0033_lichess_into_challenges.down.sql` just removes the `challenge` tag it added; no other data is touched, so it's fully reversible.
+
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.

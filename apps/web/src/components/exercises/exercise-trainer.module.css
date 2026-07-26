@@ -85,6 +85,21 @@
   background: #e5c56f;
   color: #1c1917;
 }
+.themeFilter {
+  display: grid;
+  justify-self: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.themeFilter select {
+  border: 1px solid #52525b;
+  background: #09090b;
+  color: #fff;
+  border-radius: 0.6rem;
+  min-height: 2.6rem;
+  padding: 0.6rem 0.75rem;
+}
 .filters {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 0.7fr auto auto;

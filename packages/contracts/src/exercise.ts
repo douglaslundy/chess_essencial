@@ -18,6 +18,12 @@ export const exerciseSearchQuerySchema = z.object({
   positionType: exercisePositionTypeSchema.optional(),
   q: z.string().trim().min(1).max(120).optional(),
   source: z.enum(['classic', 'lichess', 'book']).optional(),
+  theme: z.string().trim().min(1).max(60).optional(),
+});
+
+export const exerciseThemeSchema = z.object({
+  count: z.number().int().nonnegative(),
+  theme: z.string(),
 });
 
 export const exerciseSummarySchema = z.object({
@@ -149,6 +155,7 @@ export type ExerciseSearchResult = z.infer<typeof exerciseSearchResultSchema>;
 export type ExerciseSolution = z.infer<typeof exerciseSolutionSchema>;
 export type ExerciseStudyContext = z.infer<typeof exerciseStudyContextSchema>;
 export type ExerciseSummary = z.infer<typeof exerciseSummarySchema>;
+export type ExerciseTheme = z.infer<typeof exerciseThemeSchema>;
 export type ExerciseTrainingFilters = z.infer<typeof exerciseTrainingFiltersSchema>;
 export type ExerciseTrainingView = z.infer<typeof exerciseTrainingViewSchema>;
 export type StartExerciseTrainingInput = z.infer<typeof startExerciseTrainingInputSchema>;

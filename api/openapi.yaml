@@ -1415,6 +1415,7 @@ paths:
         - {name: lessonId, in: query, schema: {type: string, format: uuid}}
         - {name: positionType, in: query, schema: {$ref: '#/components/schemas/ExercisePositionType'}}
         - {name: source, in: query, schema: {type: string, enum: [classic, lichess, book]}}
+        - {name: theme, in: query, schema: {type: string, maxLength: 60}}
         - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
         - {name: offset, in: query, schema: {type: integer, minimum: 0, default: 0}}
       responses:
@@ -1424,6 +1425,16 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/ExerciseSearchResult'}
         '400': {$ref: '#/components/responses/Problem'}
+  /exercises/challenge-themes:
+    get:
+      summary: List catalogued challenge themes with remaining counts for the current user
+      operationId: listChallengeThemes
+      responses:
+        '200':
+          description: Themes with at least one unsolved challenge exercise
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/ExerciseTheme'}}
   /exercises/{exerciseId}/attempts:
     post:
       summary: Submit a server-evaluated exercise attempt
@@ -1600,7 +1611,14 @@ components:
         lessonId: {type: string, format: uuid}
         positionType: {$ref: '#/components/schemas/ExercisePositionType'}
         source: {type: string, enum: [classic, lichess, book]}
+        theme: {type: string, maxLength: 60}
         limit: {type: integer, minimum: 1, maximum: 50, default: 10}
+    ExerciseTheme:
+      type: object
+      required: [theme, count]
+      properties:
+        theme: {type: string}
+        count: {type: integer, minimum: 0}
     StartExerciseTrainingInput:
       type: object
       required: [filters]

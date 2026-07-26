@@ -5,6 +5,7 @@ import type {
   ExerciseSearchResult,
   ExerciseSolution,
   ExerciseStudyContext,
+  ExerciseTheme,
   ExerciseTrainingView,
 } from '@xadrez/contracts';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -51,11 +52,21 @@ function moveToUci(move: { from: string; promotion?: string | undefined; to: str
 
 type ExerciseSource = 'all' | 'classic' | 'lichess' | 'book';
 
-// Each source filter (Todos/Clássicos/Livro) keeps its own session so
-// switching tabs and coming back resumes where the learner left off,
-// instead of starting a brand-new disposable batch every time.
-function sourceStorageKey(storageKey: string, src: ExerciseSource) {
-  return `${storageKey}:${src}`;
+// Each source/theme combination (Todos/Clássicos/Livro × tema tático) keeps
+// its own session so switching tabs and coming back resumes where the
+// learner left off, instead of starting a brand-new disposable batch every
+// time.
+function sessionStorageKey(storageKey: string, src: ExerciseSource, themeTag: string) {
+  return `${storageKey}:${src}:${themeTag || 'all'}`;
+}
+
+// Theme tags are catalogued as snake_case (e.g. "peca_pendurada"); this is a
+// mechanical formatter, not invented copy.
+function formatThemeLabel(tag: string) {
+  return tag
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
 interface ExerciseTrainerProps {
@@ -65,6 +76,7 @@ interface ExerciseTrainerProps {
   initialQuery?: string;
   positionType?: 'legal_position' | 'illustrative_diagram' | 'text_only';
   showSourceFilter?: boolean;
+  showThemeFilter?: boolean;
   storageKey?: string;
   title?: string;
 }
@@ -76,6 +88,7 @@ export function ExerciseTrainer({
   initialQuery = '',
   positionType,
   showSourceFilter = false,
+  showThemeFilter = false,
   storageKey = 'xadrez.challenge_training_session',
   title = 'Exercícios de Xadrez Essencial',
 }: ExerciseTrainerProps = {}) {
@@ -85,6 +98,8 @@ export function ExerciseTrainer({
   const [moduleNumber, setModuleNumber] = useState('');
   const [query, setQuery] = useState(initialQuery);
   const [source, setSource] = useState<ExerciseSource>('all');
+  const [theme, setTheme] = useState('');
+  const [themes, setThemes] = useState<ExerciseTheme[]>([]);
   const [result, setResult] = useState(emptySearch);
   const [metrics, setMetrics] = useState(emptyMetrics);
   const [training, setTraining] = useState<ExerciseTrainingView | null>(null);
@@ -121,7 +136,7 @@ export function ExerciseTrainer({
   }
 
   const filters = useCallback(
-    (overrides?: { source?: ExerciseSource }) => {
+    (overrides?: { source?: ExerciseSource; theme?: string }) => {
       const value = new URLSearchParams();
       if (query.trim()) value.set('q', query.trim());
       if (category.trim()) value.set('category', category.trim());
@@ -130,9 +145,11 @@ export function ExerciseTrainer({
       if (positionType) value.set('positionType', positionType);
       const effectiveSource = overrides?.source ?? source;
       if (effectiveSource !== 'all') value.set('source', effectiveSource);
+      const effectiveTheme = overrides?.theme ?? theme;
+      if (effectiveTheme) value.set('theme', effectiveTheme);
       return value;
     },
-    [category, difficulty, moduleNumber, positionType, query, source],
+    [category, difficulty, moduleNumber, positionType, query, source, theme],
   );
 
   function resetAttemptUi() {
@@ -168,10 +185,11 @@ export function ExerciseTrainer({
   }, [guided, load]);
 
   const startTraining = useCallback(
-    async (overrides?: { source?: ExerciseSource }) => {
+    async (overrides?: { source?: ExerciseSource; theme?: string }) => {
       const accessToken = token();
       if (!accessToken) return;
       const effectiveSource = overrides?.source ?? source;
+      const effectiveTheme = overrides?.theme ?? theme;
       const search = filters(overrides);
       const parsedModule = search.get('module');
       try {
@@ -192,6 +210,7 @@ export function ExerciseTrainer({
               ...(search.get('source')
                 ? { source: search.get('source') as 'classic' | 'lichess' | 'book' }
                 : {}),
+              ...(search.get('theme') ? { theme: search.get('theme')! } : {}),
             },
           },
           accessToken,
@@ -199,7 +218,7 @@ export function ExerciseTrainer({
         setTraining(value);
         if (guided) {
           window.localStorage.setItem(
-            sourceStorageKey(storageKey, effectiveSource),
+            sessionStorageKey(storageKey, effectiveSource, effectiveTheme),
             value.sessionId,
           );
         }
@@ -212,13 +231,15 @@ export function ExerciseTrainer({
         setMessage(error instanceof Error ? error.message : 'Falha ao iniciar treino.');
       }
     },
-    [filters, guided, source, storageKey],
+    [filters, guided, source, storageKey, theme],
   );
 
-  const resumeOrStartSource = useCallback(
-    async (src: ExerciseSource) => {
+  const resumeOrStart = useCallback(
+    async (overrides: { source?: ExerciseSource; theme?: string }) => {
+      const effectiveSource = overrides.source ?? source;
+      const effectiveTheme = overrides.theme ?? theme;
       const accessToken = token();
-      const key = sourceStorageKey(storageKey, src);
+      const key = sessionStorageKey(storageKey, effectiveSource, effectiveTheme);
       const savedSession = accessToken ? window.localStorage.getItem(key) : null;
       if (accessToken && savedSession) {
         try {
@@ -238,21 +259,44 @@ export function ExerciseTrainer({
           window.localStorage.removeItem(key);
         }
       }
-      await startTraining({ source: src });
+      await startTraining(overrides);
     },
-    [startTraining, storageKey],
+    [startTraining, storageKey, source, theme],
   );
 
   useEffect(() => {
     if (!guided || autoStarted.current) return;
     autoStarted.current = true;
-    // 'all' matches the source state's initial value.
-    queueMicrotask(() => void resumeOrStartSource('all'));
-  }, [guided, resumeOrStartSource]);
+    // 'all'/'' match the source/theme states' initial values.
+    queueMicrotask(() => void resumeOrStart({ source: 'all', theme: '' }));
+  }, [guided, resumeOrStart]);
+
+  useEffect(() => {
+    if (!guided || !showThemeFilter) return;
+    const accessToken = token();
+    if (!accessToken) return;
+    let active = true;
+    api
+      .listChallengeThemes(accessToken)
+      .then((value) => {
+        if (active) setThemes(value);
+      })
+      .catch(() => {
+        if (active) setThemes([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [guided, showThemeFilter]);
 
   function selectSource(next: ExerciseSource) {
     setSource(next);
-    void resumeOrStartSource(next);
+    void resumeOrStart({ source: next, theme });
+  }
+
+  function selectTheme(next: string) {
+    setTheme(next);
+    void resumeOrStart({ source, theme: next });
   }
 
   useEffect(
@@ -589,7 +633,6 @@ export function ExerciseTrainer({
             [
               { label: 'Todos', value: 'all' },
               { label: 'Mates clássicos', value: 'classic' },
-              { label: 'Banco Lichess', value: 'lichess' },
               { label: 'Livro', value: 'book' },
             ] as const
           ).map((option) => (
@@ -603,6 +646,20 @@ export function ExerciseTrainer({
             </button>
           ))}
         </div>
+      ) : null}
+
+      {guided && showThemeFilter ? (
+        <label className={styles.themeFilter}>
+          Tema tático
+          <select onChange={(event) => selectTheme(event.target.value)} value={theme}>
+            <option value="">Todos os temas</option>
+            {themes.map((option) => (
+              <option key={option.theme} value={option.theme}>
+                {formatThemeLabel(option.theme)} ({option.count})
+              </option>
+            ))}
+          </select>
+        </label>
       ) : null}
 
       {!guided ? (

@@ -68,6 +68,19 @@ describeDatabase('exercise runtime database integration', () => {
       RETURNING id
     `;
     textualExerciseId = textualExercise!.id;
+    await sql`
+      INSERT INTO exercises (
+        external_id, source_number, module_number, chapter_number, title, prompt_md,
+        solution_md, difficulty, category, fen, side_to_move, solution_lines, hints,
+        tags, status, position_type
+      ) VALUES (
+        'phase-18-theme-integration', 1301, 1, 1, 'Tema de teste', 'Encontre o lance.',
+        'e2e4', 'beginner', 'theme_test', '8/8/8/8/8/8/4P3/4K2k w - - 0 1', 'white',
+        '[ ["e2e4"] ]'::jsonb, '[]'::jsonb,
+        ARRAY['challenge', 'tema_teste_e2e'], 'published', 'legal_position'
+      )
+      ON CONFLICT (external_id) DO UPDATE SET updated_at = now()
+    `;
   });
 
   afterAll(async () => {
@@ -358,5 +371,35 @@ describeDatabase('exercise runtime database integration', () => {
       url: `/v1/exercise-training-sessions/${sessionId}`,
     });
     expect(session.json()).toMatchObject({ position: 1, status: 'started' });
+  });
+
+  it('filters the search by catalogued theme tag', async () => {
+    const response = await app.inject({
+      headers: auth(),
+      method: 'GET',
+      url: '/v1/exercises?theme=tema_teste_e2e',
+    });
+    expect(response.statusCode, response.body).toBe(200);
+    expect(response.json().items.map((item: { title?: string }) => item.title)).toContain(
+      'Tema de teste',
+    );
+  });
+
+  it('lists catalogued challenge themes with unsolved counts', async () => {
+    const response = await app.inject({
+      headers: auth(),
+      method: 'GET',
+      url: '/v1/exercises/challenge-themes',
+    });
+    expect(response.statusCode, response.body).toBe(200);
+    expect(response.json()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ theme: 'tema_teste_e2e', count: expect.any(Number) }),
+      ]),
+    );
+    const entry = response
+      .json()
+      .find((item: { theme: string }) => item.theme === 'tema_teste_e2e');
+    expect(entry.count).toBeGreaterThanOrEqual(1);
   });
 });

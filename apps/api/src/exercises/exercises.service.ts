@@ -16,6 +16,10 @@ export class ExercisesService {
     return this.exercises.search(query);
   }
 
+  listChallengeThemes(userId: string) {
+    return this.exercises.listChallengeThemes(userId);
+  }
+
   startTraining(userId: string, input: StartExerciseTrainingInput) {
     return this.exercises.startTraining(userId, input.filters);
   }
