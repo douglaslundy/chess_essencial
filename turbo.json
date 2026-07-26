@@ -23,6 +23,7 @@
     "API_PORT",
     "DATABASE_URL",
     "NODE_ENV",
+    "EXPO_PUBLIC_API_URL",
     "NEXT_PUBLIC_API_URL",
     "PORT",
     "REDIS_URL",

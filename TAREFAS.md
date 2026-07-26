@@ -139,15 +139,26 @@ Ordem aprovada pelo usuário: A→I, com SMTP e config de pagamento inseridos no
 - [x] **SP-I — Checkout de assinatura via Mercado Pago (2026-07-24).** Fluxo completo: `GET /subscription-plans` (catálogo público, só planos ativos) → página `/app/planos` → `POST /me/subscription/checkout` cria uma assinatura `pending` local (id vira o `external_reference` do Mercado Pago) e chama a API de Preapproval (assinaturas recorrentes) do Mercado Pago, devolvendo o `init_point` pra redirecionar o usuário → `POST /webhooks/mercado-pago` (rota pública, sem guard de sessão — é o Mercado Pago chamando) recebe a notificação, **verifica a assinatura HMAC-SHA256** (`x-signature`/`x-request-id`, formato documentado pelo Mercado Pago) contra um `webhookSecret` novo nas configurações admin (`/app/admin/mercado-pago`) — sem o secret configurado, o webhook recusa tudo (nunca aceita confirmação de pagamento sem verificar assinatura) — e então busca o preapproval completo na API deles e ativa/cancela a assinatura local. Migration `0027` adiciona o status `pending` à tabela `user_subscriptions` (fica fora do índice único de "uma ativa por usuário", que só cobre `status='active'`). Testes novos cobrem a verificação de assinatura (aceita válida, rejeita secret errado, rejeita payload adulterado, rejeita sem header, rejeita sem secret configurado).
   - **Importante, sem verificação ponta a ponta**: não há como testar contra o Mercado Pago de verdade nesta sessão (sem credenciais sandbox configuradas nem acesso de rede pra simular o webhook deles). A lógica foi implementada com o máximo de fidelidade possível ao formato documentado da API de Preapproval e do esquema de assinatura de webhook, mas **precisa ser validada pelo usuário** com uma conta sandbox real (criar credenciais de teste no painel do Mercado Pago, configurar em `/app/admin/mercado-pago` incluindo o webhook secret, apontar a URL de notificação pra `https://chess.dlsistemas.com.br/v1/webhooks/mercado-pago`, e fazer uma assinatura de teste de ponta a ponta) antes de confiar nisso em produção com dinheiro real.
 
-## Fase 18 — Aplicativo mobile (P2; exige decisão)
+## Fase 18 — Aplicativo mobile (P2)
 
 ### Objetivo
 
 Escolher a tecnologia e o escopo do primeiro aplicativo após as Fases 15 e 16.
 
-### Gate de decisão
+### Gate de decisão — RESOLVIDO em 2026-07-26
 
-Não iniciar sem aprovação explícita de tecnologia, plataformas alvo, distribuição e escopo do MVP mobile.
+Decisões do usuário, por pergunta direta:
+
+- **Tecnologia**: React Native / Expo (reaproveita `packages/contracts`/`packages/sdk` já TypeScript e o conhecimento de React já usado no site).
+- **Plataformas**: Android e iOS simultaneamente.
+- **Escopo do MVP**: paridade completa com o site (todas as áreas: jogo, curso/exercícios, social).
+- **Distribuição**: usuário ainda não tem conta de desenvolvedor Apple nem Google — desenvolvimento segue sem publicar; ele cria as contas mais adiante, antes de qualquer lançamento real nas lojas.
+
+### Entregáveis
+
+- [x] **Projeto Expo/React Native criado, sem publicar (2026-07-26).** `apps/mobile` (`@xadrez/mobile`), scaffold via `create-expo-app` (Expo Router, TypeScript), integrado ao workspace pnpm com dependência direta de `@xadrez/contracts`/`@xadrez/sdk` (mesmos schemas Zod do site, zero duplicação de tipos). Removidas as telas/assets de tutorial do template (abas de exemplo, ícone animado, badge web) — como o escopo é só Android/iOS, também saíram `react-native-web`/`react-dom` e o bloco `web` do `app.json`. Primeira fatia vertical real: tela de login (rota raiz, alterna para a tela inicial conforme o estado de sessão) chamando a API de verdade (`POST /auth/login`, `GET /me`), sessão persistida com `expo-secure-store` (não `AsyncStorage`, por guardar tokens), e um `AuthProvider`/`useAuth()` que decide entre tela de login e tela inicial. Cliente HTTP (`src/lib/api/client.ts`) espelha o formato do `apps/web/src/lib/api/client.ts` (mesma lógica de refresh automático em 401), trocando `localStorage` por `expo-secure-store`. `pnpm --filter @xadrez/mobile typecheck`/`lint` passam e entraram no pipeline do turbo (adicionado `EXPO_PUBLIC_API_URL` ao `globalEnv`).
+  - **Sem publicação nas lojas ainda**: por decisão do usuário (Fase 18, gate resolvido acima), o app roda via Expo Go/simulador/emulador; ele ainda não tem conta de desenvolvedor Apple nem Google.
+  - **Escopo "Tudo (paridade completa com o site)" é grande demais para uma sessão só** — construção é incremental. Login é só a base; faltam as áreas de jogo (tabuleiro, matchmaking, tempo real), curso/exercícios e social (feed, amigos, mensagens, ranking) — cada uma exigirá adaptar os componentes web (React DOM) para primitivas React Native, já que não há reaproveitamento direto de JSX entre web e mobile, só de contratos/tipos e lógica pura de domínio (`packages/chess-domain`).
 
 ## Fase 19 — Motor de xadrez real (pré-requisito compartilhado das Fases 20 e 21)
 
