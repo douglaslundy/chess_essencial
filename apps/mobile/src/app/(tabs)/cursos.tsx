@@ -4,19 +4,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { useAuth } from '@/lib/auth/auth-context';
 
-export function HomeScreen() {
-  const { logout, user } = useAuth();
-
+export default function CursosScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title">Olá, {user?.profile.displayName}</ThemedText>
-        <ThemedText type="small">@{user?.username}</ThemedText>
-        <ThemedText onPress={() => void logout()} type="linkPrimary">
-          Sair
-        </ThemedText>
+        <ThemedText type="title">Cursos</ThemedText>
+        <ThemedText type="small">Em breve: aulas do curso e exercícios/desafios.</ThemedText>
       </SafeAreaView>
     </ThemedView>
   );
@@ -31,5 +25,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.three,
+    paddingHorizontal: Spacing.four,
   },
 });

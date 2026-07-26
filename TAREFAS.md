@@ -109,7 +109,7 @@ Concluídos depois (todos deployados):
 Pendências restantes:
 
 - [x] **Aulas — botão "aula anterior"/navegação prev/next entre aulas (2026-07-24).** API (`GET /v1/lessons/:id`) agora expõe `previousLessonId` além do já existente `nextLessonId`, calculado na mesma CTE ordenada por `course_modules.position, lessons.position` (`lesson-runtime.repository.ts`). Frontend (`lesson-player.tsx`) ganhou uma barra de navegação "← Aula anterior / Próxima aula →" visível durante toda a aula (antes só existia o link de próxima aula na tela de conclusão, que continua lá também).
-- [ ] **SMTP real:** UI de configuração pronta (ver acima); falta o usuário inserir credenciais SMTP reais em produção para os e-mails passarem a sair de fato.
+- [x] **SMTP real:** UI de configuração pronta (ver acima); usuário optou por inserir as credenciais SMTP reais em produção diretamente, sem precisar de trabalho de código adicional — nada pendente do lado de desenvolvimento.
 
 ### Lote 2 — rede social, bots, monetização (2026-07-22/23)
 

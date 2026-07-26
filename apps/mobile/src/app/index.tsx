@@ -1,11 +1,10 @@
+import { Redirect } from 'expo-router';
 import { ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/auth-context';
-import { HomeScreen } from '@/screens/home-screen';
-import { LoginScreen } from '@/screens/login-screen';
 
 export default function Index() {
   const { isLoading, user } = useAuth();
@@ -20,7 +19,7 @@ export default function Index() {
     );
   }
 
-  return user ? <HomeScreen /> : <LoginScreen />;
+  return <Redirect href={user ? '/(tabs)/jogar' : '/(auth)/login'} />;
 }
 
 const styles = StyleSheet.create({
