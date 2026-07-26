@@ -7,7 +7,7 @@ import type {
 } from '@xadrez/contracts';
 import type { Square } from 'chess.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ChessBoard } from '@/components/chess-board';
@@ -15,6 +15,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/auth-context';
+import { useTheme } from '@/hooks/use-theme';
 import { GameApiProblem, gameApi } from '@/lib/api/game';
 import { getRealtimeAccessToken } from '@/lib/api/client';
 import { getAccessToken } from '@/lib/api/session';
@@ -29,16 +30,38 @@ const DIFFICULTIES: { label: string; value: BotDifficulty }[] = [
   { label: 'Especialista', value: 'expert' },
 ];
 
-const TIME_CONTROLS: { label: string; value: TimeControlCode }[] = [
-  { label: 'Bullet 1+0', value: 'bullet-1-0' },
-  { label: 'Bullet 2+1', value: 'bullet-2-1' },
-  { label: 'Blitz 3+0', value: 'blitz-3-0' },
-  { label: 'Blitz 3+2', value: 'blitz-3-2' },
-  { label: 'Rápida 10+0', value: 'rapid-10-0' },
-  { label: 'Rápida 15+10', value: 'rapid-15-10' },
-  { label: 'Clássica 30+0', value: 'classical-30-0' },
-  { label: 'Sem tempo', value: 'untimed' },
+// Same grouping as apps/web/src/app/app/jogar/page.tsx's GroupedListbox data
+// (pool -> options), rendered here as a modal picker with section headers
+// instead of a flat chip row.
+const TIME_CONTROLS: { code: TimeControlCode; detail: string; label: string; pool: string }[] = [
+  { code: 'bullet-1-0', detail: 'Ultrarrápida · 1 min', label: '1 + 0', pool: 'Bullet' },
+  { code: 'bullet-2-1', detail: 'Ultrarrápida · +1s/lance', label: '2 + 1', pool: 'Bullet' },
+  { code: 'blitz-3-0', detail: 'Muito rápida · 3 min', label: '3 + 0', pool: 'Blitz' },
+  { code: 'blitz-3-2', detail: 'Muito rápida · +2s/lance', label: '3 + 2', pool: 'Blitz' },
+  { code: 'rapid-10-0', detail: 'Mais tempo para pensar', label: '10 + 0', pool: 'Rápida' },
+  { code: 'rapid-15-10', detail: 'Reflexiva · +10s/lance', label: '15 + 10', pool: 'Rápida' },
+  {
+    code: 'classical-30-0',
+    detail: 'Longa e profunda · 30 min',
+    label: '30 + 0',
+    pool: 'Clássica',
+  },
+  {
+    code: 'untimed',
+    detail: 'Jogo livre, sem relógio · não ranqueado',
+    label: 'Sem tempo',
+    pool: 'Livre',
+  },
 ];
+
+const TIME_CONTROL_POOLS = Array.from(
+  TIME_CONTROLS.reduce((pools, control) => {
+    const group = pools.get(control.pool) ?? [];
+    group.push(control);
+    pools.set(control.pool, group);
+    return pools;
+  }, new Map<string, typeof TIME_CONTROLS>()),
+).map(([pool, options]) => ({ options, pool }));
 
 const POLL_INTERVAL_MS = 3000;
 
@@ -56,6 +79,7 @@ function resultMessage(state: GameState, myUserId: string | undefined) {
 
 export default function JogarScreen() {
   const { user } = useAuth();
+  const theme = useTheme();
   const [mode, setMode] = useState<LobbyMode>('bot');
   const [game, setGame] = useState<GameState | null>(null);
   const [message, setMessage] = useState('');
@@ -63,6 +87,7 @@ export default function JogarScreen() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [timeControl, setTimeControl] = useState<TimeControlCode>('rapid-10-0');
+  const [timeControlPickerOpen, setTimeControlPickerOpen] = useState(false);
   const [searchingOnline, setSearchingOnline] = useState(false);
 
   const [challenges, setChallenges] = useState<DirectChallengesView | null>(null);
@@ -308,6 +333,9 @@ export default function JogarScreen() {
     setChallengeFriendId(null);
   }
 
+  const selectedTimeControl =
+    TIME_CONTROLS.find((option) => option.code === timeControl) ?? TIME_CONTROLS[0]!;
+
   if (game) {
     const myColor = game.players.find((player) => player.userId === user?.id)?.color ?? 'white';
     const isMyTurn = game.status === 'active' && game.sideToMove === myColor;
@@ -416,20 +444,58 @@ export default function JogarScreen() {
           ))}
         </View>
 
-        <View style={styles.timeControlRow}>
-          {TIME_CONTROLS.map((option) => (
-            <Pressable
-              key={option.value}
-              onPress={() => setTimeControl(option.value)}
-              style={[
-                styles.timeControlChip,
-                timeControl === option.value && styles.timeControlChipActive,
-              ]}
-            >
-              <ThemedText type="small">{option.label}</ThemedText>
+        <Pressable onPress={() => setTimeControlPickerOpen(true)} style={styles.timeControlButton}>
+          <ThemedText themeColor="textSecondary" type="small">
+            Controle de tempo
+          </ThemedText>
+          <ThemedText type="smallBold">
+            {selectedTimeControl.pool} {selectedTimeControl.label}
+          </ThemedText>
+        </Pressable>
+
+        <Modal
+          animationType="slide"
+          onRequestClose={() => setTimeControlPickerOpen(false)}
+          transparent
+          visible={timeControlPickerOpen}
+        >
+          <Pressable onPress={() => setTimeControlPickerOpen(false)} style={styles.overlayBackdrop}>
+            <Pressable onPress={() => undefined} style={styles.pickerCardWrapper}>
+              <ThemedView style={styles.pickerCard} type="backgroundElement">
+                <ThemedText type="subtitle">Controle de tempo</ThemedText>
+                <ScrollView>
+                  {TIME_CONTROL_POOLS.map((group) => (
+                    <View key={group.pool} style={styles.pickerGroup}>
+                      <ThemedText themeColor="textSecondary" type="smallBold">
+                        {group.pool}
+                      </ThemedText>
+                      {group.options.map((option) => (
+                        <Pressable
+                          key={option.code}
+                          onPress={() => {
+                            setTimeControl(option.code);
+                            setTimeControlPickerOpen(false);
+                          }}
+                          style={[
+                            styles.pickerOption,
+                            timeControl === option.code && {
+                              backgroundColor: theme.backgroundSelected,
+                            },
+                          ]}
+                        >
+                          <ThemedText type="smallBold">{option.label}</ThemedText>
+                          <ThemedText themeColor="textSecondary" type="small">
+                            {option.detail}
+                          </ThemedText>
+                        </Pressable>
+                      ))}
+                    </View>
+                  ))}
+                </ScrollView>
+              </ThemedView>
             </Pressable>
-          ))}
-        </View>
+          </Pressable>
+        </Modal>
 
         {mode === 'bot' ? (
           <View style={styles.difficultyList}>
@@ -584,11 +650,41 @@ const styles = StyleSheet.create({
   modeButtonActive: {
     backgroundColor: '#3c87f733',
   },
-  timeControlRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  timeControlButton: {
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    borderColor: '#8888',
+    borderRadius: Spacing.two,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: Spacing.half,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+  },
+  overlayBackdrop: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  pickerCard: {
+    borderTopLeftRadius: Spacing.three,
+    borderTopRightRadius: Spacing.three,
+    gap: Spacing.two,
+    maxHeight: '100%',
+    padding: Spacing.four,
+  },
+  pickerCardWrapper: {
+    maxHeight: '80%',
+    width: '100%',
+  },
+  pickerGroup: {
     gap: Spacing.one,
-    justifyContent: 'center',
+    marginTop: Spacing.three,
+  },
+  pickerOption: {
+    borderRadius: Spacing.two,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.two,
   },
   timeControlChip: {
     borderRadius: Spacing.two,

@@ -6,11 +6,12 @@ import {
   ScrollView,
   StyleSheet,
   TextInput,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
 
-import type { LessonAttemptView } from '@xadrez/contracts';
+import type { LessonAttemptView, PublicLessonStep } from '@xadrez/contracts';
 import { ChessBoard } from '@/components/chess-board';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -36,6 +37,8 @@ export default function LessonScreen() {
   const [attempt, setAttempt] = useState<LessonAttemptView | null>(null);
   const [pendingAttempt, setPendingAttempt] = useState<LessonAttemptView | null>(null);
   const [pendingFeedback, setPendingFeedback] = useState<string | null>(null);
+  const [stepHistory, setStepHistory] = useState<PublicLessonStep[]>([]);
+  const [viewingHistoryIndex, setViewingHistoryIndex] = useState<number | null>(null);
   const [answer, setAnswer] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [advancing, setAdvancing] = useState(false);
@@ -60,7 +63,9 @@ export default function LessonScreen() {
     if (!attempt) return;
     setAdvancing(true);
     try {
-      setAttempt(await coursesApi.submitLessonAction(attempt.attemptId, { type: 'continue' }));
+      const value = await coursesApi.submitLessonAction(attempt.attemptId, { type: 'continue' });
+      if (attempt.currentStep) setStepHistory((current) => [...current, attempt.currentStep!]);
+      setAttempt(value);
     } catch (thrown) {
       setError(thrown instanceof ApiProblem ? thrown.message : 'Falha ao avançar a aula.');
     } finally {
@@ -87,9 +92,30 @@ export default function LessonScreen() {
 
   function acknowledgePending() {
     if (!pendingAttempt) return;
+    if (attempt?.currentStep) setStepHistory((current) => [...current, attempt.currentStep!]);
     setAttempt(pendingAttempt);
     setPendingAttempt(null);
     setPendingFeedback(null);
+  }
+
+  function viewPreviousStep() {
+    setStepHistory((current) => {
+      if (current.length === 0) return current;
+      setViewingHistoryIndex(current.length - 1);
+      return current;
+    });
+  }
+
+  function stepHistoryBack() {
+    setViewingHistoryIndex((index) => (index === null ? null : Math.max(0, index - 1)));
+  }
+
+  function stepHistoryForward() {
+    setViewingHistoryIndex((index) => {
+      if (index === null) return null;
+      if (index + 1 >= stepHistory.length) return null;
+      return index + 1;
+    });
   }
 
   if (error) {
@@ -108,8 +134,9 @@ export default function LessonScreen() {
     );
   }
 
-  const step = attempt.currentStep;
-  const readOnly = Boolean(pendingAttempt);
+  const viewingHistory = viewingHistoryIndex !== null;
+  const step = viewingHistory ? stepHistory[viewingHistoryIndex] : attempt.currentStep;
+  const readOnly = viewingHistory || Boolean(pendingAttempt);
   const showsBoard = step
     ? step.stepType === 'board_instruction' || step.stepType === 'checkpoint'
     : false;
@@ -124,6 +151,32 @@ export default function LessonScreen() {
           <ThemedText themeColor="textSecondary" type="small">
             {attempt.progress.completedSteps} de {attempt.progress.totalSteps} etapas
           </ThemedText>
+
+          {stepHistory.length > 0 ? (
+            <View style={styles.stepNav}>
+              <Pressable
+                disabled={viewingHistory ? viewingHistoryIndex === 0 : stepHistory.length === 0}
+                onPress={viewingHistory ? stepHistoryBack : viewPreviousStep}
+                style={styles.secondaryButton}
+              >
+                <ThemedText type="smallBold">← Passo anterior</ThemedText>
+              </Pressable>
+              {viewingHistory ? (
+                <Pressable onPress={stepHistoryForward} style={styles.secondaryButton}>
+                  <ThemedText type="smallBold">
+                    {viewingHistoryIndex! + 1 < stepHistory.length
+                      ? 'Próximo passo →'
+                      : 'Voltar ao atual →'}
+                  </ThemedText>
+                </Pressable>
+              ) : null}
+            </View>
+          ) : null}
+          {viewingHistory ? (
+            <ThemedText themeColor="textSecondary" type="small">
+              Revisando um passo já concluído.
+            </ThemedText>
+          ) : null}
 
           {!step ? (
             <ThemedText type="title">
@@ -140,12 +193,13 @@ export default function LessonScreen() {
                   onMove={(from, to, promotion) =>
                     void submitEvaluated({ type: 'move', uci: `${from}${to}${promotion ?? ''}` })
                   }
+                  orientation={step.orientation ?? 'white'}
                 />
               ) : null}
 
               <ThemedText type="default">{step.bodyMd}</ThemedText>
 
-              {PASSIVE_STEP_TYPES.has(step.stepType) ? (
+              {PASSIVE_STEP_TYPES.has(step.stepType) && !readOnly ? (
                 <Pressable
                   disabled={advancing}
                   onPress={() => void continueStep()}
@@ -229,6 +283,18 @@ const styles = StyleSheet.create({
   },
   continueButtonPressed: {
     opacity: 0.7,
+  },
+  secondaryButton: {
+    alignItems: 'center',
+    borderColor: '#8888',
+    borderRadius: Spacing.two,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+  },
+  stepNav: {
+    flexDirection: 'row',
+    gap: Spacing.two,
   },
   overlayBackdrop: {
     alignItems: 'center',
