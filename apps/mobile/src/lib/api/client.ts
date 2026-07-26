@@ -69,6 +69,14 @@ async function refreshStoredSession(): Promise<string | null> {
   }
 }
 
+export async function getRealtimeAccessToken(forceRefresh = false): Promise<string | null> {
+  if (!forceRefresh) {
+    const token = await getAccessToken();
+    if (token) return token;
+  }
+  return refreshStoredSession();
+}
+
 async function responseWithRefresh(path: string, token?: string, init?: RequestInit) {
   const storedAccessToken = token ? await getAccessToken() : null;
   const isStoredAccessToken = Boolean(token) && token === storedAccessToken;

@@ -15,9 +15,11 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/auth-context';
-import { GameApiProblem, gameApi, randomMoveId } from '@/lib/api/game';
+import { GameApiProblem, gameApi } from '@/lib/api/game';
+import { getRealtimeAccessToken } from '@/lib/api/client';
 import { getAccessToken } from '@/lib/api/session';
 import { socialApi } from '@/lib/api/social';
+import { GameSocket } from '@/lib/realtime/game-socket';
 
 const DIFFICULTIES: { label: string; value: BotDifficulty }[] = [
   { label: 'Equilibrado (seu nível)', value: 'matched' },
@@ -70,6 +72,10 @@ export default function JogarScreen() {
   const [resignConfirmOpen, setResignConfirmOpen] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
   const queueCancelledRef = useRef(false);
+  const socketRef = useRef<GameSocket | null>(null);
+  const [connection, setConnection] = useState<
+    'connecting' | 'online' | 'reconnecting' | 'offline'
+  >('connecting');
 
   const stopPolling = useCallback(() => {
     if (pollRef.current) clearInterval(pollRef.current);
@@ -78,21 +84,44 @@ export default function JogarScreen() {
 
   useEffect(() => stopPolling, [stopPolling]);
 
-  const startGamePolling = useCallback(
-    (gameId: string) => {
-      stopPolling();
-      pollRef.current = setInterval(() => {
-        gameApi
-          .getGame(gameId)
-          .then((state) => {
-            setGame(state);
-            if (state.status === 'finished') stopPolling();
-          })
-          .catch(() => undefined);
-      }, POLL_INTERVAL_MS);
-    },
-    [stopPolling],
-  );
+  // The in-game connection is a live WebSocket (GameSocket), not polling —
+  // see the effect below keyed on game?.id. This just tracks whether a game
+  // is active; searchOnline/loadChallenges below still poll REST, since the
+  // realtime protocol only covers an already-created game, not matchmaking.
+  useEffect(() => {
+    if (!game) return;
+    setConnection('connecting');
+    const socket = new GameSocket(game.id, getRealtimeAccessToken, game.version, {
+      connection: setConnection,
+      drawOffered: (_offerId, offeredByUserId, snapshot) => {
+        setGame(snapshot);
+        if (offeredByUserId !== user?.id) {
+          setMessage('Seu adversário ofereceu empate. Use "Propor empate" para aceitar.');
+        }
+      },
+      snapshot: (snapshot) => {
+        setGame(snapshot);
+        setMessage('');
+      },
+      move: (snapshot) => {
+        setGame(snapshot);
+        setMessage('');
+      },
+      finished: (snapshot) => {
+        setGame(snapshot);
+      },
+      error: setMessage,
+    });
+    socketRef.current = socket;
+    socket.connect();
+    return () => {
+      socket.stop();
+      socketRef.current = null;
+    };
+    // Reconnecting only when the game identity changes (not on every state
+    // update the socket itself produces) — game.version is only read once,
+    // as the connection's starting point.
+  }, [game?.id]);
 
   async function startBotGame(botDifficulty: BotDifficulty) {
     setStarting(true);
@@ -105,7 +134,6 @@ export default function JogarScreen() {
         timeControlCode: timeControl,
       });
       setGame(state);
-      startGamePolling(state.id);
     } catch (error) {
       setMessage(error instanceof GameApiProblem ? error.message : 'Falha ao iniciar a partida.');
     } finally {
@@ -136,13 +164,12 @@ export default function JogarScreen() {
           const state = await gameApi.getGame(status.gameId);
           if (queueCancelledRef.current) return;
           setGame(state);
-          startGamePolling(state.id);
         }
       } catch {
         // Keep trying on the next tick; a transient failure here isn't fatal.
       }
     }, POLL_INTERVAL_MS);
-  }, [startGamePolling, stopPolling, timeControl]);
+  }, [stopPolling, timeControl]);
 
   async function cancelOnlineSearch() {
     queueCancelledRef.current = true;
@@ -194,7 +221,6 @@ export default function JogarScreen() {
       if (result.gameId) {
         const state = await gameApi.getGame(result.gameId);
         setGame(state);
-        startGamePolling(state.id);
       } else {
         setMessage('Desafio enviado.');
         await loadChallenges();
@@ -213,7 +239,6 @@ export default function JogarScreen() {
       if (result.gameId) {
         const state = await gameApi.getGame(result.gameId);
         setGame(state);
-        startGamePolling(state.id);
       } else {
         await loadChallenges();
       }
@@ -236,20 +261,12 @@ export default function JogarScreen() {
     }
   }
 
-  async function handleMove(from: Square, to: Square, promotion?: string) {
+  // Moves go out over the live WebSocket connection (matches the web app's
+  // approach); the resulting state comes back through the socket's `move`
+  // handler above, not as a direct response here.
+  function handleMove(from: Square, to: Square, promotion?: string) {
     if (!game) return;
-    try {
-      const { state } = await gameApi.submitMove(game.id, {
-        clientMoveId: randomMoveId(),
-        expectedVersion: game.version,
-        uci: `${from}${to}${promotion ?? ''}`,
-      });
-      setGame(state);
-      setMessage('');
-      if (state.status === 'finished') stopPolling();
-    } catch (error) {
-      setMessage(error instanceof GameApiProblem ? error.message : 'Lance não permitido.');
-    }
+    socketRef.current?.submitMove(`${from}${to}${promotion ?? ''}`);
   }
 
   async function handleResign() {
@@ -259,7 +276,6 @@ export default function JogarScreen() {
       const state = await gameApi.resign(game.id);
       setGame(state);
       setMessage('Partida encerrada por desistência.');
-      stopPolling();
     } catch (error) {
       setMessage(error instanceof GameApiProblem ? error.message : 'Falha ao desistir.');
     } finally {
@@ -277,7 +293,6 @@ export default function JogarScreen() {
       setMessage(
         result.accepted ? 'Empate aceito. A partida foi encerrada.' : 'Oferta de empate enviada.',
       );
-      if (result.accepted) stopPolling();
     } catch (error) {
       setMessage(
         error instanceof GameApiProblem ? error.message : 'Não foi possível propor empate.',
@@ -308,6 +323,11 @@ export default function JogarScreen() {
                 ? 'Sua vez'
                 : 'Vez do adversário'}
           </ThemedText>
+          {!isFinished && connection !== 'online' ? (
+            <ThemedText themeColor="textSecondary" type="small">
+              {connection === 'reconnecting' ? 'Reconectando…' : 'Conectando…'}
+            </ThemedText>
+          ) : null}
           <ChessBoard
             disabled={isFinished || !isMyTurn}
             fen={game.currentFen}
