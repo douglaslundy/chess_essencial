@@ -7,6 +7,13 @@ import type {
   Post,
   RatingPool,
 } from '@xadrez/contracts';
+import { Image } from 'expo-image';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
+import {
+  launchImageLibraryAsync,
+  requestMediaLibraryPermissionsAsync,
+  type ImagePickerAsset,
+} from 'expo-image-picker';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,6 +24,23 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getAccessToken } from '@/lib/api/session';
 import { ApiProblem, socialApi } from '@/lib/api/social';
+
+// Resize to a JPEG (max `maxDimension` px on the longer side) and return
+// base64 without the data: prefix — mirrors apps/web/src/app/app/feed/page.tsx's
+// resizeToJpegBase64, just via expo-image-manipulator instead of Canvas.
+async function resizeToJpegBase64(asset: ImagePickerAsset, maxDimension: number): Promise<string> {
+  const scale = Math.min(1, maxDimension / Math.max(asset.width, asset.height));
+  const targetWidth = Math.round(asset.width * scale);
+  const rendered = await ImageManipulator.manipulate(asset.uri)
+    .resize({ width: targetWidth })
+    .renderAsync();
+  const result = await rendered.saveAsync({
+    base64: true,
+    compress: 0.85,
+    format: SaveFormat.JPEG,
+  });
+  return result.base64 ?? '';
+}
 
 type Section = 'feed' | 'friends' | 'messages' | 'ranking';
 
@@ -53,6 +77,7 @@ export default function SocialScreen() {
   const [feedMessage, setFeedMessage] = useState('Carregando…');
   const [loadingMore, setLoadingMore] = useState(false);
   const [composerText, setComposerText] = useState('');
+  const [composerPhoto, setComposerPhoto] = useState<ImagePickerAsset | null>(null);
   const [posting, setPosting] = useState(false);
 
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -188,22 +213,55 @@ export default function SocialScreen() {
     setLoadingMore(false);
   }
 
+  async function pickPhoto() {
+    const permission = await requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setFeedMessage('Permita o acesso às fotos para anexar uma imagem.');
+      return;
+    }
+    const result = await launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
+    if (!result.canceled) setComposerPhoto(result.assets[0] ?? null);
+  }
+
   async function submitPost() {
     const body = composerText.trim();
-    if (!body) return;
+    if (!body && !composerPhoto) return;
     const token = await getAccessToken();
     if (!token) return;
     setPosting(true);
     try {
-      const created = await socialApi.createPost({ body }, token);
+      let photoUrl: string | undefined;
+      if (composerPhoto) {
+        const dataBase64 = await resizeToJpegBase64(composerPhoto, 1024);
+        const uploaded = await socialApi.uploadPostPhoto(
+          { contentType: 'image/jpeg', dataBase64 },
+          token,
+        );
+        photoUrl = uploaded.photoUrl;
+      }
+      const created = await socialApi.createPost({ body: body || undefined, photoUrl }, token);
       setPosts((current) => [created, ...current]);
       setComposerText('');
+      setComposerPhoto(null);
     } catch (error) {
       setFeedMessage(
         error instanceof ApiProblem ? error.message : 'Não foi possível publicar agora.',
       );
     } finally {
       setPosting(false);
+    }
+  }
+
+  async function removePost(postId: string) {
+    const token = await getAccessToken();
+    if (!token) return;
+    try {
+      await socialApi.deletePost(postId, token);
+      setPosts((current) => current.filter((item) => item.id !== postId));
+    } catch (error) {
+      setFeedMessage(
+        error instanceof ApiProblem ? error.message : 'Não foi possível apagar a publicação.',
+      );
     }
   }
 
@@ -304,6 +362,10 @@ export default function SocialScreen() {
 
   const listRef = useRef<FlatList<DirectMessage>>(null);
 
+  useEffect(() => {
+    if (thread.length > 0) listRef.current?.scrollToEnd({ animated: true });
+  }, [thread]);
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
@@ -345,16 +407,34 @@ export default function SocialScreen() {
                   style={[styles.composerInput, { color: theme.text }]}
                   value={composerText}
                 />
-                <Pressable
-                  disabled={posting || !composerText.trim()}
-                  onPress={() => void submitPost()}
-                  style={[
-                    styles.postButton,
-                    (posting || !composerText.trim()) && styles.postButtonDisabled,
-                  ]}
-                >
-                  <ThemedText type="smallBold">{posting ? 'Publicando…' : 'Publicar'}</ThemedText>
-                </Pressable>
+                {composerPhoto ? (
+                  <View>
+                    <Image
+                      contentFit="cover"
+                      source={{ uri: composerPhoto.uri }}
+                      style={styles.composerPhotoPreview}
+                    />
+                    <Pressable onPress={() => setComposerPhoto(null)} style={styles.removePhoto}>
+                      <ThemedText type="smallBold">Remover foto</ThemedText>
+                    </Pressable>
+                  </View>
+                ) : null}
+                <View style={styles.composerActions}>
+                  <Pressable onPress={() => void pickPhoto()} style={styles.secondaryPostButton}>
+                    <ThemedText type="smallBold">📷 Foto</ThemedText>
+                  </Pressable>
+                  <Pressable
+                    disabled={posting || (!composerText.trim() && !composerPhoto)}
+                    onPress={() => void submitPost()}
+                    style={[
+                      styles.postButton,
+                      (posting || (!composerText.trim() && !composerPhoto)) &&
+                        styles.postButtonDisabled,
+                    ]}
+                  >
+                    <ThemedText type="smallBold">{posting ? 'Publicando…' : 'Publicar'}</ThemedText>
+                  </Pressable>
+                </View>
               </View>
             }
             ListEmptyComponent={
@@ -370,11 +450,27 @@ export default function SocialScreen() {
                   {formatPostDate(item.createdAt)}
                 </ThemedText>
                 {item.body ? <ThemedText>{item.body}</ThemedText> : null}
-                <Pressable onPress={() => void likeToggle(item)}>
-                  <ThemedText themeColor={item.likedByMe ? 'text' : 'textSecondary'} type="link">
-                    {item.likedByMe ? '♥' : '♡'} {item.likeCount}
-                  </ThemedText>
-                </Pressable>
+                {item.photoUrl ? (
+                  <Image
+                    contentFit="cover"
+                    source={{ uri: item.photoUrl }}
+                    style={styles.postPhoto}
+                  />
+                ) : null}
+                <View style={styles.postActionsRow}>
+                  <Pressable onPress={() => void likeToggle(item)}>
+                    <ThemedText themeColor={item.likedByMe ? 'text' : 'textSecondary'} type="link">
+                      {item.likedByMe ? '♥' : '♡'} {item.likeCount}
+                    </ThemedText>
+                  </Pressable>
+                  {item.mine ? (
+                    <Pressable onPress={() => void removePost(item.id)}>
+                      <ThemedText themeColor="textSecondary" type="link">
+                        Apagar
+                      </ThemedText>
+                    </Pressable>
+                  ) : null}
+                </View>
               </ThemedView>
             )}
           />
@@ -617,6 +713,12 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     marginBottom: Spacing.three,
   },
+  composerActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: Spacing.two,
+    justifyContent: 'space-between',
+  },
   composerInput: {
     borderColor: '#8888',
     borderRadius: Spacing.two,
@@ -624,6 +726,11 @@ const styles = StyleSheet.create({
     minHeight: 60,
     padding: Spacing.three,
     textAlignVertical: 'top',
+  },
+  composerPhotoPreview: {
+    aspectRatio: 4 / 3,
+    borderRadius: Spacing.two,
+    width: '100%',
   },
   container: {
     flex: 1,
@@ -660,6 +767,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.half,
   },
+  postActionsRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: Spacing.three,
+  },
   postButton: {
     alignItems: 'center',
     backgroundColor: '#3c87f7',
@@ -671,9 +783,26 @@ const styles = StyleSheet.create({
   postButtonDisabled: {
     opacity: 0.5,
   },
+  postPhoto: {
+    aspectRatio: 4 / 3,
+    borderRadius: Spacing.two,
+    width: '100%',
+  },
+  removePhoto: {
+    paddingTop: Spacing.one,
+  },
   requestActions: {
     flexDirection: 'row',
     gap: Spacing.three,
+  },
+  secondaryPostButton: {
+    alignItems: 'center',
+    borderColor: '#8888',
+    borderRadius: Spacing.two,
+    borderWidth: StyleSheet.hairlineWidth,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
   },
   requestsSection: {
     gap: Spacing.one,

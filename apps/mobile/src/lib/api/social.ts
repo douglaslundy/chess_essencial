@@ -11,6 +11,8 @@ import type {
   SendFriendRequestInput,
   SendMessageInput,
   TokenPair,
+  UploadPostPhotoInput,
+  UploadPostPhotoResult,
 } from '@xadrez/contracts';
 
 import { mobileEnv } from '@/lib/env';
@@ -114,6 +116,8 @@ export const socialApi = {
     }),
   createPost: (input: CreatePostInput, token: string) =>
     request<Post>('/posts', token, { method: 'POST', body: JSON.stringify(input) }),
+  deletePost: (postId: string, token: string) =>
+    request<void>(`/posts/${postId}`, token, { method: 'DELETE' }),
   declineFriendRequest: (username: string, token: string) =>
     request<void>(`/friends/requests/${encodeURIComponent(username)}/decline`, token, {
       method: 'POST',
@@ -141,4 +145,9 @@ export const socialApi = {
     }),
   unlikePost: (postId: string, token: string) =>
     request<void>(`/posts/${postId}/like`, token, { method: 'DELETE' }),
+  uploadPostPhoto: (input: UploadPostPhotoInput, token: string) =>
+    request<UploadPostPhotoResult>('/posts/photo', token, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
 };
