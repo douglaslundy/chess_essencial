@@ -377,7 +377,10 @@ describeDatabase('exercise runtime database integration', () => {
     const response = await app.inject({
       headers: auth(),
       method: 'GET',
-      url: '/v1/exercises?theme=tema_teste_e2e',
+      // challenge-tagged exercises are hidden from the general search unless
+      // a text query is present (same rule the real ChallengeHub relies on
+      // by always sending q=challenge) — match that here too.
+      url: '/v1/exercises?q=challenge&theme=tema_teste_e2e',
     });
     expect(response.statusCode, response.body).toBe(200);
     expect(response.json().items.map((item: { title?: string }) => item.title)).toContain(
