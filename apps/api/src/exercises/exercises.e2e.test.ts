@@ -86,8 +86,11 @@ describeDatabase('exercise runtime database integration', () => {
     expect(response.statusCode, response.body).toBe(200);
     expect(response.json()).toMatchObject({ limit: 20, offset: 0, total: 1 });
     expect(response.json().items[0].id).toBe(exerciseId);
+    // hintsAvailable is just a count; the actual hint/solution text must never leak.
+    expect(response.json().items[0].hintsAvailable).toBe(1);
     expect(response.body).not.toContain('solutionMd');
-    expect(response.body).not.toContain('hints');
+    expect(response.body).not.toContain('solution_lines');
+    expect(response.body).not.toContain('Use o peao da coluna e.');
   });
 
   it('serves and authoritatively scores the curated mate-in-one challenge', async () => {
