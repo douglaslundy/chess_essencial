@@ -1,4 +1,17 @@
-import type { Friend, LeaderboardEntry, Post, RatingPool, TokenPair } from '@xadrez/contracts';
+import type {
+  Conversation,
+  CreatePostInput,
+  DirectMessage,
+  Friend,
+  FriendRequest,
+  FriendRequestsView,
+  LeaderboardEntry,
+  Post,
+  RatingPool,
+  SendFriendRequestInput,
+  SendMessageInput,
+  TokenPair,
+} from '@xadrez/contracts';
 
 import { mobileEnv } from '@/lib/env';
 import { clearSession, getAccessToken, getRefreshToken, saveSession } from '@/lib/api/session';
@@ -91,13 +104,41 @@ async function request<T>(path: string, token?: string, init?: RequestInit): Pro
 }
 
 export const socialApi = {
+  acceptFriendRequest: (username: string, token: string) =>
+    request<Friend>(`/friends/requests/${encodeURIComponent(username)}/accept`, token, {
+      method: 'POST',
+    }),
+  cancelFriendRequest: (username: string, token: string) =>
+    request<void>(`/friends/requests/${encodeURIComponent(username)}`, token, {
+      method: 'DELETE',
+    }),
+  createPost: (input: CreatePostInput, token: string) =>
+    request<Post>('/posts', token, { method: 'POST', body: JSON.stringify(input) }),
+  declineFriendRequest: (username: string, token: string) =>
+    request<void>(`/friends/requests/${encodeURIComponent(username)}/decline`, token, {
+      method: 'POST',
+    }),
   getLeaderboard: (pool: RatingPool, token: string) =>
     request<LeaderboardEntry[]>(`/ratings/${pool}/leaderboard?limit=100`, token),
   likePost: (postId: string, token: string) =>
     request<Post>(`/posts/${postId}/like`, token, { method: 'POST' }),
+  listConversations: (token: string) => request<Conversation[]>('/messages/conversations', token),
   listFeed: (token: string, before?: string) =>
     request<Post[]>(`/feed${before ? `?before=${encodeURIComponent(before)}` : ''}`, token),
+  listFriendRequests: (token: string) => request<FriendRequestsView>('/friends/requests', token),
   listFriends: (token: string) => request<Friend[]>('/friends', token),
+  listMessages: (friendUserId: string, token: string) =>
+    request<DirectMessage[]>(`/messages/${friendUserId}`, token),
+  sendFriendRequest: (input: SendFriendRequestInput, token: string) =>
+    request<FriendRequest>('/friends/requests', token, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  sendMessage: (friendUserId: string, input: SendMessageInput, token: string) =>
+    request<DirectMessage>(`/messages/${friendUserId}`, token, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
   unlikePost: (postId: string, token: string) =>
     request<void>(`/posts/${postId}/like`, token, { method: 'DELETE' }),
 };
