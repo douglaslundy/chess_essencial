@@ -45,5 +45,7 @@ pnpm --filter @xadrez/api db:rollback
 
 `0031_review_narration_preference.down.sql` drops `user_profiles.review_narration_enabled`; defaults to false (narration off) both ways, nothing to preserve.
 
+`0032_game_narrations.down.sql` drops `game_narrations` (derived data, recomputable by re-running the worker's narration job) and `move_narration_cache` (a reusable cross-game cache, safe to lose and rebuild on demand).
+
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@xadrez/chess-domain": "workspace:*",
+    "@xadrez/contracts": "workspace:*",
     "bullmq": "5.80.5",
     "ioredis": "5.11.1",
     "postgres": "3.4.9",

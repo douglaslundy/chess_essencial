@@ -7,12 +7,17 @@ import { runPresenceSchedule } from './bots/presence-job.js';
 import { runBotQueueJob } from './bots/queue-job.js';
 import { parseWorkerEnv } from './config/env.js';
 import { createHealthServer } from './health-server.js';
+import { runGameNarrationJob } from './narration/game-narration-job.js';
 import { createSystemWorker } from './system.worker.js';
 
 const PRESENCE_INTERVAL_MS = 60_000;
 const AUTO_ACCEPT_INTERVAL_MS = 10_000;
 const QUEUE_INTERVAL_MS = 30_000;
 const ANALYSIS_INTERVAL_MS = 30_000;
+// Runs less often than the engine analysis it depends on: it's a paid LLM
+// call, so there's no benefit to polling as tightly as the free local
+// engine job, and most ticks will find nothing new to narrate anyway.
+const NARRATION_INTERVAL_MS = 60_000;
 
 const env = parseWorkerEnv(process.env);
 const worker = createSystemWorker(env.REDIS_URL);
@@ -60,6 +65,14 @@ const analysisInterval = setInterval(() => {
   });
 }, ANALYSIS_INTERVAL_MS);
 
+const narrationInterval = setInterval(() => {
+  runGameNarrationJob(sql).catch((error: unknown) => {
+    console.error('worker.narration.game_narration_failed', {
+      message: error instanceof Error ? error.message : String(error),
+    });
+  });
+}, NARRATION_INTERVAL_MS);
+
 healthServer.listen(env.WORKER_HEALTH_PORT, '0.0.0.0');
 
 async function shutdown() {
@@ -67,6 +80,7 @@ async function shutdown() {
   clearInterval(autoAcceptInterval);
   clearInterval(queueInterval);
   clearInterval(analysisInterval);
+  clearInterval(narrationInterval);
   healthServer.close();
   await worker.close();
   await redis.quit();

@@ -706,6 +706,35 @@ paths:
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
+  /admin/settings/narration-ai:
+    get:
+      summary: Get the AI provider settings for post-game narration (admin only)
+      operationId: adminGetNarrationAiSettings
+      responses:
+        '200':
+          description: Current narration AI settings
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/NarrationAiSettings'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+    put:
+      summary: Configure the AI provider used for post-game narration (admin only)
+      operationId: adminUpdateNarrationAiSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateNarrationAiSettingsInput'}
+      responses:
+        '200':
+          description: Updated narration AI settings
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/NarrationAiSettings'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
   /settings/assisted-game:
     get:
       summary: Get whether "partida assistida" is currently enabled
@@ -1055,6 +1084,21 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/GameAnalysis'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /games/{gameId}/narration:
+    parameters:
+      - $ref: '#/components/parameters/GameId'
+    get:
+      summary: Buscar a narração falada (gerada por IA) da revisão pós-partida
+      operationId: getGameNarration
+      responses:
+        '200':
+          description: Status da narração, resumo, momentos-chave, padrões e plano de estudo
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GameNarration'}
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
@@ -2005,6 +2049,21 @@ components:
       properties:
         enabled: {type: boolean}
       additionalProperties: false
+    NarrationAiSettings:
+      type: object
+      required: [hasApiKey, model, provider]
+      properties:
+        hasApiKey: {type: boolean}
+        model: {type: [string, 'null']}
+        provider: {type: [string, 'null'], enum: [anthropic, null]}
+    UpdateNarrationAiSettingsInput:
+      type: object
+      required: [model, provider]
+      properties:
+        apiKey: {type: [string, 'null'], minLength: 1, maxLength: 500}
+        model: {type: string, minLength: 1, maxLength: 120}
+        provider: {type: string, enum: [anthropic]}
+      additionalProperties: false
     PlanFeatureLimit:
       type: object
       required: [featureKey, dailyLimit]
@@ -2614,6 +2673,24 @@ components:
             white: {$ref: '#/components/schemas/GameAnalysisQualityCounts'}
             black: {$ref: '#/components/schemas/GameAnalysisQualityCounts'}
         moves: {type: array, items: {$ref: '#/components/schemas/GameMoveAnalysis'}}
+    GameNarrationKeyMoment:
+      type: object
+      required: [ply, color, san, quality, narrative]
+      properties:
+        ply: {type: integer, minimum: 1}
+        color: {type: string, enum: [white, black]}
+        san: {type: string}
+        quality: {$ref: '#/components/schemas/MoveQuality'}
+        narrative: {type: string}
+    GameNarration:
+      type: object
+      required: [status, summary, keyMoments, patterns, studyPlan]
+      properties:
+        status: {type: string, enum: [pending, processing, completed, failed]}
+        summary: {type: [string, 'null']}
+        keyMoments: {type: array, items: {$ref: '#/components/schemas/GameNarrationKeyMoment'}}
+        patterns: {type: array, items: {type: string}}
+        studyPlan: {type: array, items: {type: string}}
     GameMove:
       type: object
       required: [id, ply, color, clientMoveId, uci, san, from, to, promotion, fenBefore, fenAfter, flags, committedAt]

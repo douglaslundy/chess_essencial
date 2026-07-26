@@ -63,6 +63,11 @@ export class GamesController {
     return this.gamesService.getAnalysis(parseInput(gameIdSchema, gameId), request.auth.userId);
   }
 
+  @Get(':gameId/narration')
+  getNarration(@Req() request: AuthenticatedRequest, @Param('gameId') gameId: string) {
+    return this.gamesService.getNarration(parseInput(gameIdSchema, gameId), request.auth.userId);
+  }
+
   @Post(':gameId/moves')
   commitMove(
     @Req() request: AuthenticatedRequest,

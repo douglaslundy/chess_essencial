@@ -2,9 +2,11 @@ import type {
   AssistedGameSettings,
   MercadoPagoConnectionTestResult,
   MercadoPagoSettings,
+  NarrationAiSettings,
   SmtpSettings,
   UpdateAssistedGameSettingsInput,
   UpdateMercadoPagoSettingsInput,
+  UpdateNarrationAiSettingsInput,
   UpdateSmtpSettingsInput,
 } from '@xadrez/contracts';
 import { BadRequestException, Injectable, ServiceUnavailableException } from '@nestjs/common';
@@ -15,6 +17,14 @@ import { SettingsRepository } from './settings.repository.js';
 const SMTP_SETTINGS_KEY = 'smtp';
 const MERCADO_PAGO_SETTINGS_KEY = 'payment.mercado_pago';
 const ASSISTED_GAME_SETTINGS_KEY = 'features.assisted_game';
+const NARRATION_AI_SETTINGS_KEY = 'ai.narration';
+const DEFAULT_NARRATION_MODEL = 'claude-sonnet-5';
+
+export interface StoredNarrationAiConfig {
+  apiKey: string | null;
+  model: string;
+  provider: 'anthropic';
+}
 
 export interface StoredSmtpConfig {
   fromAddress: string;
@@ -155,5 +165,28 @@ export class SettingsService {
   ): Promise<AssistedGameSettings> {
     await this.settings.set(ASSISTED_GAME_SETTINGS_KEY, input, userId);
     return this.getAssistedGameSettings();
+  }
+
+  async getNarrationAiSettings(): Promise<NarrationAiSettings> {
+    const stored = await this.settings.get<StoredNarrationAiConfig>(NARRATION_AI_SETTINGS_KEY);
+    return {
+      hasApiKey: Boolean(stored?.apiKey),
+      model: stored?.model ?? null,
+      provider: stored?.provider ?? null,
+    };
+  }
+
+  async updateNarrationAiSettings(
+    input: UpdateNarrationAiSettingsInput,
+    userId: string,
+  ): Promise<NarrationAiSettings> {
+    const existing = await this.settings.get<StoredNarrationAiConfig>(NARRATION_AI_SETTINGS_KEY);
+    const next: StoredNarrationAiConfig = {
+      apiKey: input.apiKey || existing?.apiKey || null,
+      model: input.model || DEFAULT_NARRATION_MODEL,
+      provider: input.provider,
+    };
+    await this.settings.set(NARRATION_AI_SETTINGS_KEY, next, userId);
+    return this.getNarrationAiSettings();
   }
 }

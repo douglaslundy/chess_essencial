@@ -53,6 +53,10 @@ export class GamesService {
     return this.games.getAnalysis(gameId, userId);
   }
 
+  getNarration(gameId: string, userId: string) {
+    return this.games.getNarration(gameId, userId);
+  }
+
   listMoves(gameId: string, userId: string) {
     return this.games.listMoves(gameId, userId);
   }

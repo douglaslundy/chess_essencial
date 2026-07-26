@@ -31,6 +31,7 @@ describeDatabase('platform settings database integration', () => {
   afterAll(async () => {
     await database.client`DELETE FROM platform_settings WHERE key = 'payment.mercado_pago'`;
     await database.client`DELETE FROM platform_settings WHERE key = 'features.assisted_game'`;
+    await database.client`DELETE FROM platform_settings WHERE key = 'ai.narration'`;
     await app.close();
   });
 
@@ -189,5 +190,59 @@ describeDatabase('platform settings database integration', () => {
     });
     expect(read.statusCode, read.body).toBe(200);
     expect(read.json()).toEqual({ enabled: true });
+  });
+
+  it('defaults narration AI settings to no key configured', async () => {
+    const response = await app.inject({
+      headers: auth(admin),
+      method: 'GET',
+      url: '/v1/admin/settings/narration-ai',
+    });
+    expect(response.statusCode, response.body).toBe(200);
+    expect(response.json()).toEqual({ hasApiKey: false, model: null, provider: null });
+  });
+
+  it('forbids non-admins from configuring the narration AI settings', async () => {
+    const response = await app.inject({
+      headers: auth(member),
+      method: 'PUT',
+      payload: { apiKey: 'sk-test', model: 'claude-sonnet-5', provider: 'anthropic' },
+      url: '/v1/admin/settings/narration-ai',
+    });
+    expect(response.statusCode).toBe(403);
+  });
+
+  it('saves the API key, masks it on read, and keeps it when omitted on update', async () => {
+    const created = await app.inject({
+      headers: auth(admin),
+      method: 'PUT',
+      payload: { apiKey: 'sk-test-abc123', model: 'claude-sonnet-5', provider: 'anthropic' },
+      url: '/v1/admin/settings/narration-ai',
+    });
+    expect(created.statusCode, created.body).toBe(200);
+    expect(created.json()).toEqual({
+      hasApiKey: true,
+      model: 'claude-sonnet-5',
+      provider: 'anthropic',
+    });
+    expect(created.body).not.toContain('sk-test-abc123');
+
+    const updated = await app.inject({
+      headers: auth(admin),
+      method: 'PUT',
+      payload: { model: 'claude-sonnet-5-mini', provider: 'anthropic' },
+      url: '/v1/admin/settings/narration-ai',
+    });
+    expect(updated.statusCode, updated.body).toBe(200);
+    expect(updated.json()).toEqual({
+      hasApiKey: true,
+      model: 'claude-sonnet-5-mini',
+      provider: 'anthropic',
+    });
+
+    const [stored] = await database.client<{ value: { apiKey: string } }[]>`
+      SELECT value FROM platform_settings WHERE key = 'ai.narration'
+    `;
+    expect(stored!.value.apiKey).toBe('sk-test-abc123');
   });
 });

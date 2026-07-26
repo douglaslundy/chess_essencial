@@ -37,6 +37,7 @@ import type {
   StartExerciseTrainingInput,
   SubmitExerciseAttemptInput,
   GameAnalysis,
+  GameNarration,
   GameHistoryPage,
   GameMove,
   GameState,
@@ -48,6 +49,7 @@ import type {
   MercadoPagoConnectionTestResult,
   MercadoPagoSettings,
   MyReferralInfo,
+  NarrationAiSettings,
   ReferralSettings,
   CheckoutResult,
   CreateCheckoutInput,
@@ -70,6 +72,7 @@ import type {
   SmtpSettings,
   TokenPair,
   UpdateAssistedGameSettingsInput,
+  UpdateNarrationAiSettingsInput,
   UpdateMercadoPagoSettingsInput,
   UpdateSmtpSettingsInput,
   UpdateMeInput,
@@ -423,6 +426,13 @@ export const api = {
     }),
   getAssistedGameSettings: (token: string) =>
     request<AssistedGameSettings>('/settings/assisted-game', token),
+  adminGetNarrationAiSettings: (token: string) =>
+    request<NarrationAiSettings>('/admin/settings/narration-ai', token),
+  adminUpdateNarrationAiSettings: (input: UpdateNarrationAiSettingsInput, token: string) =>
+    request<NarrationAiSettings>('/admin/settings/narration-ai', token, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    }),
   listSubscriptionPlans: (token: string) =>
     request<SubscriptionPlanList>('/subscription-plans', token),
   getMySubscription: (token: string) => request<UserSubscription>('/me/subscription', token),
@@ -475,6 +485,8 @@ export const api = {
   getMoves: (gameId: string, token: string) => request<GameMove[]>(`/games/${gameId}/moves`, token),
   getGameAnalysis: (gameId: string, token: string) =>
     request<GameAnalysis>(`/games/${gameId}/analysis`, token),
+  getGameNarration: (gameId: string, token: string) =>
+    request<GameNarration>(`/games/${gameId}/narration`, token),
   joinQueue: (input: JoinQueueInput, token: string) =>
     request<QueueStatus>('/matchmaking/queues', token, {
       method: 'POST',

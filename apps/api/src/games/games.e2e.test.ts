@@ -200,6 +200,66 @@ describeDatabase('games database integration', () => {
     expect(forbidden.statusCode).toBe(403);
   });
 
+  it('returns the AI narration for a finished game once the worker has processed it', async () => {
+    const pending = await app.inject({
+      headers: auth(white),
+      method: 'GET',
+      url: `/v1/games/${gameId}/narration`,
+    });
+    expect(pending.statusCode, pending.body).toBe(200);
+    expect(pending.json()).toEqual({
+      keyMoments: [],
+      patterns: [],
+      status: 'pending',
+      studyPlan: [],
+      summary: null,
+    });
+
+    // Simulates the worker's narration job having already run, without
+    // calling a real LLM here (see
+    // apps/worker/src/narration/game-narration-job.test.ts for the job itself).
+    const database = app.get(DatabaseService);
+    const keyMoments = [
+      {
+        color: 'black',
+        narrative: 'Você deixou a dama pendurada.',
+        ply: 4,
+        quality: 'gafe',
+        san: 'Qh5',
+      },
+    ];
+    await database.client`
+      INSERT INTO game_narrations (game_id, status, summary, key_moments, patterns, study_plan, completed_at)
+      VALUES (
+        ${gameId}, 'completed', 'Uma partida curta decidida por um erro tático.',
+        ${JSON.stringify(keyMoments)}::jsonb, ${JSON.stringify(['Cuidado com peças penduradas.'])}::jsonb,
+        ${JSON.stringify(['Treinar táticas básicas de captura.'])}::jsonb, now()
+      )
+    `;
+
+    const completed = await app.inject({
+      headers: auth(black),
+      method: 'GET',
+      url: `/v1/games/${gameId}/narration`,
+    });
+    expect(completed.statusCode, completed.body).toBe(200);
+    expect(completed.json()).toEqual({
+      keyMoments,
+      patterns: ['Cuidado com peças penduradas.'],
+      status: 'completed',
+      studyPlan: ['Treinar táticas básicas de captura.'],
+      summary: 'Uma partida curta decidida por um erro tático.',
+    });
+
+    const outsider = await createIdentity('narration-outsider@example.com', 'game_narration_out');
+    const forbidden = await app.inject({
+      headers: auth(outsider),
+      method: 'GET',
+      url: `/v1/games/${gameId}/narration`,
+    });
+    expect(forbidden.statusCode).toBe(403);
+  });
+
   it('lists paginated history and persists private review annotations', async () => {
     const history = await app.inject({
       headers: auth(white),

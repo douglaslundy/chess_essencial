@@ -2049,6 +2049,46 @@ input:focus-visible {
   border-radius: 14px;
   padding: 16px;
 }
+.reviewNarration {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  display: grid;
+  gap: 12px;
+  padding: 16px 20px;
+}
+.reviewNarrationHeader {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+.reviewNarrationHeader h2 {
+  color: var(--gold);
+  font-size: 1.05rem;
+  margin: 0;
+}
+.reviewNarrationHeader button {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 6px 12px;
+}
+.reviewNarrationSection h3 {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0 0 6px;
+  text-transform: uppercase;
+}
+.reviewNarrationSection p,
+.reviewNarrationSection li {
+  line-height: 1.5;
+}
+.reviewNarrationSection ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
 .reviewSummaryColumn h2 {
   align-items: center;
   color: var(--gold);

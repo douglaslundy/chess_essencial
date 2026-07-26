@@ -4,6 +4,7 @@ import type {
   GameAnalysis,
   GameAnalysisQualityCounts,
   GameMove,
+  GameNarration,
   GameState,
   ReviewAnnotation,
 } from '@xadrez/contracts';
@@ -15,7 +16,7 @@ import { reviewEligibility, type ReviewEligibility } from './review-eligibility'
 import { ChessBoard, type BoardOrientation } from '@/components/game/chess-board';
 import { Avatar } from '@/components/ui/avatar';
 import { api, getStoredUserId } from '@/lib/api/client';
-import { formatUciSquares, toBrazilianSan } from '@/lib/notation';
+import { formatUciSquares, speakableSquares, toBrazilianSan } from '@/lib/notation';
 import { usePieceTheme } from '@/lib/piece-theme';
 import { speak, stopSpeaking } from '@/lib/speech';
 import { useVoicePreference } from '@/lib/voice-preference';
@@ -39,6 +40,11 @@ const QUALITY_ROWS: Array<{ key: keyof GameAnalysisQualityCounts; label: string 
   { key: 'missedWin', label: 'Oportunidades perdidas' },
 ];
 
+function speakNarration(narration: GameNarration, voiceName: string | null) {
+  const parts = [narration.summary, ...narration.keyMoments.map((moment) => moment.narrative)];
+  speak(speakableSquares(parts.filter(Boolean).join(' ')), { voiceName });
+}
+
 export interface FutureEvaluation {
   centipawns?: number;
   mateIn?: number;
@@ -51,6 +57,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
   const [moves, setMoves] = useState<GameMove[]>([]);
   const [annotations, setAnnotations] = useState<ReviewAnnotation[]>([]);
   const [analysis, setAnalysis] = useState<GameAnalysis | null>(null);
+  const [narration, setNarration] = useState<GameNarration | null>(null);
   const [ply, setPly] = useState(0);
   const [comment, setComment] = useState('');
   const [highlight, setHighlight] = useState('');
@@ -77,14 +84,16 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
           setMessage(nextEligibility.reason);
           return;
         }
-        const [nextMoves, nextAnnotations, nextAnalysis] = await Promise.all([
+        const [nextMoves, nextAnnotations, nextAnalysis, nextNarration] = await Promise.all([
           api.getMoves(gameId, token),
           api.getReviewAnnotations(gameId, token),
           api.getGameAnalysis(gameId, token),
+          api.getGameNarration(gameId, token).catch(() => null),
         ]);
         setMoves(nextMoves);
         setAnnotations(nextAnnotations);
         setAnalysis(nextAnalysis);
+        setNarration(nextNarration);
         setPly(0);
         const myPlayer = nextState.players.find((player) => player.userId === getStoredUserId());
         if (myPlayer) setOrientation(myPlayer.color);
@@ -226,6 +235,50 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
                 </div>
               </div>
             ))}
+          </section>
+        ) : null}
+        {narration?.status === 'completed' && narration.summary ? (
+          <section className="reviewNarration" aria-label="Resumo narrado">
+            <div className="reviewNarrationHeader">
+              <h2>Resumo narrado</h2>
+              <button onClick={() => speakNarration(narration, voiceName)} type="button">
+                🔊 Ouvir
+              </button>
+            </div>
+            <p>{narration.summary}</p>
+            {narration.keyMoments.length > 0 ? (
+              <div className="reviewNarrationSection">
+                <h3>Momentos-chave</h3>
+                {narration.keyMoments.map((moment) => (
+                  <p key={moment.ply}>
+                    <strong>
+                      Lance {moment.ply} ({toBrazilianSan(moment.san)}):
+                    </strong>{' '}
+                    {moment.narrative}
+                  </p>
+                ))}
+              </div>
+            ) : null}
+            {narration.patterns.length > 0 ? (
+              <div className="reviewNarrationSection">
+                <h3>Padrões observados</h3>
+                <ul>
+                  {narration.patterns.map((pattern) => (
+                    <li key={pattern}>{pattern}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {narration.studyPlan.length > 0 ? (
+              <div className="reviewNarrationSection">
+                <h3>Plano de estudo</h3>
+                <ul>
+                  {narration.studyPlan.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </section>
         ) : null}
         <button

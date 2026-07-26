@@ -43,6 +43,11 @@ const sections = [
       'Ativar ou desativar recursos como a partida assistida do tabuleiro demonstrativo.',
   },
   {
+    href: '/app/admin/narracao-ia',
+    title: 'Narração por IA',
+    description: 'Chave de API usada para gerar a narração falada da revisão pós-partida.',
+  },
+  {
     href: '/app/admin/metricas',
     title: 'Métricas',
     description: 'Usuários, partidas, exercícios, aulas, assinaturas e indicações em um só lugar.',

@@ -726,6 +726,24 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/admin/settings/narration-ai': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get the AI provider settings for post-game narration (admin only) */
+    get: operations['adminGetNarrationAiSettings'];
+    /** Configure the AI provider used for post-game narration (admin only) */
+    put: operations['adminUpdateNarrationAiSettings'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/settings/assisted-game': {
     parameters: {
       query?: never;
@@ -1019,6 +1037,25 @@ export interface paths {
     };
     /** Buscar a análise de motor (por lance + resumo agregado) de uma partida */
     get: operations['getGameAnalysis'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/games/{gameId}/narration': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        gameId: components['parameters']['GameId'];
+      };
+      cookie?: never;
+    };
+    /** Buscar a narração falada (gerada por IA) da revisão pós-partida */
+    get: operations['getGameNarration'];
     put?: never;
     post?: never;
     delete?: never;
@@ -1880,6 +1917,18 @@ export interface components {
     UpdateAssistedGameSettingsInput: {
       enabled: boolean;
     };
+    NarrationAiSettings: {
+      hasApiKey: boolean;
+      model: string | null;
+      /** @enum {string|null} */
+      provider: 'anthropic' | null;
+    };
+    UpdateNarrationAiSettingsInput: {
+      apiKey?: string | null;
+      model: string;
+      /** @enum {string} */
+      provider: 'anthropic';
+    };
     PlanFeatureLimit: {
       featureKey: string;
       /** @description 0 means unlimited for this feature. */
@@ -2468,6 +2517,22 @@ export interface components {
         black: components['schemas']['GameAnalysisQualityCounts'];
       } | null;
       moves: components['schemas']['GameMoveAnalysis'][];
+    };
+    GameNarrationKeyMoment: {
+      ply: number;
+      /** @enum {string} */
+      color: 'white' | 'black';
+      san: string;
+      quality: components['schemas']['MoveQuality'];
+      narrative: string;
+    };
+    GameNarration: {
+      /** @enum {string} */
+      status: 'pending' | 'processing' | 'completed' | 'failed';
+      summary: string | null;
+      keyMoments: components['schemas']['GameNarrationKeyMoment'][];
+      patterns: string[];
+      studyPlan: string[];
     };
     GameMove: {
       id: number;
@@ -3692,6 +3757,55 @@ export interface operations {
       403: components['responses']['Problem'];
     };
   };
+  adminGetNarrationAiSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Current narration AI settings */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NarrationAiSettings'];
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  adminUpdateNarrationAiSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateNarrationAiSettingsInput'];
+      };
+    };
+    responses: {
+      /** @description Updated narration AI settings */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NarrationAiSettings'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
   getAssistedGameSettings: {
     parameters: {
       query?: never;
@@ -4264,6 +4378,31 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['GameAnalysis'];
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  getGameNarration: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        gameId: components['parameters']['GameId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Status da narração, resumo, momentos-chave, padrões e plano de estudo */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GameNarration'];
         };
       };
       401: components['responses']['Problem'];

@@ -12,6 +12,7 @@ import type {
   GameHistoryQuery,
   GameMove,
   GameMoveAnalysis,
+  GameNarration,
   GameState,
   ReviewAnnotation,
   ReviewAnnotationInput,
@@ -486,6 +487,29 @@ export class GamesRepository {
     `;
     const moves = rows.map((row) => ({ ...row, ply: Number(row.ply) }));
     return { moves, status, summary: status === 'completed' ? summarizeAnalysis(moves) : null };
+  }
+
+  async getNarration(gameId: string, userId: string): Promise<GameNarration> {
+    await this.assertPlayer(gameId, userId);
+    const [row] = await this.database.client<
+      {
+        keyMoments: GameNarration['keyMoments'] | null;
+        patterns: string[] | null;
+        status: GameNarration['status'];
+        studyPlan: string[] | null;
+        summary: string | null;
+      }[]
+    >`
+      SELECT status, summary, key_moments AS "keyMoments", patterns, study_plan AS "studyPlan"
+      FROM game_narrations WHERE game_id = ${gameId}
+    `;
+    return {
+      keyMoments: row?.keyMoments ?? [],
+      patterns: row?.patterns ?? [],
+      status: row?.status ?? 'pending',
+      studyPlan: row?.studyPlan ?? [],
+      summary: row?.summary ?? null,
+    };
   }
 
   async realtimeSnapshot(gameId: string, userId: string, lastKnownVersion: number) {
