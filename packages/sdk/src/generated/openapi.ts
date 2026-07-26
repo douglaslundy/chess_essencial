@@ -1921,13 +1921,13 @@ export interface components {
       hasApiKey: boolean;
       model: string | null;
       /** @enum {string|null} */
-      provider: 'anthropic' | null;
+      provider: 'anthropic' | 'openai' | 'gemini' | null;
     };
     UpdateNarrationAiSettingsInput: {
       apiKey?: string | null;
       model: string;
       /** @enum {string} */
-      provider: 'anthropic';
+      provider: 'anthropic' | 'openai' | 'gemini';
     };
     PlanFeatureLimit: {
       featureKey: string;

@@ -11,7 +11,12 @@ import type {
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
-import { describeMoveQuality, moveQualityLabel, narrateMove } from './move-narration';
+import {
+  buildFallbackNarration,
+  describeMoveQuality,
+  moveQualityLabel,
+  narrateMove,
+} from './move-narration';
 import { reviewEligibility, type ReviewEligibility } from './review-eligibility';
 import { ChessBoard, type BoardOrientation } from '@/components/game/chess-board';
 import { Avatar } from '@/components/ui/avatar';
@@ -125,6 +130,15 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
         { avatarUrl: avatarForColor('white'), color: 'white', label: 'Brancas' },
         { avatarUrl: avatarForColor('black'), color: 'black', label: 'Pretas' },
       ];
+  // Prefer the AI-generated narration once it's ready; otherwise fall back
+  // to a free, offline summary built from the same engine analysis, so
+  // "Resumo narrado" is available even with no narration AI configured.
+  const effectiveNarration =
+    narration?.status === 'completed' && narration.summary
+      ? narration
+      : analysis
+        ? buildFallbackNarration(analysis, myColor)
+        : null;
 
   const { voiceName, reviewNarrationEnabled, setReviewNarrationEnabled } = useVoicePreference();
 
@@ -237,19 +251,19 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
             ))}
           </section>
         ) : null}
-        {narration?.status === 'completed' && narration.summary ? (
+        {effectiveNarration?.summary ? (
           <section className="reviewNarration" aria-label="Resumo narrado">
             <div className="reviewNarrationHeader">
               <h2>Resumo narrado</h2>
-              <button onClick={() => speakNarration(narration, voiceName)} type="button">
+              <button onClick={() => speakNarration(effectiveNarration, voiceName)} type="button">
                 🔊 Ouvir
               </button>
             </div>
-            <p>{narration.summary}</p>
-            {narration.keyMoments.length > 0 ? (
+            <p>{effectiveNarration.summary}</p>
+            {effectiveNarration.keyMoments.length > 0 ? (
               <div className="reviewNarrationSection">
                 <h3>Momentos-chave</h3>
-                {narration.keyMoments.map((moment) => (
+                {effectiveNarration.keyMoments.map((moment) => (
                   <p key={moment.ply}>
                     <strong>
                       Lance {moment.ply} ({toBrazilianSan(moment.san)}):
@@ -259,21 +273,21 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
                 ))}
               </div>
             ) : null}
-            {narration.patterns.length > 0 ? (
+            {effectiveNarration.patterns.length > 0 ? (
               <div className="reviewNarrationSection">
                 <h3>Padrões observados</h3>
                 <ul>
-                  {narration.patterns.map((pattern) => (
+                  {effectiveNarration.patterns.map((pattern) => (
                     <li key={pattern}>{pattern}</li>
                   ))}
                 </ul>
               </div>
             ) : null}
-            {narration.studyPlan.length > 0 ? (
+            {effectiveNarration.studyPlan.length > 0 ? (
               <div className="reviewNarrationSection">
                 <h3>Plano de estudo</h3>
                 <ul>
-                  {narration.studyPlan.map((item) => (
+                  {effectiveNarration.studyPlan.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
                 </ul>

@@ -1,7 +1,7 @@
-import type { GameMoveAnalysis } from '@xadrez/contracts';
+import type { GameAnalysis, GameAnalysisQualityCounts, GameMoveAnalysis } from '@xadrez/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { describeMoveQuality, narrateMove } from './move-narration';
+import { buildFallbackNarration, describeMoveQuality, narrateMove } from './move-narration';
 
 function move(overrides: Partial<GameMoveAnalysis> = {}): GameMoveAnalysis {
   return {
@@ -57,5 +57,74 @@ describe('narrateMove', () => {
     expect(narrateMove(move({ missedWin: true, quality: 'gafe' }))).toContain(
       'Havia uma oportunidade melhor',
     );
+  });
+});
+
+function qualityCounts(
+  overrides: Partial<GameAnalysisQualityCounts> = {},
+): GameAnalysisQualityCounts {
+  return {
+    bom: 0,
+    erro: 0,
+    excelente: 0,
+    gafe: 0,
+    imprecisao: 0,
+    missedWin: 0,
+    otimo: 0,
+    ...overrides,
+  };
+}
+
+function analysis(overrides: Partial<GameAnalysis> = {}): GameAnalysis {
+  return {
+    moves: [move({ centipawnLoss: 0, ply: 1, quality: 'otimo' })],
+    status: 'completed',
+    summary: { black: qualityCounts(), white: qualityCounts({ otimo: 1 }) },
+    ...overrides,
+  };
+}
+
+describe('buildFallbackNarration', () => {
+  it('returns null when the analysis has no summary yet', () => {
+    expect(buildFallbackNarration(analysis({ summary: null }), 'white')).toBeNull();
+  });
+
+  it('returns null when the player made no moves at all', () => {
+    expect(
+      buildFallbackNarration(
+        analysis({ summary: { black: qualityCounts(), white: qualityCounts() } }),
+        'white',
+      ),
+    ).toBeNull();
+  });
+
+  it('praises a mistake-free game', () => {
+    const result = buildFallbackNarration(
+      analysis({ summary: { black: qualityCounts(), white: qualityCounts({ otimo: 4 }) } }),
+      'white',
+    );
+    expect(result?.summary).toContain('Nenhum erro grave');
+    expect(result?.keyMoments).toEqual([]);
+  });
+
+  it('flags the worst move as a key moment when there were mistakes', () => {
+    const blunder = move({
+      bestMoveUci: 'd2d4',
+      centipawnLoss: 350,
+      color: 'white',
+      ply: 8,
+      quality: 'gafe',
+      san: 'Nf3',
+    });
+    const result = buildFallbackNarration(
+      analysis({
+        moves: [move({ centipawnLoss: 0, ply: 1, quality: 'otimo' }), blunder],
+        summary: { black: qualityCounts(), white: qualityCounts({ gafe: 1, otimo: 1 }) },
+      }),
+      'white',
+    );
+    expect(result?.summary).toContain('1 lance que vale a pena revisar');
+    expect(result?.keyMoments).toHaveLength(1);
+    expect(result?.keyMoments[0]).toMatchObject({ ply: 8, quality: 'gafe' });
   });
 });

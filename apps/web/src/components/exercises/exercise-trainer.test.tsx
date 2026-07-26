@@ -183,6 +183,23 @@ describe('ExerciseTrainer guided auto-grading modal', () => {
     expect(screen.getByRole('button', { name: /Próximo exercício/ })).toBeTruthy();
   });
 
+  it('offers a way to fetch a fresh batch once every challenge in the current one is solved', async () => {
+    startExerciseTraining.mockResolvedValueOnce({
+      ...trainingView(),
+      completed: 1,
+      currentExercise: null,
+      status: 'completed',
+    });
+    render(<ExerciseTrainer guided />);
+    await screen.findByText('Treino concluído');
+
+    startExerciseTraining.mockResolvedValueOnce(trainingView());
+    fireEvent.click(screen.getByRole('button', { name: /Próximo desafio/ }));
+
+    await screen.findByText('Jogue o melhor lance para as brancas.');
+    expect(startExerciseTraining).toHaveBeenCalledTimes(2);
+  });
+
   it('opens a defeat modal with retry when the move is incorrect', async () => {
     nextBoardMove = 'e2e4';
     evaluateExerciseLine.mockResolvedValue({

@@ -854,6 +854,13 @@ export function ExerciseTrainer({
         <section className={styles.training}>
           <h2>Treino concluído</h2>
           <p>{training.completed} exercícios registrados.</p>
+          <button
+            className={styles.primaryAction}
+            onClick={() => void startTraining()}
+            type="button"
+          >
+            Próximo desafio →
+          </button>
         </section>
       ) : null}
 

@@ -1,4 +1,4 @@
-import type { MoveQuality } from '@xadrez/contracts';
+import type { MoveQuality, NarrationAiProvider } from '@xadrez/contracts';
 import { createHash } from 'node:crypto';
 import type { Sql } from 'postgres';
 
@@ -18,7 +18,7 @@ const MAX_KEY_MOMENTS = 6;
 interface StoredNarrationAiConfig {
   apiKey: string | null;
   model: string;
-  provider: 'anthropic';
+  provider: NarrationAiProvider;
 }
 
 interface MoveAnalysisRow {
@@ -90,7 +90,7 @@ async function resolveNarrationAiConfig(sql: Sql): Promise<LlmConfig | null> {
     SELECT value FROM platform_settings WHERE key = ${NARRATION_SETTINGS_KEY}
   `;
   if (!row?.value.apiKey) return null;
-  return { apiKey: row.value.apiKey, model: row.value.model };
+  return { apiKey: row.value.apiKey, model: row.value.model, provider: row.value.provider };
 }
 
 async function queuePendingNarrations(sql: Sql): Promise<void> {

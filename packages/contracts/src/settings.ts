@@ -61,19 +61,22 @@ export const updateAssistedGameSettingsInputSchema = z.object({
 // The API key is never returned by the API once set — only whether one is
 // configured. Admins re-enter it to change it; leaving it blank on update
 // keeps the previously stored value (same convention as SMTP/Mercado Pago).
+export const narrationAiProviderSchema = z.enum(['anthropic', 'openai', 'gemini']);
+
 export const narrationAiSettingsSchema = z.object({
   hasApiKey: z.boolean(),
   model: z.string().nullable(),
-  provider: z.enum(['anthropic']).nullable(),
+  provider: narrationAiProviderSchema.nullable(),
 });
 
 export const updateNarrationAiSettingsInputSchema = z.object({
   apiKey: z.string().trim().min(1).max(500).nullable().optional(),
   model: z.string().trim().min(1).max(120),
-  provider: z.enum(['anthropic']),
+  provider: narrationAiProviderSchema,
 });
 
 export type AssistedGameSettings = z.infer<typeof assistedGameSettingsSchema>;
+export type NarrationAiProvider = z.infer<typeof narrationAiProviderSchema>;
 export type NarrationAiSettings = z.infer<typeof narrationAiSettingsSchema>;
 export type UpdateNarrationAiSettingsInput = z.infer<typeof updateNarrationAiSettingsInputSchema>;
 export type MercadoPagoConnectionTestResult = z.infer<typeof mercadoPagoConnectionTestResultSchema>;

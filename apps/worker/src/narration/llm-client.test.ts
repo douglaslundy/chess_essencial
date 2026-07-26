@@ -10,7 +10,7 @@ afterEach(() => {
 });
 
 describe('callLlm', () => {
-  it('sends the system/user messages and returns the text content of the response', async () => {
+  it('anthropic: sends the system/user messages and returns the text content of the response', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       json: () => Promise.resolve({ content: [{ text: 'Olá, aluno.', type: 'text' }] }),
       ok: true,
@@ -18,7 +18,7 @@ describe('callLlm', () => {
     global.fetch = fetchMock as never;
 
     const result = await callLlm(
-      { apiKey: 'sk-test', model: 'claude-test' },
+      { apiKey: 'sk-test', model: 'claude-test', provider: 'anthropic' },
       'system prompt',
       'user message',
     );
@@ -32,7 +32,7 @@ describe('callLlm', () => {
     expect(body.system).toBe('system prompt');
   });
 
-  it('throws LlmRequestError when the API responds with a non-2xx status', async () => {
+  it('anthropic: throws LlmRequestError when the API responds with a non-2xx status', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 401,
@@ -40,18 +40,100 @@ describe('callLlm', () => {
     }) as never;
 
     await expect(
-      callLlm({ apiKey: 'bad-key', model: 'claude-test' }, 'system', 'user'),
+      callLlm({ apiKey: 'bad-key', model: 'claude-test', provider: 'anthropic' }, 'system', 'user'),
     ).rejects.toThrow(LlmRequestError);
   });
 
-  it('throws LlmRequestError when the response has no text content block', async () => {
+  it('anthropic: throws LlmRequestError when the response has no text content block', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       json: () => Promise.resolve({ content: [] }),
       ok: true,
     }) as never;
 
     await expect(
-      callLlm({ apiKey: 'sk-test', model: 'claude-test' }, 'system', 'user'),
+      callLlm({ apiKey: 'sk-test', model: 'claude-test', provider: 'anthropic' }, 'system', 'user'),
+    ).rejects.toThrow(LlmRequestError);
+  });
+
+  it('openai: sends system+user messages and returns the assistant message content', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve({ choices: [{ message: { content: 'Olá, aluno.' } }] }),
+      ok: true,
+    });
+    global.fetch = fetchMock as never;
+
+    const result = await callLlm(
+      { apiKey: 'sk-openai', model: 'gpt-4.1-mini', provider: 'openai' },
+      'system prompt',
+      'user message',
+    );
+
+    expect(result).toBe('Olá, aluno.');
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('https://api.openai.com/v1/chat/completions');
+    expect(init.headers).toMatchObject({ authorization: 'Bearer sk-openai' });
+    const body = JSON.parse(init.body as string) as {
+      messages: Array<{ content: string; role: string }>;
+      model: string;
+    };
+    expect(body.model).toBe('gpt-4.1-mini');
+    expect(body.messages).toEqual([
+      { content: 'system prompt', role: 'system' },
+      { content: 'user message', role: 'user' },
+    ]);
+  });
+
+  it('openai: throws LlmRequestError when the API responds with a non-2xx status', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 429,
+      text: () => Promise.resolve('rate limited'),
+    }) as never;
+
+    await expect(
+      callLlm({ apiKey: 'sk-openai', model: 'gpt-4.1-mini', provider: 'openai' }, 'system', 'user'),
+    ).rejects.toThrow(LlmRequestError);
+  });
+
+  it('gemini: sends the API key as a query param and returns the candidate text', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: () =>
+        Promise.resolve({ candidates: [{ content: { parts: [{ text: 'Olá, aluno.' }] } }] }),
+      ok: true,
+    });
+    global.fetch = fetchMock as never;
+
+    const result = await callLlm(
+      { apiKey: 'gm-test', model: 'gemini-2.5-flash', provider: 'gemini' },
+      'system prompt',
+      'user message',
+    );
+
+    expect(result).toBe('Olá, aluno.');
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=gm-test',
+    );
+    const body = JSON.parse(init.body as string) as {
+      contents: Array<{ parts: Array<{ text: string }> }>;
+      systemInstruction: { parts: Array<{ text: string }> };
+    };
+    expect(body.contents[0]?.parts[0]?.text).toBe('user message');
+    expect(body.systemInstruction.parts[0]?.text).toBe('system prompt');
+  });
+
+  it('gemini: throws LlmRequestError when the response has no candidate text', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve({ candidates: [] }),
+      ok: true,
+    }) as never;
+
+    await expect(
+      callLlm(
+        { apiKey: 'gm-test', model: 'gemini-2.5-flash', provider: 'gemini' },
+        'system',
+        'user',
+      ),
     ).rejects.toThrow(LlmRequestError);
   });
 });

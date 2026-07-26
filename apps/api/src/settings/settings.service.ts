@@ -2,6 +2,7 @@ import type {
   AssistedGameSettings,
   MercadoPagoConnectionTestResult,
   MercadoPagoSettings,
+  NarrationAiProvider,
   NarrationAiSettings,
   SmtpSettings,
   UpdateAssistedGameSettingsInput,
@@ -18,12 +19,16 @@ const SMTP_SETTINGS_KEY = 'smtp';
 const MERCADO_PAGO_SETTINGS_KEY = 'payment.mercado_pago';
 const ASSISTED_GAME_SETTINGS_KEY = 'features.assisted_game';
 const NARRATION_AI_SETTINGS_KEY = 'ai.narration';
-const DEFAULT_NARRATION_MODEL = 'claude-sonnet-5';
+const DEFAULT_NARRATION_MODEL: Record<NarrationAiProvider, string> = {
+  anthropic: 'claude-sonnet-5',
+  gemini: 'gemini-2.5-flash',
+  openai: 'gpt-4.1-mini',
+};
 
 export interface StoredNarrationAiConfig {
   apiKey: string | null;
   model: string;
-  provider: 'anthropic';
+  provider: NarrationAiProvider;
 }
 
 export interface StoredSmtpConfig {
@@ -183,7 +188,7 @@ export class SettingsService {
     const existing = await this.settings.get<StoredNarrationAiConfig>(NARRATION_AI_SETTINGS_KEY);
     const next: StoredNarrationAiConfig = {
       apiKey: input.apiKey || existing?.apiKey || null,
-      model: input.model || DEFAULT_NARRATION_MODEL,
+      model: input.model || DEFAULT_NARRATION_MODEL[input.provider],
       provider: input.provider,
     };
     await this.settings.set(NARRATION_AI_SETTINGS_KEY, next, userId);

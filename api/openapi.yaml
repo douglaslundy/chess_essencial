@@ -2055,14 +2055,14 @@ components:
       properties:
         hasApiKey: {type: boolean}
         model: {type: [string, 'null']}
-        provider: {type: [string, 'null'], enum: [anthropic, null]}
+        provider: {type: [string, 'null'], enum: [anthropic, openai, gemini, null]}
     UpdateNarrationAiSettingsInput:
       type: object
       required: [model, provider]
       properties:
         apiKey: {type: [string, 'null'], minLength: 1, maxLength: 500}
         model: {type: string, minLength: 1, maxLength: 120}
-        provider: {type: string, enum: [anthropic]}
+        provider: {type: string, enum: [anthropic, openai, gemini]}
       additionalProperties: false
     PlanFeatureLimit:
       type: object
