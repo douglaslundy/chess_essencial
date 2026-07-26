@@ -26,6 +26,7 @@ export const exerciseSummarySchema = z.object({
   chapterNumber: z.number().int().positive().nullable(),
   difficulty: z.string().nullable(),
   fen: z.string().nullable(),
+  hintsAvailable: z.number().int().nonnegative(),
   id: z.string().uuid(),
   moduleNumber: z.number().int().min(1).max(10).nullable(),
   positionType: exercisePositionTypeSchema,

@@ -22,6 +22,7 @@ type ExerciseRow = {
   chapter_number: number | null;
   difficulty: string | null;
   fen: string | null;
+  hints_available: number;
   id: string;
   module_number: number | null;
   position_type: 'legal_position' | 'illustrative_diagram' | 'text_only';
@@ -46,6 +47,7 @@ function summary(row: ExerciseRow) {
     chapterNumber: row.chapter_number,
     difficulty: row.difficulty,
     fen: row.fen,
+    hintsAvailable: row.hints_available,
     id: row.id,
     moduleNumber: row.module_number,
     positionType: row.position_type,
@@ -133,6 +135,7 @@ export class ExercisesRepository {
     const rows = await sql<ExerciseRow[]>`
       SELECT e.id, e.source_number, e.module_number, e.chapter_number, e.title, e.prompt_md,
         COALESCE(e.import_metadata->>'answerFormat', 'move_sequence') AS answer_format, e.difficulty, e.category, e.fen, e.side_to_move, e.tags, e.position_type,
+        jsonb_array_length(e.hints) AS hints_available,
         CASE WHEN e.source_pages IS NULL THEN '{}'::integer[]
           ELSE ARRAY(SELECT generate_series(lower(e.source_pages), upper(e.source_pages) - 1)) END AS source_pages
         FROM exercises e
@@ -240,6 +243,7 @@ export class ExercisesRepository {
     const [current] = await sql<ExerciseRow[]>`
       SELECT e.id, e.source_number, e.module_number, e.chapter_number, e.title, e.prompt_md,
         COALESCE(e.import_metadata->>'answerFormat', 'move_sequence') AS answer_format, e.difficulty, e.category, e.fen, e.side_to_move, e.tags, e.position_type,
+        jsonb_array_length(e.hints) AS hints_available,
         CASE WHEN e.source_pages IS NULL THEN '{}'::integer[]
           ELSE ARRAY(SELECT generate_series(lower(e.source_pages), upper(e.source_pages) - 1)) END AS source_pages
         FROM exercise_training_items i JOIN exercises e ON e.id = i.exercise_id

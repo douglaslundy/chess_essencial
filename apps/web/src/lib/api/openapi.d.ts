@@ -1558,6 +1558,7 @@ export interface components {
       tags: string[];
       sourcePages: number[];
       positionType: components['schemas']['ExercisePositionType'];
+      hintsAvailable: number;
     };
     ExerciseSearchResult: {
       items: components['schemas']['ExerciseSummary'][];

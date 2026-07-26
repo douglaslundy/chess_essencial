@@ -207,9 +207,7 @@ export function ExerciseTrainer({
         setExerciseHistory([]);
         setViewingExerciseAt(null);
         previousExerciseRef.current = null;
-        setMessage(
-          value.total ? 'Treino iniciado.' : 'Nenhum exercício disponível para este treino.',
-        );
+        setMessage(value.total ? 'Treino iniciado.' : 'Você já resolveu tudo por aqui!');
       } catch (error) {
         setMessage(error instanceof Error ? error.message : 'Falha ao iniciar treino.');
       }
@@ -868,9 +866,11 @@ export function ExerciseTrainer({
                   {guided ? 'Confirmar resposta' : 'Enviar tentativa'}
                 </button>
               ) : null}
-              <button className={styles.secondaryAction} onClick={revealHint} type="button">
-                Pedir dica
-              </button>
+              {displayedExercise.hintsAvailable > 0 ? (
+                <button className={styles.secondaryAction} onClick={revealHint} type="button">
+                  Pedir dica
+                </button>
+              ) : null}
               {!guided && displayedExercise.answerFormat !== 'free_text' ? (
                 <button className={styles.secondaryAction} onClick={revealSolution} type="button">
                   Ver solução
@@ -878,6 +878,14 @@ export function ExerciseTrainer({
               ) : null}
             </div>
           ) : null}
+        </section>
+      ) : training?.status === 'completed' && training.total === 0 ? (
+        <section className={styles.training}>
+          <h2>Você já resolveu tudo por aqui!</h2>
+          <p>
+            Não há mais desafios novos disponíveis com esses filtros agora — você já acertou todos.
+            Volte mais tarde para novidades.
+          </p>
         </section>
       ) : training?.status === 'completed' ? (
         <section className={styles.training}>

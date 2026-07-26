@@ -1564,7 +1564,7 @@ components:
       enum: [legal_position, illustrative_diagram, text_only]
     ExerciseSummary:
       type: object
-      required: [id, answerFormat, sourceNumber, moduleNumber, chapterNumber, title, promptMd, difficulty, category, fen, sideToMove, tags, sourcePages, positionType]
+      required: [id, answerFormat, sourceNumber, moduleNumber, chapterNumber, title, promptMd, difficulty, category, fen, sideToMove, tags, sourcePages, positionType, hintsAvailable]
       properties:
         id: {type: string, format: uuid}
         answerFormat: {type: string, enum: [free_text, move_sequence]}
@@ -1580,6 +1580,7 @@ components:
         tags: {type: array, items: {type: string}}
         sourcePages: {type: array, items: {type: integer, minimum: 1}}
         positionType: {$ref: '#/components/schemas/ExercisePositionType'}
+        hintsAvailable: {type: integer, minimum: 0}
     ExerciseSearchResult:
       type: object
       required: [items, total, limit, offset]

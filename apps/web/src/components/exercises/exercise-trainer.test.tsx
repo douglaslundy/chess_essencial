@@ -47,6 +47,7 @@ function trainingView(): ExerciseTrainingView {
       chapterNumber: null,
       difficulty: 'beginner',
       fen: startFen,
+      hintsAvailable: 2,
       id: '99000000-0000-4000-8000-000000000001',
       moduleNumber: 1,
       positionType: 'legal_position',
@@ -161,6 +162,20 @@ describe('ExerciseTrainer guided auto-grading modal', () => {
     render(<ExerciseTrainer guided />);
     await screen.findByText('Jogue o melhor lance para as brancas.');
   }
+
+  it('offers a hint button when the exercise has hints', async () => {
+    await renderGuided();
+    expect(screen.getByRole('button', { name: 'Pedir dica' })).toBeTruthy();
+  });
+
+  it('hides the hint button when the exercise has no hints recorded', async () => {
+    startExerciseTraining.mockResolvedValue({
+      ...trainingView(),
+      currentExercise: { ...trainingView().currentExercise!, hintsAvailable: 0 },
+    });
+    await renderGuided();
+    expect(screen.queryByRole('button', { name: 'Pedir dica' })).toBeNull();
+  });
 
   it('opens a victory modal when the played line is solved, then shows the batch-completed screen once dismissed', async () => {
     evaluateExerciseLine.mockResolvedValue({
