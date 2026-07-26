@@ -1,4 +1,14 @@
-import type { CreateBotGameInput, GameMove, GameState, SubmitMoveInput } from '@xadrez/contracts';
+import type {
+  CreateBotGameInput,
+  CreateChallengeInput,
+  DirectChallengesView,
+  DrawOfferAction,
+  GameMove,
+  GameState,
+  JoinQueueInput,
+  QueueStatus,
+  SubmitMoveInput,
+} from '@xadrez/contracts';
 
 import { mobileEnv } from '@/lib/env';
 import { getAccessToken } from '@/lib/api/session';
@@ -30,6 +40,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       problem?.detail ?? 'Não foi possível concluir a operação.',
     );
   }
+  if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
 }
 
@@ -55,4 +66,25 @@ export const gameApi = {
       body: JSON.stringify(input),
     }),
   resign: (gameId: string) => request<GameState>(`/games/${gameId}/resign`, { method: 'POST' }),
+  offerDraw: (gameId: string) =>
+    request<DrawOfferAction>(`/games/${gameId}/draw-offers`, { method: 'POST' }),
+  // "Entrar ou renovar presença na fila" per the API spec: intended to be
+  // called repeatedly while queued — each call either renews the queue slot
+  // or reports a match found in the meantime.
+  joinQueue: (input: JoinQueueInput) =>
+    request<QueueStatus>('/matchmaking/queues', { method: 'POST', body: JSON.stringify(input) }),
+  leaveQueue: () => request<void>('/matchmaking/queues', { method: 'DELETE' }),
+  listChallenges: () => request<DirectChallengesView>('/matchmaking/challenges'),
+  createChallenge: (input: CreateChallengeInput) =>
+    request<{ expiresAt?: string; gameId?: string; id: string; status: 'accepted' | 'pending' }>(
+      '/matchmaking/challenges',
+      { method: 'POST', body: JSON.stringify(input) },
+    ),
+  respondChallenge: (challengeId: string, accept: boolean) =>
+    request<{ gameId?: string; id: string; status: 'accepted' | 'declined' }>(
+      `/matchmaking/challenges/${challengeId}/respond`,
+      { method: 'POST', body: JSON.stringify({ accept }) },
+    ),
+  cancelChallenge: (challengeId: string) =>
+    request<void>(`/matchmaking/challenges/${challengeId}`, { method: 'DELETE' }),
 };
