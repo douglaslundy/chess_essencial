@@ -292,7 +292,6 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
             ⏭
           </button>
         </div>
-        <code className="fenDisplay">{fen}</code>
         <div className="reviewMoves">
           {moves.map((move) => (
             <button

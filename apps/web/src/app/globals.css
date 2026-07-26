@@ -1838,29 +1838,56 @@ input:focus-visible {
   gap: 16px;
 }
 .historyCard {
-  align-items: center;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 18px;
-  display: grid;
-  gap: 20px;
-  grid-template-columns: 1fr auto auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   padding: 20px;
 }
-.historyCard > div {
-  display: grid;
+.historyCardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
-.historyCard span,
+.historyCardTitle {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.historyCardTitle strong {
+  overflow-wrap: anywhere;
+}
+.historyCardSubtitle {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
 .historyCard dt {
   color: var(--muted);
 }
-.historyCard dl {
+.historyCardMeta {
   display: flex;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 12px 28px;
   margin: 0;
 }
-.historyCard dl div {
+.historyCardMeta div {
   display: grid;
+  gap: 2px;
+}
+.historyCardMeta dt {
+  font-size: 0.78rem;
+}
+.historyCardMeta dd {
+  font-weight: 600;
+  margin: 0;
+}
+.historyCardAction {
+  display: flex;
+  justify-content: flex-end;
 }
 .historyCard a,
 .reviewHeader button,
@@ -1871,6 +1898,11 @@ input:focus-visible {
   color: white;
   padding: 12px 18px;
   text-align: center;
+}
+.historyCard a {
+  align-self: flex-start;
+  display: inline-flex;
+  text-decoration: none;
 }
 .historyReviewUnavailable {
   display: inline-flex;
@@ -1971,12 +2003,6 @@ input:focus-visible {
   display: flex;
   gap: 8px;
   justify-content: center;
-}
-.fenDisplay {
-  background: var(--bg);
-  border-radius: 8px;
-  overflow-wrap: anywhere;
-  padding: 12px;
 }
 .reviewMoves {
   display: flex;
@@ -2082,10 +2108,6 @@ input:focus-visible {
 }
 @media (max-width: 900px) {
   .reviewPage {
-    grid-template-columns: 1fr;
-  }
-  .historyCard {
-    align-items: stretch;
     grid-template-columns: 1fr;
   }
 }

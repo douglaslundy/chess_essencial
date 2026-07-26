@@ -7,11 +7,11 @@ vi.mock('./speech', () => ({ getAvailableVoices }));
 const { listVoiceOptions } = await import('./voices');
 
 describe('listVoiceOptions', () => {
-  it('only offers Brazilian Portuguese voices, excluding other languages entirely', async () => {
+  it('excludes non-Portuguese languages entirely, never using them as filler', async () => {
     getAvailableVoices.mockResolvedValueOnce([
       { lang: 'en-US', name: 'Alex' },
       { lang: 'pt-BR', name: 'Camila' },
-      { lang: 'pt-PT', name: 'Joana' },
+      { lang: 'es-ES', name: 'Monica' },
     ]);
 
     const options = await listVoiceOptions();
@@ -19,15 +19,24 @@ describe('listVoiceOptions', () => {
     expect(options.map((o) => o.name)).toEqual(['Camila']);
   });
 
-  it('excludes European Portuguese (pt-PT) — not the Brazilian standard', async () => {
+  it('lists Brazilian Portuguese (pt-BR) before other Portuguese locales', async () => {
     getAvailableVoices.mockResolvedValueOnce([
       { lang: 'pt-PT', name: 'Joana' },
       { lang: 'pt-AO', name: 'Ana' },
+      { lang: 'pt-BR', name: 'Camila' },
     ]);
 
     const options = await listVoiceOptions();
 
-    expect(options).toEqual([]);
+    expect(options.map((o) => o.name)).toEqual(['Camila', 'Joana', 'Ana']);
+  });
+
+  it('still offers other Portuguese locales when pt-BR alone would leave too few options', async () => {
+    getAvailableVoices.mockResolvedValueOnce([{ lang: 'pt-PT', name: 'Joana' }]);
+
+    const options = await listVoiceOptions();
+
+    expect(options).toEqual([{ lang: 'pt-PT', name: 'Joana' }]);
   });
 
   it('caps the list at 8 voices', async () => {

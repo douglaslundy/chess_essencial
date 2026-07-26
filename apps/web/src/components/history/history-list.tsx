@@ -105,14 +105,16 @@ export function HistoryList() {
           const review = reviewEligibility(game);
           return (
             <article className="historyCard" key={game.id}>
-              <div>
-                <strong>{game.opponent.displayName}</strong>
-                {game.coachMode ? <span className="adminBadge">Treinador</span> : null}
-                <span>
+              <div className="historyCardHeader">
+                <div className="historyCardTitle">
+                  <strong>{game.opponent.displayName}</strong>
+                  {game.coachMode ? <span className="adminBadge">Treinador</span> : null}
+                </div>
+                <span className="historyCardSubtitle">
                   @{game.opponent.username} · {game.opponent.rating} XE
                 </span>
               </div>
-              <dl>
+              <dl className="historyCardMeta">
                 <div>
                   <dt>Ritmo</dt>
                   <dd>{game.timeControl}</dd>
@@ -134,11 +136,13 @@ export function HistoryList() {
                   </div>
                 ) : null}
               </dl>
-              {review.available ? (
-                <Link href={'/app/partidas/' + game.id + '/revisao'}>Revisar partida</Link>
-              ) : (
-                <span className="historyReviewUnavailable">{review.shortLabel}</span>
-              )}
+              <div className="historyCardAction">
+                {review.available ? (
+                  <Link href={'/app/partidas/' + game.id + '/revisao'}>Revisar partida</Link>
+                ) : (
+                  <span className="historyReviewUnavailable">{review.shortLabel}</span>
+                )}
+              </div>
             </article>
           );
         })}
