@@ -78,6 +78,22 @@ vi.mock('@/lib/api/client', () => ({
   api: {
     getExerciseMetrics: (...args: unknown[]) => getExerciseMetrics(...args),
     getExerciseTraining: (...args: unknown[]) => getExerciseTraining(...args),
+    getMySubscription: vi.fn().mockResolvedValue({
+      autoRenew: null,
+      billingPeriod: null,
+      currentPeriodEnd: null,
+      plan: {
+        annualPriceCents: null,
+        id: '99000000-0000-4000-8000-000000000fff',
+        isDefault: true,
+        limits: [{ dailyLimit: 0, featureKey: 'hints_per_day' }],
+        name: 'Teste',
+        priceCents: 0,
+        slug: 'teste',
+        status: 'active',
+      },
+      status: 'active',
+    }),
     listChallengeThemes: (...args: unknown[]) => listChallengeThemes(...args),
     revealExerciseHint: vi.fn(),
     revealExerciseSolution: vi.fn(),

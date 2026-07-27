@@ -24,6 +24,7 @@ import { api, getStoredUserId } from '@/lib/api/client';
 import { formatUciSquares, speakableSquares, toBrazilianSan } from '@/lib/notation';
 import { usePieceTheme } from '@/lib/piece-theme';
 import { speak, stopSpeaking } from '@/lib/speech';
+import { useEntitlements } from '@/lib/subscriptions/use-entitlements';
 import { useVoicePreference } from '@/lib/voice-preference';
 
 const INITIAL_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -72,6 +73,8 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
   const [eligibility, setEligibility] = useState<ReviewEligibility | null>(null);
   const [view, setView] = useState<'summary' | 'moves'>('summary');
   const [orientation, setOrientation] = useState<BoardOrientation>('white');
+  const { hasFeature } = useEntitlements();
+  const analysisAllowed = hasFeature('game_analysis_access');
 
   useEffect(() => {
     const token = window.localStorage.getItem('xadrez.access_token');
@@ -92,7 +95,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
         const [nextMoves, nextAnnotations, nextAnalysis, nextNarration] = await Promise.all([
           api.getMoves(gameId, token),
           api.getReviewAnnotations(gameId, token),
-          api.getGameAnalysis(gameId, token),
+          api.getGameAnalysis(gameId, token).catch(() => null),
           api.getGameNarration(gameId, token).catch(() => null),
         ]);
         setMoves(nextMoves);
@@ -230,7 +233,12 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
           </div>
           <Link href="/app/partidas">Voltar ao histórico</Link>
         </header>
-        <p role="status">{message || ANALYSIS_STATUS_LABEL[analysis?.status ?? 'pending']}</p>
+        <p role="status">
+          {message ||
+            (!analysisAllowed
+              ? 'A análise com o motor de xadrez não está incluída no seu plano atual.'
+              : ANALYSIS_STATUS_LABEL[analysis?.status ?? 'pending'])}
+        </p>
         {analysis?.summary ? (
           <section className="reviewSummaryColumns">
             {summaryColumns.map(({ avatarUrl, color, label }) => (

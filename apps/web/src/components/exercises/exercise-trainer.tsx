@@ -19,6 +19,7 @@ import {
 } from '@/components/game/move-announcement';
 import { api } from '@/lib/api/client';
 import { usePieceTheme } from '@/lib/piece-theme';
+import { useEntitlements } from '@/lib/subscriptions/use-entitlements';
 import {
   playCaptureSound,
   playDefeatSound,
@@ -94,6 +95,8 @@ export function ExerciseTrainer({
 }: ExerciseTrainerProps = {}) {
   const [category, setCategory] = useState('');
   const { theme: pieceTheme } = usePieceTheme();
+  const { hasFeature } = useEntitlements();
+  const hintsAllowed = hasFeature('hints_per_day');
   const [difficulty, setDifficulty] = useState(initialDifficulty);
   const [moduleNumber, setModuleNumber] = useState('');
   const [query, setQuery] = useState(initialQuery);
@@ -923,7 +926,7 @@ export function ExerciseTrainer({
                   {guided ? 'Confirmar resposta' : 'Enviar tentativa'}
                 </button>
               ) : null}
-              {displayedExercise.hintsAvailable > 0 ? (
+              {displayedExercise.hintsAvailable > 0 && hintsAllowed ? (
                 <button className={styles.secondaryAction} onClick={revealHint} type="button">
                   Pedir dica
                 </button>

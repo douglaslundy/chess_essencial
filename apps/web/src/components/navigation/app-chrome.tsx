@@ -6,6 +6,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 
 import { AuthStatus } from '@/components/auth/auth-status';
 import { api } from '@/lib/api/client';
+import { useEntitlements } from '@/lib/subscriptions/use-entitlements';
 
 const navigation = [
   { href: '/app', label: 'Visão geral' },
@@ -13,11 +14,11 @@ const navigation = [
   { href: '/app/partidas', label: 'Partidas' },
   { href: '/app/exercicios', label: 'Exercícios' },
   { href: '/app/desafios', label: 'Desafios' },
-  { href: '/app/ranking', label: 'Ranking' },
+  { href: '/app/ranking', label: 'Ranking', requiresFeature: 'social_access' },
   { href: '/app/cursos', label: 'Cursos e aulas' },
-  { href: '/app/amigos', label: 'Amigos' },
-  { href: '/app/mensagens', label: 'Mensagens' },
-  { href: '/app/feed', label: 'Feed' },
+  { href: '/app/amigos', label: 'Amigos', requiresFeature: 'social_access' },
+  { href: '/app/mensagens', label: 'Mensagens', requiresFeature: 'social_access' },
+  { href: '/app/feed', label: 'Feed', requiresFeature: 'social_access' },
   { href: '/app/planos', label: 'Planos' },
   { href: '/app/partida/demo', label: 'Tabuleiro demonstrativo' },
   { href: '/regras', label: 'Regras da comunidade' },
@@ -29,6 +30,7 @@ export function AppChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const { hasFeature } = useEntitlements();
 
   useEffect(() => {
     queueMicrotask(() => setMenuOpen(false));
@@ -70,16 +72,18 @@ export function AppChrome({ children }: { children: ReactNode }) {
           <strong>Xadrez Essencial</strong>
         </Link>
         <nav aria-label="Navegação principal">
-          {navigation.map((item) => {
-            const active =
-              pathname === item.href ||
-              (item.href !== '/app' && pathname.startsWith(`${item.href}/`));
-            return (
-              <Link className={active ? 'activeNav' : undefined} href={item.href} key={item.href}>
-                {item.label}
-              </Link>
-            );
-          })}
+          {navigation
+            .filter((item) => !('requiresFeature' in item) || hasFeature(item.requiresFeature))
+            .map((item) => {
+              const active =
+                pathname === item.href ||
+                (item.href !== '/app' && pathname.startsWith(`${item.href}/`));
+              return (
+                <Link className={active ? 'activeNav' : undefined} href={item.href} key={item.href}>
+                  {item.label}
+                </Link>
+              );
+            })}
           {isAdmin ? (
             <Link
               className={pathname.startsWith('/app/admin') ? 'activeNav' : undefined}

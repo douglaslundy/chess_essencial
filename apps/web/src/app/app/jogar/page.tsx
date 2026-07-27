@@ -7,6 +7,7 @@ import type { BotDifficulty, PlayerColorPreference, TimeControlCode } from '@xad
 
 import { GroupedListbox } from '@/components/ui/grouped-listbox';
 import { api } from '@/lib/api/client';
+import { useEntitlements } from '@/lib/subscriptions/use-entitlements';
 
 const controls: Array<{ code: TimeControlCode; label: string; detail: string; pool: string }> = [
   { code: 'bullet-1-0', label: '1 + 0', detail: 'Ultrarrápida · 1 min', pool: 'Bullet' },
@@ -46,6 +47,8 @@ export default function PlayPage() {
   const [playerColor, setPlayerColor] = useState<PlayerColorPreference>('random');
   const [status, setStatus] = useState<'idle' | 'searching' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const { hasFeature } = useEntitlements();
+  const coachModeAllowed = hasFeature('coach_mode_access');
 
   async function search() {
     const token = window.localStorage.getItem('xadrez.access_token');
@@ -124,7 +127,9 @@ export default function PlayPage() {
             >
               <option value="human">Buscar adversário online</option>
               <option value="bot">Jogar contra o bot</option>
-              <option value="coach">Treinador (dicas e avisos)</option>
+              <option disabled={!coachModeAllowed} value="coach">
+                Treinador (dicas e avisos){coachModeAllowed ? '' : ' · indisponível no seu plano'}
+              </option>
             </select>
           </label>
           {opponent === 'bot' ? (
