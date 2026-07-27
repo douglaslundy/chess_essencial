@@ -72,6 +72,7 @@ function buildGameState(overrides: Partial<Parameters<GameSocketHandlers['snapsh
     currentFen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
     finishedAt: null,
     id: '99000000-0000-4000-8000-000000000001',
+    pendingDrawOffer: null,
     players: [
       {
         avatarUrl: null,
