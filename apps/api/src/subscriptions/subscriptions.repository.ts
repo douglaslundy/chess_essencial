@@ -46,6 +46,14 @@ function slugify(name: string) {
   return base.length > 0 ? base : 'plano';
 }
 
+// porsager/postgres has no native binder for "arbitrary unknown value as
+// jsonb" — same `${...}::text::jsonb` idiom already used elsewhere in the
+// codebase (see courses/lesson-importer.ts) for the webhook's raw payload,
+// kept for audit/debugging (subscription_payments.raw_notification).
+function toJsonb(value: unknown): string {
+  return JSON.stringify(value ?? null);
+}
+
 @Injectable()
 export class SubscriptionsRepository {
   constructor(private readonly database: DatabaseService) {}
@@ -283,6 +291,7 @@ export class SubscriptionsRepository {
     mercadoPagoSubscriptionId: string,
     currentPeriodEnd: Date | null,
     amountCents: number,
+    rawNotification: unknown,
   ): Promise<{ planId: string; userId: string } | null> {
     return this.database.client.begin(async (transaction) => {
       const [pending] = await transaction<{ planId: string; userId: string }[]>`
@@ -303,8 +312,9 @@ export class SubscriptionsRepository {
       `;
       await transaction`
         INSERT INTO subscription_payments
-          (subscription_id, provider_transaction_id, status, amount_cents, billing_period, paid_at)
-        VALUES (${externalReference}, ${mercadoPagoSubscriptionId}, 'approved', ${amountCents}, 'monthly', now())
+          (subscription_id, provider_transaction_id, status, amount_cents, billing_period, paid_at, raw_notification)
+        VALUES (${externalReference}, ${mercadoPagoSubscriptionId}, 'approved', ${amountCents}, 'monthly', now(),
+          ${toJsonb(rawNotification)}::text::jsonb)
         ON CONFLICT (provider, provider_transaction_id) DO NOTHING
       `;
       return pending;
@@ -329,6 +339,7 @@ export class SubscriptionsRepository {
     externalReference: string,
     providerTransactionId: string,
     amountCents: number,
+    rawNotification: unknown,
   ): Promise<{ planId: string; userId: string } | null> {
     return this.database.client.begin(async (transaction) => {
       const [pending] = await transaction<{ planId: string; userId: string }[]>`
@@ -348,11 +359,59 @@ export class SubscriptionsRepository {
       `;
       await transaction`
         INSERT INTO subscription_payments
-          (subscription_id, provider_transaction_id, status, amount_cents, billing_period, paid_at)
-        VALUES (${externalReference}, ${providerTransactionId}, 'approved', ${amountCents}, 'annual', now())
+          (subscription_id, provider_transaction_id, status, amount_cents, billing_period, paid_at, raw_notification)
+        VALUES (${externalReference}, ${providerTransactionId}, 'approved', ${amountCents}, 'annual', now(),
+          ${toJsonb(rawNotification)}::text::jsonb)
         ON CONFLICT (provider, provider_transaction_id) DO NOTHING
       `;
       return pending;
+    });
+  }
+
+  /**
+   * Records a Mercado Pago recurring charge (`type=payment` webhook) for a
+   * subscription that is already `active` — i.e. every renewal after the
+   * first. `activateOneTimePayment` only matches a still-`pending` row (the
+   * initial charge); once the local subscription has transitioned to
+   * `active`, that lookup finds nothing and a renewal payment used to
+   * vanish silently — never logged in the ledger, `current_period_end`
+   * never pushed out. Idempotent the same way as the rest of the ledger
+   * (ON CONFLICT on provider+provider_transaction_id); the period is only
+   * extended when the ledger insert actually happened, so a re-delivered
+   * webhook can't push `current_period_end` out twice. Returns whether a
+   * renewal was actually recorded (false when there's no matching active
+   * subscription — e.g. an unrelated/unknown payment id).
+   */
+  async recordRecurringRenewal(
+    externalReference: string,
+    providerTransactionId: string,
+    amountCents: number,
+    rawNotification: unknown,
+  ): Promise<boolean> {
+    return this.database.client.begin(async (transaction) => {
+      const [subscription] = await transaction<{ billingPeriod: BillingPeriod }[]>`
+        SELECT billing_period AS "billingPeriod" FROM user_subscriptions
+         WHERE id = ${externalReference} AND status = 'active'
+         FOR UPDATE
+      `;
+      if (!subscription) return false;
+      const [inserted] = await transaction<{ id: string }[]>`
+        INSERT INTO subscription_payments
+          (subscription_id, provider_transaction_id, status, amount_cents, billing_period, paid_at, raw_notification)
+        VALUES (${externalReference}, ${providerTransactionId}, 'approved', ${amountCents},
+          ${subscription.billingPeriod}, now(), ${toJsonb(rawNotification)}::text::jsonb)
+        ON CONFLICT (provider, provider_transaction_id) DO NOTHING
+        RETURNING id
+      `;
+      if (!inserted) return false;
+      const period =
+        subscription.billingPeriod === 'annual' ? transaction`interval '1 year'` : transaction`interval '1 month'`;
+      await transaction`
+        UPDATE user_subscriptions
+           SET current_period_end = COALESCE(current_period_end, now()) + ${period}, updated_at = now()
+         WHERE id = ${externalReference}
+      `;
+      return true;
     });
   }
 
@@ -367,12 +426,15 @@ export class SubscriptionsRepository {
     providerTransactionId: string,
     status: Exclude<SubscriptionPaymentStatus, 'approved' | 'refunded'>,
     amountCents: number,
+    rawNotification: unknown,
   ): Promise<void> {
     await this.database.client`
       INSERT INTO subscription_payments
-        (subscription_id, provider_transaction_id, status, amount_cents, billing_period)
-      VALUES (${externalReference}, ${providerTransactionId}, ${status}, ${amountCents}, 'annual')
-      ON CONFLICT (provider, provider_transaction_id) DO UPDATE SET status = EXCLUDED.status
+        (subscription_id, provider_transaction_id, status, amount_cents, billing_period, raw_notification)
+      VALUES (${externalReference}, ${providerTransactionId}, ${status}, ${amountCents}, 'annual',
+        ${toJsonb(rawNotification)}::text::jsonb)
+      ON CONFLICT (provider, provider_transaction_id) DO UPDATE
+        SET status = EXCLUDED.status, raw_notification = EXCLUDED.raw_notification
     `;
   }
 
@@ -385,13 +447,16 @@ export class SubscriptionsRepository {
     externalReference: string,
     providerTransactionId: string,
     amountCents: number,
+    rawNotification: unknown,
   ): Promise<void> {
     await this.database.client.begin(async (transaction) => {
       await transaction`
         INSERT INTO subscription_payments
-          (subscription_id, provider_transaction_id, status, amount_cents, billing_period)
-        VALUES (${externalReference}, ${providerTransactionId}, 'refunded', ${amountCents}, 'annual')
-        ON CONFLICT (provider, provider_transaction_id) DO UPDATE SET status = 'refunded'
+          (subscription_id, provider_transaction_id, status, amount_cents, billing_period, raw_notification)
+        VALUES (${externalReference}, ${providerTransactionId}, 'refunded', ${amountCents}, 'annual',
+          ${toJsonb(rawNotification)}::text::jsonb)
+        ON CONFLICT (provider, provider_transaction_id) DO UPDATE
+          SET status = 'refunded', raw_notification = EXCLUDED.raw_notification
       `;
       await transaction`
         UPDATE user_subscriptions SET status = 'canceled', updated_at = now()
@@ -421,12 +486,42 @@ export class SubscriptionsRepository {
     `;
   }
 
-  /** Flips subscriptions past their expiry to 'expired' — the enum value existed but nothing wrote it until now. */
+  /**
+   * Flips subscriptions past their expiry to 'expired' — the enum value
+   * existed but nothing wrote it until now. Also logs a matching
+   * `subscription_payments` row for each one: the `expired` status was
+   * already allowed by the table's CHECK constraint but nothing ever wrote
+   * it, leaving the ledger silently incomplete. Not a Mercado Pago
+   * notification — there's no provider transaction id — so the ledger row
+   * is keyed by a synthetic id derived from the subscription and the exact
+   * period end it expired against, which keeps the same idempotent
+   * ON CONFLICT shape as the rest of the ledger while still allowing a new
+   * row if the same subscription is reactivated and expires again later.
+   */
   async expirePastDue(): Promise<number> {
     const rows = await this.database.client<{ id: string }[]>`
-      UPDATE user_subscriptions SET status = 'expired', updated_at = now()
-      WHERE status = 'active' AND current_period_end IS NOT NULL AND current_period_end < now()
-      RETURNING id
+      WITH expired AS (
+        UPDATE user_subscriptions SET status = 'expired', updated_at = now()
+        WHERE status = 'active' AND current_period_end IS NOT NULL AND current_period_end < now()
+        RETURNING id, billing_period, current_period_end
+      ), logged AS (
+        INSERT INTO subscription_payments
+          (subscription_id, provider_transaction_id, status, amount_cents, billing_period, raw_notification)
+        SELECT
+          expired.id,
+          'expired:' || expired.id::text || ':' || expired.current_period_end::text,
+          'expired',
+          0,
+          expired.billing_period,
+          jsonb_build_object(
+            'reason', 'current_period_end_passed',
+            'subscriptionId', expired.id,
+            'currentPeriodEnd', expired.current_period_end
+          )
+        FROM expired
+        ON CONFLICT (provider, provider_transaction_id) DO NOTHING
+      )
+      SELECT id FROM expired
     `;
     return rows.length;
   }

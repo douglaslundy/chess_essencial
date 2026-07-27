@@ -326,6 +326,7 @@ export class SubscriptionsService {
         preapproval.id,
         endDate ? new Date(endDate) : null,
         amountCents,
+        preapproval,
       );
       return;
     }
@@ -347,11 +348,26 @@ export class SubscriptionsService {
     const providerTransactionId = String(payment.id);
 
     if (payment.status === 'approved') {
-      await this.repository.activateOneTimePayment(
+      const activated = await this.repository.activateOneTimePayment(
         payment.external_reference,
         providerTransactionId,
         amountCents,
+        payment,
       );
+      if (!activated) {
+        // Not a still-pending row waiting on its first charge — Mercado
+        // Pago also sends a `type=payment` notification for every
+        // subsequent monthly renewal of an already-`active` recurring
+        // subscription. Without this fallback that renewal was silently
+        // dropped: never logged in the ledger, current_period_end never
+        // extended.
+        await this.repository.recordRecurringRenewal(
+          payment.external_reference,
+          providerTransactionId,
+          amountCents,
+          payment,
+        );
+      }
       return;
     }
     if (payment.status === 'refunded' || payment.status === 'charged_back') {
@@ -359,6 +375,7 @@ export class SubscriptionsService {
         payment.external_reference,
         providerTransactionId,
         amountCents,
+        payment,
       );
       return;
     }
@@ -368,6 +385,7 @@ export class SubscriptionsService {
         providerTransactionId,
         payment.status,
         amountCents,
+        payment,
       );
       return;
     }
@@ -379,6 +397,7 @@ export class SubscriptionsService {
       providerTransactionId,
       'pending',
       amountCents,
+      payment,
     );
   }
 }

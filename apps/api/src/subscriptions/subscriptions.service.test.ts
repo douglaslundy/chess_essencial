@@ -17,21 +17,34 @@ class FakeSubscriptionsRepository {
   active: ActiveSubscription | null = null;
   defaultPlan: PlanWithLimits | null = null;
   usage = 0;
+  // Simulates whether activateOneTimePayment finds a matching `pending` row
+  // — false reproduces the "already active" case a renewal notification
+  // hits (bug 1's regression scenario).
+  hasPendingRowToActivate = true;
   activatedOneTimePayments: {
     amountCents: number;
     externalReference: string;
     providerTransactionId: string;
+    rawNotification: unknown;
   }[] = [];
   recordedEvents: {
     amountCents: number;
     externalReference: string;
     providerTransactionId: string;
+    rawNotification: unknown;
     status: string;
   }[] = [];
   refundedPayments: {
     amountCents: number;
     externalReference: string;
     providerTransactionId: string;
+    rawNotification: unknown;
+  }[] = [];
+  recordedRenewals: {
+    amountCents: number;
+    externalReference: string;
+    providerTransactionId: string;
+    rawNotification: unknown;
   }[] = [];
 
   async getActiveSubscriptionForUser() {
@@ -50,8 +63,31 @@ class FakeSubscriptionsRepository {
     externalReference: string,
     providerTransactionId: string,
     amountCents: number,
+    rawNotification: unknown,
   ) {
-    this.activatedOneTimePayments.push({ amountCents, externalReference, providerTransactionId });
+    if (!this.hasPendingRowToActivate) return null;
+    this.activatedOneTimePayments.push({
+      amountCents,
+      externalReference,
+      providerTransactionId,
+      rawNotification,
+    });
+    return { planId: 'plan-1', userId: 'user-1' };
+  }
+
+  async recordRecurringRenewal(
+    externalReference: string,
+    providerTransactionId: string,
+    amountCents: number,
+    rawNotification: unknown,
+  ) {
+    this.recordedRenewals.push({
+      amountCents,
+      externalReference,
+      providerTransactionId,
+      rawNotification,
+    });
+    return true;
   }
 
   async recordOneTimePaymentEvent(
@@ -59,16 +95,29 @@ class FakeSubscriptionsRepository {
     providerTransactionId: string,
     status: string,
     amountCents: number,
+    rawNotification: unknown,
   ) {
-    this.recordedEvents.push({ amountCents, externalReference, providerTransactionId, status });
+    this.recordedEvents.push({
+      amountCents,
+      externalReference,
+      providerTransactionId,
+      rawNotification,
+      status,
+    });
   }
 
   async refundOneTimePayment(
     externalReference: string,
     providerTransactionId: string,
     amountCents: number,
+    rawNotification: unknown,
   ) {
-    this.refundedPayments.push({ amountCents, externalReference, providerTransactionId });
+    this.refundedPayments.push({
+      amountCents,
+      externalReference,
+      providerTransactionId,
+      rawNotification,
+    });
   }
 }
 
@@ -323,29 +372,36 @@ describe('SubscriptionsService.processMercadoPagoNotification (type=payment, one
   }
 
   it('activates the subscription on an approved payment', async () => {
-    mockPaymentFetch({
+    const payment = {
       external_reference: 'sub-1',
       id: 555,
       status: 'approved',
       transaction_amount: 199,
-    });
+    };
+    mockPaymentFetch(payment);
     const repository = new FakeSubscriptionsRepository();
     const service = new SubscriptionsService(repository as never, settings as never, {} as never);
 
     await service.processMercadoPagoNotification('payment', '555');
 
+    // Bug 3: the raw webhook payload must be forwarded for audit/debug
+    // (subscription_payments.raw_notification), not just the fields the
+    // service happens to read out of it.
     expect(repository.activatedOneTimePayments).toEqual([
-      { amountCents: 19_900, externalReference: 'sub-1', providerTransactionId: '555' },
+      { amountCents: 19_900, externalReference: 'sub-1', providerTransactionId: '555', rawNotification: payment },
     ]);
+    // Already activated via the pending-row lookup — no fallback renewal.
+    expect(repository.recordedRenewals).toEqual([]);
   });
 
   it('records a pending payment without activating anything', async () => {
-    mockPaymentFetch({
+    const payment = {
       external_reference: 'sub-2',
       id: 556,
       status: 'in_process',
       transaction_amount: 199,
-    });
+    };
+    mockPaymentFetch(payment);
     const repository = new FakeSubscriptionsRepository();
     const service = new SubscriptionsService(repository as never, settings as never, {} as never);
 
@@ -357,18 +413,20 @@ describe('SubscriptionsService.processMercadoPagoNotification (type=payment, one
         amountCents: 19_900,
         externalReference: 'sub-2',
         providerTransactionId: '556',
+        rawNotification: payment,
         status: 'pending',
       },
     ]);
   });
 
   it('records a rejected payment without activating anything', async () => {
-    mockPaymentFetch({
+    const payment = {
       external_reference: 'sub-3',
       id: 557,
       status: 'rejected',
       transaction_amount: 199,
-    });
+    };
+    mockPaymentFetch(payment);
     const repository = new FakeSubscriptionsRepository();
     const service = new SubscriptionsService(repository as never, settings as never, {} as never);
 
@@ -380,25 +438,58 @@ describe('SubscriptionsService.processMercadoPagoNotification (type=payment, one
         amountCents: 19_900,
         externalReference: 'sub-3',
         providerTransactionId: '557',
+        rawNotification: payment,
         status: 'rejected',
       },
     ]);
   });
 
   it('cancels the subscription and records a refund when a payment is refunded', async () => {
-    mockPaymentFetch({
+    const payment = {
       external_reference: 'sub-4',
       id: 558,
       status: 'refunded',
       transaction_amount: 199,
-    });
+    };
+    mockPaymentFetch(payment);
     const repository = new FakeSubscriptionsRepository();
     const service = new SubscriptionsService(repository as never, settings as never, {} as never);
 
     await service.processMercadoPagoNotification('payment', '558');
 
     expect(repository.refundedPayments).toEqual([
-      { amountCents: 19_900, externalReference: 'sub-4', providerTransactionId: '558' },
+      { amountCents: 19_900, externalReference: 'sub-4', providerTransactionId: '558', rawNotification: payment },
+    ]);
+  });
+
+  // Bug 1: Mercado Pago fires a `type=payment` notification for every
+  // monthly renewal, not just the subscription's first charge. By the time
+  // a renewal lands, the local row is already `active` (not `pending`), so
+  // activateOneTimePayment's pending-row lookup finds nothing. Before this
+  // fix that meant the renewal was dropped — never recorded in the ledger,
+  // current_period_end never extended.
+  it('records a recurring renewal when the payment is approved for an already-active subscription', async () => {
+    const payment = {
+      external_reference: 'sub-active-1',
+      id: 999,
+      status: 'approved',
+      transaction_amount: 49.9,
+    };
+    mockPaymentFetch(payment);
+    const repository = new FakeSubscriptionsRepository();
+    repository.hasPendingRowToActivate = false;
+    const service = new SubscriptionsService(repository as never, settings as never, {} as never);
+
+    await service.processMercadoPagoNotification('payment', '999');
+
+    expect(repository.activatedOneTimePayments).toEqual([]);
+    expect(repository.recordedRenewals).toEqual([
+      {
+        amountCents: 4_990,
+        externalReference: 'sub-active-1',
+        providerTransactionId: '999',
+        rawNotification: payment,
+      },
     ]);
   });
 

@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createApp } from '../bootstrap.js';
 import { DatabaseService } from '../database/database.service.js';
+import { SubscriptionsRepository } from './subscriptions.repository.js';
 
 const describeDatabase = process.env.RUN_DB_TESTS === 'true' ? describe : describe.skip;
 
@@ -177,5 +178,130 @@ describeDatabase('subscription plans database integration (área 6/7)', () => {
       url: '/v1/admin/subscription-plans',
     });
     expect(response.statusCode).toBe(403);
+  });
+
+  // Bug 1 (monthly renewal ledger) + Bug 3 (raw_notification always saved).
+  it('records a recurring renewal for an already-active monthly subscription and extends the period', async () => {
+    const plan = await app.inject({
+      headers: auth(admin),
+      method: 'POST',
+      payload: { limits: [], name: 'Plano Renovação Mensal', priceCents: 990 },
+      url: '/v1/admin/subscription-plans',
+    });
+    createdPlanIds.push(plan.json().id);
+
+    const originalPeriodEnd = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+    const [subscription] = await database.client<{ id: string }[]>`
+      INSERT INTO user_subscriptions
+        (user_id, plan_id, status, billing_period, auto_renew, current_period_end)
+      VALUES (${member.userId}, ${plan.json().id}, 'active', 'monthly', true, ${originalPeriodEnd})
+      RETURNING id
+    `;
+    const subscriptionId = subscription!.id;
+    const repository = app.get(SubscriptionsRepository);
+
+    // activateOneTimePayment must NOT find this row (it's active, not
+    // pending) — this reproduces exactly what used to make the renewal
+    // vanish before the fix.
+    const notActivated = await repository.activateOneTimePayment(
+      subscriptionId,
+      'mp-renewal-not-pending',
+      990,
+      { note: 'should not activate' },
+    );
+    expect(notActivated).toBeNull();
+
+    const rawNotification = { id: 'renewal-1', status: 'approved', type: 'payment' };
+    const recorded = await repository.recordRecurringRenewal(
+      subscriptionId,
+      'mp-renewal-1',
+      990,
+      rawNotification,
+    );
+    expect(recorded).toBe(true);
+
+    const [payment] = await database.client<
+      { amountCents: number; rawNotification: unknown; status: string }[]
+    >`
+      SELECT amount_cents AS "amountCents", status, raw_notification AS "rawNotification"
+      FROM subscription_payments
+      WHERE subscription_id = ${subscriptionId} AND provider_transaction_id = 'mp-renewal-1'
+    `;
+    expect(payment).toMatchObject({ amountCents: 990, status: 'approved' });
+    expect(payment!.rawNotification).toEqual(rawNotification);
+
+    const [updated] = await database.client<{ currentPeriodEnd: Date }[]>`
+      SELECT current_period_end AS "currentPeriodEnd" FROM user_subscriptions WHERE id = ${subscriptionId}
+    `;
+    expect(updated!.currentPeriodEnd.getTime()).toBeGreaterThan(originalPeriodEnd.getTime());
+
+    // Re-delivering the same webhook notification must not create a
+    // second ledger row nor push the period out again.
+    const recordedAgain = await repository.recordRecurringRenewal(
+      subscriptionId,
+      'mp-renewal-1',
+      990,
+      rawNotification,
+    );
+    expect(recordedAgain).toBe(false);
+    const [afterRetry] = await database.client<{ currentPeriodEnd: Date }[]>`
+      SELECT current_period_end AS "currentPeriodEnd" FROM user_subscriptions WHERE id = ${subscriptionId}
+    `;
+    expect(afterRetry!.currentPeriodEnd.getTime()).toBe(updated!.currentPeriodEnd.getTime());
+    const [renewalCount] = await database.client<{ count: number }[]>`
+      SELECT count(*)::integer AS count FROM subscription_payments WHERE subscription_id = ${subscriptionId}
+    `;
+    expect(renewalCount!.count).toBe(1);
+
+    await database.client`DELETE FROM user_subscriptions WHERE id = ${subscriptionId}`;
+  });
+
+  // Bug 2 (expired status written to the ledger) + Bug 3 (raw_notification).
+  it('logs an expired ledger row when a past-due subscription is flipped to expired', async () => {
+    const plan = await app.inject({
+      headers: auth(admin),
+      method: 'POST',
+      payload: { limits: [], name: 'Plano Expiração', priceCents: 500 },
+      url: '/v1/admin/subscription-plans',
+    });
+    createdPlanIds.push(plan.json().id);
+
+    const pastPeriodEnd = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const [subscription] = await database.client<{ id: string }[]>`
+      INSERT INTO user_subscriptions
+        (user_id, plan_id, status, billing_period, auto_renew, current_period_end)
+      VALUES (${member.userId}, ${plan.json().id}, 'active', 'monthly', true, ${pastPeriodEnd})
+      RETURNING id
+    `;
+    const subscriptionId = subscription!.id;
+    const repository = app.get(SubscriptionsRepository);
+
+    const expiredCount = await repository.expirePastDue();
+    expect(expiredCount).toBeGreaterThanOrEqual(1);
+
+    const [reloaded] = await database.client<{ status: string }[]>`
+      SELECT status FROM user_subscriptions WHERE id = ${subscriptionId}
+    `;
+    expect(reloaded!.status).toBe('expired');
+
+    const [payment] = await database.client<
+      { amountCents: number; rawNotification: unknown; status: string }[]
+    >`
+      SELECT amount_cents AS "amountCents", status, raw_notification AS "rawNotification"
+      FROM subscription_payments WHERE subscription_id = ${subscriptionId}
+    `;
+    expect(payment).toMatchObject({ amountCents: 0, status: 'expired' });
+    expect(payment!.rawNotification).not.toBeNull();
+    expect(payment!.rawNotification).toMatchObject({ reason: 'current_period_end_passed' });
+
+    // Idempotent: running the job again doesn't touch an already-expired
+    // subscription, so no second ledger row is created for it.
+    await repository.expirePastDue();
+    const [expiredLedgerCount] = await database.client<{ count: number }[]>`
+      SELECT count(*)::integer AS count FROM subscription_payments WHERE subscription_id = ${subscriptionId}
+    `;
+    expect(expiredLedgerCount!.count).toBe(1);
+
+    await database.client`DELETE FROM user_subscriptions WHERE id = ${subscriptionId}`;
   });
 });
