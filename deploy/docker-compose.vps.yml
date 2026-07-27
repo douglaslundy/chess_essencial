@@ -107,6 +107,7 @@ services:
       MINIO_USE_SSL: 'false'
       NODE_ENV: production
       REDIS_URL: redis://redis:6379
+      SETTINGS_ENCRYPTION_KEY: ${SETTINGS_ENCRYPTION_KEY}
       SMTP_URL: ${SMTP_URL:-smtp://mailpit:1025}
       WEB_ORIGIN: ${WEB_ORIGIN}
     healthcheck:
@@ -136,6 +137,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       NODE_ENV: production
       REDIS_URL: redis://redis:6379
+      SETTINGS_ENCRYPTION_KEY: ${SETTINGS_ENCRYPTION_KEY}
       WORKER_HEALTH_PORT: 4001
     healthcheck:
       test:
