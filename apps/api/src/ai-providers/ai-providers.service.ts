@@ -60,13 +60,18 @@ export class AiProvidersService implements OnModuleInit {
    * a live plaintext copy sitting next to it.
    */
   async onModuleInit() {
-    const legacy = await this.legacySettings.get<LegacyNarrationAiConfig>(
-      LEGACY_NARRATION_AI_SETTINGS_KEY,
-    );
-    if (!legacy?.apiKey) return;
-    const existing = await this.repository.get(legacy.provider);
-    if (existing?.encryptedApiKey) return;
+    // The whole method is best-effort: this runs on every app boot,
+    // including test/CI environments with no real database connection at
+    // all — a failure here (DB unreachable, encryption not configured yet)
+    // must never take down app startup itself. If skipped, the legacy row
+    // simply stays put and this is retried on the next restart.
     try {
+      const legacy = await this.legacySettings.get<LegacyNarrationAiConfig>(
+        LEGACY_NARRATION_AI_SETTINGS_KEY,
+      );
+      if (!legacy?.apiKey) return;
+      const existing = await this.repository.get(legacy.provider);
+      if (existing?.encryptedApiKey) return;
       const encryptedApiKey = encryptSecret(legacy.apiKey, this.encryptionKey());
       await this.repository.upsert(legacy.provider, {
         encryptedApiKey,
@@ -77,8 +82,7 @@ export class AiProvidersService implements OnModuleInit {
       await this.repository.setActive(legacy.provider, true);
       await this.legacySettings.set(LEGACY_NARRATION_AI_SETTINGS_KEY, {}, 'system');
     } catch {
-      // Best-effort: if encryption isn't configured yet at boot, the legacy
-      // row simply stays put and this runs again on the next restart.
+      // See comment above — intentionally swallowed.
     }
   }
 
