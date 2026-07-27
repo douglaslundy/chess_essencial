@@ -20,11 +20,14 @@ describe('mate-solver', () => {
     expect(findMateFirstMoves(fen, 1)).toEqual([]);
   });
 
+  // Full mate-in-2 search + line building runs close to vitest's 5000ms
+  // default on a loaded CI runner (~5.1s observed) — not an infinite loop,
+  // just a slow exhaustive search. Give it real headroom instead of racing.
   it('finds the mate-in-two first move and builds its interleaved line', () => {
     const fen = '5r1k/6pp/4Q2N/8/8/8/8/K7 w - - 0 1';
     expect(findMateFirstMoves(fen, 2)).toContain('e6g8');
     expect(buildSolutionLines(fen, 2, 'e6g8')).toContainEqual(['e6g8', 'f8g8', 'h6f7']);
-  });
+  }, 20_000);
 
   it('recognizes forced mate depth', () => {
     const fen = '5r1k/6pp/4Q2N/8/8/8/8/K7 w - - 0 1';
