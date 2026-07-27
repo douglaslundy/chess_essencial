@@ -2,6 +2,7 @@ import type {
   AdminBotStats,
   AdminMetrics,
   AdminOnlineBot,
+  AdminUser,
   AdminUserSearchQuery,
   UpdateAdminUserInput,
   UpdateAdminUserStatusInput,
@@ -12,6 +13,15 @@ import { AuditService } from '../observability/audit.service.js';
 import { RedisService } from '../redis/redis.service.js';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service.js';
 import { AdminRepository } from './admin.repository.js';
+
+// Audit metadata only accepts primitives (see AuditService.record), so a
+// null/undefined field value is rendered as this placeholder instead of
+// being dropped or coerced into "null"/"undefined" strings.
+const AUDIT_EMPTY_VALUE = '(vazio)';
+
+function auditValue(value: null | number | string | undefined): number | string {
+  return value === null || value === undefined ? AUDIT_EMPTY_VALUE : value;
+}
 
 @Injectable()
 export class AdminService {
@@ -43,21 +53,61 @@ export class AdminService {
    * present) via SubscriptionsService — two separate writes, but the plan
    * change is idempotent-safe on its own (see adminSetPlan), so a failure
    * between the two just leaves the plan unchanged rather than corrupting
-   * anything. Every changed field is audited, but never the plan/roles'
-   * underlying IDs beyond what's needed to know what changed — no secrets
-   * are involved here either way.
+   * anything. Every changed field is audited with its before/after value
+   * (see buildUserUpdateAuditMetadata) — including the plan — but never the
+   * password, which isn't editable through this endpoint at all.
    */
   async updateUser(actingUserId: string, targetUserId: string, input: UpdateAdminUserInput) {
     const { planId, ...profileInput } = input;
+    const before = await this.admin.getUserDetail(targetUserId);
     let updated = await this.admin.updateUser(actingUserId, targetUserId, profileInput);
     if (planId !== undefined) {
       await this.subscriptions.adminSetPlan(targetUserId, planId);
       updated = await this.admin.getUserDetail(targetUserId);
     }
-    await this.audit?.record(actingUserId, 'admin.user_updated', 'user', targetUserId, {
-      fields: Object.keys(input).join(','),
-    });
+    await this.audit?.record(
+      actingUserId,
+      'admin.user_updated',
+      'user',
+      targetUserId,
+      this.buildUserUpdateAuditMetadata(input, before, updated),
+    );
     return updated;
+  }
+
+  /**
+   * Only the fields actually present in `input` get an entry — untouched
+   * fields aren't padded in with their unchanged value. Arrays (roles) are
+   * flattened to a comma-joined string since AuditService.record only
+   * accepts string/number/boolean metadata values.
+   */
+  private buildUserUpdateAuditMetadata(
+    input: UpdateAdminUserInput,
+    before: AdminUser,
+    after: AdminUser,
+  ): Record<string, boolean | number | string> {
+    const metadata: Record<string, boolean | number | string> = {};
+    if (input.displayName !== undefined) {
+      metadata.display_name_before = auditValue(before.displayName);
+      metadata.display_name_after = auditValue(after.displayName);
+    }
+    if (input.email !== undefined) {
+      metadata.email_before = before.email;
+      metadata.email_after = after.email;
+    }
+    if (input.status !== undefined) {
+      metadata.status_before = before.status;
+      metadata.status_after = after.status;
+    }
+    if (input.roles !== undefined) {
+      metadata.roles_before = before.roles.join(', ') || AUDIT_EMPTY_VALUE;
+      metadata.roles_after = after.roles.join(', ') || AUDIT_EMPTY_VALUE;
+    }
+    if (input.planId !== undefined) {
+      metadata.plan_id_before = auditValue(before.planId);
+      metadata.plan_id_after = auditValue(after.planId);
+    }
+    return metadata;
   }
 
   async getBotStats(): Promise<AdminBotStats> {
