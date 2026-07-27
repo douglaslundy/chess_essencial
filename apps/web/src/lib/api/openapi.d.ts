@@ -2523,6 +2523,14 @@ export interface components {
       color: 'white' | 'black';
       ratingBefore: number;
     };
+    GameDrawOffer: {
+      /** Format: uuid */
+      offerId: string;
+      /** Format: uuid */
+      offeredByUserId: string;
+      /** Format: date-time */
+      createdAt: string;
+    };
     GameState: {
       /** Format: uuid */
       id: string;
@@ -2557,6 +2565,7 @@ export interface components {
       /** Format: date-time */
       finishedAt: string | null;
       players: components['schemas']['GamePlayer'][];
+      pendingDrawOffer: components['schemas']['GameDrawOffer'] | null;
     };
     GameHistoryItem: {
       /** Format: uuid */

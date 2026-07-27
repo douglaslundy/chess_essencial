@@ -54,6 +54,13 @@ export const gameStateSchema = z.object({
       ratingBefore: z.number().int(),
     }),
   ),
+  pendingDrawOffer: z
+    .object({
+      offerId: z.string().uuid(),
+      offeredByUserId: z.string().uuid(),
+      createdAt: z.string().datetime(),
+    })
+    .nullable(),
 });
 
 export const gameMoveSchema = z.object({

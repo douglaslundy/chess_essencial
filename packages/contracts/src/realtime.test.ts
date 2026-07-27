@@ -48,6 +48,11 @@ describe('realtime contracts', () => {
           currentFen: 'startpos',
           finishedAt: null,
           id: '018f47f4-7b2f-4d90-8a66-a00000000004',
+          pendingDrawOffer: {
+            createdAt: timestamp,
+            offerId: '018f47f4-7b2f-4d90-8a66-a00000000003',
+            offeredByUserId: '018f47f4-7b2f-4d90-8a66-a00000000001',
+          },
           players: [],
           result: 'none',
           sideToMove: 'white',

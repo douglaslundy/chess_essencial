@@ -343,8 +343,29 @@ describeDatabase('games database integration', () => {
     expect(offered.statusCode, offered.body).toBe(201);
     expect(offered.json()).toMatchObject({
       accepted: false,
-      state: { status: 'active' },
+      state: {
+        status: 'active',
+        pendingDrawOffer: {
+          offerId: offered.json().offerId,
+          offeredByUserId: white.userId,
+        },
+      },
     });
+
+    // A separate read (e.g. the opponent refreshing the page or reconnecting
+    // from another device) must still see the pending offer: it is not only
+    // visible in the response that created it.
+    const reread = await app.inject({
+      headers: auth(black),
+      method: 'GET',
+      url: `/v1/games/${drawGameId}`,
+    });
+    expect(reread.statusCode, reread.body).toBe(200);
+    expect(reread.json().pendingDrawOffer).toMatchObject({
+      offerId: offered.json().offerId,
+      offeredByUserId: white.userId,
+    });
+    expect(typeof reread.json().pendingDrawOffer.createdAt).toBe('string');
 
     const repeated = await app.inject({
       headers: auth(white),
@@ -368,8 +389,19 @@ describeDatabase('games database integration', () => {
         status: 'finished',
         termination: 'agreement',
         version: 1,
+        pendingDrawOffer: null,
       },
     });
+
+    // The offer is resolved (status 'accepted' in the DB), so it must no
+    // longer surface as pending on subsequent reads either.
+    const finalRead = await app.inject({
+      headers: auth(white),
+      method: 'GET',
+      url: `/v1/games/${drawGameId}`,
+    });
+    expect(finalRead.statusCode, finalRead.body).toBe(200);
+    expect(finalRead.json().pendingDrawOffer).toBeNull();
   });
 
   it('finishes a game by resignation with the opponent as winner', async () => {

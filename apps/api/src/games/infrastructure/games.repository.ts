@@ -63,6 +63,12 @@ interface PlayerStateRow extends PlayerRow {
   username: string;
 }
 
+interface DrawOfferRow {
+  createdAt: Date | string;
+  offerId: string;
+  offeredByUserId: string;
+}
+
 export interface BotTurn {
   botUserId: string;
   currentFen: string;
@@ -1214,6 +1220,15 @@ export class GamesRepository {
       ORDER BY game_players.color DESC
     `;
 
+    const [pendingDrawOffer] = await query<DrawOfferRow[]>`
+      SELECT
+        id AS "offerId",
+        offered_by_user_id AS "offeredByUserId",
+        created_at AS "createdAt"
+      FROM game_draw_offers
+      WHERE game_id = ${gameId} AND status = 'pending'
+    `;
+
     return {
       activeClockStartedAt: this.toIso(game.activeClockStartedAt),
       blackClockMs: game.blackClockMs,
@@ -1221,6 +1236,13 @@ export class GamesRepository {
       currentFen: game.currentFen,
       finishedAt: this.toIso(game.finishedAt),
       id: game.id,
+      pendingDrawOffer: pendingDrawOffer
+        ? {
+            createdAt: this.toIso(pendingDrawOffer.createdAt) ?? new Date(0).toISOString(),
+            offerId: pendingDrawOffer.offerId,
+            offeredByUserId: pendingDrawOffer.offeredByUserId,
+          }
+        : null,
       players,
       result: game.result,
       sideToMove: game.sideToMove,

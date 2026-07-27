@@ -2704,9 +2704,17 @@ components:
         color: {type: string, enum: [white, black]}
         ratingBefore: {type: integer}
       additionalProperties: false
+    GameDrawOffer:
+      type: object
+      required: [offerId, offeredByUserId, createdAt]
+      properties:
+        offerId: {type: string, format: uuid}
+        offeredByUserId: {type: string, format: uuid}
+        createdAt: {type: string, format: date-time}
+      additionalProperties: false
     GameState:
       type: object
-      required: [id, status, result, termination, currentFen, sideToMove, coachMode, version, whiteClockMs, blackClockMs, activeClockStartedAt, startedAt, finishedAt, players]
+      required: [id, status, result, termination, currentFen, sideToMove, coachMode, version, whiteClockMs, blackClockMs, activeClockStartedAt, startedAt, finishedAt, players, pendingDrawOffer]
       properties:
         id: {type: string, format: uuid}
         status: {type: string, enum: [created, waiting, active, finished, aborted]}
@@ -2728,6 +2736,10 @@ components:
           minItems: 2
           maxItems: 2
           items: {$ref: '#/components/schemas/GamePlayer'}
+        pendingDrawOffer:
+          oneOf:
+            - {$ref: '#/components/schemas/GameDrawOffer'}
+            - {type: 'null'}
       additionalProperties: false
     GameHistoryItem:
       type: object

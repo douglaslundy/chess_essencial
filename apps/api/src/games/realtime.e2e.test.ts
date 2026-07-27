@@ -23,6 +23,7 @@ interface MessageEnvelope {
       termination: string;
       version: number;
       whiteClockMs: number;
+      pendingDrawOffer: { offerId: string; offeredByUserId: string; createdAt: string } | null;
     };
   };
   event: string;
@@ -230,6 +231,20 @@ describeDatabase('realtime game integration', () => {
       offerId: offered.json().offerId,
       offeredByUserId: white.userId,
       state: { status: 'active' },
+    });
+
+    // Reconnecting (e.g. a page refresh) after the live event was already
+    // delivered must still surface the still-pending offer in the join
+    // snapshot, not just at the moment it was created.
+    blackSocket.close();
+    const reconnectedBlack = await connect(black);
+    const reconnectSnapshot = waitFor(reconnectedBlack, 'game.snapshot');
+    send(reconnectedBlack, 'game.join', { gameId, lastKnownVersion: 0 });
+    expect((await reconnectSnapshot).data.state).toMatchObject({
+      pendingDrawOffer: {
+        offerId: offered.json().offerId,
+        offeredByUserId: white.userId,
+      },
     });
 
     const whiteFinished = waitFor(whiteSocket, 'game.finished');

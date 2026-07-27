@@ -128,6 +128,7 @@ function demoState(gameId: string): GameState {
     activeClockStartedAt: new Date().toISOString(),
     startedAt: new Date().toISOString(),
     finishedAt: null,
+    pendingDrawOffer: null,
     players: [
       {
         avatarUrl: null,
@@ -324,6 +325,16 @@ export function GameRoom({ gameId }: { gameId: string }) {
 
   const white = state.players.find((player) => player.color === 'white');
   const black = state.players.find((player) => player.color === 'black');
+  const me = myColor ? state.players.find((player) => player.color === myColor) : undefined;
+  // Reflects the server's persisted pending draw offer (populated on initial
+  // load, WS reconnection snapshots, and every live event), so a fresh page
+  // load or a second device shows an opponent's pending offer even if the
+  // player was never connected when it was made.
+  const pendingDrawOfferFromOpponent =
+    !isDemo &&
+    state.pendingDrawOffer !== null &&
+    me !== undefined &&
+    state.pendingDrawOffer.offeredByUserId !== me.userId;
   const canMove =
     state.status === 'active' &&
     (isDemo || (connection === 'online' && myColor !== null && state.sideToMove === myColor));
@@ -635,6 +646,14 @@ export function GameRoom({ gameId }: { gameId: string }) {
             Vendo lance {viewIndex! + 1} de {moves.length}
             <button onClick={returnToLive} type="button">
               {isDemo ? 'Ir ao último lance' : 'Voltar ao vivo'}
+            </button>
+          </div>
+        ) : null}
+        {pendingDrawOfferFromOpponent ? (
+          <div className="drawOfferBanner" role="status">
+            Seu adversário ofereceu empate.
+            <button onClick={() => action('draw')} type="button">
+              Aceitar empate
             </button>
           </div>
         ) : null}
