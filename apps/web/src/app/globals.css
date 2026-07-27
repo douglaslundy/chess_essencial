@@ -973,7 +973,13 @@ input:focus-visible {
 .chessBoard {
   grid-area: board;
   display: grid;
-  width: min(100%, 45rem);
+  /* Always fills its grid cell exactly — `.boardWithCoordinates` is the
+     single source of truth for the board's overall size. A second,
+     independent cap here (previously `min(100%, 45rem)` vs. the
+     container's `46.5rem`) let the board render narrower than the file/
+     rank coordinate labels, which always span the full grid cell —
+     misaligning the legend from the actual squares on wide viewports. */
+  width: 100%;
   aspect-ratio: 1;
   grid-template-columns: repeat(8, 1fr);
   overflow: hidden;
@@ -981,7 +987,6 @@ input:focus-visible {
   border: 0.35rem solid #28231f;
   border-radius: 0.4rem;
   box-shadow: 0 1.5rem 5rem rgba(0, 0, 0, 0.42);
-  max-width: 100%;
   touch-action: manipulation;
 }
 
@@ -1284,6 +1289,9 @@ input:focus-visible {
 }
 .adminHubCard:hover {
   background: var(--surface-2);
+}
+.adminHubGrid + .adminHubCard {
+  margin-top: 1.5rem;
 }
 .adminHubCard strong {
   font-size: 1.05rem;
@@ -1836,6 +1844,12 @@ input:focus-visible {
 .historyGrid {
   display: grid;
   gap: 16px;
+}
+.historyActiveGrid {
+  margin-bottom: 1.5rem;
+}
+.historyCardActive {
+  border-color: var(--gold);
 }
 .historyCard {
   background: var(--surface);

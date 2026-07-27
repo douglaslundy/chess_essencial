@@ -9,6 +9,11 @@ export const planFeatureCatalog = [
   { key: 'exercises_per_day', label: 'Exercícios resolvidos por dia' },
   { key: 'games_per_day', label: 'Partidas jogadas por dia' },
   { key: 'lessons_per_day', label: 'Aulas iniciadas por dia' },
+  { key: 'hints_per_day', label: 'Dicas de exercícios por dia' },
+  { key: 'ai_narrations_per_day', label: 'Narrações por IA da revisão pós-partida por dia' },
+  { key: 'game_analysis_access', label: 'Revisão pós-partida com o motor (Stockfish)' },
+  { key: 'coach_mode_access', label: 'Modo Treinador (dicas em tempo real)' },
+  { key: 'social_access', label: 'Rede social (feed, amigos, mensagens diretas, ranking)' },
 ] as const;
 
 export const planFeatureKeySchema = z.enum(
@@ -25,7 +30,9 @@ function uniqueFeatureKeys(limits: { featureKey: string }[]) {
 }
 
 export const subscriptionPlanSchema = z.object({
+  annualPriceCents: z.number().int().min(0).nullable(),
   id: z.string().uuid(),
+  isDefault: z.boolean(),
   limits: z.array(planFeatureLimitSchema),
   name: z.string(),
   priceCents: z.number().int().min(0),
@@ -34,6 +41,12 @@ export const subscriptionPlanSchema = z.object({
 });
 
 export const saveSubscriptionPlanInputSchema = z.object({
+  // Omitted/null: this plan offers monthly only.
+  annualPriceCents: z.number().int().min(0).max(100_000_00).nullable().optional(),
+  // At most one plan may be the default (fallback for users with no paid
+  // subscription) — enforced by a partial unique index in the database too,
+  // not just here.
+  isDefault: z.boolean().optional(),
   limits: z
     .array(planFeatureLimitSchema)
     .max(planFeatureCatalog.length)
@@ -50,10 +63,28 @@ export const subscriptionPlanListSchema = z.object({
   items: z.array(subscriptionPlanSchema),
 });
 
+export const billingPeriodSchema = z.enum(['monthly', 'annual']);
+
 export const userSubscriptionSchema = z.object({
+  autoRenew: z.boolean().nullable(),
+  billingPeriod: billingPeriodSchema.nullable(),
   currentPeriodEnd: z.string().datetime().nullable(),
   plan: subscriptionPlanSchema.nullable(),
   status: z.enum(['active', 'canceled', 'expired']).nullable(),
+});
+
+export const subscriptionPaymentSchema = z.object({
+  amountCents: z.number().int(),
+  billingPeriod: billingPeriodSchema,
+  currency: z.string(),
+  id: z.string().uuid(),
+  paidAt: z.string().datetime().nullable(),
+  provider: z.string(),
+  status: z.enum(['pending', 'approved', 'rejected', 'cancelled', 'refunded', 'expired']),
+});
+
+export const subscriptionPaymentListSchema = z.object({
+  items: z.array(subscriptionPaymentSchema),
 });
 
 export const planFeatureUsageSchema = z.object({
@@ -64,6 +95,7 @@ export const planFeatureUsageSchema = z.object({
 });
 
 export const createCheckoutInputSchema = z.object({
+  billingPeriod: billingPeriodSchema.default('monthly'),
   planId: z.string().uuid(),
 });
 
@@ -71,12 +103,15 @@ export const checkoutResultSchema = z.object({
   checkoutUrl: z.string().url(),
 });
 
+export type BillingPeriod = z.infer<typeof billingPeriodSchema>;
 export type CheckoutResult = z.infer<typeof checkoutResultSchema>;
 export type CreateCheckoutInput = z.infer<typeof createCheckoutInputSchema>;
 export type PlanFeatureKey = z.infer<typeof planFeatureKeySchema>;
 export type PlanFeatureLimit = z.infer<typeof planFeatureLimitSchema>;
 export type PlanFeatureUsage = z.infer<typeof planFeatureUsageSchema>;
 export type SaveSubscriptionPlanInput = z.infer<typeof saveSubscriptionPlanInputSchema>;
+export type SubscriptionPayment = z.infer<typeof subscriptionPaymentSchema>;
+export type SubscriptionPaymentList = z.infer<typeof subscriptionPaymentListSchema>;
 export type SubscriptionPlan = z.infer<typeof subscriptionPlanSchema>;
 export type SubscriptionPlanList = z.infer<typeof subscriptionPlanListSchema>;
 export type UpdateSubscriptionPlanStatusInput = z.infer<

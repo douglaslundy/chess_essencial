@@ -1,11 +1,21 @@
-import type { PlanFeatureKey, SaveSubscriptionPlanInput } from '@xadrez/contracts';
+import type { BillingPeriod, PlanFeatureKey, SaveSubscriptionPlanInput } from '@xadrez/contracts';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Sql, TransactionSql } from 'postgres';
 
 import { DatabaseService } from '../database/database.service.js';
 
+// Composable fragment (porsager/postgres): a tagged-template `sql` call
+// spliced into another `sql` call is inlined as real SQL, not bound as a
+// parameter value — this must stay a `sql\`...\`` call, not a plain string.
+function planColumns(sql: Sql | TransactionSql) {
+  return sql`id, name, slug, status, price_cents AS "priceCents",
+    annual_price_cents AS "annualPriceCents", is_default AS "isDefault"`;
+}
+
 interface PlanRow {
+  annualPriceCents: number | null;
   id: string;
+  isDefault: boolean;
   name: string;
   priceCents: number;
   slug: string;
@@ -19,6 +29,9 @@ interface PlanLimitRow {
 export interface PlanWithLimits extends PlanRow {
   limits: { dailyLimit: number; featureKey: string }[];
 }
+
+export type SubscriptionPaymentStatus =
+  'pending' | 'approved' | 'rejected' | 'cancelled' | 'refunded' | 'expired';
 
 const COMBINING_DIACRITICS = /[̀-ͯ]/g;
 
@@ -54,7 +67,7 @@ export class SubscriptionsRepository {
 
   async listPlans(): Promise<PlanWithLimits[]> {
     const plans = await this.database.client<PlanRow[]>`
-      SELECT id, name, slug, status, price_cents AS "priceCents"
+      SELECT ${planColumns(this.database.client)}
         FROM subscription_plans ORDER BY created_at
     `;
     return this.withLimits(plans);
@@ -63,7 +76,7 @@ export class SubscriptionsRepository {
   /** Public-facing catalog for the checkout page — active plans only. */
   async listActivePlans(): Promise<PlanWithLimits[]> {
     const plans = await this.database.client<PlanRow[]>`
-      SELECT id, name, slug, status, price_cents AS "priceCents"
+      SELECT ${planColumns(this.database.client)}
         FROM subscription_plans WHERE status = 'active' ORDER BY price_cents
     `;
     return this.withLimits(plans);
@@ -71,8 +84,19 @@ export class SubscriptionsRepository {
 
   async getPlanById(planId: string): Promise<PlanWithLimits | null> {
     const [plan] = await this.database.client<PlanRow[]>`
-      SELECT id, name, slug, status, price_cents AS "priceCents"
+      SELECT ${planColumns(this.database.client)}
         FROM subscription_plans WHERE id = ${planId}
+    `;
+    if (!plan) return null;
+    const [withLimits] = await this.withLimits([plan]);
+    return withLimits!;
+  }
+
+  /** Fallback plan for users with no active paid subscription (área 6 gating). */
+  async getDefaultPlan(): Promise<PlanWithLimits | null> {
+    const [plan] = await this.database.client<PlanRow[]>`
+      SELECT ${planColumns(this.database.client)}
+        FROM subscription_plans WHERE is_default = true
     `;
     if (!plan) return null;
     const [withLimits] = await this.withLimits([plan]);
@@ -92,13 +116,25 @@ export class SubscriptionsRepository {
     return `${base}-${Date.now()}`;
   }
 
+  /** Clears any other plan's is_default flag — must run inside the same transaction as the set. */
+  private async clearOtherDefaults(transaction: TransactionSql, exceptPlanId: string | null) {
+    await transaction`
+      UPDATE subscription_plans SET is_default = false, updated_at = now()
+      WHERE is_default = true ${exceptPlanId ? transaction`AND id != ${exceptPlanId}` : transaction``}
+    `;
+  }
+
   async createPlan(input: SaveSubscriptionPlanInput): Promise<PlanWithLimits> {
     return this.database.client.begin(async (transaction) => {
       const slug = await this.uniqueSlug(input.name, transaction);
+      if (input.isDefault) await this.clearOtherDefaults(transaction, null);
       const [plan] = await transaction<PlanRow[]>`
-        INSERT INTO subscription_plans (name, slug, price_cents)
-        VALUES (${input.name}, ${slug}, ${input.priceCents})
-        RETURNING id, name, slug, status, price_cents AS "priceCents"
+        INSERT INTO subscription_plans (name, slug, price_cents, annual_price_cents, is_default)
+        VALUES (
+          ${input.name}, ${slug}, ${input.priceCents}, ${input.annualPriceCents ?? null},
+          ${input.isDefault ?? false}
+        )
+        RETURNING ${planColumns(transaction)}
       `;
       if (!plan) throw new Error('Plano não foi criado');
       for (const limit of input.limits)
@@ -112,11 +148,14 @@ export class SubscriptionsRepository {
 
   async updatePlan(planId: string, input: SaveSubscriptionPlanInput): Promise<PlanWithLimits> {
     return this.database.client.begin(async (transaction) => {
+      if (input.isDefault) await this.clearOtherDefaults(transaction, planId);
       const [plan] = await transaction<PlanRow[]>`
         UPDATE subscription_plans SET name = ${input.name}, price_cents = ${input.priceCents},
+          annual_price_cents = ${input.annualPriceCents ?? null},
+          is_default = ${input.isDefault ?? false},
           updated_at = now()
         WHERE id = ${planId}
-        RETURNING id, name, slug, status, price_cents AS "priceCents"
+        RETURNING ${planColumns(transaction)}
       `;
       if (!plan) throw new NotFoundException('Plano não encontrado');
       await transaction`DELETE FROM subscription_plan_limits WHERE plan_id = ${planId}`;
@@ -133,26 +172,43 @@ export class SubscriptionsRepository {
     const [plan] = await this.database.client<PlanRow[]>`
       UPDATE subscription_plans SET status = ${status}, updated_at = now()
       WHERE id = ${planId}
-      RETURNING id, name, slug, status, price_cents AS "priceCents"
+      RETURNING ${planColumns(this.database.client)}
     `;
     if (!plan) throw new NotFoundException('Plano não encontrado');
     const [withLimits] = await this.withLimits([plan]);
     return withLimits!;
   }
 
-  async getActiveSubscriptionForUser(
-    userId: string,
-  ): Promise<{ currentPeriodEnd: Date | null; plan: PlanWithLimits; status: string } | null> {
+  async getActiveSubscriptionForUser(userId: string): Promise<{
+    autoRenew: boolean;
+    billingPeriod: BillingPeriod;
+    currentPeriodEnd: Date | null;
+    plan: PlanWithLimits;
+    status: string;
+  } | null> {
     const [row] = await this.database.client<
-      { currentPeriodEnd: Date | null; planId: string; status: string }[]
+      {
+        autoRenew: boolean;
+        billingPeriod: BillingPeriod;
+        currentPeriodEnd: Date | null;
+        planId: string;
+        status: string;
+      }[]
     >`
-      SELECT plan_id AS "planId", status, current_period_end AS "currentPeriodEnd"
+      SELECT plan_id AS "planId", status, current_period_end AS "currentPeriodEnd",
+        billing_period AS "billingPeriod", auto_renew AS "autoRenew"
         FROM user_subscriptions WHERE user_id = ${userId} AND status = 'active'
     `;
     if (!row) return null;
     const plan = await this.getPlanById(row.planId);
     if (!plan) return null;
-    return { currentPeriodEnd: row.currentPeriodEnd, plan, status: row.status };
+    return {
+      autoRenew: row.autoRenew,
+      billingPeriod: row.billingPeriod,
+      currentPeriodEnd: row.currentPeriodEnd,
+      plan,
+      status: row.status,
+    };
   }
 
   /**
@@ -170,19 +226,42 @@ export class SubscriptionsRepository {
   }
 
   /**
+   * Admin override (apps/api/src/admin) — sets a user's plan directly with
+   * no expiry and no Mercado Pago involvement, e.g. support/comp cases.
+   * `planId: null` just cancels the current active subscription, if any.
+   */
+  async adminSetPlan(userId: string, planId: string | null): Promise<void> {
+    await this.database.client.begin(async (transaction) => {
+      await transaction`
+        UPDATE user_subscriptions SET status = 'canceled', updated_at = now()
+         WHERE user_id = ${userId} AND status = 'active'
+      `;
+      if (!planId) return;
+      await transaction`
+        INSERT INTO user_subscriptions (user_id, plan_id, status, current_period_end)
+        VALUES (${userId}, ${planId}, 'active', NULL)
+      `;
+    });
+  }
+
+  /**
    * Starts a checkout: creates a 'pending' row (the row's own id becomes the
    * Mercado Pago `external_reference`) so the webhook can find it later.
    * Any previous pending row for this user is discarded first — only the
    * most recent checkout attempt matters.
    */
-  async createPendingSubscription(userId: string, planId: string): Promise<string> {
+  async createPendingSubscription(
+    userId: string,
+    planId: string,
+    billingPeriod: BillingPeriod,
+  ): Promise<string> {
     return this.database.client.begin(async (transaction) => {
       await transaction`
         DELETE FROM user_subscriptions WHERE user_id = ${userId} AND status = 'pending'
       `;
       const [row] = await transaction<{ id: string }[]>`
-        INSERT INTO user_subscriptions (user_id, plan_id, status)
-        VALUES (${userId}, ${planId}, 'pending')
+        INSERT INTO user_subscriptions (user_id, plan_id, status, billing_period, auto_renew)
+        VALUES (${userId}, ${planId}, 'pending', ${billingPeriod}, ${billingPeriod === 'monthly'})
         RETURNING id
       `;
       if (!row) throw new Error('Assinatura pendente não foi criada');
@@ -198,11 +277,12 @@ export class SubscriptionsRepository {
     `;
   }
 
-  /** Called by the webhook once Mercado Pago confirms the preapproval. */
+  /** Called by the webhook once Mercado Pago confirms the preapproval (monthly, recurring). */
   async activateSubscription(
     externalReference: string,
     mercadoPagoSubscriptionId: string,
     currentPeriodEnd: Date | null,
+    amountCents: number,
   ): Promise<{ planId: string; userId: string } | null> {
     return this.database.client.begin(async (transaction) => {
       const [pending] = await transaction<{ planId: string; userId: string }[]>`
@@ -221,6 +301,12 @@ export class SubscriptionsRepository {
           current_period_end = ${currentPeriodEnd}, updated_at = now()
          WHERE id = ${externalReference}
       `;
+      await transaction`
+        INSERT INTO subscription_payments
+          (subscription_id, provider_transaction_id, status, amount_cents, billing_period, paid_at)
+        VALUES (${externalReference}, ${mercadoPagoSubscriptionId}, 'approved', ${amountCents}, 'monthly', now())
+        ON CONFLICT (provider, provider_transaction_id) DO NOTHING
+      `;
       return pending;
     });
   }
@@ -230,6 +316,119 @@ export class SubscriptionsRepository {
       UPDATE user_subscriptions SET status = 'canceled', updated_at = now()
        WHERE mercado_pago_subscription_id = ${mercadoPagoSubscriptionId} AND status = 'active'
     `;
+  }
+
+  /**
+   * Called by the webhook for a one-time annual payment (Mercado Pago
+   * Payment API, not Preapproval — no recurring/auto-charge). Same
+   * "cancel prior active, then activate the pending row" shape as
+   * activateSubscription, just with a fixed 1-year expiry instead of
+   * whatever Mercado Pago's Preapproval reports.
+   */
+  async activateOneTimePayment(
+    externalReference: string,
+    providerTransactionId: string,
+    amountCents: number,
+  ): Promise<{ planId: string; userId: string } | null> {
+    return this.database.client.begin(async (transaction) => {
+      const [pending] = await transaction<{ planId: string; userId: string }[]>`
+        SELECT user_id AS "userId", plan_id AS "planId" FROM user_subscriptions
+         WHERE id = ${externalReference} AND status = 'pending'
+         FOR UPDATE
+      `;
+      if (!pending) return null;
+      await transaction`
+        UPDATE user_subscriptions s SET status = 'canceled', updated_at = now()
+         WHERE s.user_id = ${pending.userId} AND s.status = 'active'
+      `;
+      await transaction`
+        UPDATE user_subscriptions SET status = 'active',
+          current_period_end = now() + interval '1 year', updated_at = now()
+         WHERE id = ${externalReference}
+      `;
+      await transaction`
+        INSERT INTO subscription_payments
+          (subscription_id, provider_transaction_id, status, amount_cents, billing_period, paid_at)
+        VALUES (${externalReference}, ${providerTransactionId}, 'approved', ${amountCents}, 'annual', now())
+        ON CONFLICT (provider, provider_transaction_id) DO NOTHING
+      `;
+      return pending;
+    });
+  }
+
+  /**
+   * Records any non-approving payment event (pending/in_process while
+   * awaiting confirmation, rejected, cancelled) in the ledger without
+   * activating anything. Idempotent upsert — a later notification for the
+   * same payment id updates the same row instead of duplicating it.
+   */
+  async recordOneTimePaymentEvent(
+    externalReference: string,
+    providerTransactionId: string,
+    status: Exclude<SubscriptionPaymentStatus, 'approved' | 'refunded'>,
+    amountCents: number,
+  ): Promise<void> {
+    await this.database.client`
+      INSERT INTO subscription_payments
+        (subscription_id, provider_transaction_id, status, amount_cents, billing_period)
+      VALUES (${externalReference}, ${providerTransactionId}, ${status}, ${amountCents}, 'annual')
+      ON CONFLICT (provider, provider_transaction_id) DO UPDATE SET status = EXCLUDED.status
+    `;
+  }
+
+  /**
+   * A previously approved one-time payment was refunded/charged back —
+   * marks the ledger row accordingly and cancels the subscription it paid
+   * for (the money was returned, so the access it bought should end too).
+   */
+  async refundOneTimePayment(
+    externalReference: string,
+    providerTransactionId: string,
+    amountCents: number,
+  ): Promise<void> {
+    await this.database.client.begin(async (transaction) => {
+      await transaction`
+        INSERT INTO subscription_payments
+          (subscription_id, provider_transaction_id, status, amount_cents, billing_period)
+        VALUES (${externalReference}, ${providerTransactionId}, 'refunded', ${amountCents}, 'annual')
+        ON CONFLICT (provider, provider_transaction_id) DO UPDATE SET status = 'refunded'
+      `;
+      await transaction`
+        UPDATE user_subscriptions SET status = 'canceled', updated_at = now()
+        WHERE id = ${externalReference} AND status = 'active'
+      `;
+    });
+  }
+
+  async listPaymentsForUser(userId: string): Promise<
+    {
+      amountCents: number;
+      billingPeriod: BillingPeriod;
+      currency: string;
+      id: string;
+      paidAt: Date | null;
+      provider: string;
+      status: SubscriptionPaymentStatus;
+    }[]
+  > {
+    return this.database.client`
+      SELECT p.id, p.provider, p.status, p.amount_cents AS "amountCents", p.currency,
+        p.billing_period AS "billingPeriod", p.paid_at AS "paidAt"
+      FROM subscription_payments p
+      JOIN user_subscriptions s ON s.id = p.subscription_id
+      WHERE s.user_id = ${userId}
+      ORDER BY p.created_at DESC
+    `;
+  }
+
+  /** Flips subscriptions past their expiry to 'expired' — the enum value existed but nothing wrote it until now. */
+  async expirePastDue(): Promise<number> {
+    const rows = await this.database.client<{ id: string }[]>`
+      UPDATE user_subscriptions SET status = 'expired', updated_at = now()
+      WHERE status = 'active' AND current_period_end IS NOT NULL AND current_period_end < now()
+      RETURNING id
+    `;
+    return rows.length;
   }
 
   /**
@@ -258,14 +457,45 @@ export class SubscriptionsRepository {
       `;
       return row?.count ?? 0;
     }
-    // games_per_day
-    const [row] = await sql<{ count: number }[]>`
-      SELECT count(*)::integer AS count FROM games g
-        JOIN game_players gp ON gp.game_id = g.id
-       WHERE gp.user_id = ${userId}
-         AND g.created_at >= date_trunc('day', now())
-         AND g.created_at < date_trunc('day', now()) + interval '1 day'
-    `;
-    return row?.count ?? 0;
+    if (featureKey === 'games_per_day') {
+      const [row] = await sql<{ count: number }[]>`
+        SELECT count(*)::integer AS count FROM games g
+          JOIN game_players gp ON gp.game_id = g.id
+         WHERE gp.user_id = ${userId}
+           AND g.created_at >= date_trunc('day', now())
+           AND g.created_at < date_trunc('day', now()) + interval '1 day'
+      `;
+      return row?.count ?? 0;
+    }
+    if (featureKey === 'hints_per_day') {
+      // No per-hint timestamp exists (hints_used is a running counter on the
+      // training item) — approximated by the session's start time, same
+      // day-bucketing precision already used for lessons_per_day.
+      const [row] = await sql<{ count: number }[]>`
+        SELECT COALESCE(SUM(i.hints_used), 0)::integer AS count
+        FROM exercise_training_items i
+        JOIN exercise_training_sessions s ON s.id = i.session_id
+       WHERE s.user_id = ${userId}
+         AND s.created_at >= date_trunc('day', now())
+         AND s.created_at < date_trunc('day', now()) + interval '1 day'
+      `;
+      return row?.count ?? 0;
+    }
+    if (featureKey === 'ai_narrations_per_day') {
+      const [row] = await sql<{ count: number }[]>`
+        SELECT count(DISTINCT gn.game_id)::integer AS count
+        FROM game_narrations gn
+        JOIN game_players gp ON gp.game_id = gn.game_id
+       WHERE gp.user_id = ${userId} AND gn.status = 'completed'
+         AND gn.completed_at >= date_trunc('day', now())
+         AND gn.completed_at < date_trunc('day', now()) + interval '1 day'
+      `;
+      return row?.count ?? 0;
+    }
+    // Boolean-access features (game_analysis_access, coach_mode_access,
+    // social_access) never reach here in practice — checkEntitlement only
+    // calls usageToday when a plan's dailyLimit for the feature is nonzero,
+    // and those are meant to be granted with dailyLimit 0 (unlimited).
+    return 0;
   }
 }

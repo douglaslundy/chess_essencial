@@ -29,9 +29,14 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@jest/globals": "29.7.0",
+    "@testing-library/react-native": "14.0.1",
+    "@types/node": "catalog:",
     "@types/react": "~19.2.2",
     "@xadrez/eslint-config": "workspace:*",
     "eslint": "catalog:",
+    "jest": "^29.7.0",
+    "jest-expo": "~57.0.2",
     "typescript": "catalog:"
   },
   "scripts": {
@@ -39,6 +44,7 @@
     "ios": "expo start --ios",
     "lint": "eslint .",
     "start": "expo start",
+    "test": "jest",
     "typecheck": "tsc --noEmit"
   }
 }

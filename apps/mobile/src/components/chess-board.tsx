@@ -101,6 +101,7 @@ export function ChessBoard({
                 <Pressable
                   key={square}
                   onPress={() => handlePress(square)}
+                  testID={`square-${square}`}
                   style={[
                     styles.square,
                     {
@@ -127,6 +128,7 @@ export function ChessBoard({
               key={option.value}
               onPress={() => choosePromotion(option.value)}
               style={[styles.promotionButton, { backgroundColor: theme.backgroundElement }]}
+              testID={`promotion-${option.value}`}
             >
               <Text style={styles.piece}>
                 {pieceGlyphs[`${pendingPromotion.color}${option.label}`]}

@@ -115,6 +115,84 @@ describeDatabase('admin user management database integration', () => {
     expect(self.statusCode).toBe(400);
   });
 
+  it('edits a user profile (name, e-mail, roles) and refuses to touch self or another admin', async () => {
+    const editable = await createIdentity('editable-user@example.com', 'editable_user');
+
+    const self = await app.inject({
+      headers: auth(admin),
+      method: 'PATCH',
+      payload: { displayName: 'Nome novo' },
+      url: `/v1/admin/users/${admin.userId}`,
+    });
+    expect(self.statusCode).toBe(400);
+
+    const otherAdmin = await createIdentity('other-admin@example.com', 'other_admin_user');
+    await database.client`
+      INSERT INTO user_roles (user_id, role) VALUES (${otherAdmin.userId}, 'admin')
+      ON CONFLICT DO NOTHING
+    `;
+    const blocked = await app.inject({
+      headers: auth(admin),
+      method: 'PATCH',
+      payload: { displayName: 'Não deveria mudar' },
+      url: `/v1/admin/users/${otherAdmin.userId}`,
+    });
+    expect(blocked.statusCode).toBe(400);
+
+    const updated = await app.inject({
+      headers: auth(admin),
+      method: 'PATCH',
+      payload: {
+        displayName: 'Editável Atualizado',
+        email: 'editable-user-renamed@example.com',
+        roles: ['content_editor'],
+      },
+      url: `/v1/admin/users/${editable.userId}`,
+    });
+    expect(updated.statusCode, updated.body).toBe(200);
+    expect(updated.json()).toMatchObject({
+      displayName: 'Editável Atualizado',
+      email: 'editable-user-renamed@example.com',
+      isAdmin: false,
+      roles: ['content_editor'],
+    });
+
+    const duplicate = await app.inject({
+      headers: auth(admin),
+      method: 'PATCH',
+      payload: { email: 'member-user@example.com' },
+      url: `/v1/admin/users/${editable.userId}`,
+    });
+    expect(duplicate.statusCode).toBe(409);
+  });
+
+  it('assigns a plan to a user directly, bypassing payment', async () => {
+    const target = await createIdentity('plan-target@example.com', 'plan_target_user');
+    const [plan] = await database.client<{ id: string }[]>`
+      INSERT INTO subscription_plans (name, slug, status, price_cents)
+      VALUES ('Plano de Teste Admin', 'plano-teste-admin', 'active', 1990)
+      RETURNING id
+    `;
+
+    const granted = await app.inject({
+      headers: auth(admin),
+      method: 'PATCH',
+      payload: { planId: plan!.id },
+      url: `/v1/admin/users/${target.userId}`,
+    });
+    expect(granted.statusCode, granted.body).toBe(200);
+    expect(granted.json()).toMatchObject({ planId: plan!.id, planName: 'Plano de Teste Admin' });
+
+    const revoked = await app.inject({
+      headers: auth(admin),
+      method: 'PATCH',
+      payload: { planId: null },
+      url: `/v1/admin/users/${target.userId}`,
+    });
+    expect(revoked.statusCode, revoked.body).toBe(200);
+    expect(revoked.json()).toMatchObject({ planId: null, planName: null });
+  });
+
   it('forbids non-admins from viewing bot fleet stats', async () => {
     const response = await app.inject({
       headers: auth(member),

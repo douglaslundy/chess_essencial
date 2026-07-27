@@ -3,9 +3,10 @@ import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nest
 
 import { AccessTokenGuard, type AuthenticatedRequest } from '../auth/access-token.guard.js';
 import { parseInput } from '../common/http/parse-input.js';
+import { SocialAccessGuard } from '../subscriptions/social-access.guard.js';
 import { MessagesService } from './messages.service.js';
 
-@UseGuards(AccessTokenGuard)
+@UseGuards(AccessTokenGuard, SocialAccessGuard)
 @Controller('messages')
 export class MessagesController {
   constructor(private readonly messages: MessagesService) {}

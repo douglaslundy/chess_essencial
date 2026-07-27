@@ -2,6 +2,12 @@ import { z } from 'zod';
 
 export const adminUserStatusSchema = z.enum(['pending', 'active', 'suspended', 'deleted']);
 
+// The whole role/hierarchy model in this codebase — a flat membership table
+// (user_roles), not tiered levels. "Cannot edit another admin" (enforced in
+// admin.repository.ts) is the entire hierarchy rule; there is no separate
+// superadmin tier to model here.
+export const adminUserRoleSchema = z.enum(['admin', 'content_editor']);
+
 export const adminUserSchema = z.object({
   avatarUrl: z.string().nullable(),
   createdAt: z.string().datetime(),
@@ -9,6 +15,9 @@ export const adminUserSchema = z.object({
   email: z.string(),
   id: z.string().uuid(),
   isAdmin: z.boolean(),
+  planId: z.string().uuid().nullable(),
+  planName: z.string().nullable(),
+  roles: z.array(adminUserRoleSchema),
   status: adminUserStatusSchema,
   username: z.string(),
 });
@@ -29,6 +38,18 @@ export const adminUserSearchQuerySchema = z.object({
 // reversible soft-delete (status only); it never hard-deletes data.
 export const updateAdminUserStatusInputSchema = z.object({
   status: z.enum(['active', 'suspended', 'deleted']),
+});
+
+// Every field optional and independently applied — the admin can change just
+// one thing (e.g. only the plan) without resending the rest. Password is
+// deliberately never a field here: use the existing forgot/reset-password
+// flow instead (auth.controller.ts).
+export const updateAdminUserInputSchema = z.object({
+  displayName: z.string().trim().min(1).max(120).optional(),
+  email: z.string().trim().toLowerCase().email().optional(),
+  planId: z.string().uuid().nullable().optional(),
+  roles: z.array(adminUserRoleSchema).optional(),
+  status: z.enum(['active', 'suspended', 'deleted']).optional(),
 });
 
 export const adminBotStatsSchema = z.object({
@@ -65,6 +86,8 @@ export type AdminOnlineBot = z.infer<typeof adminOnlineBotSchema>;
 export type AdminMetrics = z.infer<typeof adminMetricsSchema>;
 export type AdminUser = z.infer<typeof adminUserSchema>;
 export type AdminUserList = z.infer<typeof adminUserListSchema>;
+export type AdminUserRole = z.infer<typeof adminUserRoleSchema>;
 export type AdminUserSearchQuery = z.infer<typeof adminUserSearchQuerySchema>;
 export type AdminUserStatus = z.infer<typeof adminUserStatusSchema>;
+export type UpdateAdminUserInput = z.infer<typeof updateAdminUserInputSchema>;
 export type UpdateAdminUserStatusInput = z.infer<typeof updateAdminUserStatusInputSchema>;

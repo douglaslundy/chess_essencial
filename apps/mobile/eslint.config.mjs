@@ -1,3 +1,3 @@
 import baseConfig from '@xadrez/eslint-config';
 
-export default [{ ignores: ['.expo/**', 'scripts/**'] }, ...baseConfig];
+export default [{ ignores: ['.expo/**', 'scripts/**', 'jest.config.js'] }, ...baseConfig];

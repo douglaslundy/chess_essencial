@@ -39,7 +39,7 @@ export class MercadoPagoWebhookController {
     const verified = await this.subscriptions.verifyWebhookSignature(signature, requestId, dataId);
     if (!verified) throw new UnauthorizedException('Assinatura inválida');
 
-    await this.subscriptions.processMercadoPagoNotification(dataId);
+    await this.subscriptions.processMercadoPagoNotification(body?.type, dataId);
     return { received: true };
   }
 }

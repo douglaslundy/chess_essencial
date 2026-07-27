@@ -32,6 +32,8 @@ export default function AdminSubscriptionPlansPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [priceReais, setPriceReais] = useState('0');
+  const [annualPriceReais, setAnnualPriceReais] = useState('');
+  const [isDefault, setIsDefault] = useState(false);
   const [features, setFeatures] = useState<FeatureFormState>(emptyFeatureState());
 
   function token() {
@@ -61,6 +63,8 @@ export default function AdminSubscriptionPlansPage() {
     setEditingId(null);
     setName('');
     setPriceReais('0');
+    setAnnualPriceReais('');
+    setIsDefault(false);
     setFeatures(emptyFeatureState());
   }
 
@@ -68,6 +72,10 @@ export default function AdminSubscriptionPlansPage() {
     setEditingId(plan.id);
     setName(plan.name);
     setPriceReais((plan.priceCents / 100).toFixed(2));
+    setAnnualPriceReais(
+      plan.annualPriceCents === null ? '' : (plan.annualPriceCents / 100).toFixed(2),
+    );
+    setIsDefault(plan.isDefault);
     setFeatures(planToFeatureState(plan));
   }
 
@@ -87,6 +95,9 @@ export default function AdminSubscriptionPlansPage() {
     const accessToken = token();
     if (!accessToken) return;
     const priceCents = Math.round(Number(priceReais.replace(',', '.')) * 100);
+    const annualPriceCents = annualPriceReais.trim()
+      ? Math.round(Number(annualPriceReais.replace(',', '.')) * 100)
+      : null;
     const limits = planFeatureCatalog
       .filter((feature) => features[feature.key]!.included)
       .map((feature) => ({
@@ -95,13 +106,10 @@ export default function AdminSubscriptionPlansPage() {
       }));
     setMessage('Salvando…');
     try {
+      const input = { annualPriceCents, isDefault, limits, name, priceCents };
       const saved = editingId
-        ? await api.adminUpdateSubscriptionPlan(
-            editingId,
-            { limits, name, priceCents },
-            accessToken,
-          )
-        : await api.adminCreateSubscriptionPlan({ limits, name, priceCents }, accessToken);
+        ? await api.adminUpdateSubscriptionPlan(editingId, input, accessToken)
+        : await api.adminCreateSubscriptionPlan(input, accessToken);
       setPlans((current) =>
         editingId
           ? current.map((plan) => (plan.id === saved.id ? saved : plan))
@@ -158,7 +166,10 @@ export default function AdminSubscriptionPlansPage() {
                   currency: 'BRL',
                 })}
               </span>
-              <span>{plan.status === 'active' ? 'Ativo' : 'Arquivado'}</span>
+              <span>
+                {plan.status === 'active' ? 'Ativo' : 'Arquivado'}
+                {plan.isDefault ? ' · Padrão (grátis)' : ''}
+              </span>
               <small>
                 {plan.limits.length === 0
                   ? 'Nenhum'
@@ -200,6 +211,25 @@ export default function AdminSubscriptionPlansPage() {
               type="number"
               value={priceReais}
             />
+          </label>
+          <label className={styles.field}>
+            Preço anual (R$) — opcional, pagamento único sem renovação automática
+            <input
+              min="0"
+              onChange={(event) => setAnnualPriceReais(event.target.value)}
+              placeholder="Sem cobrança anual"
+              step="0.01"
+              type="number"
+              value={annualPriceReais}
+            />
+          </label>
+          <label className={styles.checkbox}>
+            <input
+              checked={isDefault}
+              onChange={(event) => setIsDefault(event.target.checked)}
+              type="checkbox"
+            />{' '}
+            Usar como plano padrão (gratuito) — aplicado a quem não tem assinatura paga
           </label>
         </div>
         <fieldset>

@@ -3,6 +3,7 @@ import type {
   CreateChallengeInput,
   DirectChallengesView,
   DrawOfferAction,
+  GameHistoryPage,
   GameMove,
   GameState,
   JoinQueueInput,
@@ -59,6 +60,11 @@ export const gameApi = {
   createBotGame: (input: CreateBotGameInput) =>
     request<GameState>('/matchmaking/bot-games', { method: 'POST', body: JSON.stringify(input) }),
   getGame: (gameId: string) => request<GameState>(`/games/${gameId}`),
+  // Used to resume a game still `active` server-side after the app was
+  // closed/backgrounded — `game` in JogarScreen is local React state with no
+  // persistence, so without this the player would have no way back into a
+  // game they didn't explicitly leave.
+  listGames: (query: URLSearchParams) => request<GameHistoryPage>(`/games?${query.toString()}`),
   getMoves: (gameId: string) => request<GameMove[]>(`/games/${gameId}/moves`),
   submitMove: (gameId: string, input: SubmitMoveInput) =>
     request<{ move: GameMove; state: GameState }>(`/games/${gameId}/moves`, {

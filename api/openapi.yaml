@@ -706,35 +706,78 @@ paths:
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
-  /admin/settings/narration-ai:
+  /admin/ai-providers:
     get:
-      summary: Get the AI provider settings for post-game narration (admin only)
-      operationId: adminGetNarrationAiSettings
+      summary: List all AI providers and their configuration state (admin only)
+      operationId: adminListAiProviders
       responses:
         '200':
-          description: Current narration AI settings
+          description: AI provider keys
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/NarrationAiSettings'}
+              schema: {type: array, items: {$ref: '#/components/schemas/AiProviderKey'}}
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
-    put:
-      summary: Configure the AI provider used for post-game narration (admin only)
-      operationId: adminUpdateNarrationAiSettings
+  /admin/ai-providers/{provider}/models:
+    post:
+      summary: Validate a key and list its available models, without saving it (admin only)
+      operationId: adminListAiProviderModels
+      parameters:
+        - {name: provider, in: path, required: true, schema: {type: string, enum: [anthropic, openai, gemini]}}
       requestBody:
         required: true
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/UpdateNarrationAiSettingsInput'}
+            schema: {$ref: '#/components/schemas/ListAiProviderModelsInput'}
       responses:
         '200':
-          description: Updated narration AI settings
+          description: Available models for this key/account
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/NarrationAiSettings'}
+              schema: {$ref: '#/components/schemas/AiProviderModelList'}
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
+  /admin/ai-providers/{provider}:
+    put:
+      summary: Save and validate an AI provider's key/model (admin only)
+      operationId: adminUpdateAiProviderKey
+      parameters:
+        - {name: provider, in: path, required: true, schema: {type: string, enum: [anthropic, openai, gemini]}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateAiProviderKeyInput'}
+      responses:
+        '200':
+          description: Updated AI provider key, including live model list
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AiProviderKey'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /admin/ai-providers/{provider}/active:
+    put:
+      summary: Activate or deactivate an AI provider (deactivates any other automatically)
+      operationId: adminSetAiProviderActive
+      parameters:
+        - {name: provider, in: path, required: true, schema: {type: string, enum: [anthropic, openai, gemini]}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateAiProviderActiveInput'}
+      responses:
+        '200':
+          description: Updated AI provider key
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AiProviderKey'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
   /settings/assisted-game:
     get:
       summary: Get whether "partida assistida" is currently enabled
@@ -867,6 +910,28 @@ paths:
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
+  /admin/users/{userId}:
+    patch:
+      summary: Edit a user's profile, roles, and plan (admin only; never the password)
+      operationId: adminUpdateUser
+      parameters:
+        - {name: userId, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateAdminUserInput'}
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AdminUser'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
   /me/blocks:
     get:
       summary: Listar usuários bloqueados
@@ -1936,7 +2001,20 @@ components:
       additionalProperties: false
     AdminUser:
       type: object
-      required: [id, username, email, displayName, avatarUrl, status, isAdmin, createdAt]
+      required:
+        [
+          id,
+          username,
+          email,
+          displayName,
+          avatarUrl,
+          status,
+          isAdmin,
+          roles,
+          planId,
+          planName,
+          createdAt,
+        ]
       properties:
         id: {type: string, format: uuid}
         username: {type: string}
@@ -1945,6 +2023,9 @@ components:
         avatarUrl: {type: [string, 'null']}
         status: {type: string, enum: [pending, active, suspended, deleted]}
         isAdmin: {type: boolean}
+        roles: {type: array, items: {type: string, enum: [admin, content_editor]}}
+        planId: {type: [string, 'null'], format: uuid}
+        planName: {type: [string, 'null']}
         createdAt: {type: string, format: date-time}
     AdminUserList:
       type: object
@@ -2005,6 +2086,14 @@ components:
       required: [status]
       properties:
         status: {type: string, enum: [active, suspended, deleted]}
+    UpdateAdminUserInput:
+      type: object
+      properties:
+        displayName: {type: string}
+        email: {type: string}
+        status: {type: string, enum: [active, suspended, deleted]}
+        roles: {type: array, items: {type: string, enum: [admin, content_editor]}}
+        planId: {type: [string, 'null'], format: uuid}
     SmtpSettings:
       type: object
       required: [fromAddress, fromName, hasPassword, host, port, secure, username]
@@ -2068,21 +2157,65 @@ components:
       properties:
         enabled: {type: boolean}
       additionalProperties: false
-    NarrationAiSettings:
+    AiProviderModelMetadata:
       type: object
-      required: [hasApiKey, model, provider]
+      required: [contextWindowTokens, inputPricePerMillionTokensUsd, maxOutputTokens, outputPricePerMillionTokensUsd]
       properties:
+        contextWindowTokens: {type: [integer, 'null']}
+        inputPricePerMillionTokensUsd: {type: [number, 'null']}
+        maxOutputTokens: {type: [integer, 'null']}
+        outputPricePerMillionTokensUsd: {type: [number, 'null']}
+    AiProviderModel:
+      type: object
+      required: [id, metadata]
+      properties:
+        id: {type: string}
+        metadata: {$ref: '#/components/schemas/AiProviderModelMetadata'}
+    AiProviderKey:
+      type: object
+      required:
+        [
+          availableModels,
+          hasApiKey,
+          isActive,
+          keyPreview,
+          lastValidatedAt,
+          lastValidationError,
+          model,
+          provider,
+        ]
+      properties:
+        availableModels: {type: array, items: {$ref: '#/components/schemas/AiProviderModel'}}
         hasApiKey: {type: boolean}
+        isActive: {type: boolean}
+        keyPreview: {type: [string, 'null']}
+        lastValidatedAt: {type: [string, 'null'], format: date-time}
+        lastValidationError: {type: [string, 'null']}
         model: {type: [string, 'null']}
-        provider: {type: [string, 'null'], enum: [anthropic, openai, gemini, null]}
-    UpdateNarrationAiSettingsInput:
-      type: object
-      required: [model, provider]
-      properties:
-        apiKey: {type: [string, 'null'], minLength: 1, maxLength: 500}
-        model: {type: string, minLength: 1, maxLength: 120}
         provider: {type: string, enum: [anthropic, openai, gemini]}
+    UpdateAiProviderKeyInput:
+      type: object
+      required: [model]
+      properties:
+        apiKey: {type: string, minLength: 1, maxLength: 500}
+        model: {type: string, minLength: 1, maxLength: 120}
       additionalProperties: false
+    UpdateAiProviderActiveInput:
+      type: object
+      required: [isActive]
+      properties:
+        isActive: {type: boolean}
+      additionalProperties: false
+    ListAiProviderModelsInput:
+      type: object
+      properties:
+        apiKey: {type: string, minLength: 1, maxLength: 500}
+      additionalProperties: false
+    AiProviderModelList:
+      type: object
+      required: [models]
+      properties:
+        models: {type: array, items: {$ref: '#/components/schemas/AiProviderModel'}}
     PlanFeatureLimit:
       type: object
       required: [featureKey, dailyLimit]

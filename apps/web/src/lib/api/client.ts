@@ -4,8 +4,15 @@ import type {
   AdminOnlineBot,
   AdminUser,
   AdminUserList,
+  AiProvider,
+  AiProviderKey,
+  AiProviderModelList,
   AssistedGameSettings,
+  ListAiProviderModelsInput,
+  UpdateAdminUserInput,
   UpdateAdminUserStatusInput,
+  UpdateAiProviderActiveInput,
+  UpdateAiProviderKeyInput,
   CreateBotGameInput,
   CreateChallengeInput,
   DirectChallengesView,
@@ -50,11 +57,11 @@ import type {
   MercadoPagoConnectionTestResult,
   MercadoPagoSettings,
   MyReferralInfo,
-  NarrationAiSettings,
   ReferralSettings,
   CheckoutResult,
   CreateCheckoutInput,
   SaveSubscriptionPlanInput,
+  SubscriptionPaymentList,
   SubscriptionPlan,
   SubscriptionPlanList,
   UpdateReferralSettingsInput,
@@ -73,7 +80,6 @@ import type {
   SmtpSettings,
   TokenPair,
   UpdateAssistedGameSettingsInput,
-  UpdateNarrationAiSettingsInput,
   UpdateMercadoPagoSettingsInput,
   UpdateSmtpSettingsInput,
   UpdateMeInput,
@@ -391,6 +397,11 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify(input),
     }),
+  adminUpdateUser: (userId: string, input: UpdateAdminUserInput, token: string) =>
+    request<AdminUser>(`/admin/users/${userId}`, token, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    }),
   adminGetBotStats: (token: string) => request<AdminBotStats>('/admin/bots/stats', token),
   adminListOnlineBots: (token: string) => request<AdminOnlineBot[]>('/admin/bots/online', token),
   adminGetMetrics: (token: string) => request<AdminMetrics>('/admin/metrics', token),
@@ -429,16 +440,39 @@ export const api = {
     }),
   getAssistedGameSettings: (token: string) =>
     request<AssistedGameSettings>('/settings/assisted-game', token),
-  adminGetNarrationAiSettings: (token: string) =>
-    request<NarrationAiSettings>('/admin/settings/narration-ai', token),
-  adminUpdateNarrationAiSettings: (input: UpdateNarrationAiSettingsInput, token: string) =>
-    request<NarrationAiSettings>('/admin/settings/narration-ai', token, {
+  adminListAiProviders: (token: string) => request<AiProviderKey[]>('/admin/ai-providers', token),
+  adminListAiProviderModels: (
+    provider: AiProvider,
+    input: ListAiProviderModelsInput,
+    token: string,
+  ) =>
+    request<AiProviderModelList>(`/admin/ai-providers/${provider}/models`, token, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  adminUpdateAiProviderKey: (
+    provider: AiProvider,
+    input: UpdateAiProviderKeyInput,
+    token: string,
+  ) =>
+    request<AiProviderKey>(`/admin/ai-providers/${provider}`, token, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    }),
+  adminSetAiProviderActive: (
+    provider: AiProvider,
+    input: UpdateAiProviderActiveInput,
+    token: string,
+  ) =>
+    request<AiProviderKey>(`/admin/ai-providers/${provider}/active`, token, {
       method: 'PUT',
       body: JSON.stringify(input),
     }),
   listSubscriptionPlans: (token: string) =>
     request<SubscriptionPlanList>('/subscription-plans', token),
   getMySubscription: (token: string) => request<UserSubscription>('/me/subscription', token),
+  getMySubscriptionPayments: (token: string) =>
+    request<SubscriptionPaymentList>('/me/subscription/payments', token),
   createSubscriptionCheckout: (input: CreateCheckoutInput, token: string) =>
     request<CheckoutResult>('/me/subscription/checkout', token, {
       method: 'POST',

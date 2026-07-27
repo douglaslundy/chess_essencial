@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
 import { AdminModule } from './admin/admin.module.js';
+import { AiProvidersModule } from './ai-providers/ai-providers.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { validateApiEnv } from './config/env.js';
 import { CoursesModule } from './courses/courses.module.js';
@@ -27,6 +28,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module.js';
 @Module({
   imports: [
     AdminModule,
+    AiProvidersModule,
     AuthModule,
     CoursesModule,
     DatabaseModule,

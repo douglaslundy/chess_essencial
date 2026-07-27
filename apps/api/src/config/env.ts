@@ -33,6 +33,7 @@ export const apiEnvSchema = z.object({
   OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().optional(),
   OTEL_SERVICE_NAME: z.string().min(1).max(100).default('xadrez-api'),
   REDIS_URL: z.string().url().default('redis://localhost:6379'),
+  SETTINGS_ENCRYPTION_KEY: optionalSecret,
   SMTP_URL: z.string().url().optional(),
   WEB_ORIGIN: z.string().url().default('http://localhost:3000'),
 });
@@ -42,6 +43,7 @@ const localSecrets = {
   AUTH_IP_HASH_SECRET: 'local-ip-hash-secret-change-before-production',
   AUTH_REFRESH_SECRET: 'local-refresh-secret-change-before-production',
   AUTH_VERIFICATION_SECRET: 'local-verification-secret-change-before-production',
+  SETTINGS_ENCRYPTION_KEY: 'local-settings-encryption-key-change-before-production',
 } as const;
 
 export function validateApiEnv(config: Record<string, unknown>) {

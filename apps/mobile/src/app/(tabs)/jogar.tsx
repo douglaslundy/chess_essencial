@@ -109,6 +109,32 @@ export default function JogarScreen() {
 
   useEffect(() => stopPolling, [stopPolling]);
 
+  // `game` is local React state with no persistence — without this, closing
+  // the app (or just switching tabs) mid-game and coming back drops the
+  // player into the mode selector with no way back into a game that's still
+  // very much alive server-side.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const page = await gameApi.listGames(
+          new URLSearchParams({ limit: '1', page: '1', status: 'active' }),
+        );
+        const activeGameId = page.items[0]?.id;
+        if (!cancelled && activeGameId) {
+          const state = await gameApi.getGame(activeGameId);
+          if (!cancelled) setGame(state);
+        }
+      } catch {
+        // No connectivity or no session yet — the mode selector is a fine
+        // fallback, same as any other transient failure on this screen.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // The in-game connection is a live WebSocket (GameSocket), not polling —
   // see the effect below keyed on game?.id. This just tracks whether a game
   // is active; searchOnline/loadChallenges below still poll REST, since the

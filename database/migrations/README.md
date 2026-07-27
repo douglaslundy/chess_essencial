@@ -49,5 +49,9 @@ pnpm --filter @xadrez/api db:rollback
 
 `0033_lichess_into_challenges.down.sql` just removes the `challenge` tag it added; no other data is touched, so it's fully reversible.
 
+`0034_ai_provider_keys.down.sql` drops `ai_provider_keys` entirely. The encrypted API keys it holds are not preserved anywhere else — reconfigure via `/app/admin/ia` after rollback.
+
+`0035_subscription_billing.down.sql` drops `subscription_payments` (the payment ledger — history is lost on rollback, there's nowhere else it's preserved) and the new columns on `subscription_plans`/`user_subscriptions` (`annual_price_cents`, `is_default`, `billing_period`, `currency`, `auto_renew`). Existing monthly subscriptions and plan prices are untouched.
+
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.

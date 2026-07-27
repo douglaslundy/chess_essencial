@@ -24,6 +24,7 @@ describe('validateApiEnv', () => {
         AUTH_REFRESH_SECRET: 'c'.repeat(32),
         AUTH_VERIFICATION_SECRET: 'd'.repeat(32),
         NODE_ENV: 'production',
+        SETTINGS_ENCRYPTION_KEY: 'e'.repeat(32),
       }),
     ).toThrow('Production SMTP_URL is required');
   });

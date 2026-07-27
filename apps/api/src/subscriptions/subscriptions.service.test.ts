@@ -1,29 +1,106 @@
 import { createHmac } from 'node:crypto';
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { PlanWithLimits } from './subscriptions.repository.js';
 import { SubscriptionsService } from './subscriptions.service.js';
 
+interface ActiveSubscription {
+  autoRenew: boolean;
+  billingPeriod: 'monthly' | 'annual';
+  currentPeriodEnd: Date | null;
+  plan: PlanWithLimits;
+  status: string;
+}
+
 class FakeSubscriptionsRepository {
-  active: { currentPeriodEnd: Date | null; plan: PlanWithLimits; status: string } | null = null;
+  active: ActiveSubscription | null = null;
+  defaultPlan: PlanWithLimits | null = null;
   usage = 0;
+  activatedOneTimePayments: {
+    amountCents: number;
+    externalReference: string;
+    providerTransactionId: string;
+  }[] = [];
+  recordedEvents: {
+    amountCents: number;
+    externalReference: string;
+    providerTransactionId: string;
+    status: string;
+  }[] = [];
+  refundedPayments: {
+    amountCents: number;
+    externalReference: string;
+    providerTransactionId: string;
+  }[] = [];
 
   async getActiveSubscriptionForUser() {
     return this.active;
   }
 
+  async getDefaultPlan() {
+    return this.defaultPlan;
+  }
+
   async usageToday() {
     return this.usage;
   }
+
+  async activateOneTimePayment(
+    externalReference: string,
+    providerTransactionId: string,
+    amountCents: number,
+  ) {
+    this.activatedOneTimePayments.push({ amountCents, externalReference, providerTransactionId });
+  }
+
+  async recordOneTimePaymentEvent(
+    externalReference: string,
+    providerTransactionId: string,
+    status: string,
+    amountCents: number,
+  ) {
+    this.recordedEvents.push({ amountCents, externalReference, providerTransactionId, status });
+  }
+
+  async refundOneTimePayment(
+    externalReference: string,
+    providerTransactionId: string,
+    amountCents: number,
+  ) {
+    this.refundedPayments.push({ amountCents, externalReference, providerTransactionId });
+  }
 }
 
-function plan(limits: PlanWithLimits['limits']): PlanWithLimits {
-  return { id: 'plan-1', limits, name: 'Plano', priceCents: 0, slug: 'plano', status: 'active' };
+function plan(
+  limits: PlanWithLimits['limits'],
+  overrides: Partial<PlanWithLimits> = {},
+): PlanWithLimits {
+  return {
+    annualPriceCents: null,
+    id: 'plan-1',
+    isDefault: false,
+    limits,
+    name: 'Plano',
+    priceCents: 0,
+    slug: 'plano',
+    status: 'active',
+    ...overrides,
+  };
+}
+
+function active(planWithLimits: PlanWithLimits): ActiveSubscription {
+  return {
+    autoRenew: true,
+    billingPeriod: 'monthly',
+    currentPeriodEnd: null,
+    plan: planWithLimits,
+    status: 'active',
+  };
 }
 
 describe('SubscriptionsService.checkEntitlement', () => {
-  it('allows everything when the user has no active subscription', async () => {
+  it('allows everything when there is no active subscription and no default plan configured', async () => {
     const repository = new FakeSubscriptionsRepository();
     const service = new SubscriptionsService(repository as never, {} as never, {} as never);
 
@@ -37,9 +114,59 @@ describe('SubscriptionsService.checkEntitlement', () => {
     });
   });
 
+  it('falls back to the default plan when the user has no active subscription', async () => {
+    const repository = new FakeSubscriptionsRepository();
+    repository.defaultPlan = plan([{ dailyLimit: 2, featureKey: 'exercises_per_day' }], {
+      id: 'free-plan',
+      isDefault: true,
+    });
+
+    const service = new SubscriptionsService(repository as never, {} as never, {} as never);
+
+    repository.usage = 1;
+    expect(await service.checkEntitlement('user-1', 'exercises_per_day')).toMatchObject({
+      allowed: true,
+      limit: 2,
+      used: 1,
+    });
+
+    repository.usage = 2;
+    expect(await service.checkEntitlement('user-1', 'exercises_per_day')).toMatchObject({
+      allowed: false,
+      limit: 2,
+      used: 2,
+    });
+
+    // The default plan doesn't include social_access at all — absent from a
+    // plan's limits means not granted, same rule as for a paid plan.
+    expect(await service.checkEntitlement('user-1', 'social_access')).toEqual({
+      allowed: false,
+      featureKey: 'social_access',
+      limit: 0,
+      used: 0,
+    });
+  });
+
+  it('prefers the active paid subscription over the default plan', async () => {
+    const repository = new FakeSubscriptionsRepository();
+    repository.defaultPlan = plan([], { id: 'free-plan', isDefault: true });
+    repository.active = active(
+      plan([{ dailyLimit: 0, featureKey: 'social_access' }], { id: 'paid-plan' }),
+    );
+
+    const service = new SubscriptionsService(repository as never, {} as never, {} as never);
+
+    expect(await service.checkEntitlement('user-1', 'social_access')).toEqual({
+      allowed: true,
+      featureKey: 'social_access',
+      limit: null,
+      used: 0,
+    });
+  });
+
   it('blocks a feature the active plan does not include', async () => {
     const repository = new FakeSubscriptionsRepository();
-    repository.active = { currentPeriodEnd: null, plan: plan([]), status: 'active' };
+    repository.active = active(plan([]));
     const service = new SubscriptionsService(repository as never, {} as never, {} as never);
 
     const result = await service.checkEntitlement('user-1', 'games_per_day');
@@ -49,11 +176,7 @@ describe('SubscriptionsService.checkEntitlement', () => {
 
   it('treats a daily limit of 0 as unlimited', async () => {
     const repository = new FakeSubscriptionsRepository();
-    repository.active = {
-      currentPeriodEnd: null,
-      plan: plan([{ dailyLimit: 0, featureKey: 'exercises_per_day' }]),
-      status: 'active',
-    };
+    repository.active = active(plan([{ dailyLimit: 0, featureKey: 'exercises_per_day' }]));
     const service = new SubscriptionsService(repository as never, {} as never, {} as never);
 
     const result = await service.checkEntitlement('user-1', 'exercises_per_day');
@@ -68,11 +191,7 @@ describe('SubscriptionsService.checkEntitlement', () => {
 
   it('allows usage under the limit and blocks at the limit', async () => {
     const repository = new FakeSubscriptionsRepository();
-    repository.active = {
-      currentPeriodEnd: null,
-      plan: plan([{ dailyLimit: 3, featureKey: 'lessons_per_day' }]),
-      status: 'active',
-    };
+    repository.active = active(plan([{ dailyLimit: 3, featureKey: 'lessons_per_day' }]));
     const service = new SubscriptionsService(repository as never, {} as never, {} as never);
 
     repository.usage = 2;
@@ -179,5 +298,122 @@ describe('SubscriptionsService.verifyWebhookSignature', () => {
     const verified = await service.verifyWebhookSignature(`ts=${ts},v1=${v1}`, 'req-1', 'abc123');
 
     expect(verified).toBe(false);
+  });
+});
+
+describe('SubscriptionsService.processMercadoPagoNotification (type=payment, one-time annual)', () => {
+  const settings = {
+    resolveActiveMercadoPagoConfig: async () => ({
+      accessToken: 'token',
+      environment: 'sandbox' as const,
+      publicKey: null,
+      webhookSecret: 'secret',
+    }),
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function mockPaymentFetch(payment: Record<string, unknown>) {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ json: async () => payment, ok: true } as Response),
+    );
+  }
+
+  it('activates the subscription on an approved payment', async () => {
+    mockPaymentFetch({
+      external_reference: 'sub-1',
+      id: 555,
+      status: 'approved',
+      transaction_amount: 199,
+    });
+    const repository = new FakeSubscriptionsRepository();
+    const service = new SubscriptionsService(repository as never, settings as never, {} as never);
+
+    await service.processMercadoPagoNotification('payment', '555');
+
+    expect(repository.activatedOneTimePayments).toEqual([
+      { amountCents: 19_900, externalReference: 'sub-1', providerTransactionId: '555' },
+    ]);
+  });
+
+  it('records a pending payment without activating anything', async () => {
+    mockPaymentFetch({
+      external_reference: 'sub-2',
+      id: 556,
+      status: 'in_process',
+      transaction_amount: 199,
+    });
+    const repository = new FakeSubscriptionsRepository();
+    const service = new SubscriptionsService(repository as never, settings as never, {} as never);
+
+    await service.processMercadoPagoNotification('payment', '556');
+
+    expect(repository.activatedOneTimePayments).toEqual([]);
+    expect(repository.recordedEvents).toEqual([
+      {
+        amountCents: 19_900,
+        externalReference: 'sub-2',
+        providerTransactionId: '556',
+        status: 'pending',
+      },
+    ]);
+  });
+
+  it('records a rejected payment without activating anything', async () => {
+    mockPaymentFetch({
+      external_reference: 'sub-3',
+      id: 557,
+      status: 'rejected',
+      transaction_amount: 199,
+    });
+    const repository = new FakeSubscriptionsRepository();
+    const service = new SubscriptionsService(repository as never, settings as never, {} as never);
+
+    await service.processMercadoPagoNotification('payment', '557');
+
+    expect(repository.activatedOneTimePayments).toEqual([]);
+    expect(repository.recordedEvents).toEqual([
+      {
+        amountCents: 19_900,
+        externalReference: 'sub-3',
+        providerTransactionId: '557',
+        status: 'rejected',
+      },
+    ]);
+  });
+
+  it('cancels the subscription and records a refund when a payment is refunded', async () => {
+    mockPaymentFetch({
+      external_reference: 'sub-4',
+      id: 558,
+      status: 'refunded',
+      transaction_amount: 199,
+    });
+    const repository = new FakeSubscriptionsRepository();
+    const service = new SubscriptionsService(repository as never, settings as never, {} as never);
+
+    await service.processMercadoPagoNotification('payment', '558');
+
+    expect(repository.refundedPayments).toEqual([
+      { amountCents: 19_900, externalReference: 'sub-4', providerTransactionId: '558' },
+    ]);
+  });
+
+  it('ignores a notification with no external reference', async () => {
+    mockPaymentFetch({
+      external_reference: null,
+      id: 559,
+      status: 'approved',
+      transaction_amount: 199,
+    });
+    const repository = new FakeSubscriptionsRepository();
+    const service = new SubscriptionsService(repository as never, settings as never, {} as never);
+
+    await service.processMercadoPagoNotification('payment', '559');
+
+    expect(repository.activatedOneTimePayments).toEqual([]);
   });
 });

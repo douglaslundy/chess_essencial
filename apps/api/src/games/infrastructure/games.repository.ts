@@ -237,6 +237,16 @@ export class GamesRepository {
       throw new ForbiddenException(
         'Você atingiu o limite diário de partidas do seu plano. Volte amanhã ou assine um plano com mais acesso.',
       );
+    if (input.coachMode) {
+      const coachEntitlement = await this.subscriptions.checkEntitlement(
+        userId,
+        'coach_mode_access',
+      );
+      if (!coachEntitlement.allowed)
+        throw new ForbiddenException(
+          'O modo Treinador não está disponível no seu plano atual. Assine um plano com esse recurso.',
+        );
+    }
     const gameId = randomUUID();
     const initialFen = new ChessJsRules().fen();
 
@@ -467,6 +477,11 @@ export class GamesRepository {
 
   async getAnalysis(gameId: string, userId: string): Promise<GameAnalysis> {
     await this.assertPlayer(gameId, userId);
+    const entitlement = await this.subscriptions.checkEntitlement(userId, 'game_analysis_access');
+    if (!entitlement.allowed)
+      throw new ForbiddenException(
+        'A revisão com o motor não está disponível no seu plano atual. Assine um plano com esse recurso.',
+      );
     const [analysis] = await this.database.client<{ status: GameAnalysis['status'] }[]>`
       SELECT status FROM game_analyses WHERE game_id = ${gameId}
     `;
@@ -491,6 +506,14 @@ export class GamesRepository {
 
   async getNarration(gameId: string, userId: string): Promise<GameNarration> {
     await this.assertPlayer(gameId, userId);
+    // Not entitled: behave exactly like "no AI narration exists yet" (the
+    // same shape already used when no provider is configured at all) — the
+    // free, non-LLM template summary the frontend falls back to is never
+    // gated, only the real AI-generated one is.
+    const entitlement = await this.subscriptions.checkEntitlement(userId, 'ai_narrations_per_day');
+    if (!entitlement.allowed) {
+      return { keyMoments: [], patterns: [], status: 'pending', studyPlan: [], summary: null };
+    }
     const [row] = await this.database.client<
       {
         keyMoments: GameNarration['keyMoments'] | null;

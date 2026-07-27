@@ -26,6 +26,7 @@ export function HistoryList() {
     page: 1,
     total: 0,
   });
+  const [active, setActive] = useState<GameHistoryPage['items']>([]);
   const [page, setPage] = useState(1);
   const [pool, setPool] = useState('');
   const [result, setResult] = useState('');
@@ -49,6 +50,13 @@ export function HistoryList() {
       .catch((error: unknown) =>
         setMessage(error instanceof Error ? error.message : 'Falha ao carregar.'),
       );
+    // Games still `active` are excluded from the list above on purpose (it's
+    // always filtered to `finished`), so without this they'd be unreachable
+    // once the player navigates away from the live game page.
+    api
+      .getHistory(new URLSearchParams({ limit: '10', page: '1', status: 'active' }), token)
+      .then((value) => setActive(value.items))
+      .catch(() => setActive([]));
   }, [page, pool, result]);
 
   useEffect(() => {
@@ -63,6 +71,33 @@ export function HistoryList() {
         <h1>Histórico de partidas</h1>
         <p>Filtre seus jogos concluídos e abra a revisão lance a lance.</p>
       </header>
+      {active.length > 0 ? (
+        <section className="historyGrid historyActiveGrid" aria-label="Partidas em andamento">
+          {active.map((game) => (
+            <article className="historyCard historyCardActive" key={game.id}>
+              <div className="historyCardHeader">
+                <div className="historyCardTitle">
+                  <Avatar avatarUrl={game.opponent.avatarUrl} name={game.opponent.displayName} />
+                  <strong>{game.opponent.displayName}</strong>
+                  <span className="adminBadge">Em andamento</span>
+                </div>
+                <span className="historyCardSubtitle">
+                  @{game.opponent.username} · {game.opponent.rating} XE
+                </span>
+              </div>
+              <dl className="historyCardMeta">
+                <div>
+                  <dt>Ritmo</dt>
+                  <dd>{game.timeControl}</dd>
+                </div>
+              </dl>
+              <div className="historyCardAction">
+                <Link href={'/app/partida/' + game.id}>Continuar partida</Link>
+              </div>
+            </article>
+          ))}
+        </section>
+      ) : null}
       <section className="historyFilters" aria-label="Filtros do histórico">
         <label>
           Ritmo

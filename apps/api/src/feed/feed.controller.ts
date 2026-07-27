@@ -14,9 +14,10 @@ import {
 
 import { AccessTokenGuard, type AuthenticatedRequest } from '../auth/access-token.guard.js';
 import { parseInput } from '../common/http/parse-input.js';
+import { SocialAccessGuard } from '../subscriptions/social-access.guard.js';
 import { FeedService } from './feed.service.js';
 
-@UseGuards(AccessTokenGuard)
+@UseGuards(AccessTokenGuard, SocialAccessGuard)
 @Controller()
 export class FeedController {
   constructor(private readonly feed: FeedService) {}

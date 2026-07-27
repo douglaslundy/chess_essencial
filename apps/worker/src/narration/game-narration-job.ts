@@ -1,7 +1,8 @@
-import type { MoveQuality, NarrationAiProvider } from '@xadrez/contracts';
+import type { AiProvider, MoveQuality } from '@xadrez/contracts';
 import { createHash } from 'node:crypto';
 import type { Sql } from 'postgres';
 
+import { decryptSecret } from '../config/secret-cipher.js';
 import { callLlm, type LlmConfig } from './llm-client.js';
 import {
   buildGameSummaryPrompt,
@@ -11,14 +12,13 @@ import {
   type NarratedMoment,
 } from './prompts.js';
 
-const NARRATION_SETTINGS_KEY = 'ai.narration';
 const MAX_NEWLY_QUEUED_PER_TICK = 20;
 const MAX_KEY_MOMENTS = 6;
 
-interface StoredNarrationAiConfig {
-  apiKey: string | null;
-  model: string;
-  provider: NarrationAiProvider;
+interface ActiveAiProviderKeyRow {
+  encryptedApiKey: string | null;
+  model: string | null;
+  provider: AiProvider;
 }
 
 interface MoveAnalysisRow {
@@ -55,11 +55,14 @@ let running = false;
  * users (openings, common blunders, bot games) is looked up instead of
  * paying for another LLM call.
  */
-export async function runGameNarrationJob(sql: Sql): Promise<{ narratedGameId: string | null }> {
+export async function runGameNarrationJob(
+  sql: Sql,
+  encryptionKey: string,
+): Promise<{ narratedGameId: string | null }> {
   if (running) return { narratedGameId: null };
   running = true;
   try {
-    const config = await resolveNarrationAiConfig(sql);
+    const config = await resolveNarrationAiConfig(sql, encryptionKey);
     if (!config) return { narratedGameId: null };
 
     await queuePendingNarrations(sql);
@@ -85,12 +88,21 @@ export async function runGameNarrationJob(sql: Sql): Promise<{ narratedGameId: s
   }
 }
 
-async function resolveNarrationAiConfig(sql: Sql): Promise<LlmConfig | null> {
-  const [row] = await sql<{ value: StoredNarrationAiConfig }[]>`
-    SELECT value FROM platform_settings WHERE key = ${NARRATION_SETTINGS_KEY}
+async function resolveNarrationAiConfig(
+  sql: Sql,
+  encryptionKey: string,
+): Promise<LlmConfig | null> {
+  const [row] = await sql<ActiveAiProviderKeyRow[]>`
+    SELECT provider, model, encrypted_api_key AS "encryptedApiKey"
+    FROM ai_provider_keys
+    WHERE is_active = true
   `;
-  if (!row?.value.apiKey) return null;
-  return { apiKey: row.value.apiKey, model: row.value.model, provider: row.value.provider };
+  if (!row?.encryptedApiKey || !row.model) return null;
+  return {
+    apiKey: decryptSecret(row.encryptedApiKey, encryptionKey),
+    model: row.model,
+    provider: row.provider,
+  };
 }
 
 async function queuePendingNarrations(sql: Sql): Promise<void> {

@@ -1,4 +1,8 @@
-import { adminUserSearchQuerySchema, updateAdminUserStatusInputSchema } from '@xadrez/contracts';
+import {
+  adminUserSearchQuerySchema,
+  updateAdminUserInputSchema,
+  updateAdminUserStatusInputSchema,
+} from '@xadrez/contracts';
 import { Body, Controller, Get, Param, Patch, Query, Req, UseGuards } from '@nestjs/common';
 import { z } from 'zod';
 
@@ -44,6 +48,19 @@ export class AdminController {
       request.auth.userId,
       parseInput(idSchema, userId),
       parseInput(updateAdminUserStatusInputSchema, body),
+    );
+  }
+
+  @Patch('users/:userId')
+  updateUser(
+    @Req() request: AuthenticatedRequest,
+    @Param('userId') userId: string,
+    @Body() body: unknown,
+  ) {
+    return this.admin.updateUser(
+      request.auth.userId,
+      parseInput(idSchema, userId),
+      parseInput(updateAdminUserInputSchema, body),
     );
   }
 }

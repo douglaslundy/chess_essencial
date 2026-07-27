@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import { AccessTokenGuard, type AuthenticatedRequest } from '../../auth/access-token.guard.js';
 import { parseInput } from '../../common/http/parse-input.js';
+import { SocialAccessGuard } from '../../subscriptions/social-access.guard.js';
 import { RatingsService } from '../application/ratings.service.js';
 
 @Controller('ratings')
@@ -25,6 +26,7 @@ export class RatingsController {
   }
 
   @Get(':pool/leaderboard')
+  @UseGuards(SocialAccessGuard)
   leaderboard(@Param('pool') pool: string, @Query('limit') limit?: string) {
     return this.ratings.leaderboard(
       parseInput(ratingPoolSchema, pool),

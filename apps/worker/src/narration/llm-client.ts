@@ -4,12 +4,12 @@
 // quality) always comes from the Stockfish-backed pipeline in analysis/;
 // the LLM's only job is to turn already-computed facts into natural spoken
 // Portuguese narration. It never picks moves or invents evaluations.
-import type { NarrationAiSettings } from '@xadrez/contracts';
+import type { AiProvider } from '@xadrez/contracts';
 
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_OUTPUT_TOKENS = 1024;
 
-export type LlmProvider = NonNullable<NarrationAiSettings['provider']>;
+export type LlmProvider = AiProvider;
 
 export interface LlmConfig {
   apiKey: string;

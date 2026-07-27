@@ -2,7 +2,6 @@ import {
   sendTestEmailInputSchema,
   updateAssistedGameSettingsInputSchema,
   updateMercadoPagoSettingsInputSchema,
-  updateNarrationAiSettingsInputSchema,
   updateSmtpSettingsInputSchema,
 } from '@xadrez/contracts';
 import {
@@ -83,16 +82,5 @@ export class SettingsController {
   updateAssistedGame(@Req() request: AuthenticatedRequest, @Body() body: unknown) {
     const input = parseInput(updateAssistedGameSettingsInputSchema, body);
     return this.settings.updateAssistedGameSettings(input, request.auth.userId);
-  }
-
-  @Get('narration-ai')
-  getNarrationAi() {
-    return this.settings.getNarrationAiSettings();
-  }
-
-  @Put('narration-ai')
-  updateNarrationAi(@Req() request: AuthenticatedRequest, @Body() body: unknown) {
-    const input = parseInput(updateNarrationAiSettingsInputSchema, body);
-    return this.settings.updateNarrationAiSettings(input, request.auth.userId);
   }
 }

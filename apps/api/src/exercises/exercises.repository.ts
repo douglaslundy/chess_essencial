@@ -338,6 +338,11 @@ export class ExercisesRepository {
   }
 
   async hint(userId: string, sessionId: string) {
+    const entitlement = await this.subscriptions.checkEntitlement(userId, 'hints_per_day');
+    if (!entitlement.allowed)
+      throw new ForbiddenException(
+        'Você atingiu o limite diário de dicas do seu plano. Volte amanhã ou assine um plano com mais acesso.',
+      );
     const sql = this.database.client;
     const [row] = await sql<{ hints: string[]; hints_used: number }[]>`
       UPDATE exercise_training_items i SET hints_used = i.hints_used + 1

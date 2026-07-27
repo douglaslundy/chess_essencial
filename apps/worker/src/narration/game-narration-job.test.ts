@@ -2,8 +2,14 @@ import { describe, expect, it, vi } from 'vitest';
 
 const callLlm = vi.hoisted(() => vi.fn());
 vi.mock('./llm-client.js', () => ({ callLlm }));
+// The real cipher is tested on its own (secret-cipher.test.ts); here the
+// stored "ciphertext" is just the plaintext key, decrypted as a no-op.
+vi.mock('../config/secret-cipher.js', () => ({
+  decryptSecret: (payload: string) => payload,
+}));
 
 const { runGameNarrationJob } = await import('./game-narration-job.js');
+const TEST_ENCRYPTION_KEY = 'test-encryption-key';
 
 interface Call {
   text: string;
@@ -29,7 +35,7 @@ function fakeSql(
 }
 
 const AI_CONFIG_ROW = [
-  { value: { apiKey: 'sk-test-123', model: 'claude-test', provider: 'anthropic' } },
+  { encryptedApiKey: 'sk-test-123', model: 'claude-test', provider: 'anthropic' },
 ];
 
 const SUMMARY_JSON = JSON.stringify({
@@ -49,10 +55,10 @@ function defaultLlmMock() {
 describe('runGameNarrationJob', () => {
   it('does nothing when no narration AI API key is configured', async () => {
     const { sql } = fakeSql([
-      { match: (text) => text.includes('FROM platform_settings'), rows: [] },
+      { match: (text) => text.includes('FROM ai_provider_keys'), rows: [] },
     ]);
 
-    const result = await runGameNarrationJob(sql);
+    const result = await runGameNarrationJob(sql, TEST_ENCRYPTION_KEY);
 
     expect(result).toEqual({ narratedGameId: null });
     expect(callLlm).not.toHaveBeenCalled();
@@ -61,12 +67,12 @@ describe('runGameNarrationJob', () => {
   it('does nothing when no narration is pending', async () => {
     callLlm.mockReset();
     const { sql } = fakeSql([
-      { match: (text) => text.includes('FROM platform_settings'), rows: AI_CONFIG_ROW },
+      { match: (text) => text.includes('FROM ai_provider_keys'), rows: AI_CONFIG_ROW },
       { match: (text) => text.includes('INSERT INTO game_narrations'), rows: [] },
       { match: (text) => text.includes("SET status = 'processing'"), rows: [] },
     ]);
 
-    const result = await runGameNarrationJob(sql);
+    const result = await runGameNarrationJob(sql, TEST_ENCRYPTION_KEY);
 
     expect(result).toEqual({ narratedGameId: null });
     expect(callLlm).not.toHaveBeenCalled();
@@ -77,7 +83,7 @@ describe('runGameNarrationJob', () => {
     defaultLlmMock();
 
     const { calls, sql } = fakeSql([
-      { match: (text) => text.includes('FROM platform_settings'), rows: AI_CONFIG_ROW },
+      { match: (text) => text.includes('FROM ai_provider_keys'), rows: AI_CONFIG_ROW },
       { match: (text) => text.includes('INSERT INTO game_narrations'), rows: [] },
       {
         match: (text) => text.includes("SET status = 'processing'"),
@@ -129,7 +135,7 @@ describe('runGameNarrationJob', () => {
       { match: (text) => text.includes("SET status = 'completed'"), rows: [] },
     ]);
 
-    const result = await runGameNarrationJob(sql);
+    const result = await runGameNarrationJob(sql, TEST_ENCRYPTION_KEY);
 
     expect(result).toEqual({ narratedGameId: 'game-1' });
     // One moment came from cache (no LLM call for it) plus the mandatory
@@ -149,7 +155,7 @@ describe('runGameNarrationJob', () => {
     callLlm.mockRejectedValue(new Error('anthropic api down'));
 
     const { calls, sql } = fakeSql([
-      { match: (text) => text.includes('FROM platform_settings'), rows: AI_CONFIG_ROW },
+      { match: (text) => text.includes('FROM ai_provider_keys'), rows: AI_CONFIG_ROW },
       { match: (text) => text.includes('INSERT INTO game_narrations'), rows: [] },
       {
         match: (text) => text.includes("SET status = 'processing'"),
@@ -179,7 +185,7 @@ describe('runGameNarrationJob', () => {
       { match: (text) => text.includes("SET status = 'failed'"), rows: [] },
     ]);
 
-    const result = await runGameNarrationJob(sql);
+    const result = await runGameNarrationJob(sql, TEST_ENCRYPTION_KEY);
 
     expect(result).toEqual({ narratedGameId: 'game-2' });
     const failedCall = calls.find((call) => call.text.includes("SET status = 'failed'"));

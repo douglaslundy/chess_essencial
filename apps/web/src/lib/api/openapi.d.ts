@@ -726,17 +726,67 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/admin/settings/narration-ai': {
+  '/admin/ai-providers': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    /** Get the AI provider settings for post-game narration (admin only) */
-    get: operations['adminGetNarrationAiSettings'];
-    /** Configure the AI provider used for post-game narration (admin only) */
-    put: operations['adminUpdateNarrationAiSettings'];
+    /** List all AI providers and their configuration state (admin only) */
+    get: operations['adminListAiProviders'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/ai-providers/{provider}/models': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Validate a key and list its available models, without saving it (admin only) */
+    post: operations['adminListAiProviderModels'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/ai-providers/{provider}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** Save and validate an AI provider's key/model (admin only) */
+    put: operations['adminUpdateAiProviderKey'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/ai-providers/{provider}/active': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** Activate or deactivate an AI provider (deactivates any other automatically) */
+    put: operations['adminSetAiProviderActive'];
     post?: never;
     delete?: never;
     options?: never;
@@ -846,6 +896,23 @@ export interface paths {
     head?: never;
     /** Change a user's status (admin only; delete is a reversible soft-delete) */
     patch: operations['adminUpdateUserStatus'];
+    trace?: never;
+  };
+  '/admin/users/{userId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Edit a user's profile, roles, and plan (admin only; never the password) */
+    patch: operations['adminUpdateUser'];
     trace?: never;
   };
   '/me/blocks': {
@@ -1853,6 +1920,10 @@ export interface components {
       /** @enum {string} */
       status: 'pending' | 'active' | 'suspended' | 'deleted';
       isAdmin: boolean;
+      roles: ('admin' | 'content_editor')[];
+      /** Format: uuid */
+      planId: string | null;
+      planName: string | null;
       /** Format: date-time */
       createdAt: string;
     };
@@ -1891,6 +1962,15 @@ export interface components {
     UpdateAdminUserStatusInput: {
       /** @enum {string} */
       status: 'active' | 'suspended' | 'deleted';
+    };
+    UpdateAdminUserInput: {
+      displayName?: string;
+      email?: string;
+      /** @enum {string} */
+      status?: 'active' | 'suspended' | 'deleted';
+      roles?: ('admin' | 'content_editor')[];
+      /** Format: uuid */
+      planId?: string | null;
     };
     SmtpSettings: {
       /** Format: email */
@@ -1940,17 +2020,40 @@ export interface components {
     UpdateAssistedGameSettingsInput: {
       enabled: boolean;
     };
-    NarrationAiSettings: {
-      hasApiKey: boolean;
-      model: string | null;
-      /** @enum {string|null} */
-      provider: 'anthropic' | 'openai' | 'gemini' | null;
+    AiProviderModelMetadata: {
+      contextWindowTokens: number | null;
+      inputPricePerMillionTokensUsd: number | null;
+      maxOutputTokens: number | null;
+      outputPricePerMillionTokensUsd: number | null;
     };
-    UpdateNarrationAiSettingsInput: {
-      apiKey?: string | null;
-      model: string;
+    AiProviderModel: {
+      id: string;
+      metadata: components['schemas']['AiProviderModelMetadata'];
+    };
+    AiProviderKey: {
+      availableModels: components['schemas']['AiProviderModel'][];
+      hasApiKey: boolean;
+      isActive: boolean;
+      keyPreview: string | null;
+      /** Format: date-time */
+      lastValidatedAt: string | null;
+      lastValidationError: string | null;
+      model: string | null;
       /** @enum {string} */
       provider: 'anthropic' | 'openai' | 'gemini';
+    };
+    UpdateAiProviderKeyInput: {
+      apiKey?: string;
+      model: string;
+    };
+    UpdateAiProviderActiveInput: {
+      isActive: boolean;
+    };
+    ListAiProviderModelsInput: {
+      apiKey?: string;
+    };
+    AiProviderModelList: {
+      models: components['schemas']['AiProviderModel'][];
     };
     PlanFeatureLimit: {
       featureKey: string;
@@ -3780,7 +3883,7 @@ export interface operations {
       403: components['responses']['Problem'];
     };
   };
-  adminGetNarrationAiSettings: {
+  adminListAiProviders: {
     parameters: {
       query?: never;
       header?: never;
@@ -3789,44 +3892,104 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
-      /** @description Current narration AI settings */
+      /** @description AI provider keys */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['NarrationAiSettings'];
+          'application/json': components['schemas']['AiProviderKey'][];
         };
       };
       401: components['responses']['Problem'];
       403: components['responses']['Problem'];
     };
   };
-  adminUpdateNarrationAiSettings: {
+  adminListAiProviderModels: {
     parameters: {
       query?: never;
       header?: never;
-      path?: never;
+      path: {
+        provider: 'anthropic' | 'openai' | 'gemini';
+      };
       cookie?: never;
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['UpdateNarrationAiSettingsInput'];
+        'application/json': components['schemas']['ListAiProviderModelsInput'];
       };
     };
     responses: {
-      /** @description Updated narration AI settings */
+      /** @description Available models for this key/account */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['NarrationAiSettings'];
+          'application/json': components['schemas']['AiProviderModelList'];
         };
       };
       400: components['responses']['Problem'];
       401: components['responses']['Problem'];
       403: components['responses']['Problem'];
+    };
+  };
+  adminUpdateAiProviderKey: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        provider: 'anthropic' | 'openai' | 'gemini';
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateAiProviderKeyInput'];
+      };
+    };
+    responses: {
+      /** @description Updated AI provider key, including live model list */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AiProviderKey'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  adminSetAiProviderActive: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        provider: 'anthropic' | 'openai' | 'gemini';
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateAiProviderActiveInput'];
+      };
+    };
+    responses: {
+      /** @description Updated AI provider key */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AiProviderKey'];
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
     };
   };
   getAssistedGameSettings: {
@@ -4036,6 +4199,37 @@ export interface operations {
       401: components['responses']['Problem'];
       403: components['responses']['Problem'];
       404: components['responses']['Problem'];
+    };
+  };
+  adminUpdateUser: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateAdminUserInput'];
+      };
+    };
+    responses: {
+      /** @description Updated user */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminUser'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+      409: components['responses']['Problem'];
     };
   };
   listBlocks: {
