@@ -273,7 +273,7 @@ describeDatabase('games database integration', () => {
         botDifficulty: 'beginner',
         coachMode: true,
         playerColor: 'white',
-        timeControlCode: 'blitz-5-0',
+        timeControlCode: 'blitz-3-0',
       },
       url: '/v1/matchmaking/bot-games',
     });
