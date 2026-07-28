@@ -405,7 +405,9 @@ export class SubscriptionsRepository {
       `;
       if (!inserted) return false;
       const period =
-        subscription.billingPeriod === 'annual' ? transaction`interval '1 year'` : transaction`interval '1 month'`;
+        subscription.billingPeriod === 'annual'
+          ? transaction`interval '1 year'`
+          : transaction`interval '1 month'`;
       await transaction`
         UPDATE user_subscriptions
            SET current_period_end = COALESCE(current_period_end, now()) + ${period}, updated_at = now()

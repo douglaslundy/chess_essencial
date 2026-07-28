@@ -388,7 +388,12 @@ describe('SubscriptionsService.processMercadoPagoNotification (type=payment, one
     // (subscription_payments.raw_notification), not just the fields the
     // service happens to read out of it.
     expect(repository.activatedOneTimePayments).toEqual([
-      { amountCents: 19_900, externalReference: 'sub-1', providerTransactionId: '555', rawNotification: payment },
+      {
+        amountCents: 19_900,
+        externalReference: 'sub-1',
+        providerTransactionId: '555',
+        rawNotification: payment,
+      },
     ]);
     // Already activated via the pending-row lookup — no fallback renewal.
     expect(repository.recordedRenewals).toEqual([]);
@@ -458,7 +463,12 @@ describe('SubscriptionsService.processMercadoPagoNotification (type=payment, one
     await service.processMercadoPagoNotification('payment', '558');
 
     expect(repository.refundedPayments).toEqual([
-      { amountCents: 19_900, externalReference: 'sub-4', providerTransactionId: '558', rawNotification: payment },
+      {
+        amountCents: 19_900,
+        externalReference: 'sub-4',
+        providerTransactionId: '558',
+        rawNotification: payment,
+      },
     ]);
   });
 

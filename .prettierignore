@@ -10,6 +10,10 @@ pnpm-lock.yaml
 /CHECKLIST.md
 /PROGRESSO.md
 /ROADMAP.md
+# Verbatim archive of the user's original request text - must stay
+# byte-identical to what was pasted, including the ASCII tree diagram in
+# FASE 4, which prettier's markdown formatter reflows and breaks.
+/docs/superpowers/specs/2026-07-27-jornada-de-aprendizagem-spec.md
 /api/
 /architecture/
 /backend/

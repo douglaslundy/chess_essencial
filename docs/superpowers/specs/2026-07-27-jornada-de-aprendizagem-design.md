@@ -25,12 +25,12 @@ query real contra produção antes da implementação (Tarefa 1 do plano de
 execução, seção 11) — não vou inventar números que a auditoria não mediu
 diretamente. O que a auditoria já confirma sobre a composição do pool:
 
-| Origem | Tamanho aproximado | Dificuldade | Dicas | Formato de resposta |
-|---|---|---|---|---|
-| Lichess (`0022`) | ~8000 (8003/8007 confirmado) | `rating`/`ratingBand` numérico em `import_metadata` | **quase nenhuma** (8003/8007 sem dica) | `move_sequence`, tabuleiro jogável |
-| Desafios curados (`0011`) | 8 | enum `difficulty` | Sim, escritas à mão | `move_sequence`, tabuleiro jogável |
-| Livro (`exercise-importer.ts`) | ~1298 `free_text` (por `TAREFAS.md:131`) + outros `move_sequence` | enum `difficulty` | Parcial (mapeada na importação quando o livro trazia) | `free_text` (autoavaliação) e `move_sequence` |
-| Táticas de mate geradas (`scripts/generate-tactics.mjs`) | desconhecido sem query | calculado pelo `mate-solver.ts` | Não | `move_sequence` |
+| Origem                                                   | Tamanho aproximado                                                | Dificuldade                                         | Dicas                                                 | Formato de resposta                           |
+| -------------------------------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------- | ----------------------------------------------------- | --------------------------------------------- |
+| Lichess (`0022`)                                         | ~8000 (8003/8007 confirmado)                                      | `rating`/`ratingBand` numérico em `import_metadata` | **quase nenhuma** (8003/8007 sem dica)                | `move_sequence`, tabuleiro jogável            |
+| Desafios curados (`0011`)                                | 8                                                                 | enum `difficulty`                                   | Sim, escritas à mão                                   | `move_sequence`, tabuleiro jogável            |
+| Livro (`exercise-importer.ts`)                           | ~1298 `free_text` (por `TAREFAS.md:131`) + outros `move_sequence` | enum `difficulty`                                   | Parcial (mapeada na importação quando o livro trazia) | `free_text` (autoavaliação) e `move_sequence` |
+| Táticas de mate geradas (`scripts/generate-tactics.mjs`) | desconhecido sem query                                            | calculado pelo `mate-solver.ts`                     | Não                                                   | `move_sequence`                               |
 
 **Implicação de design**: a trilha por níveis (progressão sequencial,
 tabuleiro jogável, dica progressiva) só faz sentido pedagogicamente para
@@ -73,23 +73,27 @@ como risco (seção 10).
 Nomes autorais, sem copiar terminologia de concorrente, alinhados à
 identidade "Xadrez Essencial" do produto:
 
-| Mundo | Faixa `difficulty_score` | Foco pedagógico |
-|---|---|---|
-| 1 — Primeiros Lances | 400–800 | Movimentação de peças, captura, xeque básico |
-| 2 — Peças em Ação | 800–1100 | Peça indefesa, garfo simples, cravada básica |
-| 3 — Olho Tático | 1100–1400 | Reconhecimento de padrão misto (garfo/cravada/espeto/raio-x) |
-| 4 — Combinações | 1400–1700 | Sequências forçadas de 2-3 lances, sacrifícios |
-| 5 — Ataque ao Rei | 1700–2000 | Mate em 2-3, xeque duplo, ataques ao rei |
-| 6 — Defesa e Resistência | 2000–2300 | Defesa contra ameaças, zugzwang, finais táticos |
-| 7 — Jogador em Formação | 2300+ | Mistura avançada, revisão cruzada de todos os temas |
+| Mundo                    | Faixa `difficulty_score` | Foco pedagógico                                              |
+| ------------------------ | ------------------------ | ------------------------------------------------------------ |
+| 1 — Primeiros Lances     | 0–800                    | Movimentação de peças, captura, xeque básico                 |
+| 2 — Peças em Ação        | 800–1050                 | Peça indefesa, garfo simples, cravada básica                 |
+| 3 — Olho Tático          | 1050–1300                | Reconhecimento de padrão misto (garfo/cravada/espeto/raio-x) |
+| 4 — Combinações          | 1300–1550                | Sequências forçadas de 2-3 lances, sacrifícios               |
+| 5 — Ataque ao Rei        | 1550–1800                | Mate em 2-3, xeque duplo, ataques ao rei                     |
+| 6 — Defesa e Resistência | 1800–2000                | Defesa contra ameaças, zugzwang, finais táticos              |
+| 7 — Jogador em Formação  | 2000–2200                | Mistura avançada, revisão cruzada de todos os temas táticos  |
 
-7 mundos cobre a faixa observada de rating Lichess (tipicamente até
-~2800, mas o volume real cai muito acima de 2300 — confirmar na query de
-inventário da seção 2 antes de fechar o teto do Mundo 7). Cada Mundo tem
-Níveis (proposta inicial: 10-15 por mundo, ajustável por volume real de
-conteúdo disponível na faixa); cada Nível tem 5-8 Etapas, majoritariamente
-`CHALLENGE`, com `REVIEW` a cada poucos níveis e `CHECKPOINT`/`BOSS` ao
-final de cada Mundo (obrigatório pra desbloquear o próximo Mundo).
+**Atualizado depois da query real de inventário (seção 2, já executada em
+2026-07-27)**: confirmado que não existe conteúdo tático catalogado acima
+de rating 2200 — o teto do Mundo 7 originalmente proposto (2300+) foi
+revisado pra baixo pra não prometer um patamar sem conteúdo nenhum pra
+alimentá-lo. As faixas acima já são as implementadas de fato pelo script
+de seed (`apps/api/src/database/seed-learning-path.ts`), não só a proposta
+inicial. Cada Mundo tem Níveis (implementado: até 12 por mundo, menos se o
+pool real da faixa for menor — sinal honesto de conteúdo escasso, não
+escondido); cada Nível tem até 6 Etapas do tipo `CHALLENGE`, com `REVIEW`
+a cada 4 níveis e `BOSS` no último nível de cada Mundo (obrigatório pra
+sinalizar o Mundo como concluído).
 
 Etapas do tipo `LESSON` **não são criadas nesta primeira versão** —
 reaproveitar o sistema de aulas existente (`lesson_steps`) como Etapa é
@@ -113,6 +117,7 @@ ponto manualmente via "Treino Livre" (seção 9), então um posicionamento
 levemente errado não é uma armadilha permanente.
 
 **Regra de desbloqueio**:
+
 - Etapas dentro de um Nível: estritamente sequenciais (Etapa N só fica
   `available` quando N-1 está `completed`).
 - Níveis dentro de um Mundo: sequenciais também, exceto que o Nível final
@@ -282,13 +287,13 @@ com sua própria camada de "o que vem antes/depois" (mapa vs. filtros).
 Módulo novo `learning-path/` (controller + service + repository), sob o
 mesmo `AccessTokenGuard` já usado por exercícios:
 
-| Método | Path | Função |
-|---|---|---|
-| GET | `/learning-path/map` | Mundos + Níveis + status de cada um pro usuário logado |
-| GET | `/learning-path/levels/:levelId` | Etapas do nível + status de cada uma |
-| POST | `/learning-path/stages/:stageId/start` | Marca Etapa como `available`/em progresso, retorna o `exercise_id` associado |
-| POST | `/learning-path/stages/:stageId/complete` | Chamado após sucesso no exercício subjacente; atualiza `user_stage_completions`, `skill_mastery`, desbloqueia próxima Etapa/Nível/Mundo |
-| GET | `/learning-path/progress` | `UserLearningProgress` resumido (pro `ProgressHeader`) |
+| Método | Path                                      | Função                                                                                                                                  |
+| ------ | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/learning-path/map`                      | Mundos + Níveis + status de cada um pro usuário logado                                                                                  |
+| GET    | `/learning-path/levels/:levelId`          | Etapas do nível + status de cada uma                                                                                                    |
+| POST   | `/learning-path/stages/:stageId/start`    | Marca Etapa como `available`/em progresso, retorna o `exercise_id` associado                                                            |
+| POST   | `/learning-path/stages/:stageId/complete` | Chamado após sucesso no exercício subjacente; atualiza `user_stage_completions`, `skill_mastery`, desbloqueia próxima Etapa/Nível/Mundo |
+| GET    | `/learning-path/progress`                 | `UserLearningProgress` resumido (pro `ProgressHeader`)                                                                                  |
 
 **Reaproveitamento explícito**: a execução do exercício em si (validar
 lance, revelar dica, gravar tentativa) continua passando pelos endpoints
@@ -362,8 +367,8 @@ nível `current` visualmente destacado) → mundos futuros (bloqueados)
 Segue a ordem da FASE 20 do spec, sem pular etapas:
 
 1. Migration aditiva (`exercises.difficulty_score`/`instructional_metadata`
-   + 5 tabelas novas) — zero impacto em runtime, nada lê essas colunas
-   ainda.
+   - 5 tabelas novas) — zero impacto em runtime, nada lê essas colunas
+     ainda.
 2. Script de backfill/seed do currículo: calcula `difficulty_score` pra
    todo `exercises` existente, gera `learning_worlds`/`learning_levels`/
    `learning_stages` a partir da distribuição real de conteúdo (não
@@ -440,17 +445,17 @@ exatos) é o próximo passo depois de aprovação, via
 documento de plano dado o tamanho (schema/backend vs. frontend/UI podem
 ser plans separados executados em sequência ou por agentes distintos).
 
-| Fase de implementação | Conteúdo | Depende de |
-|---|---|---|
-| A — Dados | Migration `0036`, script de inventário real (Tarefa 1), script de backfill/seed de currículo | — |
-| B — Backend leitura | Módulo `learning-path`, endpoints GET (mapa/nível/progresso) | A |
-| C — Backend escrita | Endpoints start/complete de Etapa, integração com `exercise_attempts` existente, atualização de `skill_mastery` | B |
-| D — Frontend mapa (RO) | `LearningMap`/`LevelNode`/`WorldSection`/`ProgressHeader`, atrás de flag, só leitura | B |
-| E — Extração de execução | Camada compartilhada de execução extraída de `ExerciseTrainer`, sem mudar comportamento atual | — (paralelo a A-D) |
-| F — Frontend execução | `StageRunner` + `InstructorContext`/`InstructorBubble` + dicas visuais no `ChessBoard` (highlight/seta aditivos) | C, D, E |
-| G — Fluxo completo + testes | Integração ponta a ponta atrás da flag, testes de unidade (`unlockLevel`, `completeChallenge`, `calculateMastery`, `selectNextChallenge`, `requestHint`, `completeLevel`) e de integração do fluxo completo (FASE 22) | F |
-| H — Posicionamento e corte | Cálculo de posicionamento pra usuários existentes, `/app/desafios`→Treino Livre, troca de entrada principal, remoção da flag | G |
-| I — Polimento adiado | Analytics (FASE 18), acessibilidade (FASE 19), gamificação (FASE 15) — deliberadamente depois do fluxo core validado | H |
+| Fase de implementação       | Conteúdo                                                                                                                                                                                                              | Depende de         |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| A — Dados                   | Migration `0036`, script de inventário real (Tarefa 1), script de backfill/seed de currículo                                                                                                                          | —                  |
+| B — Backend leitura         | Módulo `learning-path`, endpoints GET (mapa/nível/progresso)                                                                                                                                                          | A                  |
+| C — Backend escrita         | Endpoints start/complete de Etapa, integração com `exercise_attempts` existente, atualização de `skill_mastery`                                                                                                       | B                  |
+| D — Frontend mapa (RO)      | `LearningMap`/`LevelNode`/`WorldSection`/`ProgressHeader`, atrás de flag, só leitura                                                                                                                                  | B                  |
+| E — Extração de execução    | Camada compartilhada de execução extraída de `ExerciseTrainer`, sem mudar comportamento atual                                                                                                                         | — (paralelo a A-D) |
+| F — Frontend execução       | `StageRunner` + `InstructorContext`/`InstructorBubble` + dicas visuais no `ChessBoard` (highlight/seta aditivos)                                                                                                      | C, D, E            |
+| G — Fluxo completo + testes | Integração ponta a ponta atrás da flag, testes de unidade (`unlockLevel`, `completeChallenge`, `calculateMastery`, `selectNextChallenge`, `requestHint`, `completeLevel`) e de integração do fluxo completo (FASE 22) | F                  |
+| H — Posicionamento e corte  | Cálculo de posicionamento pra usuários existentes, `/app/desafios`→Treino Livre, troca de entrada principal, remoção da flag                                                                                          | G                  |
+| I — Polimento adiado        | Analytics (FASE 18), acessibilidade (FASE 19), gamificação (FASE 15) — deliberadamente depois do fluxo core validado                                                                                                  | H                  |
 
 ---
 

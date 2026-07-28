@@ -25,27 +25,27 @@
 
 ### Frontend (Next.js App Router)
 
-| Rota | Arquivo | O que renderiza |
-|---|---|---|
-| `/app/exercicios` | `apps/web/src/app/app/exercicios/page.tsx:1-13` | `<ExerciseTrainer guided showSourceFilter storageKey="xadrez.exercicios_session" .../>` — catálogo de exercícios (livro + clássicos), exclui por padrão tudo com a tag `challenge`. |
-| `/app/desafios` | `apps/web/src/app/app/desafios/page.tsx:1-5` | `<ChallengeHub />`, que por sua vez renderiza `<ExerciseTrainer guided initialQuery="challenge" positionType="legal_position" showThemeFilter .../>` (`apps/web/src/components/challenges/challenge-hub.tsx:6-20`) — pool de itens marcados `challenge`, navegável por tema tático. |
+| Rota              | Arquivo                                         | O que renderiza                                                                                                                                                                                                                                                                     |
+| ----------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/app/exercicios` | `apps/web/src/app/app/exercicios/page.tsx:1-13` | `<ExerciseTrainer guided showSourceFilter storageKey="xadrez.exercicios_session" .../>` — catálogo de exercícios (livro + clássicos), exclui por padrão tudo com a tag `challenge`.                                                                                                 |
+| `/app/desafios`   | `apps/web/src/app/app/desafios/page.tsx:1-5`    | `<ChallengeHub />`, que por sua vez renderiza `<ExerciseTrainer guided initialQuery="challenge" positionType="legal_position" showThemeFilter .../>` (`apps/web/src/components/challenges/challenge-hub.tsx:6-20`) — pool de itens marcados `challenge`, navegável por tema tático. |
 
 Não há sub-rotas adicionais (ex. `/app/desafios/[tema]` ou `/app/exercicios/[id]`) — tudo é resolvido por estado de query string interno ao componente `ExerciseTrainer`, nunca por rota Next.js distinta.
 
 ### Backend (todas sob `AccessTokenGuard`, `apps/api/src/exercises/exercises.controller.ts:16`)
 
-| Método | Path | Handler | Função |
-|---|---|---|---|
-| GET | `/exercises` | `search` (`exercises.controller.ts:21-24`) | Busca paginada com filtros (categoria, capítulo, dificuldade, módulo, tipo de posição, texto livre `q`, `source`, `theme`, `lessonId`). |
-| GET | `/exercises/challenge-themes` | `listChallengeThemes` (`:26-29`) | Lista temas táticos catalogados (tags) dos exercícios `challenge`, com contagem de itens ainda não resolvidos pelo usuário. |
-| POST | `/exercise-training-sessions` | `startTraining` (`:31-37`) | Cria uma sessão de treino (lote de exercícios) a partir de filtros. |
-| GET | `/exercise-training-sessions/:sessionId` | `training` (`:39-42`) | Retorna estado atual da sessão (exercício corrente, progresso, status). |
-| POST | `/exercise-training-sessions/:sessionId/hints` | `hint` (`:44-47`) | Revela a próxima dica do exercício corrente da sessão (consome quota do plano). |
-| POST | `/exercise-training-sessions/:sessionId/solution` | `solution` (`:49-52`) | Revela a solução completa do exercício corrente da sessão. |
-| POST | `/exercises/:exerciseId/attempts` | `attempt` (`:54-65`) | Submete uma tentativa (linha completa de lances ou autoavaliação) e grava o resultado. |
-| POST | `/exercises/:exerciseId/evaluate-line` | `evaluateLine` (`:67-78`) | Avalia lance-a-lance contra a linha de solução gravada (usado pelo tabuleiro interativo). |
-| GET | `/exercises/:exerciseId/study` | `study` (`:80-83`) | Retorna o conteúdo de estudo da aula vinculada (texto + páginas), sem exigir progresso de sessão. |
-| GET | `/exercise-metrics` | `metrics` (`:85-88`) | Métricas agregadas do usuário (tentativas, acertos, precisão, tempo médio, dicas usadas). |
+| Método | Path                                              | Handler                                    | Função                                                                                                                                  |
+| ------ | ------------------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/exercises`                                      | `search` (`exercises.controller.ts:21-24`) | Busca paginada com filtros (categoria, capítulo, dificuldade, módulo, tipo de posição, texto livre `q`, `source`, `theme`, `lessonId`). |
+| GET    | `/exercises/challenge-themes`                     | `listChallengeThemes` (`:26-29`)           | Lista temas táticos catalogados (tags) dos exercícios `challenge`, com contagem de itens ainda não resolvidos pelo usuário.             |
+| POST   | `/exercise-training-sessions`                     | `startTraining` (`:31-37`)                 | Cria uma sessão de treino (lote de exercícios) a partir de filtros.                                                                     |
+| GET    | `/exercise-training-sessions/:sessionId`          | `training` (`:39-42`)                      | Retorna estado atual da sessão (exercício corrente, progresso, status).                                                                 |
+| POST   | `/exercise-training-sessions/:sessionId/hints`    | `hint` (`:44-47`)                          | Revela a próxima dica do exercício corrente da sessão (consome quota do plano).                                                         |
+| POST   | `/exercise-training-sessions/:sessionId/solution` | `solution` (`:49-52`)                      | Revela a solução completa do exercício corrente da sessão.                                                                              |
+| POST   | `/exercises/:exerciseId/attempts`                 | `attempt` (`:54-65`)                       | Submete uma tentativa (linha completa de lances ou autoavaliação) e grava o resultado.                                                  |
+| POST   | `/exercises/:exerciseId/evaluate-line`            | `evaluateLine` (`:67-78`)                  | Avalia lance-a-lance contra a linha de solução gravada (usado pelo tabuleiro interativo).                                               |
+| GET    | `/exercises/:exerciseId/study`                    | `study` (`:80-83`)                         | Retorna o conteúdo de estudo da aula vinculada (texto + páginas), sem exigir progresso de sessão.                                       |
+| GET    | `/exercise-metrics`                               | `metrics` (`:85-88`)                       | Métricas agregadas do usuário (tentativas, acertos, precisão, tempo médio, dicas usadas).                                               |
 
 Todos os endpoints validam entrada via `parseInput()` (`apps/api/src/common/http/parse-input.js`) com os schemas Zod de `packages/contracts`.
 
@@ -132,27 +132,27 @@ Todos os endpoints validam entrada via `parseInput()` (`apps/api/src/common/http
 
 Criada em `database/migrations/0001_base.up.sql:272-292`, alterada em `database/migrations/0007_exercises_runtime.up.sql:1-5,55-56`.
 
-| Coluna | Tipo | Origem | Notas |
-|---|---|---|---|
-| `id` | `uuid` PK | `0001_base.up.sql:273` | |
-| `external_id` | `varchar(80)` UNIQUE | `:274` | ex. `"lichess-BAu1A"`, `"challenge-mate-in-one-001"`, `"xadrez-essencial-<n>"`. |
-| `source_number` | `integer` UNIQUE | `:275` | Chave de upsert do importador do livro (`ON CONFLICT (source_number)`, `exercise-importer.ts:379`). |
-| `module_number`, `chapter_number` | `integer` | `:276-277` | Ligação ao curso/livro. |
-| `title` | `varchar(300)` | `:278` | |
-| `prompt_md` | `text NOT NULL` | `:279` | Enunciado. |
-| `solution_md` | `text NOT NULL` | `:280` | Solução em texto (prosa/notação). |
-| `difficulty` | `varchar(20)` | `:281` | `beginner`/`intermediate`/`advanced`/`expert` (usado para ordenar o lote de treino, ver seção 11). |
-| `category` | `varchar(60)` | `:282` | |
-| `fen` | `text` | `:283` | Nulo para exercícios `text_only`. |
-| `side_to_move` | `color_side` (enum `white`/`black`) | `:284` | |
-| `solution_lines` | `jsonb DEFAULT '[]'` | `:285` | Array de arrays de lances UCI; cada linha intercala `[jogador, oponente, jogador, ...]` (documentado em `exercise-grader.ts:14-16`). |
-| `hints` | `jsonb DEFAULT '[]'` | `:286` | Array de strings; ver seção 9 sobre cobertura real. |
-| `tags` | `text[] DEFAULT '{}'` | `:287` | Contém tanto tags de proveniência (`classico`, `lichess`, `challenge`) quanto tags de tema tático (`garfo`, `mate_em_dois`, `peca_pendurada`, ...). |
-| `source_pages` | `int4range` | `:288` | Faixa de páginas do livro-fonte. |
-| `status` | `publication_status` (enum, inclui `draft`/`published`) | `:289` | Só `published` é exposto pelas queries (`exercises.repository.ts:119`, etc.). |
-| `position_type` | `varchar(30)` CHECK `legal_position\|illustrative_diagram\|text_only` | `0007_exercises_runtime.up.sql:2-3` | |
-| `import_run_id` | `uuid` FK → `exercise_import_runs` | `:4,18-20` | |
-| `import_metadata` | `jsonb DEFAULT '{}'` | `:5` | Guarda `answerFormat` (`free_text`/`move_sequence`), `ratingBand`, `source`, `sourcePuzzleId`, `rating` (Lichess), etc. — **`answer_format` não é uma coluna própria**, é lido via `import_metadata->>'answerFormat'` com fallback `'move_sequence'` (`exercises.repository.ts:139`, `:269`, `:380`). |
+| Coluna                            | Tipo                                                                  | Origem                              | Notas                                                                                                                                                                                                                                                                                                 |
+| --------------------------------- | --------------------------------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                              | `uuid` PK                                                             | `0001_base.up.sql:273`              |                                                                                                                                                                                                                                                                                                       |
+| `external_id`                     | `varchar(80)` UNIQUE                                                  | `:274`                              | ex. `"lichess-BAu1A"`, `"challenge-mate-in-one-001"`, `"xadrez-essencial-<n>"`.                                                                                                                                                                                                                       |
+| `source_number`                   | `integer` UNIQUE                                                      | `:275`                              | Chave de upsert do importador do livro (`ON CONFLICT (source_number)`, `exercise-importer.ts:379`).                                                                                                                                                                                                   |
+| `module_number`, `chapter_number` | `integer`                                                             | `:276-277`                          | Ligação ao curso/livro.                                                                                                                                                                                                                                                                               |
+| `title`                           | `varchar(300)`                                                        | `:278`                              |                                                                                                                                                                                                                                                                                                       |
+| `prompt_md`                       | `text NOT NULL`                                                       | `:279`                              | Enunciado.                                                                                                                                                                                                                                                                                            |
+| `solution_md`                     | `text NOT NULL`                                                       | `:280`                              | Solução em texto (prosa/notação).                                                                                                                                                                                                                                                                     |
+| `difficulty`                      | `varchar(20)`                                                         | `:281`                              | `beginner`/`intermediate`/`advanced`/`expert` (usado para ordenar o lote de treino, ver seção 11).                                                                                                                                                                                                    |
+| `category`                        | `varchar(60)`                                                         | `:282`                              |                                                                                                                                                                                                                                                                                                       |
+| `fen`                             | `text`                                                                | `:283`                              | Nulo para exercícios `text_only`.                                                                                                                                                                                                                                                                     |
+| `side_to_move`                    | `color_side` (enum `white`/`black`)                                   | `:284`                              |                                                                                                                                                                                                                                                                                                       |
+| `solution_lines`                  | `jsonb DEFAULT '[]'`                                                  | `:285`                              | Array de arrays de lances UCI; cada linha intercala `[jogador, oponente, jogador, ...]` (documentado em `exercise-grader.ts:14-16`).                                                                                                                                                                  |
+| `hints`                           | `jsonb DEFAULT '[]'`                                                  | `:286`                              | Array de strings; ver seção 9 sobre cobertura real.                                                                                                                                                                                                                                                   |
+| `tags`                            | `text[] DEFAULT '{}'`                                                 | `:287`                              | Contém tanto tags de proveniência (`classico`, `lichess`, `challenge`) quanto tags de tema tático (`garfo`, `mate_em_dois`, `peca_pendurada`, ...).                                                                                                                                                   |
+| `source_pages`                    | `int4range`                                                           | `:288`                              | Faixa de páginas do livro-fonte.                                                                                                                                                                                                                                                                      |
+| `status`                          | `publication_status` (enum, inclui `draft`/`published`)               | `:289`                              | Só `published` é exposto pelas queries (`exercises.repository.ts:119`, etc.).                                                                                                                                                                                                                         |
+| `position_type`                   | `varchar(30)` CHECK `legal_position\|illustrative_diagram\|text_only` | `0007_exercises_runtime.up.sql:2-3` |                                                                                                                                                                                                                                                                                                       |
+| `import_run_id`                   | `uuid` FK → `exercise_import_runs`                                    | `:4,18-20`                          |                                                                                                                                                                                                                                                                                                       |
+| `import_metadata`                 | `jsonb DEFAULT '{}'`                                                  | `:5`                                | Guarda `answerFormat` (`free_text`/`move_sequence`), `ratingBand`, `source`, `sourcePuzzleId`, `rating` (Lichess), etc. — **`answer_format` não é uma coluna própria**, é lido via `import_metadata->>'answerFormat'` com fallback `'move_sequence'` (`exercises.repository.ts:139`, `:269`, `:380`). |
 
 ### Tabelas relacionadas (todas de `0007_exercises_runtime.up.sql` salvo indicado)
 
@@ -182,11 +182,13 @@ Criada em `database/migrations/0001_base.up.sql:272-292`, alterada em `database/
 ## 8. Onde a classificação por tema acontece, exatamente
 
 **Backend** — filtro de tema é sempre `${filter.theme}::text IS NULL OR ${filter.theme} = ANY(e.tags)` (comparação direta contra o array `tags`, sem tabela de temas separada). Aparece idêntico em três queries:
+
 - `search()` — contagem: `exercises.repository.ts:132`; listagem: `:157`.
 - `startTraining()` (monta o lote da sessão): `:227`.
 - (implicitamente também filtra em `listChallengeThemes()`, que faz o inverso — agrupa por tag: ver abaixo.)
 
 **Listagem de temas disponíveis** — `listChallengeThemes()` (`exercises.repository.ts:175-190`):
+
 ```sql
 SELECT tag, count(*)::integer AS count
   FROM exercises e, unnest(e.tags) AS tag
@@ -196,6 +198,7 @@ SELECT tag, count(*)::integer AS count
                      WHERE a.exercise_id = e.id AND a.user_id = ${userId} AND a.correct = true)
  GROUP BY tag ORDER BY count DESC, tag
 ```
+
 Isto é: **"tema" é qualquer valor de `tags` que não seja uma das 3 tags estruturais de proveniência** (`challenge`, `lichess`, `classico`) — não há uma tabela `themes` nem enum fechado de temas. O comentário em `:172-174` confirma essa decisão de design.
 
 **Frontend** — `<select>` de tema tático: `apps/web/src/components/exercises/exercise-trainer.tsx:651-663`, renderizado só quando `showThemeFilter=true` (só `/app/desafios`). É populado (`:274-290`) por `api.listChallengeThemes(accessToken)` num `useEffect` disparado quando `guided && showThemeFilter`. Ao selecionar, `selectTheme(next)` (`:297-300`) atualiza o estado `theme` e chama `resumeOrStart({ source, theme: next })`, que tenta retomar sessão salva daquele tema (`sessionStorageKey`, `:59-61`) ou inicia uma nova via `POST /exercise-training-sessions` com `theme` nos filtros. O rótulo exibido é formatado mecanicamente a partir do tag snake_case (`formatThemeLabel`, `:65-70`, ex. `peca_pendurada` → `"Peca Pendurada"`).
@@ -236,6 +239,7 @@ Há **dois endpoints distintos**, para dois momentos diferentes do fluxo:
    - Pontuação: `score = correct ? max(0, 100 - hintsUsed * 10) : 0` (`:427`) — cada dica usada custa 10 pontos.
    - Gating por plano: `checkEntitlement(userId, 'exercises_per_day')` (`:385-389`) antes de aceitar a tentativa.
    - Se `correct` e vinculado a uma `trainingSessionId`: marca o item da sessão como concluído e avança `current_position` (`:438-452`), com a sessão virando `completed` quando `current_position >= total`.
+
 - **Não há engine de xadrez em tempo real (Stockfish) envolvida em nenhum dos dois** — comparação é sempre contra `solution_lines` gravado estaticamente (ver seção 6).
 
 ---
@@ -346,11 +350,13 @@ Há **dois endpoints distintos**, para dois momentos diferentes do fluxo:
 ## 18. Estratégia de migração — primeira impressão (não é o entregável principal)
 
 **Provavelmente mais fácil de estender sem quebrar:**
+
 - Adicionar uma tabela nova (ex. "níveis", "trilhas", "mastery por tema") ao lado das existentes, alimentada por `exercise_attempts`/`tags` sem alterar seu formato — o histórico de tentativas já tem tudo que uma camada de progressão/mastery precisaria consumir (usuário, exercício, correto, tempo, dicas usadas, timestamp) sem exigir mudança retroativa.
 - O `<select>` de tema (`exercise-trainer.tsx:651-663`) e `listChallengeThemes()` (`exercises.repository.ts:175-190`) são pontos de extensão relativamente isolados — trocar por uma navegação de "níveis por tema" pode reaproveitar a mesma agregação de tags sem tocar no motor de correção.
 - O componente `ChessBoard` já expõe `lastMove`/highlight de casas via classes CSS; adicionar uma camada de overlay para setas é aditivo (não exige reescrever a lógica de clique/drag existente), mas exige trabalho novo do zero (não há nada reaproveitável hoje, seção 5).
 
 **Provavelmente mais arriscado/acoplado:**
+
 - **`ExerciseTrainer`** é um componente monolítico de 1025 linhas que serve simultaneamente `/app/exercicios` (catálogo livre) e `/app/desafios` (pool guiado por tema) via um leque grande de props condicionais (`guided`, `showSourceFilter`, `showThemeFilter`, `positionType`, `initialQuery`...). Uma "jornada por níveis" provavelmente quer um fluxo de UI genuinamente diferente (progressão linear, bloqueio de nível, XP/streak) — tentar encaixar isso como mais uma prop condicional nesse componente tende a piorar a already-alta complexidade condicional; extrair um componente de execução de exercício mais enxuto (tabuleiro + validação + dica, sem toda a lógica de filtros/histórico/fonte) parece o ponto de alavancagem mais valioso.
 - **Ausência de mastery/rating por tema** significa que "nível" na nova arquitetura precisa ser inteiramente novo — não há dado histórico de proficiência por tema para inicializar usuários existentes além de contar acertos passados por tag (cruzando `exercise_attempts` × `exercises.tags`, viável mas não trivial, e não normalizado hoje).
 - O **domínio fora do Drizzle** (SQL cru em `exercises.repository.ts`) significa que uma reestruturação de schema (novas tabelas de nível/trilha) não tem o mesmo suporte de migração tipada que o resto do backend — precisa seguir o padrão manual de migrations `.up.sql`/`.down.sql` já em uso (`database/migrations/`), respeitando a regra do projeto de nunca editar uma migration já aplicada em produção (histórico em `database/migrations/0023...` e na memória do projeto).
