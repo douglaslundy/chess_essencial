@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createApp } from '../bootstrap.js';
+import { encryptSecret } from '../common/crypto/secret-cipher.js';
 import { DatabaseService } from '../database/database.service.js';
 
 const describeDatabase = process.env.RUN_DB_TESTS === 'true' ? describe : describe.skip;
@@ -148,6 +149,42 @@ describeDatabase('AI provider keys database integration', () => {
       { isActive: false, provider: 'anthropic' },
       { isActive: true, provider: 'openai' },
     ]);
+  });
+
+  it('reports a clean 400 (not a bare 500) when the stored key can no longer be decrypted, without touching what was saved', async () => {
+    // Simulates SETTINGS_ENCRYPTION_KEY having changed since this row was
+    // encrypted (the real-world trigger, per project history) by
+    // encrypting with a key that is definitely not the one this running
+    // app instance is using. Leaving apiKey out of the PUT payload is the
+    // "keep the current key, just change the model" flow the admin UI
+    // explicitly tells admins to use — this is exactly the request that
+    // used to 500 with a generic "internal error" instead of a real
+    // message (see ai-providers.service.ts#resolvePlainApiKey).
+    await database.client`DELETE FROM ai_provider_keys WHERE provider = 'openai'`;
+    const undecryptable = encryptSecret('sk-old-value', 'a-completely-different-secret');
+    await database.client`
+      INSERT INTO ai_provider_keys (provider, encrypted_api_key, key_preview, model, is_active)
+      VALUES ('openai', ${undecryptable}, 'valu', 'gpt-5.6-luna', false)
+    `;
+
+    const response = await app.inject({
+      headers: auth(admin),
+      method: 'PUT',
+      payload: { model: 'gpt-5.6-luna' },
+      url: '/v1/admin/ai-providers/openai',
+    });
+
+    expect(response.statusCode, response.body).toBe(400);
+    expect(response.body).not.toContain('sk-old-value');
+    const problem = response.json() as { detail: string };
+    expect(problem.detail).toMatch(/chave|criptografia/i);
+
+    // The unreadable row itself must be untouched - not wiped, not
+    // silently overwritten with something else.
+    const [row] = await database.client<{ encryptedApiKey: string }[]>`
+      SELECT encrypted_api_key AS "encryptedApiKey" FROM ai_provider_keys WHERE provider = 'openai'
+    `;
+    expect(row!.encryptedApiKey).toBe(undecryptable);
   });
 
   it('never returns the encrypted key or a full key preview over the API', async () => {

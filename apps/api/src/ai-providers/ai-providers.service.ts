@@ -113,8 +113,22 @@ export class AiProvidersService implements OnModuleInit {
     apiKey?: string,
   ): string {
     if (apiKey) return apiKey;
-    if (row?.encryptedApiKey) return decryptSecret(row.encryptedApiKey, this.encryptionKey());
-    throw new BadRequestException('Informe uma chave de API para este provedor.');
+    if (!row?.encryptedApiKey) {
+      throw new BadRequestException('Informe uma chave de API para este provedor.');
+    }
+    try {
+      return decryptSecret(row.encryptedApiKey, this.encryptionKey());
+    } catch {
+      // decryptSecret() throws a raw, generic crypto error whenever
+      // SETTINGS_ENCRYPTION_KEY no longer matches whatever it was when
+      // this key was saved (e.g. the env var changed across a deploy) —
+      // this used to propagate all the way up as an opaque 500 "erro
+      // interno" with no actionable message. Never let that happen: the
+      // fix here is for the admin to re-enter the key.
+      throw new BadRequestException(
+        'Não foi possível ler a chave já salva para este provedor (a configuração de criptografia pode ter mudado). Informe a chave novamente para continuar.',
+      );
+    }
   }
 
   private toPublicModels(
@@ -176,9 +190,16 @@ export class AiProvidersService implements OnModuleInit {
       liveModels = await listModelsForProvider(provider, plainApiKey);
     } catch (error) {
       if (error instanceof AiProviderKeyInvalidError) {
+        // Record why it failed (surfaced in the admin panel as
+        // lastValidationError) WITHOUT ever persisting the invalid key
+        // itself — passing null here relies on upsert()'s COALESCE to
+        // keep whatever encrypted_api_key/key_preview were already
+        // stored. The previous version encrypted and saved input.apiKey
+        // even when it had just failed validation, silently overwriting
+        // a working key with a broken one on a failed update attempt.
         await this.repository.upsert(provider, {
-          encryptedApiKey: input.apiKey ? encryptSecret(input.apiKey, this.encryptionKey()) : null,
-          keyPreview: input.apiKey ? maskedKeyPreview(input.apiKey) : null,
+          encryptedApiKey: null,
+          keyPreview: null,
           lastValidationError: error.message,
           model: input.model,
         });
