@@ -5,7 +5,13 @@ import {
   realtimeMoveSubmitSchema,
   type GameState,
 } from '@xadrez/contracts';
-import { HttpException, Logger, OnModuleDestroy, UnauthorizedException } from '@nestjs/common';
+import {
+  HttpException,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+  UnauthorizedException,
+} from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -14,11 +20,32 @@ import {
   SubscribeMessage,
   WebSocketGateway,
 } from '@nestjs/websockets';
+import type { Redis } from 'ioredis';
+import { randomUUID } from 'node:crypto';
 import type { WebSocket } from 'ws';
 
 import { AuthService } from '../../auth/auth.service.js';
 import { MetricsService } from '../../observability/metrics.service.js';
+import { RedisService } from '../../redis/redis.service.js';
 import { GamesService } from '../application/games.service.js';
+
+// The API runs multiple instances behind a load balancer, so two players in
+// the same game can end up connected to different processes. clientsByGame
+// only ever reaches WebSocket clients local to *this* process — every
+// broadcast still delivers to this instance's own clients immediately
+// (unchanged), and is *also* published on this Redis channel so every other
+// instance relays it to its own locally-connected clients. Each message
+// carries the publishing instance's id purely so that instance can ignore
+// its own echo coming back through the subscription (it already delivered
+// locally) instead of sending every event to its clients twice.
+const GAME_EVENTS_CHANNEL = 'xadrez:game-events';
+
+interface GameEventMessage {
+  data: unknown;
+  event: string;
+  gameId: string;
+  originInstanceId: string;
+}
 
 interface ClientSession {
   authenticationTimer: NodeJS.Timeout;
@@ -30,17 +57,59 @@ interface ClientSession {
 }
 
 @WebSocketGateway({ path: '/v1/ws', maxPayload: 16 * 1024 })
-export class GamesGateway implements OnGatewayConnection, OnGatewayDisconnect, OnModuleDestroy {
+export class GamesGateway
+  implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit, OnModuleDestroy
+{
   private readonly logger = new Logger(GamesGateway.name);
   private readonly clientsByGame = new Map<string, Set<WebSocket>>();
   private readonly sessions = new Map<WebSocket, ClientSession>();
   private readonly timeoutTimers = new Map<string, NodeJS.Timeout>();
+  private readonly subscriber: Redis;
+  private readonly instanceId = randomUUID();
 
   constructor(
     private readonly auth: AuthService,
     private readonly games: GamesService,
     private readonly metrics: MetricsService,
-  ) {}
+    private readonly redis: RedisService,
+  ) {
+    // A connection in subscribe mode can't issue other Redis commands, so
+    // publishing (this.redis.client) and subscribing need separate connections.
+    this.subscriber = this.redis.client.duplicate();
+  }
+
+  async onModuleInit() {
+    // This hook runs on every boot of the app, including in test suites
+    // with no real Redis available - never let it take app.init() down
+    // with it. Without cross-instance relay, live games still work exactly
+    // as before for any client connected to the same process (broadcast()
+    // always delivers locally first, regardless of this subscription).
+    this.subscriber.on('error', (error: Error) => {
+      this.logger.error('Game events Redis subscriber connection error', error.stack);
+    });
+    try {
+      await this.subscriber.subscribe(GAME_EVENTS_CHANNEL);
+    } catch (error) {
+      this.logger.error(
+        'Failed to subscribe to the game events Redis channel; cross-instance realtime relay is disabled',
+        error instanceof Error ? error.stack : undefined,
+      );
+      return;
+    }
+    this.subscriber.on('message', (channel: string, message: string) => {
+      if (channel !== GAME_EVENTS_CHANNEL) return;
+      try {
+        const payload = JSON.parse(message) as GameEventMessage;
+        if (payload.originInstanceId === this.instanceId) return; // Already delivered locally by broadcast().
+        this.broadcastLocal(payload.gameId, payload.event, payload.data);
+      } catch (error) {
+        this.logger.error(
+          'Failed to process a game event received from Redis',
+          error instanceof Error ? error.stack : undefined,
+        );
+      }
+    });
+  }
 
   handleConnection(client: WebSocket) {
     if (this.sessions.size >= 1_000) {
@@ -62,8 +131,13 @@ export class GamesGateway implements OnGatewayConnection, OnGatewayDisconnect, O
     });
   }
 
-  onModuleDestroy() {
+  async onModuleDestroy() {
     for (const timer of this.timeoutTimers.values()) clearTimeout(timer);
+    try {
+      await this.subscriber.quit();
+    } catch {
+      // Nothing meaningful to do with a failed disconnect during shutdown.
+    }
   }
 
   handleDisconnect(client: WebSocket) {
@@ -189,7 +263,27 @@ export class GamesGateway implements OnGatewayConnection, OnGatewayDisconnect, O
     return userId;
   }
 
+  /**
+   * Delivers to this instance's own locally-connected clients immediately
+   * (unchanged from before), and also publishes to Redis so every *other*
+   * API instance relays it to its own clients. See GAME_EVENTS_CHANNEL.
+   */
   private broadcast(gameId: string, event: string, data: unknown) {
+    this.broadcastLocal(gameId, event, data);
+    const payload: GameEventMessage = { data, event, gameId, originInstanceId: this.instanceId };
+    this.redis.client
+      .publish(GAME_EVENTS_CHANNEL, JSON.stringify(payload))
+      .catch((error: unknown) => {
+        // Local clients already got it above; only clients on other instances
+        // are affected by Redis being briefly unavailable.
+        this.logger.error(
+          'Failed to publish a game event to Redis; other instances will not relay it',
+          error instanceof Error ? error.stack : undefined,
+        );
+      });
+  }
+
+  private broadcastLocal(gameId: string, event: string, data: unknown) {
     for (const client of this.clientsByGame.get(gameId) ?? []) {
       this.send(client, event, data);
     }

@@ -23,6 +23,16 @@ function parseSent(socket: FakeSocket) {
   return socket.sent.map((raw) => JSON.parse(raw) as { data: unknown; event: string });
 }
 
+function fakeRedisService() {
+  const publish = vi.fn().mockResolvedValue(1);
+  return {
+    client: {
+      duplicate: () => ({ on: vi.fn(), quit: vi.fn().mockResolvedValue('OK'), subscribe: vi.fn() }),
+      publish,
+    },
+  };
+}
+
 describe('GamesGateway bot reply delay', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -64,7 +74,13 @@ describe('GamesGateway bot reply delay', () => {
       setConnection: vi.fn().mockResolvedValue(undefined),
     };
     const metrics = { increment: vi.fn() };
-    const gateway = new GamesGateway(auth as never, games as never, metrics as never);
+    const redis = fakeRedisService();
+    const gateway = new GamesGateway(
+      auth as never,
+      games as never,
+      metrics as never,
+      redis as never,
+    );
 
     const socket = fakeSocket();
     gateway.handleConnection(socket as never);
@@ -116,7 +132,13 @@ describe('GamesGateway bot reply delay', () => {
       setConnection: vi.fn().mockResolvedValue(undefined),
     };
     const metrics = { increment: vi.fn() };
-    const gateway = new GamesGateway(auth as never, games as never, metrics as never);
+    const redis = fakeRedisService();
+    const gateway = new GamesGateway(
+      auth as never,
+      games as never,
+      metrics as never,
+      redis as never,
+    );
 
     const socket = fakeSocket();
     gateway.handleConnection(socket as never);
