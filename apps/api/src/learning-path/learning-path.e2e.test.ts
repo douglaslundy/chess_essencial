@@ -19,6 +19,9 @@ describeDatabase('learning path database integration', () => {
   let levelTwoId: string;
   let stageOneId: string;
   let stageTwoId: string;
+  let advancedWorldId: string;
+  let advancedLevelId: string;
+  let advancedExerciseId: string;
 
   beforeAll(async () => {
     app = await createApp();
@@ -75,11 +78,42 @@ describeDatabase('learning path database integration', () => {
       INSERT INTO learning_stages (level_id, position, type, exercise_id)
       VALUES (${levelTwoId}, 1, 'challenge', ${exercise!.id})
     `;
+
+    // Separate, non-overlapping difficulty band (well above levelOne/levelTwo's
+    // 0-1000 range) used only by the placement-heuristic test below — proves a
+    // placed user actually lands somewhere other than the curriculum's first
+    // level, which a single shared-range world/exercise couldn't distinguish.
+    const [advancedExercise] = await database.client<{ id: string }[]>`
+      INSERT INTO exercises (
+        external_id, title, prompt_md, solution_md, difficulty, fen, side_to_move,
+        solution_lines, position_type, status, difficulty_score
+      )
+      VALUES (
+        'learning-path-test-002', 'Teste avançado', 'Encontre o melhor lance.', 'e2e4', 'expert',
+        'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 'white',
+        '[["e2e4"]]'::jsonb, 'legal_position', 'published', 2000
+      )
+      RETURNING id
+    `;
+    advancedExerciseId = advancedExercise!.id;
+    const [advancedWorld] = await database.client<{ id: string }[]>`
+      INSERT INTO learning_worlds (position, title, description, difficulty_min, difficulty_max)
+      VALUES (1000, 'Mundo Avançado de Teste', 'Só para o e2e.', 1500, 2500)
+      RETURNING id
+    `;
+    advancedWorldId = advancedWorld!.id;
+    const [advancedLevel] = await database.client<{ id: string }[]>`
+      INSERT INTO learning_levels (world_id, position, title, difficulty_min, difficulty_max, challenge_count)
+      VALUES (${advancedWorldId}, 1, 'Nível Avançado', 1500, 2500, 1)
+      RETURNING id
+    `;
+    advancedLevelId = advancedLevel!.id;
   });
 
   afterAll(async () => {
     await database.client`DELETE FROM learning_worlds WHERE id = ${worldId}`;
-    await database.client`DELETE FROM exercises WHERE external_id = 'learning-path-test-001'`;
+    await database.client`DELETE FROM learning_worlds WHERE id = ${advancedWorldId}`;
+    await database.client`DELETE FROM exercises WHERE external_id LIKE 'learning-path-test-%'`;
     await app.close();
   });
 
@@ -155,6 +189,32 @@ describeDatabase('learning path database integration', () => {
       (stage: { status: string }) => stage.status === 'available',
     ).length;
     expect(availableCount).toBeLessThanOrEqual(1);
+  });
+
+  it('places a user with enough real exercise history at an estimated level, not always the first one', async () => {
+    const placed = await createIdentity(
+      'learning-path-placement@example.com',
+      'learning_path_placement',
+    );
+    // Direct attempts, bypassing the training-session flow — only the
+    // resulting exercise_attempts rows matter for the placement estimate.
+    for (let i = 0; i < 10; i += 1) {
+      await database.client`
+        INSERT INTO exercise_attempts (user_id, exercise_id, submitted_line, correct)
+        VALUES (${placed.userId}, ${advancedExerciseId}, '["e2e4"]'::jsonb, true)
+      `;
+    }
+
+    const progress = await app.inject({
+      headers: auth(placed),
+      method: 'GET',
+      url: '/v1/learning-path/progress',
+    });
+    expect(progress.statusCode, progress.body).toBe(200);
+    expect(progress.json()).toMatchObject({
+      currentLevelId: advancedLevelId,
+      currentWorldId: advancedWorldId,
+    });
   });
 
   it('rejects an unknown level id with 404', async () => {

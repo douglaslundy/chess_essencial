@@ -35,7 +35,14 @@ export interface StageRow {
 export class LearningPathRepository {
   constructor(private readonly database: DatabaseService) {}
 
-  /** Creates the progress row on first access, anchored at the very first level of the curriculum. */
+  /**
+   * Creates the progress row on first access. FASE 5 do spec: a user with
+   * enough real exercise history (outside the Jornada entirely — the same
+   * exercise_attempts table the rest of the platform has always used)
+   * shouldn't be forced through Mundo 1 from scratch. Anchors at the
+   * estimated level when there's reliable signal, otherwise falls back to
+   * the curriculum's very first level exactly as before.
+   */
   async getOrInitProgress(userId: string): Promise<ProgressRow | null> {
     const sql = this.database.client;
     const existing = await sql<ProgressRow[]>`
@@ -55,9 +62,17 @@ export class LearningPathRepository {
     `;
     if (!first) return null; // Curriculum not seeded yet.
 
+    const placement = await this.estimatePlacementLevel(userId);
+    const target = placement ?? first;
+
     await sql`
-      INSERT INTO user_learning_progress (user_id, current_world_id, current_level_id, highest_unlocked_level_id)
-      VALUES (${userId}, ${first.worldId}, ${first.levelId}, ${first.levelId})
+      INSERT INTO user_learning_progress (
+        user_id, current_world_id, current_level_id, highest_unlocked_level_id, placement_level_id
+      )
+      VALUES (
+        ${userId}, ${target.worldId}, ${target.levelId}, ${target.levelId},
+        ${placement?.levelId ?? null}
+      )
       ON CONFLICT (user_id) DO NOTHING
     `;
     const [created] = await sql<ProgressRow[]>`
@@ -67,6 +82,63 @@ export class LearningPathRepository {
        WHERE user_id = ${userId}
     `;
     return created ?? null;
+  }
+
+  /**
+   * Estimates a starting level from the user's last 30 correctly-solved
+   * exercises that have a difficulty_score (the same scale learning_levels'
+   * difficulty_min/max are built from) — deliberately simple, matches the
+   * spirit of every other sampling heuristic in this module (no exponential
+   * decay, no separate model). Returns null when there isn't enough
+   * history to trust (fewer than 10 such attempts), per the spec's
+   * explicit "no reliable history -> keep a configurable starting point"
+   * fallback — callers then default to the curriculum's first level.
+   */
+  private async estimatePlacementLevel(
+    userId: string,
+  ): Promise<{ levelId: string; worldId: string } | null> {
+    const sql = this.database.client;
+    const [stats] = await sql<{ estimate: number | null; sampleSize: number }[]>`
+      WITH recent_correct AS (
+        SELECT e.difficulty_score
+          FROM exercise_attempts ea
+          JOIN exercises e ON e.id = ea.exercise_id
+         WHERE ea.user_id = ${userId} AND ea.correct = true AND e.difficulty_score IS NOT NULL
+         ORDER BY ea.attempted_at DESC
+         LIMIT 30
+      )
+      SELECT avg(difficulty_score)::numeric AS estimate, count(*)::int AS "sampleSize"
+        FROM recent_correct
+    `;
+    if (!stats || stats.sampleSize < 10 || stats.estimate === null) return null;
+
+    const [match] = await sql<{ levelId: string; worldId: string }[]>`
+      SELECT ll.id AS "levelId", lw.id AS "worldId"
+        FROM learning_levels ll
+        JOIN learning_worlds lw ON lw.id = ll.world_id
+       WHERE ${stats.estimate} BETWEEN ll.difficulty_min AND ll.difficulty_max
+       ORDER BY lw.position, ll.position
+       LIMIT 1
+    `;
+    if (match) return match;
+
+    const [globalRange] = await sql<{ maxDifficulty: number; minDifficulty: number }[]>`
+      SELECT min(difficulty_min) AS "minDifficulty", max(difficulty_max) AS "maxDifficulty"
+        FROM learning_levels
+    `;
+    if (!globalRange || stats.estimate < globalRange.minDifficulty) return null;
+
+    // Estimate exceeds every level's range (a stronger player than the
+    // curriculum's ceiling) - place at the hardest level instead of
+    // silently defaulting back to the very first one.
+    const [hardest] = await sql<{ levelId: string; worldId: string }[]>`
+      SELECT ll.id AS "levelId", lw.id AS "worldId"
+        FROM learning_levels ll
+        JOIN learning_worlds lw ON lw.id = ll.world_id
+       ORDER BY lw.position DESC, ll.position DESC
+       LIMIT 1
+    `;
+    return hardest ?? null;
   }
 
   /** Every level in curriculum order, ranked globally, with per-user stage-completion counts. */
