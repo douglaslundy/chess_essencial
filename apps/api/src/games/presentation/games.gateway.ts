@@ -74,8 +74,15 @@ export class GamesGateway
     private readonly redis: RedisService,
   ) {
     // A connection in subscribe mode can't issue other Redis commands, so
-    // publishing (this.redis.client) and subscribing need separate connections.
-    this.subscriber = this.redis.client.duplicate();
+    // publishing (this.redis.client) and subscribing need separate
+    // connections. Capped retryStrategy (unlike the shared client's
+    // default): environments with no Redis at all (some CI jobs, this
+    // sandbox) would otherwise leave this duplicated connection retrying
+    // forever in the background across every test file's app instance for
+    // the rest of the process's life, well past onModuleDestroy's quit().
+    this.subscriber = this.redis.client.duplicate({
+      retryStrategy: (times) => (times > 3 ? null : Math.min(times * 200, 1000)),
+    });
   }
 
   async onModuleInit() {
