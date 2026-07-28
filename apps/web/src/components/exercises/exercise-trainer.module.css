@@ -164,7 +164,7 @@
   text-align: center;
 }
 .guidedTraining .boardArea {
-  width: min(100%, calc(100dvh - 20rem), 36rem);
+  width: min(100%, calc(100dvh - 20rem), 46.5rem);
   justify-items: center;
 }
 .guidedTraining .boardControls,
@@ -172,7 +172,7 @@
   justify-content: center;
 }
 .guidedTraining .feedback {
-  width: min(100%, 36rem);
+  width: min(100%, 46.5rem);
   text-align: left;
 }
 .training h2,

@@ -2955,12 +2955,58 @@ input:focus-visible {
   border-color: var(--gold, #d8b66c);
 }
 
+.learningPathPage,
+.learningLevelPage {
+  width: min(100%, 90rem);
+  margin: 0 auto;
+  padding: var(--page-padding);
+}
+
 .stageRunnerPage {
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
-  max-width: 46.5rem;
+  width: min(100%, 46.5rem);
   margin: 0 auto;
+  padding: var(--page-padding);
+}
+
+.stageBoardArea {
+  width: min(100%, calc(100dvh - 24rem), 46.5rem);
+  margin: 0 auto;
+}
+
+.stageHintList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.stageMoveNav {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.stageMoveNav button {
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  background: var(--surface);
+  color: var(--text);
+  padding: 0.4rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.stageMoveNav button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .instructorBubble {
@@ -2994,12 +3040,70 @@ input:focus-visible {
   border: 1px solid var(--success);
   border-radius: 1rem;
   background: var(--surface);
-  padding: 1.5rem;
-  text-align: center;
+  padding: 1.1rem 1.3rem;
   display: flex;
   flex-direction: column;
+  gap: 0.7rem;
+}
+
+.stageCompletionStats {
+  display: flex;
+  justify-content: space-between;
   gap: 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.stageCompletionProgress {
+  display: flex;
   align-items: center;
+  gap: 0.75rem;
+}
+
+.stageCompletionProgressTrack {
+  flex: 1;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.stageCompletionProgressFill {
+  height: 100%;
+  background: var(--success);
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+.stageCompletionProgress span {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.stageCompletionActions {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: 0.6rem;
+}
+
+.stageCompletionActions button {
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--surface-2, #19191f);
+  color: var(--text);
+  padding: 0.6rem 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.stageCompletionActions button.stageCompletionPrimary {
+  border-color: var(--success);
+  background: var(--success);
+  color: #06210f;
 }
 
 @media (max-width: 760px) {

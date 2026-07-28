@@ -189,7 +189,7 @@ export class LearningPathService {
       exerciseId,
       completion,
     );
-    return { exerciseId, stageId, trainingSessionId, type: context.type };
+    return { exerciseId, levelId: context.levelId, stageId, trainingSessionId, type: context.type };
   }
 
   async completeStage(userId: string, stageId: string): Promise<CompleteLearningStageResult> {
