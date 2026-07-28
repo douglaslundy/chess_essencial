@@ -28,6 +28,13 @@ export class ExercisesController {
     return this.exercises.listChallengeThemes(request.auth.userId);
   }
 
+  // Must stay registered after the literal 'exercises/challenge-themes'
+  // route above, or that path would incorrectly match this :exerciseId param.
+  @Get('exercises/:exerciseId')
+  getById(@Param('exerciseId') exerciseId: string) {
+    return this.exercises.getById(parseInput(idSchema, exerciseId));
+  }
+
   @Post('exercise-training-sessions')
   startTraining(@Req() request: AuthenticatedRequest, @Body() body: unknown) {
     return this.exercises.startTraining(

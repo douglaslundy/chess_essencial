@@ -20,6 +20,14 @@ export class ExercisesService {
     return this.exercises.listChallengeThemes(userId);
   }
 
+  getById(exerciseId: string) {
+    return this.exercises.getById(exerciseId);
+  }
+
+  createSingleItemSession(userId: string, exerciseId: string) {
+    return this.exercises.createSingleItemSession(userId, exerciseId);
+  }
+
   startTraining(userId: string, input: StartExerciseTrainingInput) {
     return this.exercises.startTraining(userId, input.filters);
   }

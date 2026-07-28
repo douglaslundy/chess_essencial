@@ -57,5 +57,7 @@ pnpm --filter @xadrez/api db:rollback
 
 `0037_learning_path_stage_start.down.sql` drops `started_at`/`resolved_exercise_id` from `user_stage_completions`. Both are in principle re-derivable, but nothing recomputes them on rollback — that specific bookkeeping is lost, no other table is touched.
 
+`0038_learning_path_session_link.down.sql` drops `training_session_id` from `user_stage_completions`. The linked `exercise_training_sessions` row itself is untouched (it's real data owned by the exercises domain) — only the cross-reference is lost, and the next stage start recreates one.
+
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.

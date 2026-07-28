@@ -138,7 +138,7 @@ export class LearningPathRepository {
       ON CONFLICT (user_id, stage_id) DO UPDATE SET
         started_at = COALESCE(user_stage_completions.started_at, EXCLUDED.started_at)
       RETURNING status, started_at AS "startedAt", resolved_exercise_id AS "resolvedExerciseId",
-                attempts, hints_used AS "hintsUsed"
+                training_session_id AS "trainingSessionId", attempts, hints_used AS "hintsUsed"
     `;
     return row!;
   }
@@ -149,6 +149,19 @@ export class LearningPathRepository {
       UPDATE user_stage_completions
          SET resolved_exercise_id = ${exerciseId}
        WHERE user_id = ${userId} AND stage_id = ${stageId} AND resolved_exercise_id IS NULL
+    `;
+  }
+
+  async setTrainingSession(
+    userId: string,
+    stageId: string,
+    trainingSessionId: string,
+  ): Promise<void> {
+    const sql = this.database.client;
+    await sql`
+      UPDATE user_stage_completions
+         SET training_session_id = ${trainingSessionId}
+       WHERE user_id = ${userId} AND stage_id = ${stageId} AND training_session_id IS NULL
     `;
   }
 
@@ -346,4 +359,5 @@ export interface CompletionRow {
   resolvedExerciseId: string | null;
   startedAt: string;
   status: 'locked' | 'available' | 'completed';
+  trainingSessionId: string | null;
 }

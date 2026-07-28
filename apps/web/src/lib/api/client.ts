@@ -40,8 +40,14 @@ import type {
   ExerciseSearchResult,
   ExerciseSolution,
   ExerciseStudyContext,
+  ExerciseSummary,
   ExerciseTheme,
   ExerciseTrainingView,
+  CompleteLearningStageResult,
+  LearningLevelDetail,
+  LearningMap,
+  LearningProgress,
+  StartLearningStageResult,
   StartExerciseTrainingInput,
   SubmitExerciseAttemptInput,
   GameAnalysis,
@@ -390,6 +396,21 @@ export const api = {
     }),
   getExerciseStudy: (exerciseId: string, token: string) =>
     request<ExerciseStudyContext>(`/exercises/${exerciseId}/study`, token),
+  getExerciseById: (exerciseId: string, token: string) =>
+    request<ExerciseSummary>(`/exercises/${exerciseId}`, token),
+  getLearningMap: (token: string) => request<LearningMap>('/learning-path/map', token),
+  getLearningLevel: (levelId: string, token: string) =>
+    request<LearningLevelDetail>(`/learning-path/levels/${levelId}`, token),
+  getLearningProgress: (token: string) =>
+    request<LearningProgress>('/learning-path/progress', token),
+  startLearningStage: (stageId: string, token: string) =>
+    request<StartLearningStageResult>(`/learning-path/stages/${stageId}/start`, token, {
+      method: 'POST',
+    }),
+  completeLearningStage: (stageId: string, token: string) =>
+    request<CompleteLearningStageResult>(`/learning-path/stages/${stageId}/complete`, token, {
+      method: 'POST',
+    }),
   adminListUsers: (query: URLSearchParams, token: string) =>
     request<AdminUserList>(`/admin/users?${query.toString()}`, token),
   adminUpdateUserStatus: (userId: string, input: UpdateAdminUserStatusInput, token: string) =>

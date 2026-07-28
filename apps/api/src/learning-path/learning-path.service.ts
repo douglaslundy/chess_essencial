@@ -9,11 +9,15 @@ import type {
 } from '@xadrez/contracts';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
+import { ExercisesService } from '../exercises/exercises.service.js';
 import { LearningPathRepository } from './learning-path.repository.js';
 
 @Injectable()
 export class LearningPathService {
-  constructor(private readonly repository: LearningPathRepository) {}
+  constructor(
+    private readonly repository: LearningPathRepository,
+    private readonly exercises: ExercisesService,
+  ) {}
 
   private levelStatus(rank: number, highestUnlockedRank: number | null): LearningLevelStatus {
     if (highestUnlockedRank === null) return 'locked';
@@ -159,6 +163,19 @@ export class LearningPathService {
     return exerciseId;
   }
 
+  /** Ensures a real (1-item) training session backs this exercise, so the client can reuse evaluate-line(). */
+  private async resolveTrainingSession(
+    userId: string,
+    stageId: string,
+    exerciseId: string,
+    completion: { trainingSessionId: string | null },
+  ): Promise<string> {
+    if (completion.trainingSessionId) return completion.trainingSessionId;
+    const sessionId = await this.exercises.createSingleItemSession(userId, exerciseId);
+    await this.repository.setTrainingSession(userId, stageId, sessionId);
+    return sessionId;
+  }
+
   async startStage(userId: string, stageId: string): Promise<StartLearningStageResult> {
     const context = await this.repository.getStageContext(stageId);
     if (!context) throw new NotFoundException('Etapa não encontrada.');
@@ -166,7 +183,13 @@ export class LearningPathService {
 
     const completion = await this.repository.getOrStartCompletion(userId, stageId);
     const exerciseId = await this.resolveExerciseId(userId, stageId, context, completion);
-    return { exerciseId, stageId, type: context.type };
+    const trainingSessionId = await this.resolveTrainingSession(
+      userId,
+      stageId,
+      exerciseId,
+      completion,
+    );
+    return { exerciseId, stageId, trainingSessionId, type: context.type };
   }
 
   async completeStage(userId: string, stageId: string): Promise<CompleteLearningStageResult> {

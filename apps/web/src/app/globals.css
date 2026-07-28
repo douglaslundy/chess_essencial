@@ -2833,3 +2833,177 @@ input:focus-visible {
   font-weight: 700;
   cursor: pointer;
 }
+
+/* Jornada de Aprendizagem */
+
+.worldSection {
+  margin-bottom: 2.5rem;
+}
+
+.worldSection h2 {
+  font-family: Georgia, serif;
+  font-size: var(--font-section-title);
+  margin-bottom: 0.2rem;
+}
+
+.worldSection > p {
+  color: var(--muted);
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+.levelPath {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 1.5rem;
+  border-left: 0.2rem solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.levelPathItem:nth-child(even) {
+  margin-left: 2rem;
+}
+
+.levelNodeLink {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  text-decoration: none;
+  color: var(--text);
+  width: fit-content;
+}
+
+.levelNodeLink--disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.levelNode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  min-width: 2.6rem;
+  border-radius: 999px;
+  font-size: 1.2rem;
+  border: 0.15rem solid var(--border);
+  background: var(--surface);
+}
+
+.levelNode--completed {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.levelNode--current {
+  border-color: var(--gold, #d8b66c);
+  background: var(--gold, #d8b66c);
+  color: #1a1406;
+  box-shadow: 0 0 0 0.3rem rgba(216, 182, 108, 0.25);
+}
+
+.levelNode--locked {
+  color: var(--muted);
+}
+
+.levelNodeLabel {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+}
+
+.levelNodeLabel small {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.stageList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.stageListLink {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background: var(--surface);
+  padding: 0.9rem 1.1rem;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.stageListLink--disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.stageListItem--completed .stageListLink {
+  border-color: var(--success);
+}
+
+.stageListItem--available .stageListLink {
+  border-color: var(--gold, #d8b66c);
+}
+
+.stageRunnerPage {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  max-width: 46.5rem;
+  margin: 0 auto;
+}
+
+.instructorBubble {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  padding: 1rem 1.2rem;
+}
+
+.instructorAvatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  min-width: 2.6rem;
+  border-radius: 999px;
+  background: var(--gold, #d8b66c);
+  color: #1a1406;
+  font-size: 1.3rem;
+}
+
+.instructorBubble p {
+  margin: 0;
+}
+
+.stageCompletionCard {
+  border: 1px solid var(--success);
+  border-radius: 1rem;
+  background: var(--surface);
+  padding: 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+@media (max-width: 760px) {
+  .levelPathItem:nth-child(even) {
+    margin-left: 0.75rem;
+  }
+}

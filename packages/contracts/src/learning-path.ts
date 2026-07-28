@@ -56,6 +56,7 @@ export const learningProgressSchema = z.object({
 export const startLearningStageResultSchema = z.object({
   exerciseId: z.string().uuid(),
   stageId: z.string().uuid(),
+  trainingSessionId: z.string().uuid(),
   type: learningStageTypeSchema,
 });
 

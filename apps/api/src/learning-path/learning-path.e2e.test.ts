@@ -183,7 +183,8 @@ describeDatabase('learning path database integration', () => {
       url: `/v1/learning-path/stages/${stageOneId}/start`,
     });
     expect(startFirst.statusCode, startFirst.body).toBe(200);
-    const { exerciseId } = startFirst.json();
+    const { exerciseId, trainingSessionId } = startFirst.json();
+    expect(typeof trainingSessionId).toBe('string');
 
     const completeTooEarly = await app.inject({
       headers: auth(member),
@@ -192,13 +193,18 @@ describeDatabase('learning path database integration', () => {
     });
     expect(completeTooEarly.statusCode).toBe(400);
 
-    const attempt = await app.inject({
+    // Exercises evaluate-line() requires a real training session (see
+    // migration 0038) — proves the session created by start() actually
+    // works with the pre-existing move-by-move grading endpoint, not just
+    // the simpler direct-attempts path.
+    const evaluated = await app.inject({
       headers: auth(member),
       method: 'POST',
-      payload: { durationMs: 1000, submittedLine: ['e2e4'] },
-      url: `/v1/exercises/${exerciseId}/attempts`,
+      payload: { playedMoves: ['e2e4'], trainingSessionId },
+      url: `/v1/exercises/${exerciseId}/evaluate-line`,
     });
-    expect(attempt.statusCode, attempt.body).toBe(201);
+    expect(evaluated.statusCode, evaluated.body).toBe(200);
+    expect(evaluated.json().status).toBe('solved');
 
     const completeFirst = await app.inject({
       headers: auth(member),

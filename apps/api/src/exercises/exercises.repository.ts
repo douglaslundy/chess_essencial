@@ -283,6 +283,42 @@ export class ExercisesRepository {
     };
   }
 
+  /**
+   * A 1-item training session pointing at a single, already-chosen exercise
+   * — used by the Jornada de Aprendizagem so its stage runner can reuse
+   * evaluate-line()'s move-by-move grading (which requires a real session)
+   * without duplicating that logic outside this module.
+   */
+  async createSingleItemSession(userId: string, exerciseId: string): Promise<string> {
+    const sql = this.database.client;
+    const [session] = await sql<{ id: string }[]>`
+      INSERT INTO exercise_training_sessions (user_id, filters)
+      VALUES (${userId}, '{}'::jsonb)
+      RETURNING id
+    `;
+    await sql`
+      INSERT INTO exercise_training_items (session_id, exercise_id, position)
+      VALUES (${session!.id}, ${exerciseId}, 1)
+    `;
+    return session!.id;
+  }
+
+  /** Single playable exercise by id, no session context — used by the Jornada de Aprendizagem stage runner. */
+  async getById(exerciseId: string) {
+    const sql = this.database.client;
+    const [row] = await sql<ExerciseRow[]>`
+      SELECT e.id, e.source_number, e.module_number, e.chapter_number, e.title, e.prompt_md,
+        COALESCE(e.import_metadata->>'answerFormat', 'move_sequence') AS answer_format, e.difficulty, e.category, e.fen, e.side_to_move, e.tags, e.position_type,
+        jsonb_array_length(e.hints) AS hints_available,
+        CASE WHEN e.source_pages IS NULL THEN '{}'::integer[]
+          ELSE ARRAY(SELECT generate_series(lower(e.source_pages), upper(e.source_pages) - 1)) END AS source_pages
+        FROM exercises e
+       WHERE e.id = ${exerciseId} AND e.status = 'published'
+    `;
+    if (!row) throw new NotFoundException('Exercício não encontrado.');
+    return summary(row);
+  }
+
   async studyContext(exerciseId: string) {
     const sql = this.database.client;
     const [exercise] = await sql<
