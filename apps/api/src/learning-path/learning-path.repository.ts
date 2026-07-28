@@ -269,6 +269,14 @@ export class LearningPathRepository {
     difficultyMax: number,
   ): Promise<string | null> {
     const sql = this.database.client;
+    // Every branch requires an exercise that's actually playable in the
+    // guided single-line board flow this feeds into: a real move sequence
+    // (not free_text, which has no move validation at all), at least one
+    // hint, and a recorded solution line. Without this, an exercise
+    // authored as book prose with no hints/solution could get picked for
+    // a review stage and be permanently unsolvable there — the same class
+    // of bug fixed for the seed script's initial stage assignment
+    // (apps/api/src/database/seed-learning-path.ts).
     if (skill) {
       const [bySkill] = await sql<{ id: string }[]>`
         SELECT e.id FROM exercises e
@@ -276,6 +284,9 @@ export class LearningPathRepository {
            AND e.difficulty_score IS NOT NULL
            AND ${skill} = ANY(e.tags)
            AND e.difficulty_score BETWEEN ${difficultyMin} AND ${difficultyMax}
+           AND COALESCE(e.import_metadata->>'answerFormat', 'move_sequence') = 'move_sequence'
+           AND jsonb_array_length(e.hints) > 0
+           AND jsonb_array_length(e.solution_lines) > 0
            AND NOT EXISTS (
              SELECT 1 FROM exercise_attempts a
               WHERE a.exercise_id = e.id AND a.user_id = ${userId} AND a.correct = true
@@ -290,6 +301,9 @@ export class LearningPathRepository {
        WHERE e.status = 'published' AND e.position_type = 'legal_position'
          AND e.difficulty_score IS NOT NULL
          AND e.difficulty_score BETWEEN ${difficultyMin} AND ${difficultyMax}
+         AND COALESCE(e.import_metadata->>'answerFormat', 'move_sequence') = 'move_sequence'
+         AND jsonb_array_length(e.hints) > 0
+         AND jsonb_array_length(e.solution_lines) > 0
          AND NOT EXISTS (
            SELECT 1 FROM exercise_attempts a
             WHERE a.exercise_id = e.id AND a.user_id = ${userId} AND a.correct = true
@@ -305,6 +319,9 @@ export class LearningPathRepository {
        WHERE e.status = 'published' AND e.position_type = 'legal_position'
          AND e.difficulty_score IS NOT NULL
          AND e.difficulty_score BETWEEN ${difficultyMin} AND ${difficultyMax}
+         AND COALESCE(e.import_metadata->>'answerFormat', 'move_sequence') = 'move_sequence'
+         AND jsonb_array_length(e.hints) > 0
+         AND jsonb_array_length(e.solution_lines) > 0
        ORDER BY random()
        LIMIT 1
     `;

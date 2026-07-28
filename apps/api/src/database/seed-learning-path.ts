@@ -133,6 +133,15 @@ try {
         RETURNING id
       `;
 
+      // The extra three filters below exclude exercises that can't
+      // actually be played through the guided single-line board flow the
+      // Jornada uses: free_text exercises have no move validation at all
+      // (answer_format defaults to 'move_sequence' only when
+      // import_metadata has no explicit value, same COALESCE the rest of
+      // the exercises domain already uses), and a stage with no recorded
+      // hints or solution line has nothing to show/validate against —
+      // found as the root cause of a real "no hint, no move accepted"
+      // report against a seeded stage.
       const pool = await transaction<{ id: string; difficultyScore: number }[]>`
         SELECT id, difficulty_score AS "difficultyScore"
           FROM exercises
@@ -141,6 +150,9 @@ try {
            AND difficulty_score IS NOT NULL
            AND difficulty_score >= ${world.difficultyMin}
            AND difficulty_score < ${world.difficultyMax}
+           AND COALESCE(import_metadata->>'answerFormat', 'move_sequence') = 'move_sequence'
+           AND jsonb_array_length(hints) > 0
+           AND jsonb_array_length(solution_lines) > 0
          ORDER BY difficulty_score, id
       `;
 

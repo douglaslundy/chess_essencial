@@ -68,7 +68,15 @@ export function StageRunner({ stageId }: { stageId: string }) {
   const [trainingSessionId, setTrainingSessionId] = useState('');
   const [boardFen, setBoardFen] = useState('');
   const [startingFen, setStartingFen] = useState('');
+  // playedMoves is the full alternating sequence (player + opponent
+  // replies), needed to replay/display board history correctly. The
+  // backend's evaluate-line() only ever expects the PLAYER's own moves —
+  // sending it playedMoves (with opponent replies folded in) made every
+  // multi-move exercise unsolvable, since a legitimate player move would
+  // never match once an opponent reply got mixed into the sequence sent
+  // back. playerMoves tracks that narrower list separately.
   const [playedMoves, setPlayedMoves] = useState<string[]>([]);
+  const [playerMoves, setPlayerMoves] = useState<string[]>([]);
   const [viewingAt, setViewingAt] = useState<number | null>(null);
   const [phase, setPhase] = useState<Phase>('loading');
   const [errorMessage, setErrorMessage] = useState('');
@@ -162,15 +170,17 @@ export function StageRunner({ stageId }: { stageId: string }) {
       return; // Illegal move — ChessBoard already restricts this, but stay defensive.
     }
     const nextMoves = [...playedMoves, uci];
+    const nextPlayerMoves = [...playerMoves, uci];
     const nextFen = chess.fen();
     setBoardFen(nextFen);
     setPlayedMoves(nextMoves);
+    setPlayerMoves(nextPlayerMoves);
     setPhase('evaluating');
 
     try {
       const evaluation = await api.evaluateExerciseLine(
         exercise.id,
-        { playedMoves: nextMoves, trainingSessionId },
+        { playedMoves: nextPlayerMoves, trainingSessionId },
         token,
       );
       if (evaluation.status === 'incorrect') {
@@ -179,6 +189,7 @@ export function StageRunner({ stageId }: { stageId: string }) {
         setTimeout(() => {
           setBoardFen(startingFen);
           setPlayedMoves([]);
+          setPlayerMoves([]);
           setPhase('playing');
         }, 1500);
         return;
@@ -188,6 +199,8 @@ export function StageRunner({ stageId }: { stageId: string }) {
           const replyChess = new Chess(nextFen);
           replyChess.move(uciToChessMove(evaluation.opponentReply));
           setBoardFen(replyChess.fen());
+          // Only the full display sequence gets the opponent's reply —
+          // playerMoves (sent to evaluate-line) never does.
           setPlayedMoves([...nextMoves, evaluation.opponentReply]);
         }
         setPhase('playing');
@@ -258,6 +271,7 @@ export function StageRunner({ stageId }: { stageId: string }) {
   function repeatStage() {
     setBoardFen(startingFen);
     setPlayedMoves([]);
+    setPlayerMoves([]);
     setViewingAt(null);
     setHints([]);
     setAttemptCount(0);

@@ -1,7 +1,10 @@
+import { randomUUID } from 'node:crypto';
+
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createApp } from '../bootstrap.js';
 import { DatabaseService } from '../database/database.service.js';
+import { LearningPathRepository } from './learning-path.repository.js';
 
 const describeDatabase = process.env.RUN_DB_TESTS === 'true' ? describe : describe.skip;
 
@@ -479,5 +482,63 @@ describeDatabase('learning path database integration', () => {
       url: '/v1/learning-path/progress',
     });
     expect(progress.json().highestUnlockedLevelId).toBe(levelTwoId);
+  });
+
+  it('review stages never pick an exercise that would be unplayable in the guided board flow', async () => {
+    // Same difficulty band, three exercises: one free_text (no move
+    // validation possible at all), one with no hints/solution recorded,
+    // and one genuinely playable. Root cause of a real "no hint, no move
+    // accepted" report — the seed script and pickReviewExercise() both
+    // used to select from this pool with no such filter at all.
+    const [unplayableFreeText] = await database.client<{ id: string }[]>`
+      INSERT INTO exercises (
+        external_id, title, prompt_md, solution_md, difficulty, fen, side_to_move,
+        solution_lines, position_type, status, difficulty_score, import_metadata
+      )
+      VALUES (
+        'learning-path-test-004', 'Teste texto livre', 'Explique a ideia posicional.',
+        'Controle do centro.', 'beginner',
+        'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 'white',
+        '[]'::jsonb, 'legal_position', 'published', 5000, '{"answerFormat": "free_text"}'::jsonb
+      )
+      RETURNING id
+    `;
+    const [unplayableNoHints] = await database.client<{ id: string }[]>`
+      INSERT INTO exercises (
+        external_id, title, prompt_md, solution_md, difficulty, fen, side_to_move,
+        solution_lines, position_type, status, difficulty_score, hints
+      )
+      VALUES (
+        'learning-path-test-005', 'Teste sem dica', 'Encontre o melhor lance.', 'e2e4', 'beginner',
+        'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 'white',
+        '[["e2e4"]]'::jsonb, 'legal_position', 'published', 5000, '[]'::jsonb
+      )
+      RETURNING id
+    `;
+    const [playable] = await database.client<{ id: string }[]>`
+      INSERT INTO exercises (
+        external_id, title, prompt_md, solution_md, difficulty, fen, side_to_move,
+        solution_lines, position_type, status, difficulty_score, hints
+      )
+      VALUES (
+        'learning-path-test-006', 'Teste jogável', 'Encontre o melhor lance.', 'e2e4', 'beginner',
+        'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 'white',
+        '[["e2e4"]]'::jsonb, 'legal_position', 'published', 5000, '["Mova o peão do rei."]'::jsonb
+      )
+      RETURNING id
+    `;
+
+    const repository = app.get(LearningPathRepository);
+    // Repeated (ORDER BY random() inside pickReviewExercise means a single
+    // call could get lucky) - every single pick must land on the one
+    // playable exercise in this band, never the other two.
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const picked = await repository.pickReviewExercise(randomUUID(), null, 4900, 5100);
+      expect(picked).toBe(playable!.id);
+    }
+
+    await database.client`
+      DELETE FROM exercises WHERE id IN (${unplayableFreeText!.id}, ${unplayableNoHints!.id}, ${playable!.id})
+    `;
   });
 });
