@@ -1,6 +1,7 @@
 import {
   createGameInputSchema,
   gameHistoryQuerySchema,
+  liveNarrationRequestSchema,
   reviewAnnotationInputSchema,
   submitMoveInputSchema,
 } from '@xadrez/contracts';
@@ -66,6 +67,20 @@ export class GamesController {
   @Get(':gameId/narration')
   getNarration(@Req() request: AuthenticatedRequest, @Param('gameId') gameId: string) {
     return this.gamesService.getNarration(parseInput(gameIdSchema, gameId), request.auth.userId);
+  }
+
+  @Post(':gameId/live-narration')
+  @HttpCode(200)
+  getLiveNarration(
+    @Req() request: AuthenticatedRequest,
+    @Param('gameId') gameId: string,
+    @Body() body: unknown,
+  ) {
+    return this.gamesService.getLiveNarration(
+      parseInput(gameIdSchema, gameId),
+      request.auth.userId,
+      parseInput(liveNarrationRequestSchema, body),
+    );
   }
 
   @Post(':gameId/moves')

@@ -351,21 +351,71 @@ export function GameRoom({ gameId }: { gameId: string }) {
   });
 
   const { voiceName } = useVoicePreference();
+  // Bumped by every new narration-worthy moment (suggestion or quality
+  // warning); a pending AI reply only gets spoken if it's still the one
+  // that's current when it arrives - otherwise the game has already moved
+  // on and the reply is stale, so it's silently dropped.
+  const narrationGenerationRef = useRef(0);
 
   useEffect(() => {
-    if (muted || !coachSuggestion) return;
+    if (muted || !coachSuggestion || !coachSuggestion.bestMoveUci) return;
     const text = formatCoachSuggestion(coachSuggestion);
-    if (text) speak(speakableSquares(`Eu sugiro ${text}.`), { voiceName });
-  }, [coachSuggestion, muted, voiceName]);
+    if (!text) return;
+    speak(speakableSquares(`Eu sugiro ${text}.`), { voiceName });
+
+    // AI narration enriches the instant template above once it arrives -
+    // never blocks or delays it. Skipped in demo mode (no real game row on
+    // the server to authorize/gate against).
+    if (isDemo) return;
+    const generation = ++narrationGenerationRef.current;
+    const token = window.localStorage.getItem('xadrez.access_token');
+    if (!token) return;
+    const { bestMoveUci, mate, scoreCp } = coachSuggestion;
+    api
+      .getLiveNarration(
+        gameId,
+        { bestMoveUci, fen: state.currentFen, kind: 'suggestion', mate, scoreCp },
+        token,
+      )
+      .then((result) => {
+        if (!result.narrative || narrationGenerationRef.current !== generation) return;
+        speak(speakableSquares(result.narrative), { voiceName });
+      })
+      .catch(() => undefined);
+  }, [coachSuggestion, gameId, isDemo, muted, state.currentFen, voiceName]);
 
   useEffect(() => {
     if (muted || !pendingCoachMove) return;
-    const { quality } = pendingCoachMove;
+    const { quality, uci } = pendingCoachMove;
     speak(
       `Atenção: eu acho que esse lance é ${moveQualityLabel[quality.quality].toLowerCase()}, com perda de ${quality.centipawnLoss} centipawns.${quality.missedWin ? ' Havia uma posição melhor.' : ''}`,
       { voiceName },
     );
-  }, [muted, pendingCoachMove, voiceName]);
+
+    if (isDemo) return;
+    const generation = ++narrationGenerationRef.current;
+    const token = window.localStorage.getItem('xadrez.access_token');
+    if (!token) return;
+    api
+      .getLiveNarration(
+        gameId,
+        {
+          bestMoveUci: coachSuggestion?.bestMoveUci ?? null,
+          centipawnLoss: quality.centipawnLoss,
+          fen: state.currentFen,
+          kind: 'quality',
+          missedWin: quality.missedWin,
+          quality: quality.quality,
+          uci,
+        },
+        token,
+      )
+      .then((result) => {
+        if (!result.narrative || narrationGenerationRef.current !== generation) return;
+        speak(speakableSquares(result.narrative), { voiceName });
+      })
+      .catch(() => undefined);
+  }, [coachSuggestion, gameId, isDemo, muted, pendingCoachMove, state.currentFen, voiceName]);
 
   const groupedMoves = useMemo(() => {
     const rows: Array<{ number: number; white?: GameMove; black?: GameMove }> = [];

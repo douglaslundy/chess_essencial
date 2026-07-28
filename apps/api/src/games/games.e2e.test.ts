@@ -260,6 +260,74 @@ describeDatabase('games database integration', () => {
     expect(forbidden.statusCode).toBe(403);
   });
 
+  it('live narration is gated to coach-mode games and degrades to null without an AI provider configured', async () => {
+    // No provider is configured in this environment (see ai-providers.e2e.test.ts
+    // for the LLM-calling path itself, mocked there) - this only proves the
+    // endpoint's auth/gating wiring, and that the "no provider" fallback is
+    // silent (200 + null), never an error that would interrupt a live game.
+    const student = await createIdentity('live-narration-student@example.com', 'live_narration');
+    const coachGame = await app.inject({
+      headers: auth(student),
+      method: 'POST',
+      payload: {
+        botDifficulty: 'beginner',
+        coachMode: true,
+        playerColor: 'white',
+        timeControlCode: 'blitz-5-0',
+      },
+      url: '/v1/matchmaking/bot-games',
+    });
+    expect(coachGame.statusCode, coachGame.body).toBe(201);
+    const coachGameId = coachGame.json().id as string;
+
+    const suggestion = await app.inject({
+      headers: auth(student),
+      method: 'POST',
+      payload: {
+        bestMoveUci: 'e2e4',
+        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+        kind: 'suggestion',
+        mate: null,
+        scoreCp: 30,
+      },
+      url: `/v1/games/${coachGameId}/live-narration`,
+    });
+    expect(suggestion.statusCode, suggestion.body).toBe(200);
+    expect(suggestion.json()).toEqual({ narrative: null });
+
+    const outsider = await createIdentity('live-narration-outsider@example.com', 'ln_outsider');
+    const forbidden = await app.inject({
+      headers: auth(outsider),
+      method: 'POST',
+      payload: {
+        bestMoveUci: 'e2e4',
+        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+        kind: 'suggestion',
+        mate: null,
+        scoreCp: 30,
+      },
+      url: `/v1/games/${coachGameId}/live-narration`,
+    });
+    expect(forbidden.statusCode).toBe(403);
+
+    // A non-coach-mode game silently degrades too - never errors, just
+    // never has anything to enrich.
+    const nonCoach = await app.inject({
+      headers: auth(white),
+      method: 'POST',
+      payload: {
+        bestMoveUci: 'e2e4',
+        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+        kind: 'suggestion',
+        mate: null,
+        scoreCp: 30,
+      },
+      url: `/v1/games/${gameId}/live-narration`,
+    });
+    expect(nonCoach.statusCode, nonCoach.body).toBe(200);
+    expect(nonCoach.json()).toEqual({ narrative: null });
+  });
+
   it('lists paginated history and persists private review annotations', async () => {
     const history = await app.inject({
       headers: auth(white),

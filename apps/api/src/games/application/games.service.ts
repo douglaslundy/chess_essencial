@@ -5,6 +5,7 @@ import type {
   CreateBotGameInput,
   CreateGameInput,
   GameHistoryQuery,
+  LiveNarrationRequest,
   ReviewAnnotationInput,
   SubmitMoveInput,
 } from '@xadrez/contracts';
@@ -55,6 +56,10 @@ export class GamesService {
 
   getNarration(gameId: string, userId: string) {
     return this.games.getNarration(gameId, userId);
+  }
+
+  getLiveNarration(gameId: string, userId: string, input: LiveNarrationRequest) {
+    return this.games.getLiveNarration(gameId, userId, input);
   }
 
   listMoves(gameId: string, userId: string) {

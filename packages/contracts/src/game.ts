@@ -219,6 +219,37 @@ export const gameNarrationSchema = z.object({
   studyPlan: z.array(z.string()),
 });
 
+// Live, in-game AI narration (Treinador): enriches the existing
+// template-based suggestion/quality-warning speech with an LLM-written
+// version, same "motor calcula, LLM só narra" architecture as the
+// post-game review narration above - the client keeps speaking the
+// instant template and swaps to this once it arrives (never blocks play).
+export const liveNarrationRequestSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('suggestion'),
+    fen: z.string(),
+    bestMoveUci: z.string(),
+    mate: z.number().int().nullable(),
+    scoreCp: z.number().int().nullable(),
+  }),
+  z.object({
+    kind: z.literal('quality'),
+    fen: z.string(),
+    uci: z.string(),
+    bestMoveUci: z.string().nullable(),
+    quality: moveQualitySchema,
+    centipawnLoss: z.number().int(),
+    missedWin: z.boolean(),
+  }),
+]);
+
+export const liveNarrationResultSchema = z.object({
+  // null whenever no AI provider is configured, the plan doesn't include
+  // it, or the call failed for any reason - the frontend just keeps
+  // whatever template text it already showed/spoke, silently.
+  narrative: z.string().nullable(),
+});
+
 export type CreateGameInput = z.infer<typeof createGameInputSchema>;
 export type GameHistoryItem = z.infer<typeof gameHistoryItemSchema>;
 export type GameHistoryPage = z.infer<typeof gameHistoryPageSchema>;
@@ -235,3 +266,5 @@ export type GameAnalysisQualityCounts = z.infer<typeof gameAnalysisQualityCounts
 export type GameAnalysis = z.infer<typeof gameAnalysisSchema>;
 export type GameNarrationKeyMoment = z.infer<typeof gameNarrationKeyMomentSchema>;
 export type GameNarration = z.infer<typeof gameNarrationSchema>;
+export type LiveNarrationRequest = z.infer<typeof liveNarrationRequestSchema>;
+export type LiveNarrationResult = z.infer<typeof liveNarrationResultSchema>;

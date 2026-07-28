@@ -56,6 +56,8 @@ import type {
   GameHistoryPage,
   GameMove,
   GameState,
+  LiveNarrationRequest,
+  LiveNarrationResult,
   LessonActionInput,
   LessonAttemptView,
   LessonOverview,
@@ -547,6 +549,11 @@ export const api = {
     request<GameAnalysis>(`/games/${gameId}/analysis`, token),
   getGameNarration: (gameId: string, token: string) =>
     request<GameNarration>(`/games/${gameId}/narration`, token),
+  getLiveNarration: (gameId: string, input: LiveNarrationRequest, token: string) =>
+    request<LiveNarrationResult>(`/games/${gameId}/live-narration`, token, {
+      body: JSON.stringify(input),
+      method: 'POST',
+    }),
   joinQueue: (input: JoinQueueInput, token: string) =>
     request<QueueStatus>('/matchmaking/queues', token, {
       method: 'POST',

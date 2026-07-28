@@ -14,6 +14,8 @@ import type {
   GameMoveAnalysis,
   GameNarration,
   GameState,
+  LiveNarrationRequest,
+  LiveNarrationResult,
   ReviewAnnotation,
   ReviewAnnotationInput,
   SubmitMoveInput,
@@ -31,6 +33,7 @@ import type { TransactionSql } from 'postgres';
 import { DatabaseService } from '../../database/database.service.js';
 import { SubscriptionsService } from '../../subscriptions/subscriptions.service.js';
 import { calculateClockTransition, effectiveClockMs } from '../domain/game-clock.js';
+import { LiveNarrationService } from '../narration/live-narration.service.js';
 
 interface GameRow {
   activeClockStartedAt: Date | string | null;
@@ -134,6 +137,7 @@ export class GamesRepository {
   constructor(
     private readonly database: DatabaseService,
     private readonly subscriptions: SubscriptionsService,
+    private readonly liveNarration: LiveNarrationService,
   ) {}
 
   async create(creatorUserId: string, input: CreateGameInput): Promise<GameState> {
@@ -539,6 +543,31 @@ export class GamesRepository {
       studyPlan: row?.studyPlan ?? [],
       summary: row?.summary ?? null,
     };
+  }
+
+  /**
+   * Live per-move AI narration for a Treinador game — enriches the
+   * client's instant template speech, never blocks or interrupts play.
+   * Gated by the same coach_mode_access entitlement already required to
+   * start a Treinador game in the first place (re-checked here in case the
+   * user's plan changed mid-game, same defensive pattern as getAnalysis/
+   * getNarration above) rather than ai_narrations_per_day: that quota was
+   * sized for one narration per finished game, not dozens per game across
+   * every move of every time control.
+   */
+  async getLiveNarration(
+    gameId: string,
+    userId: string,
+    input: LiveNarrationRequest,
+  ): Promise<LiveNarrationResult> {
+    await this.assertPlayer(gameId, userId);
+    const [game] = await this.database.client<{ coachMode: boolean }[]>`
+      SELECT coach_mode AS "coachMode" FROM games WHERE id = ${gameId}
+    `;
+    if (!game?.coachMode) return { narrative: null };
+    const entitlement = await this.subscriptions.checkEntitlement(userId, 'coach_mode_access');
+    if (!entitlement.allowed) return { narrative: null };
+    return this.liveNarration.narrate(input);
   }
 
   async realtimeSnapshot(gameId: string, userId: string, lastKnownVersion: number) {
