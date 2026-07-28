@@ -9,5 +9,6 @@ import { LessonRuntimeService } from './lesson-runtime.service.js';
   imports: [AuthModule],
   controllers: [LessonRuntimeController],
   providers: [LessonRuntimeRepository, LessonRuntimeService],
+  exports: [LessonRuntimeService],
 })
 export class LessonRuntimeModule {}

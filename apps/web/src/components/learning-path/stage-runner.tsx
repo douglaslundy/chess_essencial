@@ -39,6 +39,12 @@ function formatElapsed(ms: number) {
 }
 
 type Phase = 'loading' | 'playing' | 'evaluating' | 'incorrect' | 'solved' | 'error';
+type StageKind = 'exercise' | 'lesson';
+
+interface LessonStageInfo {
+  lessonId: string;
+  title: string;
+}
 
 const INSTRUCTOR_MESSAGE: Record<Phase, string> = {
   error: 'Não consegui carregar esta etapa.',
@@ -53,7 +59,10 @@ export function StageRunner({ stageId }: { stageId: string }) {
   const router = useRouter();
   const { theme: pieceTheme } = usePieceTheme();
   const { voiceName } = useVoicePreference();
+  const [stageKind, setStageKind] = useState<StageKind>('exercise');
   const [exercise, setExercise] = useState<ExerciseSummary | null>(null);
+  const [lessonInfo, setLessonInfo] = useState<LessonStageInfo | null>(null);
+  const [lessonMessage, setLessonMessage] = useState('');
   const [levelId, setLevelId] = useState('');
   const [level, setLevel] = useState<LearningLevelDetail | null>(null);
   const [trainingSessionId, setTrainingSessionId] = useState('');
@@ -72,6 +81,15 @@ export function StageRunner({ stageId }: { stageId: string }) {
   const [attemptCount, setAttemptCount] = useState(0);
   const [score, setScore] = useState<number | null>(null);
 
+  const instructorMessage =
+    viewingAt !== null
+      ? 'Revisando um lance anterior.'
+      : phase === 'solved' && result
+        ? `Etapa concluída! ${result.correctFirstTry ? 'Primeira tentativa certa!' : 'Resolvido.'}`
+        : stageKind === 'lesson' && phase === 'playing'
+          ? `Esta etapa é uma aula: ${lessonInfo?.title ?? ''}. Termine-a e volte aqui para concluir a etapa.`
+          : INSTRUCTOR_MESSAGE[phase];
+
   useEffect(() => {
     const token = window.localStorage.getItem('xadrez.access_token');
     if (!token) {
@@ -85,6 +103,17 @@ export function StageRunner({ stageId }: { stageId: string }) {
     (async () => {
       try {
         const start = await api.startLearningStage(stageId, token);
+        if (!active) return;
+        setLevelId(start.levelId);
+        if (start.type === 'lesson') {
+          const overview = await api.getLesson(start.lessonId, token);
+          if (!active) return;
+          setStageKind('lesson');
+          setLessonInfo({ lessonId: start.lessonId, title: overview.title });
+          setStartedAt(Date.now());
+          setPhase('playing');
+          return;
+        }
         const detail = await api.getExerciseById(start.exerciseId, token);
         if (!active) return;
         if (!detail.fen || detail.positionType !== 'legal_position') {
@@ -92,8 +121,8 @@ export function StageRunner({ stageId }: { stageId: string }) {
           setErrorMessage('Esta etapa ainda não tem um tabuleiro jogável.');
           return;
         }
+        setStageKind('exercise');
         setExercise(detail);
-        setLevelId(start.levelId);
         setTrainingSessionId(start.trainingSessionId);
         setHintsRemaining(detail.hintsAvailable);
         setStartingFen(detail.fen);
@@ -117,14 +146,10 @@ export function StageRunner({ stageId }: { stageId: string }) {
   // re-render), matching the "fala o que está escrito" request.
   useEffect(() => {
     if (phase === 'loading' || phase === 'error' || phase === 'evaluating') return;
-    const message =
-      phase === 'solved' && result
-        ? `Etapa concluída! ${result.correctFirstTry ? 'Primeira tentativa certa.' : 'Resolvido.'}`
-        : INSTRUCTOR_MESSAGE[phase];
-    if (message === spokenMessage) return;
-    queueMicrotask(() => setSpokenMessage(message));
-    void speak(message, { voiceName });
-  }, [phase, result, spokenMessage, voiceName]);
+    if (instructorMessage === spokenMessage) return;
+    queueMicrotask(() => setSpokenMessage(instructorMessage));
+    void speak(instructorMessage, { voiceName });
+  }, [phase, instructorMessage, spokenMessage, voiceName]);
 
   async function playMove(uci: string) {
     const token = window.localStorage.getItem('xadrez.access_token');
@@ -185,6 +210,32 @@ export function StageRunner({ stageId }: { stageId: string }) {
     }
   }
 
+  async function completeLessonStage() {
+    const token = window.localStorage.getItem('xadrez.access_token');
+    if (!token) return;
+    setLessonMessage('');
+    setPhase('evaluating');
+    try {
+      setElapsedMs(Date.now() - startedAt);
+      const [completion, levelDetail] = await Promise.all([
+        api.completeLearningStage(stageId, token),
+        api.getLearningLevel(levelId, token),
+      ]);
+      setAttemptCount(1);
+      setResult(completion);
+      setLevel(levelDetail);
+      setPhase('solved');
+    } catch (error) {
+      // Most likely: the lesson itself isn't finished yet - stay on the
+      // lesson screen instead of the full-page error state so the "Ir para
+      // a aula" link remains available.
+      setPhase('playing');
+      setLessonMessage(
+        error instanceof Error ? error.message : 'Ainda não foi possível concluir a etapa.',
+      );
+    }
+  }
+
   async function requestHint() {
     const token = window.localStorage.getItem('xadrez.access_token');
     if (!token || hintsRemaining <= 0) return;
@@ -212,6 +263,7 @@ export function StageRunner({ stageId }: { stageId: string }) {
     setAttemptCount(0);
     setScore(null);
     setResult(null);
+    setLessonMessage('');
     setStartedAt(Date.now());
     setSpokenMessage('');
     setPhase('playing');
@@ -253,14 +305,23 @@ export function StageRunner({ stageId }: { stageId: string }) {
         <span aria-hidden="true" className="instructorAvatar">
           ♞
         </span>
-        <p>
-          {viewingAt !== null
-            ? 'Revisando um lance anterior.'
-            : phase === 'solved' && result
-              ? `Etapa concluída! ${result.correctFirstTry ? 'Primeira tentativa certa!' : 'Resolvido.'}`
-              : INSTRUCTOR_MESSAGE[phase]}
-        </p>
+        <p>{instructorMessage}</p>
       </div>
+      {stageKind === 'lesson' && lessonInfo && phase !== 'solved' ? (
+        <div className="stageLessonArea">
+          <Link className="primaryButton" href={`/app/aula/${lessonInfo.lessonId}`}>
+            📖 Ir para a aula
+          </Link>
+          <button onClick={() => void completeLessonStage()} type="button">
+            Concluir etapa
+          </button>
+          {lessonMessage ? (
+            <p className="status" role="status">
+              {lessonMessage}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
       {hints.length > 0 ? (
         <ul className="stageHintList">
           {hints.map((hint, index) => (
@@ -329,9 +390,13 @@ export function StageRunner({ stageId }: { stageId: string }) {
             <span>{level ? `Nível ${level.position}` : ''}</span>
           </div>
           <div className="stageCompletionActions">
-            <button onClick={() => goToMove(0)} type="button">
-              Analisar
-            </button>
+            {stageKind === 'lesson' && lessonInfo ? (
+              <Link href={`/app/aula/${lessonInfo.lessonId}`}>Rever aula</Link>
+            ) : (
+              <button onClick={() => goToMove(0)} type="button">
+                Analisar
+              </button>
+            )}
             <button className="stageCompletionPrimary" onClick={goToNextStage} type="button">
               Próximo
             </button>

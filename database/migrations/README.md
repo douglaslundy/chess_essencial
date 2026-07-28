@@ -61,5 +61,7 @@ pnpm --filter @xadrez/api db:rollback
 
 `0039_learning_gamification.down.sql` drops `user_learning_badges` entirely (earned badges are lost — nowhere else they're recorded) and `last_activity_date` from `user_learning_progress` (the accumulated `streak_days` count itself is untouched, but the next stage completion can't tell if today continues the streak, so it resets to 1 instead of continuing). `xp` is never touched by this migration or its rollback either way.
 
+`0040_learning_path_lesson_stages.down.sql` drops `lesson_attempt_id` from `user_stage_completions`. The linked `lesson_attempts` row itself is untouched (owned by the lesson-runtime domain, same relationship as `training_session_id`/`exercise_training_sessions` in `0038`) — only the cross-reference is lost, and the next stage start recreates or re-links one.
+
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.

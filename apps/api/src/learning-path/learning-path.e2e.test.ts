@@ -22,6 +22,11 @@ describeDatabase('learning path database integration', () => {
   let advancedWorldId: string;
   let advancedLevelId: string;
   let advancedExerciseId: string;
+  let lessonWorldId: string;
+  let lessonLevelId: string;
+  let lessonStageId: string;
+  let lessonPlacementExerciseId: string;
+  const lessonId = '00000000-0000-4000-8000-000000000998';
 
   beforeAll(async () => {
     app = await createApp();
@@ -108,12 +113,70 @@ describeDatabase('learning path database integration', () => {
       RETURNING id
     `;
     advancedLevelId = advancedLevel!.id;
+
+    // Third, non-overlapping band (well above the advanced one too) reached
+    // by its own dedicated placement exercise, holding a single 'lesson'
+    // stage — proves LESSON-type stages actually work end to end, not just
+    // that the backend no longer rejects them outright.
+    const [lessonPlacementExercise] = await database.client<{ id: string }[]>`
+      INSERT INTO exercises (
+        external_id, title, prompt_md, solution_md, difficulty, fen, side_to_move,
+        solution_lines, position_type, status, difficulty_score
+      )
+      VALUES (
+        'learning-path-test-003', 'Teste posicionamento de aula', 'Encontre o melhor lance.',
+        'e2e4', 'expert', 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 'white',
+        '[["e2e4"]]'::jsonb, 'legal_position', 'published', 3500
+      )
+      RETURNING id
+    `;
+    lessonPlacementExerciseId = lessonPlacementExercise!.id;
+    const [lessonWorld] = await database.client<{ id: string }[]>`
+      INSERT INTO learning_worlds (position, title, description, difficulty_min, difficulty_max)
+      VALUES (1001, 'Mundo de Aula de Teste', 'Só para o e2e.', 3000, 4000)
+      RETURNING id
+    `;
+    lessonWorldId = lessonWorld!.id;
+    const [lessonLevel] = await database.client<{ id: string }[]>`
+      INSERT INTO learning_levels (world_id, position, title, difficulty_min, difficulty_max, challenge_count)
+      VALUES (${lessonWorldId}, 1, 'Nível com Aula', 3000, 4000, 1)
+      RETURNING id
+    `;
+    lessonLevelId = lessonLevel!.id;
+
+    const [courseModule] = await database.client<{ id: string }[]>`
+      SELECT cm.id FROM course_modules cm JOIN courses c ON c.id = cm.course_id
+      WHERE c.slug = 'xadrez-essencial' AND cm.source_volume = 1
+    `;
+    await database.client`
+      INSERT INTO lessons (id, module_id, slug, position, title, estimated_minutes, status, version)
+      VALUES (${lessonId}, ${courseModule!.id}, 'learning-path-lesson-stage-fixture', 998,
+        'Learning path lesson stage fixture', 5, 'published', 1)
+      ON CONFLICT (id) DO UPDATE SET status = 'published'
+    `;
+    await database.client`DELETE FROM lesson_steps WHERE lesson_id = ${lessonId}`;
+    await database.client`
+      INSERT INTO lesson_steps (lesson_id, step_key, position, step_type, body_md, orientation, expected_actions, feedback, next_step_rules)
+      VALUES
+        (${lessonId}, 'intro', 1, 'text', 'Etapa de teste.', 'white', '[]'::jsonb, '{}'::jsonb, '[]'::jsonb),
+        (${lessonId}, 'fim', 2, 'summary', 'Fim.', 'white', '[]'::jsonb, '{}'::jsonb, '[]'::jsonb)
+    `;
+
+    const [lessonStage] = await database.client<{ id: string }[]>`
+      INSERT INTO learning_stages (level_id, position, type, lesson_id)
+      VALUES (${lessonLevelId}, 1, 'lesson', ${lessonId})
+      RETURNING id
+    `;
+    lessonStageId = lessonStage!.id;
   });
 
   afterAll(async () => {
     await database.client`DELETE FROM learning_worlds WHERE id = ${worldId}`;
     await database.client`DELETE FROM learning_worlds WHERE id = ${advancedWorldId}`;
+    await database.client`DELETE FROM learning_worlds WHERE id = ${lessonWorldId}`;
     await database.client`DELETE FROM exercises WHERE external_id LIKE 'learning-path-test-%'`;
+    await database.client`UPDATE user_course_enrollments SET last_lesson_id = NULL WHERE last_lesson_id = ${lessonId}`;
+    await database.client`DELETE FROM lessons WHERE id = ${lessonId}`;
     await app.close();
   });
 
@@ -215,6 +278,76 @@ describeDatabase('learning path database integration', () => {
       currentLevelId: advancedLevelId,
       currentWorldId: advancedWorldId,
     });
+  });
+
+  it('supports lesson-type stages end to end, reusing the existing lesson-runtime flow', async () => {
+    const learner = await createIdentity(
+      'learning-path-lesson@example.com',
+      'learning_path_lesson',
+    );
+    for (let i = 0; i < 10; i += 1) {
+      await database.client`
+        INSERT INTO exercise_attempts (user_id, exercise_id, submitted_line, correct)
+        VALUES (${learner.userId}, ${lessonPlacementExerciseId}, '["e2e4"]'::jsonb, true)
+      `;
+    }
+
+    const start = await app.inject({
+      headers: auth(learner),
+      method: 'POST',
+      url: `/v1/learning-path/stages/${lessonStageId}/start`,
+    });
+    expect(start.statusCode, start.body).toBe(200);
+    const startBody = start.json();
+    expect(startBody).toMatchObject({ lessonId, stageId: lessonStageId, type: 'lesson' });
+    const attemptId = startBody.lessonAttemptId as string;
+    expect(typeof attemptId).toBe('string');
+
+    const tooEarly = await app.inject({
+      headers: auth(learner),
+      method: 'POST',
+      url: `/v1/learning-path/stages/${lessonStageId}/complete`,
+    });
+    expect(tooEarly.statusCode, tooEarly.body).toBe(400);
+
+    // Walk the lesson to completion via the real, unmodified lesson-runtime
+    // endpoints — proves the Jornada stage is backed by a genuine lesson
+    // attempt, not a shortcut duplicating that domain's own logic.
+    await app.inject({
+      headers: auth(learner),
+      method: 'POST',
+      payload: { type: 'continue' },
+      url: `/v1/lesson-attempts/${attemptId}/actions`,
+    });
+    const finished = await app.inject({
+      headers: auth(learner),
+      method: 'POST',
+      payload: { type: 'continue' },
+      url: `/v1/lesson-attempts/${attemptId}/actions`,
+    });
+    expect(finished.statusCode, finished.body).toBe(200);
+    expect(finished.json().status).toBe('completed');
+
+    const complete = await app.inject({
+      headers: auth(learner),
+      method: 'POST',
+      url: `/v1/learning-path/stages/${lessonStageId}/complete`,
+    });
+    expect(complete.statusCode, complete.body).toBe(200);
+    const completeBody = complete.json();
+    // A single-stage level with no checkpoint/boss stage isn't a capstone,
+    // so it completes the level but not the world. This user's first-ever
+    // stage completion, on a single-stage level solved cleanly, earns both
+    // the "primeiros passos" and "nível perfeito" badges at once.
+    expect(completeBody).toMatchObject({
+      correctFirstTry: true,
+      levelCompleted: true,
+      worldCompleted: false,
+      xpAwarded: 15,
+    });
+    expect(
+      completeBody.newBadges.map((badge: { badgeKey: string }) => badge.badgeKey).sort(),
+    ).toEqual(['first_stage', 'perfect_level'].sort());
   });
 
   it('rejects an unknown level id with 404', async () => {

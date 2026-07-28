@@ -53,13 +53,29 @@ export const learningProgressSchema = z.object({
   xp: z.number().int(),
 });
 
-export const startLearningStageResultSchema = z.object({
-  exerciseId: z.string().uuid(),
-  levelId: z.string().uuid(),
-  stageId: z.string().uuid(),
-  trainingSessionId: z.string().uuid(),
-  type: learningStageTypeSchema,
-});
+// Two genuinely different shapes depending on what backs the stage: an
+// exercise (challenge/review/checkpoint/boss, evaluated move-by-move via
+// the existing exercises training-session flow) or a lesson (walked
+// through via the existing lesson-runtime attempt flow). A single
+// always-present exerciseId would either be a lie for lesson stages or
+// force a second optional lessonId nobody could tell apart from the
+// exercise case without also checking `type`.
+export const startLearningStageResultSchema = z.discriminatedUnion('type', [
+  z.object({
+    exerciseId: z.string().uuid(),
+    levelId: z.string().uuid(),
+    stageId: z.string().uuid(),
+    trainingSessionId: z.string().uuid(),
+    type: z.enum(['challenge', 'review', 'checkpoint', 'boss']),
+  }),
+  z.object({
+    lessonAttemptId: z.string().uuid(),
+    lessonId: z.string().uuid(),
+    levelId: z.string().uuid(),
+    stageId: z.string().uuid(),
+    type: z.literal('lesson'),
+  }),
+]);
 
 export const learningBadgeSchema = z.object({
   badgeKey: z.string(),

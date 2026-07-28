@@ -11,6 +11,7 @@ import type {
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { ExercisesService } from '../exercises/exercises.service.js';
+import { LessonRuntimeService } from '../lesson-runtime/lesson-runtime.service.js';
 import { LearningPathRepository } from './learning-path.repository.js';
 
 @Injectable()
@@ -18,6 +19,7 @@ export class LearningPathService {
   constructor(
     private readonly repository: LearningPathRepository,
     private readonly exercises: ExercisesService,
+    private readonly lessons: LessonRuntimeService,
   ) {}
 
   private levelStatus(rank: number, highestUnlockedRank: number | null): LearningLevelStatus {
@@ -129,7 +131,7 @@ export class LearningPathService {
     return stage;
   }
 
-  /** Resolves (and, for 'review' stages, persists) which exercise backs this attempt. */
+  /** Resolves (and, for 'review' stages, persists) which exercise backs this attempt. Never called for 'lesson' stages — see resolveLessonAttempt. */
   private async resolveExerciseId(
     userId: string,
     stageId: string,
@@ -142,9 +144,6 @@ export class LearningPathService {
     },
     completion: { resolvedExerciseId: string | null },
   ): Promise<string> {
-    if (context.type === 'lesson') {
-      throw new BadRequestException('Etapas de aula ainda não são suportadas nesta versão.');
-    }
     if (context.type !== 'review') {
       if (!context.exerciseId) throw new NotFoundException('Etapa sem exercício associado.');
       return context.exerciseId;
@@ -177,12 +176,43 @@ export class LearningPathService {
     return sessionId;
   }
 
+  /** Ensures a real lesson attempt backs this stage, reusing LessonRuntimeService.start() (already idempotent). */
+  private async resolveLessonAttempt(
+    userId: string,
+    stageId: string,
+    lessonId: string,
+    completion: { lessonAttemptId: string | null },
+  ): Promise<string> {
+    if (completion.lessonAttemptId) return completion.lessonAttemptId;
+    const attempt = await this.lessons.start(userId, { lessonId });
+    await this.repository.setLessonAttempt(userId, stageId, attempt.attemptId);
+    return attempt.attemptId;
+  }
+
   async startStage(userId: string, stageId: string): Promise<StartLearningStageResult> {
     const context = await this.repository.getStageContext(stageId);
     if (!context) throw new NotFoundException('Etapa não encontrada.');
     await this.assertStageReachable(userId, context.levelId, stageId);
 
     const completion = await this.repository.getOrStartCompletion(userId, stageId);
+
+    if (context.type === 'lesson') {
+      if (!context.lessonId) throw new NotFoundException('Etapa sem aula associada.');
+      const lessonAttemptId = await this.resolveLessonAttempt(
+        userId,
+        stageId,
+        context.lessonId,
+        completion,
+      );
+      return {
+        lessonAttemptId,
+        lessonId: context.lessonId,
+        levelId: context.levelId,
+        stageId,
+        type: 'lesson',
+      };
+    }
+
     const exerciseId = await this.resolveExerciseId(userId, stageId, context, completion);
     const trainingSessionId = await this.resolveTrainingSession(
       userId,
@@ -218,6 +248,28 @@ export class LearningPathService {
       };
     }
 
+    if (context.type === 'lesson') {
+      if (!context.lessonId) throw new NotFoundException('Etapa sem aula associada.');
+      const lessonAttemptId = await this.resolveLessonAttempt(
+        userId,
+        stageId,
+        context.lessonId,
+        completion,
+      );
+      const attempt = await this.lessons.get(userId, lessonAttemptId);
+      if (attempt.status !== 'completed') {
+        throw new BadRequestException(
+          'Ainda não concluída — termine a aula antes de concluir a etapa.',
+        );
+      }
+      // Lessons don't expose a pass/fail-retry concept at this layer (unlike
+      // exercises, which track real failures via countAttemptsSince) - once
+      // the underlying attempt reaches 'completed' it always counts as a
+      // clean first-try completion here. skill_mastery is exercise-tag
+      // based and deliberately not touched by lesson completions in v1.
+      return this.finishStageCompletion(userId, stageId, context, true);
+    }
+
     const exerciseId = await this.resolveExerciseId(userId, stageId, context, completion);
     const { failures, successes } = await this.repository.countAttemptsSince(
       userId,
@@ -231,10 +283,25 @@ export class LearningPathService {
     }
 
     const correctFirstTry = failures === 0;
-    await this.repository.markStageCompleted(userId, stageId, { correctFirstTry, hintsUsed: 0 });
-
     const tags = await this.repository.getExerciseTags(exerciseId);
     await this.repository.upsertSkillMastery(userId, tags, successes, failures);
+    return this.finishStageCompletion(userId, stageId, context, correctFirstTry);
+  }
+
+  /**
+   * Shared tail of completeStage() once "was this genuinely solved?" has
+   * already been verified for whichever stage type it is: marks the stage
+   * completed, advances level/world progress, and runs the gamification
+   * side effects (FASE 15 do spec) — identical regardless of whether an
+   * exercise or a lesson backed the stage.
+   */
+  private async finishStageCompletion(
+    userId: string,
+    stageId: string,
+    context: { levelId: string; worldId: string },
+    correctFirstTry: boolean,
+  ): Promise<CompleteLearningStageResult> {
+    await this.repository.markStageCompleted(userId, stageId, { correctFirstTry, hintsUsed: 0 });
 
     const levelCompleted = await this.repository.isLevelFullyCompleted(userId, context.levelId);
     let worldCompleted = false;
@@ -244,10 +311,9 @@ export class LearningPathService {
       worldCompleted = isCapstone;
     }
 
-    // Gamificação (FASE 15 do spec): escopo modesto, atrelado a marcos reais
-    // já computados acima — nunca inventa progresso paralelo. XP: base fixa
-    // + bônus por acertar de primeira, nunca reconcedido (só nesta ramificação
-    // de "primeira conclusão da etapa", não no early-return acima).
+    // XP: base fixa + bônus por acertar de primeira, nunca reconcedido (só
+    // chega aqui na primeira conclusão real da etapa, nunca no early-return
+    // "já concluída" de completeStage()).
     const xpAwarded = 10 + (correctFirstTry ? 5 : 0);
     await this.repository.addXp(userId, xpAwarded);
     const streakDays = await this.repository.bumpStreak(userId);

@@ -3142,6 +3142,32 @@ input:focus-visible {
   color: var(--muted);
 }
 
+.stageLessonArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.5rem 1rem;
+}
+
+.stageLessonArea a.primaryButton {
+  width: auto;
+  padding: 0.75rem 1.5rem;
+  text-decoration: none;
+  text-align: center;
+}
+
+.stageLessonArea button {
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  background: var(--surface);
+  color: var(--text);
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .stageMoveNav {
   display: flex;
   justify-content: center;

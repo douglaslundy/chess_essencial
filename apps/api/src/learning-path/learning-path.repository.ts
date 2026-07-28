@@ -192,9 +192,10 @@ export class LearningPathRepository {
   async getStageContext(stageId: string): Promise<StageContextRow | null> {
     const sql = this.database.client;
     const [row] = await sql<StageContextRow[]>`
-      SELECT ls.id, ls.type, ls.exercise_id AS "exerciseId", ls.level_id AS "levelId",
-             ll.world_id AS "worldId", ll.difficulty_min AS "levelDifficultyMin",
-             ll.difficulty_max AS "levelDifficultyMax", ll.allowed_themes AS "allowedThemes"
+      SELECT ls.id, ls.type, ls.exercise_id AS "exerciseId", ls.lesson_id AS "lessonId",
+             ls.level_id AS "levelId", ll.world_id AS "worldId",
+             ll.difficulty_min AS "levelDifficultyMin", ll.difficulty_max AS "levelDifficultyMax",
+             ll.allowed_themes AS "allowedThemes"
         FROM learning_stages ls
         JOIN learning_levels ll ON ll.id = ls.level_id
        WHERE ls.id = ${stageId}
@@ -210,7 +211,8 @@ export class LearningPathRepository {
       ON CONFLICT (user_id, stage_id) DO UPDATE SET
         started_at = COALESCE(user_stage_completions.started_at, EXCLUDED.started_at)
       RETURNING status, started_at AS "startedAt", resolved_exercise_id AS "resolvedExerciseId",
-                training_session_id AS "trainingSessionId", attempts, hints_used AS "hintsUsed"
+                training_session_id AS "trainingSessionId", lesson_attempt_id AS "lessonAttemptId",
+                attempts, hints_used AS "hintsUsed"
     `;
     return row!;
   }
@@ -221,6 +223,15 @@ export class LearningPathRepository {
       UPDATE user_stage_completions
          SET resolved_exercise_id = ${exerciseId}
        WHERE user_id = ${userId} AND stage_id = ${stageId} AND resolved_exercise_id IS NULL
+    `;
+  }
+
+  async setLessonAttempt(userId: string, stageId: string, lessonAttemptId: string): Promise<void> {
+    const sql = this.database.client;
+    await sql`
+      UPDATE user_stage_completions
+         SET lesson_attempt_id = ${lessonAttemptId}
+       WHERE user_id = ${userId} AND stage_id = ${stageId} AND lesson_attempt_id IS NULL
     `;
   }
 
@@ -501,6 +512,7 @@ export interface StageContextRow {
   allowedThemes: string[] | null;
   exerciseId: string | null;
   id: string;
+  lessonId: string | null;
   levelDifficultyMax: number;
   levelDifficultyMin: number;
   levelId: string;
@@ -511,6 +523,7 @@ export interface StageContextRow {
 export interface CompletionRow {
   attempts: number;
   hintsUsed: number;
+  lessonAttemptId: string | null;
   resolvedExerciseId: string | null;
   startedAt: string;
   status: 'locked' | 'available' | 'completed';
