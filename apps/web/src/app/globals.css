@@ -2243,6 +2243,7 @@ input:focus-visible {
   display: grid;
   gap: 20px;
   max-width: 760px;
+  padding: var(--page-padding);
 }
 .reviewSummaryColumns {
   display: grid;
