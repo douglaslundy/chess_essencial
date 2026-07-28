@@ -111,10 +111,10 @@ try {
        SET difficulty_score = COALESCE(
          (import_metadata->>'rating')::numeric,
          CASE difficulty
-           WHEN 'beginner' THEN ${ENUM_TO_SCORE.beginner}
-           WHEN 'intermediate' THEN ${ENUM_TO_SCORE.intermediate}
-           WHEN 'advanced' THEN ${ENUM_TO_SCORE.advanced}
-           WHEN 'expert' THEN ${ENUM_TO_SCORE.expert}
+           WHEN 'beginner' THEN ${ENUM_TO_SCORE.beginner}::numeric
+           WHEN 'intermediate' THEN ${ENUM_TO_SCORE.intermediate}::numeric
+           WHEN 'advanced' THEN ${ENUM_TO_SCORE.advanced}::numeric
+           WHEN 'expert' THEN ${ENUM_TO_SCORE.expert}::numeric
            ELSE NULL
          END
        )
