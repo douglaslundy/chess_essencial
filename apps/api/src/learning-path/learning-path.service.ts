@@ -1,11 +1,13 @@
 import type {
+  CompleteLearningStageResult,
   LearningLevelDetail,
   LearningLevelStatus,
   LearningMap,
   LearningProgress,
   LearningStageStatus,
+  StartLearningStageResult,
 } from '@xadrez/contracts';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { LearningPathRepository } from './learning-path.repository.js';
 
@@ -107,6 +109,120 @@ export class LearningPathService {
       highestUnlockedLevelId: progress?.highestUnlockedLevelId ?? null,
       streakDays: progress?.streakDays ?? 0,
       xp: progress?.xp ?? 0,
+    };
+  }
+
+  private async assertStageReachable(userId: string, levelId: string, stageId: string) {
+    const level = await this.getLevel(userId, levelId);
+    const stage = level.stages.find((entry) => entry.id === stageId);
+    if (!stage) throw new NotFoundException('Etapa não encontrada.');
+    if (stage.status === 'locked') {
+      throw new BadRequestException(
+        'Esta etapa ainda está bloqueada — conclua as anteriores primeiro.',
+      );
+    }
+    return stage;
+  }
+
+  /** Resolves (and, for 'review' stages, persists) which exercise backs this attempt. */
+  private async resolveExerciseId(
+    userId: string,
+    stageId: string,
+    context: {
+      allowedThemes: string[] | null;
+      exerciseId: string | null;
+      levelDifficultyMax: number;
+      levelDifficultyMin: number;
+      type: string;
+    },
+    completion: { resolvedExerciseId: string | null },
+  ): Promise<string> {
+    if (context.type === 'lesson') {
+      throw new BadRequestException('Etapas de aula ainda não são suportadas nesta versão.');
+    }
+    if (context.type !== 'review') {
+      if (!context.exerciseId) throw new NotFoundException('Etapa sem exercício associado.');
+      return context.exerciseId;
+    }
+    if (completion.resolvedExerciseId) return completion.resolvedExerciseId;
+
+    const skill = await this.repository.pickWeakestSkill(userId, context.allowedThemes);
+    const exerciseId = await this.repository.pickReviewExercise(
+      userId,
+      skill,
+      context.levelDifficultyMin,
+      context.levelDifficultyMax,
+    );
+    if (!exerciseId)
+      throw new NotFoundException('Nenhum exercício de revisão disponível para este nível.');
+    await this.repository.setResolvedExercise(userId, stageId, exerciseId);
+    return exerciseId;
+  }
+
+  async startStage(userId: string, stageId: string): Promise<StartLearningStageResult> {
+    const context = await this.repository.getStageContext(stageId);
+    if (!context) throw new NotFoundException('Etapa não encontrada.');
+    await this.assertStageReachable(userId, context.levelId, stageId);
+
+    const completion = await this.repository.getOrStartCompletion(userId, stageId);
+    const exerciseId = await this.resolveExerciseId(userId, stageId, context, completion);
+    return { exerciseId, stageId, type: context.type };
+  }
+
+  async completeStage(userId: string, stageId: string): Promise<CompleteLearningStageResult> {
+    const context = await this.repository.getStageContext(stageId);
+    if (!context) throw new NotFoundException('Etapa não encontrada.');
+    await this.assertStageReachable(userId, context.levelId, stageId);
+
+    const completion = await this.repository.getOrStartCompletion(userId, stageId);
+    if (completion.status === 'completed') {
+      const [levelCompleted, worldCompleted] = await Promise.all([
+        this.repository.isLevelFullyCompleted(userId, context.levelId),
+        this.repository.isCapstoneLevel(context.levelId),
+      ]);
+      return {
+        correctFirstTry: completion.attempts <= 1,
+        hintsUsed: completion.hintsUsed,
+        levelCompleted,
+        stageId,
+        status: 'completed',
+        worldCompleted: levelCompleted && worldCompleted,
+      };
+    }
+
+    const exerciseId = await this.resolveExerciseId(userId, stageId, context, completion);
+    const { failures, successes } = await this.repository.countAttemptsSince(
+      userId,
+      exerciseId,
+      completion.startedAt,
+    );
+    if (successes === 0) {
+      throw new BadRequestException(
+        'Ainda não resolvido — jogue o exercício corretamente antes de concluir a etapa.',
+      );
+    }
+
+    const correctFirstTry = failures === 0;
+    await this.repository.markStageCompleted(userId, stageId, { correctFirstTry, hintsUsed: 0 });
+
+    const tags = await this.repository.getExerciseTags(exerciseId);
+    await this.repository.upsertSkillMastery(userId, tags, successes, failures);
+
+    const levelCompleted = await this.repository.isLevelFullyCompleted(userId, context.levelId);
+    let worldCompleted = false;
+    if (levelCompleted) {
+      const isCapstone = await this.repository.isCapstoneLevel(context.levelId);
+      await this.repository.advanceProgressPastLevel(userId, context.levelId);
+      worldCompleted = isCapstone;
+    }
+
+    return {
+      correctFirstTry,
+      hintsUsed: 0,
+      levelCompleted,
+      stageId,
+      status: 'completed',
+      worldCompleted,
     };
   }
 }

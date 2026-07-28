@@ -1,11 +1,11 @@
-import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { z } from 'zod';
 
 import { AccessTokenGuard, type AuthenticatedRequest } from '../auth/access-token.guard.js';
 import { parseInput } from '../common/http/parse-input.js';
 import { LearningPathService } from './learning-path.service.js';
 
-const levelIdSchema = z.string().uuid();
+const idSchema = z.string().uuid();
 
 @UseGuards(AccessTokenGuard)
 @Controller('learning-path')
@@ -19,11 +19,21 @@ export class LearningPathController {
 
   @Get('levels/:levelId')
   level(@Req() request: AuthenticatedRequest, @Param('levelId') levelId: string) {
-    return this.learningPath.getLevel(request.auth.userId, parseInput(levelIdSchema, levelId));
+    return this.learningPath.getLevel(request.auth.userId, parseInput(idSchema, levelId));
   }
 
   @Get('progress')
   progress(@Req() request: AuthenticatedRequest) {
     return this.learningPath.getProgress(request.auth.userId);
+  }
+
+  @Post('stages/:stageId/start')
+  startStage(@Req() request: AuthenticatedRequest, @Param('stageId') stageId: string) {
+    return this.learningPath.startStage(request.auth.userId, parseInput(idSchema, stageId));
+  }
+
+  @Post('stages/:stageId/complete')
+  completeStage(@Req() request: AuthenticatedRequest, @Param('stageId') stageId: string) {
+    return this.learningPath.completeStage(request.auth.userId, parseInput(idSchema, stageId));
   }
 }

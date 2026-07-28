@@ -116,4 +116,234 @@ export class LearningPathRepository {
        ORDER BY ls.position
     `;
   }
+
+  async getStageContext(stageId: string): Promise<StageContextRow | null> {
+    const sql = this.database.client;
+    const [row] = await sql<StageContextRow[]>`
+      SELECT ls.id, ls.type, ls.exercise_id AS "exerciseId", ls.level_id AS "levelId",
+             ll.world_id AS "worldId", ll.difficulty_min AS "levelDifficultyMin",
+             ll.difficulty_max AS "levelDifficultyMax", ll.allowed_themes AS "allowedThemes"
+        FROM learning_stages ls
+        JOIN learning_levels ll ON ll.id = ls.level_id
+       WHERE ls.id = ${stageId}
+    `;
+    return row ?? null;
+  }
+
+  async getOrStartCompletion(userId: string, stageId: string): Promise<CompletionRow> {
+    const sql = this.database.client;
+    const [row] = await sql<CompletionRow[]>`
+      INSERT INTO user_stage_completions (user_id, stage_id, status, started_at)
+      VALUES (${userId}, ${stageId}, 'available', now())
+      ON CONFLICT (user_id, stage_id) DO UPDATE SET
+        started_at = COALESCE(user_stage_completions.started_at, EXCLUDED.started_at)
+      RETURNING status, started_at AS "startedAt", resolved_exercise_id AS "resolvedExerciseId",
+                attempts, hints_used AS "hintsUsed"
+    `;
+    return row!;
+  }
+
+  async setResolvedExercise(userId: string, stageId: string, exerciseId: string): Promise<void> {
+    const sql = this.database.client;
+    await sql`
+      UPDATE user_stage_completions
+         SET resolved_exercise_id = ${exerciseId}
+       WHERE user_id = ${userId} AND stage_id = ${stageId} AND resolved_exercise_id IS NULL
+    `;
+  }
+
+  /** Skill (exercises.tags entry) this user is weakest at, optionally restricted to a level's allowed themes. */
+  async pickWeakestSkill(userId: string, allowedThemes: string[] | null): Promise<string | null> {
+    const sql = this.database.client;
+    const [row] = await sql<{ skill: string }[]>`
+      SELECT skill FROM skill_mastery
+       WHERE user_id = ${userId}
+         AND (${allowedThemes}::text[] IS NULL OR skill = ANY(${allowedThemes}))
+       ORDER BY score ASC, attempts DESC
+       LIMIT 1
+    `;
+    return row?.skill ?? null;
+  }
+
+  /** Picks an unsolved playable exercise, preferring `skill` and the given difficulty band; falls back progressively. */
+  async pickReviewExercise(
+    userId: string,
+    skill: string | null,
+    difficultyMin: number,
+    difficultyMax: number,
+  ): Promise<string | null> {
+    const sql = this.database.client;
+    if (skill) {
+      const [bySkill] = await sql<{ id: string }[]>`
+        SELECT e.id FROM exercises e
+         WHERE e.status = 'published' AND e.position_type = 'legal_position'
+           AND e.difficulty_score IS NOT NULL
+           AND ${skill} = ANY(e.tags)
+           AND e.difficulty_score BETWEEN ${difficultyMin} AND ${difficultyMax}
+           AND NOT EXISTS (
+             SELECT 1 FROM exercise_attempts a
+              WHERE a.exercise_id = e.id AND a.user_id = ${userId} AND a.correct = true
+           )
+         ORDER BY random()
+         LIMIT 1
+      `;
+      if (bySkill) return bySkill.id;
+    }
+    const [byRange] = await sql<{ id: string }[]>`
+      SELECT e.id FROM exercises e
+       WHERE e.status = 'published' AND e.position_type = 'legal_position'
+         AND e.difficulty_score IS NOT NULL
+         AND e.difficulty_score BETWEEN ${difficultyMin} AND ${difficultyMax}
+         AND NOT EXISTS (
+           SELECT 1 FROM exercise_attempts a
+            WHERE a.exercise_id = e.id AND a.user_id = ${userId} AND a.correct = true
+         )
+       ORDER BY random()
+       LIMIT 1
+    `;
+    if (byRange) return byRange.id;
+
+    // Last resort: pool exhausted (user solved everything in range) — allow a repeat.
+    const [any] = await sql<{ id: string }[]>`
+      SELECT e.id FROM exercises e
+       WHERE e.status = 'published' AND e.position_type = 'legal_position'
+         AND e.difficulty_score IS NOT NULL
+         AND e.difficulty_score BETWEEN ${difficultyMin} AND ${difficultyMax}
+       ORDER BY random()
+       LIMIT 1
+    `;
+    return any?.id ?? null;
+  }
+
+  async countAttemptsSince(
+    userId: string,
+    exerciseId: string,
+    since: string,
+  ): Promise<{ failures: number; successes: number }> {
+    const sql = this.database.client;
+    const [row] = await sql<{ failures: number; successes: number }[]>`
+      SELECT count(*) FILTER (WHERE correct)::int AS successes,
+             count(*) FILTER (WHERE NOT correct)::int AS failures
+        FROM exercise_attempts
+       WHERE user_id = ${userId} AND exercise_id = ${exerciseId} AND attempted_at >= ${since}
+    `;
+    return row ?? { failures: 0, successes: 0 };
+  }
+
+  async markStageCompleted(
+    userId: string,
+    stageId: string,
+    input: { correctFirstTry: boolean; hintsUsed: number },
+  ): Promise<void> {
+    const sql = this.database.client;
+    await sql`
+      UPDATE user_stage_completions
+         SET status = 'completed', completed_at = now(),
+             correct_first_try = ${input.correctFirstTry}, hints_used = ${input.hintsUsed},
+             attempts = attempts + 1, updated_at = now()
+       WHERE user_id = ${userId} AND stage_id = ${stageId}
+    `;
+  }
+
+  async isLevelFullyCompleted(userId: string, levelId: string): Promise<boolean> {
+    const sql = this.database.client;
+    const [row] = await sql<{ allDone: boolean }[]>`
+      SELECT count(*) = count(*) FILTER (WHERE usc.status = 'completed') AS "allDone"
+        FROM learning_stages ls
+        LEFT JOIN user_stage_completions usc ON usc.stage_id = ls.id AND usc.user_id = ${userId}
+       WHERE ls.level_id = ${levelId}
+    `;
+    return row?.allDone ?? false;
+  }
+
+  /** Advances highest_unlocked_level_id to the next level in curriculum order, only if `fromLevelId` is still the current frontier. */
+  async advanceProgressPastLevel(userId: string, fromLevelId: string): Promise<void> {
+    const sql = this.database.client;
+    await sql`
+      WITH ranked AS (
+        SELECT ll.id, (ROW_NUMBER() OVER (ORDER BY lw.position, ll.position))::int AS rank
+          FROM learning_levels ll JOIN learning_worlds lw ON lw.id = ll.world_id
+      ),
+      next_level AS (
+        SELECT r2.id
+          FROM ranked r1
+          JOIN ranked r2 ON r2.rank = r1.rank + 1
+         WHERE r1.id = ${fromLevelId}
+      )
+      UPDATE user_learning_progress p
+         SET highest_unlocked_level_id = COALESCE(
+               (SELECT id FROM next_level), p.highest_unlocked_level_id
+             ),
+             current_level_id = COALESCE((SELECT id FROM next_level), p.current_level_id),
+             updated_at = now()
+       WHERE p.user_id = ${userId} AND p.highest_unlocked_level_id = ${fromLevelId}
+    `;
+  }
+
+  async upsertSkillMastery(
+    userId: string,
+    skills: string[],
+    successes: number,
+    failures: number,
+  ): Promise<void> {
+    if (skills.length === 0 || successes + failures === 0) return;
+    const sql = this.database.client;
+    for (const skill of skills) {
+      await sql`
+        INSERT INTO skill_mastery (user_id, skill, attempts, success_count, error_count, score, last_seen_at)
+        VALUES (
+          ${userId}, ${skill}, ${successes + failures}, ${successes}, ${failures},
+          ${Math.round((successes / (successes + failures)) * 100)}, now()
+        )
+        ON CONFLICT (user_id, skill) DO UPDATE SET
+          attempts = skill_mastery.attempts + EXCLUDED.attempts,
+          success_count = skill_mastery.success_count + EXCLUDED.success_count,
+          error_count = skill_mastery.error_count + EXCLUDED.error_count,
+          score = ROUND(
+            (skill_mastery.success_count + EXCLUDED.success_count)::numeric
+              / (skill_mastery.attempts + EXCLUDED.attempts) * 100
+          ),
+          last_seen_at = now(),
+          updated_at = now()
+      `;
+    }
+  }
+
+  async isCapstoneLevel(levelId: string): Promise<boolean> {
+    const sql = this.database.client;
+    const [row] = await sql<{ isCapstone: boolean }[]>`
+      SELECT EXISTS (
+        SELECT 1 FROM learning_stages WHERE level_id = ${levelId} AND type IN ('checkpoint', 'boss')
+      ) AS "isCapstone"
+    `;
+    return row?.isCapstone ?? false;
+  }
+
+  async getExerciseTags(exerciseId: string): Promise<string[]> {
+    const sql = this.database.client;
+    const [row] = await sql<{ tags: string[] }[]>`
+      SELECT tags FROM exercises WHERE id = ${exerciseId}
+    `;
+    const structural = new Set(['challenge', 'lichess', 'classico']);
+    return (row?.tags ?? []).filter((tag) => !structural.has(tag));
+  }
+}
+
+export interface StageContextRow {
+  allowedThemes: string[] | null;
+  exerciseId: string | null;
+  id: string;
+  levelDifficultyMax: number;
+  levelDifficultyMin: number;
+  levelId: string;
+  type: 'challenge' | 'lesson' | 'review' | 'checkpoint' | 'boss';
+  worldId: string;
+}
+
+export interface CompletionRow {
+  attempts: number;
+  hintsUsed: number;
+  resolvedExerciseId: string | null;
+  startedAt: string;
+  status: 'locked' | 'available' | 'completed';
 }

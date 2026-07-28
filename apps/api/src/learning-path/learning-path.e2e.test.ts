@@ -165,4 +165,77 @@ describeDatabase('learning path database integration', () => {
     });
     expect(response.statusCode).toBe(404);
   });
+
+  it('completing every stage of a capstone level unlocks the next level and closes the world', async () => {
+    // Only proceed if this test world genuinely is this user's current
+    // frontier (true whenever no other suite seeded a world ahead of ours in
+    // this same database run — see comment on the progress test above).
+    const before = await app.inject({
+      headers: auth(member),
+      method: 'GET',
+      url: '/v1/learning-path/levels/' + levelOneId,
+    });
+    if (before.json().status !== 'current') return;
+
+    const startFirst = await app.inject({
+      headers: auth(member),
+      method: 'POST',
+      url: `/v1/learning-path/stages/${stageOneId}/start`,
+    });
+    expect(startFirst.statusCode, startFirst.body).toBe(200);
+    const { exerciseId } = startFirst.json();
+
+    const completeTooEarly = await app.inject({
+      headers: auth(member),
+      method: 'POST',
+      url: `/v1/learning-path/stages/${stageOneId}/complete`,
+    });
+    expect(completeTooEarly.statusCode).toBe(400);
+
+    const attempt = await app.inject({
+      headers: auth(member),
+      method: 'POST',
+      payload: { durationMs: 1000, submittedLine: ['e2e4'] },
+      url: `/v1/exercises/${exerciseId}/attempts`,
+    });
+    expect(attempt.statusCode, attempt.body).toBe(201);
+
+    const completeFirst = await app.inject({
+      headers: auth(member),
+      method: 'POST',
+      url: `/v1/learning-path/stages/${stageOneId}/complete`,
+    });
+    expect(completeFirst.statusCode, completeFirst.body).toBe(200);
+    expect(completeFirst.json()).toMatchObject({
+      correctFirstTry: true,
+      levelCompleted: false,
+      worldCompleted: false,
+    });
+
+    await app.inject({
+      headers: auth(member),
+      method: 'POST',
+      url: `/v1/learning-path/stages/${stageTwoId}/start`,
+    });
+    await app.inject({
+      headers: auth(member),
+      method: 'POST',
+      payload: { durationMs: 1000, submittedLine: ['e2e4'] },
+      url: `/v1/exercises/${exerciseId}/attempts`,
+    });
+    const completeSecond = await app.inject({
+      headers: auth(member),
+      method: 'POST',
+      url: `/v1/learning-path/stages/${stageTwoId}/complete`,
+    });
+    expect(completeSecond.statusCode, completeSecond.body).toBe(200);
+    expect(completeSecond.json()).toMatchObject({ levelCompleted: true, worldCompleted: true });
+
+    const progress = await app.inject({
+      headers: auth(member),
+      method: 'GET',
+      url: '/v1/learning-path/progress',
+    });
+    expect(progress.json().highestUnlockedLevelId).toBe(levelTwoId);
+  });
 });

@@ -324,6 +324,7 @@ export {
   type UpdatePrivacyInput,
 } from './safety.js';
 export {
+  completeLearningStageResultSchema,
   learningLevelDetailSchema,
   learningLevelStatusSchema,
   learningLevelSummarySchema,
@@ -333,6 +334,8 @@ export {
   learningStageSummarySchema,
   learningStageTypeSchema,
   learningWorldSummarySchema,
+  startLearningStageResultSchema,
+  type CompleteLearningStageResult,
   type LearningLevelDetail,
   type LearningLevelStatus,
   type LearningLevelSummary,
@@ -342,4 +345,5 @@ export {
   type LearningStageSummary,
   type LearningStageType,
   type LearningWorldSummary,
+  type StartLearningStageResult,
 } from './learning-path.js';

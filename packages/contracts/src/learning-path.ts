@@ -53,6 +53,21 @@ export const learningProgressSchema = z.object({
   xp: z.number().int(),
 });
 
+export const startLearningStageResultSchema = z.object({
+  exerciseId: z.string().uuid(),
+  stageId: z.string().uuid(),
+  type: learningStageTypeSchema,
+});
+
+export const completeLearningStageResultSchema = z.object({
+  correctFirstTry: z.boolean(),
+  hintsUsed: z.number().int(),
+  levelCompleted: z.boolean(),
+  stageId: z.string().uuid(),
+  status: learningStageStatusSchema,
+  worldCompleted: z.boolean(),
+});
+
 export type LearningStageType = z.infer<typeof learningStageTypeSchema>;
 export type LearningStageStatus = z.infer<typeof learningStageStatusSchema>;
 export type LearningLevelStatus = z.infer<typeof learningLevelStatusSchema>;
@@ -62,3 +77,5 @@ export type LearningWorldSummary = z.infer<typeof learningWorldSummarySchema>;
 export type LearningMap = z.infer<typeof learningMapSchema>;
 export type LearningLevelDetail = z.infer<typeof learningLevelDetailSchema>;
 export type LearningProgress = z.infer<typeof learningProgressSchema>;
+export type StartLearningStageResult = z.infer<typeof startLearningStageResultSchema>;
+export type CompleteLearningStageResult = z.infer<typeof completeLearningStageResultSchema>;
