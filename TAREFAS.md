@@ -43,7 +43,7 @@ Homologar os dez módulos e importar os 1.298 exercícios reais preservando IDs 
 - [x] Backup anterior, rollback e reimportação aprovados.
 - [x] Testes unitários, integração e E2E do fluxo de exercícios aprovados.
 
-## Fase 15 — Contrato e SDK preparados para mobile (P1)
+## Fase 15 — Contrato e SDK preparados para mobile (P1) — fechada em 2026-07-28
 
 ### Objetivo
 
@@ -56,7 +56,9 @@ Garantir que autenticação, REST e realtime possam ser consumidos por um aplica
 - Testes de contrato cobrem autenticação e reconexão.
 - Nenhuma regra de domínio depende do Next.js.
 
-## Fase 16 — Acessibilidade, responsividade e UX crítica (P1)
+**Fechamento (2026-07-28, a pedido do usuário):** marcada como resolvida sem uma auditoria formal item a item dos critérios acima — a intenção da fase foi coberta na prática pela Fase 18 (app mobile), que consome `@xadrez/contracts`/`@xadrez/sdk` diretamente (mesmos schemas Zod do site, sem duplicação de tipo) e já tem login/refresh/realtime (WebSocket) funcionando de ponta a ponta fora do Next.js.
+
+## Fase 16 — Acessibilidade, responsividade e UX crítica (P1) — fechada em 2026-07-28
 
 ### Objetivo
 
@@ -69,7 +71,9 @@ Homologar os fluxos de jogo, histórico, curso e exercícios em teclado, telas p
 - Layouts críticos aprovados em viewport móvel e desktop.
 - Regressões cobertas por testes pertinentes.
 
-## Fase 17 — Eficiência e confiabilidade operacional (P1)
+**Fechamento (2026-07-28, a pedido do usuário):** marcada como resolvida sem uma auditoria formal item a item dos critérios acima — nenhuma auditoria única e completa de acessibilidade foi feita; o que existe é uma sequência de correções pontuais acumuladas ao longo do projeto (responsividade dos tabuleiros, margens coladas nas bordas, padronização de teclado/ARIA/foco no módulo admin, etc., a mais recente delas nesta mesma sessão). Se surgir a necessidade de uma homologação formal completa (auditoria dedicada de teclado/contraste/leitor de tela em todas as rotas), tratar como trabalho novo, não como retomada desta fase.
+
+## Fase 17 — Eficiência e confiabilidade operacional (P1) — fechada em 2026-07-28
 
 ### Objetivo
 
@@ -138,6 +142,8 @@ Ordem aprovada pelo usuário: A→I, com SMTP e config de pagamento inseridos no
 - [x] **SP-H — Dashboard admin com métricas (2026-07-24).** `GET /admin/metrics` (`AdminService`/`AdminRepository`, mesmo controller de `/admin/users` e `/admin/bots/stats`) agrega: usuários ativos, novos cadastros (7 dias), partidas (total/hoje), exercícios resolvidos, aulas concluídas, assinaturas ativas por plano (SP-F) e indicações registradas/recompensadas (SP-G). Página `/app/admin/metricas`, mesmo estilo de cartões da página de bots.
 - [x] **SP-I — Checkout de assinatura via Mercado Pago (2026-07-24).** Fluxo completo: `GET /subscription-plans` (catálogo público, só planos ativos) → página `/app/planos` → `POST /me/subscription/checkout` cria uma assinatura `pending` local (id vira o `external_reference` do Mercado Pago) e chama a API de Preapproval (assinaturas recorrentes) do Mercado Pago, devolvendo o `init_point` pra redirecionar o usuário → `POST /webhooks/mercado-pago` (rota pública, sem guard de sessão — é o Mercado Pago chamando) recebe a notificação, **verifica a assinatura HMAC-SHA256** (`x-signature`/`x-request-id`, formato documentado pelo Mercado Pago) contra um `webhookSecret` novo nas configurações admin (`/app/admin/mercado-pago`) — sem o secret configurado, o webhook recusa tudo (nunca aceita confirmação de pagamento sem verificar assinatura) — e então busca o preapproval completo na API deles e ativa/cancela a assinatura local. Migration `0027` adiciona o status `pending` à tabela `user_subscriptions` (fica fora do índice único de "uma ativa por usuário", que só cobre `status='active'`). Testes novos cobrem a verificação de assinatura (aceita válida, rejeita secret errado, rejeita payload adulterado, rejeita sem header, rejeita sem secret configurado).
   - **Importante, sem verificação ponta a ponta**: não há como testar contra o Mercado Pago de verdade nesta sessão (sem credenciais sandbox configuradas nem acesso de rede pra simular o webhook deles). A lógica foi implementada com o máximo de fidelidade possível ao formato documentado da API de Preapproval e do esquema de assinatura de webhook, mas **precisa ser validada pelo usuário** com uma conta sandbox real (criar credenciais de teste no painel do Mercado Pago, configurar em `/app/admin/mercado-pago` incluindo o webhook secret, apontar a URL de notificação pra `https://chess.dlsistemas.com.br/v1/webhooks/mercado-pago`, e fazer uma assinatura de teste de ponta a ponta) antes de confiar nisso em produção com dinheiro real.
+
+**Fechamento da Fase 17 (2026-07-28, a pedido do usuário):** marcada como resolvida sem reconferir agora o estado exato de cache de build/política de retenção de backup/restore drill listados nos critérios de aceite originais — SMTP real (o item que tinha uma pendência explícita) já está fechado desde 2026-07-23. Os dois lotes grandes de melhorias registrados acima (SP-A a SP-I, rede social/bots/monetização) foram o que efetivamente ocupou esta fase depois disso.
 
 ## Fase 18 — Aplicativo mobile (P2)
 
