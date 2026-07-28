@@ -37,12 +37,12 @@ describeDatabase('learning path database integration', () => {
     const [exercise] = await database.client<{ id: string }[]>`
       INSERT INTO exercises (
         external_id, title, prompt_md, solution_md, difficulty, fen, side_to_move,
-        solution_lines, position_type, status, difficulty_score
+        solution_lines, position_type, status, difficulty_score, hints
       )
       VALUES (
         'learning-path-test-001', 'Teste', 'Encontre o melhor lance.', 'e2e4', 'beginner',
         'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 'white',
-        '[["e2e4"]]'::jsonb, 'legal_position', 'published', 900
+        '[["e2e4"]]'::jsonb, 'legal_position', 'published', 900, '["Mova o peão do rei."]'::jsonb
       )
       RETURNING id
     `;
@@ -386,6 +386,16 @@ describeDatabase('learning path database integration', () => {
     });
     expect(completeTooEarly.statusCode).toBe(400);
 
+    // Requested before solving, so completeStage() below must report it
+    // back truthfully — proves hintsUsed comes from the real server-side
+    // counter (exercise_training_items.hints_used), not a hardcoded 0.
+    const hint = await app.inject({
+      headers: auth(member),
+      method: 'POST',
+      url: `/v1/exercise-training-sessions/${trainingSessionId}/hints`,
+    });
+    expect(hint.statusCode, hint.body).toBe(200);
+
     // Exercises evaluate-line() requires a real training session (see
     // migration 0038) — proves the session created by start() actually
     // works with the pre-existing move-by-move grading endpoint, not just
@@ -411,6 +421,7 @@ describeDatabase('learning path database integration', () => {
     // "primeiros passos" badge granted exactly once.
     expect(completeFirst.json()).toMatchObject({
       correctFirstTry: true,
+      hintsUsed: 1,
       levelCompleted: false,
       newBadges: [{ badgeKey: 'first_stage', label: 'Primeiros passos' }],
       streakDays: 1,

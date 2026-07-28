@@ -267,7 +267,9 @@ export class LearningPathService {
       // the underlying attempt reaches 'completed' it always counts as a
       // clean first-try completion here. skill_mastery is exercise-tag
       // based and deliberately not touched by lesson completions in v1.
-      return this.finishStageCompletion(userId, stageId, context, true);
+      // Lessons also have no hint mechanism of their own, so 0 is honest
+      // here, not a placeholder.
+      return this.finishStageCompletion(userId, stageId, context, true, 0);
     }
 
     const exerciseId = await this.resolveExerciseId(userId, stageId, context, completion);
@@ -285,7 +287,14 @@ export class LearningPathService {
     const correctFirstTry = failures === 0;
     const tags = await this.repository.getExerciseTags(exerciseId);
     await this.repository.upsertSkillMastery(userId, tags, successes, failures);
-    return this.finishStageCompletion(userId, stageId, context, correctFirstTry);
+    // Real server-tracked count (exercise_training_items.hints_used), never
+    // trusted from the client — the training session was created by
+    // resolveTrainingSession() during startStage(), so it's always set by
+    // the time completeStage() runs.
+    const hintsUsed = completion.trainingSessionId
+      ? await this.exercises.getSessionHintsUsed(completion.trainingSessionId)
+      : 0;
+    return this.finishStageCompletion(userId, stageId, context, correctFirstTry, hintsUsed);
   }
 
   /**
@@ -300,8 +309,9 @@ export class LearningPathService {
     stageId: string,
     context: { levelId: string; worldId: string },
     correctFirstTry: boolean,
+    hintsUsed: number,
   ): Promise<CompleteLearningStageResult> {
-    await this.repository.markStageCompleted(userId, stageId, { correctFirstTry, hintsUsed: 0 });
+    await this.repository.markStageCompleted(userId, stageId, { correctFirstTry, hintsUsed });
 
     const levelCompleted = await this.repository.isLevelFullyCompleted(userId, context.levelId);
     let worldCompleted = false;
@@ -349,7 +359,7 @@ export class LearningPathService {
 
     return {
       correctFirstTry,
-      hintsUsed: 0,
+      hintsUsed,
       levelCompleted,
       newBadges,
       stageId,

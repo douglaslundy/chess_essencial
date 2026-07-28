@@ -303,6 +303,15 @@ export class ExercisesRepository {
     return session!.id;
   }
 
+  /** Real server-tracked hint count for a single-item session — used by the Jornada de Aprendizagem stage runner to report hintsUsed truthfully instead of trusting the client. */
+  async getSessionHintsUsed(sessionId: string): Promise<number> {
+    const sql = this.database.client;
+    const [row] = await sql<{ hintsUsed: number }[]>`
+      SELECT hints_used AS "hintsUsed" FROM exercise_training_items WHERE session_id = ${sessionId}
+    `;
+    return row?.hintsUsed ?? 0;
+  }
+
   /** Single playable exercise by id, no session context — used by the Jornada de Aprendizagem stage runner. */
   async getById(exerciseId: string) {
     const sql = this.database.client;

@@ -28,6 +28,10 @@ export class ExercisesService {
     return this.exercises.createSingleItemSession(userId, exerciseId);
   }
 
+  getSessionHintsUsed(sessionId: string) {
+    return this.exercises.getSessionHintsUsed(sessionId);
+  }
+
   startTraining(userId: string, input: StartExerciseTrainingInput) {
     return this.exercises.startTraining(userId, input.filters);
   }
