@@ -27,7 +27,13 @@ function fakeRedisService() {
   const publish = vi.fn().mockResolvedValue(1);
   return {
     client: {
-      duplicate: () => ({ on: vi.fn(), quit: vi.fn().mockResolvedValue('OK'), subscribe: vi.fn() }),
+      duplicate: () => ({
+        connect: vi.fn().mockResolvedValue(undefined),
+        disconnect: vi.fn(),
+        on: vi.fn(),
+        quit: vi.fn().mockResolvedValue('OK'),
+        subscribe: vi.fn().mockResolvedValue(undefined),
+      }),
       publish,
     },
   };

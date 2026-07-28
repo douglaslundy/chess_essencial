@@ -75,13 +75,17 @@ export class GamesGateway
   ) {
     // A connection in subscribe mode can't issue other Redis commands, so
     // publishing (this.redis.client) and subscribing need separate
-    // connections. Capped retryStrategy (unlike the shared client's
-    // default): environments with no Redis at all (some CI jobs, this
-    // sandbox) would otherwise leave this duplicated connection retrying
-    // forever in the background across every test file's app instance for
-    // the rest of the process's life, well past onModuleDestroy's quit().
+    // connections. lazyConnect + a no-retry strategy: environments with no
+    // Redis at all (some CI jobs, this sandbox) fail the single connection
+    // attempt immediately instead of scheduling background reconnect
+    // timers. Those timers previously kept firing after onModuleDestroy
+    // (and after the owning test file had already finished), leaking
+    // "MaxRetriesPerRequestError"/"AggregateError" noise into whichever
+    // unrelated test file happened to be running at the time and getting
+    // that file marked as failed by Vitest.
     this.subscriber = this.redis.client.duplicate({
-      retryStrategy: (times) => (times > 3 ? null : Math.min(times * 200, 1000)),
+      lazyConnect: true,
+      retryStrategy: () => null,
     });
   }
 
@@ -95,12 +99,14 @@ export class GamesGateway
       this.logger.error('Game events Redis subscriber connection error', error.stack);
     });
     try {
+      await this.subscriber.connect();
       await this.subscriber.subscribe(GAME_EVENTS_CHANNEL);
     } catch (error) {
       this.logger.error(
         'Failed to subscribe to the game events Redis channel; cross-instance realtime relay is disabled',
         error instanceof Error ? error.stack : undefined,
       );
+      this.subscriber.disconnect();
       return;
     }
     this.subscriber.on('message', (channel: string, message: string) => {
