@@ -76,6 +76,10 @@ const listChallengeThemes = vi.fn();
 
 vi.mock('@/lib/api/client', () => ({
   api: {
+    // useEntitlements() probes this admin-only endpoint the same way
+    // app-chrome.tsx does; rejecting it simulates the common non-admin
+    // case so hasFeature() falls through to the mocked plan below.
+    adminListUsers: vi.fn().mockRejectedValue(new Error('not an admin')),
     getExerciseMetrics: (...args: unknown[]) => getExerciseMetrics(...args),
     getExerciseTraining: (...args: unknown[]) => getExerciseTraining(...args),
     getMySubscription: vi.fn().mockResolvedValue({
