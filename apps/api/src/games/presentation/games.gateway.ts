@@ -138,13 +138,16 @@ export class GamesGateway
     });
   }
 
-  async onModuleDestroy() {
+  onModuleDestroy() {
     for (const timer of this.timeoutTimers.values()) clearTimeout(timer);
-    try {
-      await this.subscriber.quit();
-    } catch {
-      // Nothing meaningful to do with a failed disconnect during shutdown.
-    }
+    // disconnect() (not quit()) is the deliberate choice here: it stops any
+    // in-progress reconnect attempts immediately and synchronously. quit()
+    // is meant for an already-active connection and either hangs or leaves
+    // the reconnect timer running when the connection never succeeded in
+    // the first place - exactly the case in environments with no Redis at
+    // all, where it was leaking retry timers past this test file's own
+    // teardown and into whichever one ran next.
+    this.subscriber.disconnect();
   }
 
   handleDisconnect(client: WebSocket) {
