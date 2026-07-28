@@ -37,6 +37,7 @@ function emptyCardState(): CardState {
 }
 
 export default function AdminAiProvidersPage() {
+  const [selectedProvider, setSelectedProvider] = useState<AiProvider>('anthropic');
   const [providers, setProviders] = useState<Record<AiProvider, AiProviderKey | null>>({
     anthropic: null,
     gemini: null,
@@ -164,6 +165,9 @@ export default function AdminAiProvidersPage() {
     }
   }
 
+  const current = providers[selectedProvider];
+  const card = cards[selectedProvider];
+
   return (
     <main className={styles.page}>
       <header className={styles.heading}>
@@ -179,101 +183,110 @@ export default function AdminAiProvidersPage() {
       <p className={styles.status} role="status">
         {loadMessage}
       </p>
-      <div className={styles.cardGrid}>
-        {PROVIDERS.map((provider) => {
-          const current = providers[provider];
-          const card = cards[provider];
-          return (
-            <section className={styles.card} key={provider}>
-              <h2>
-                {PROVIDER_LABELS[provider]}
-                {current?.isActive ? ' — ativo' : ''}
-              </h2>
-              <p>
-                {current?.hasApiKey
-                  ? `Chave configurada (•••• ${current.keyPreview}). Modelo atual: ${
-                      current.model ?? '—'
-                    }.`
-                  : 'Nenhuma chave configurada.'}
-              </p>
-              {current?.lastValidationError ? (
-                <p className={styles.status} role="status">
-                  Última validação falhou: {current.lastValidationError}
-                </p>
-              ) : null}
-              <div className={styles.formGrid}>
-                <label className={styles.field}>
-                  Chave de API {current?.hasApiKey ? '(deixe em branco para manter a atual)' : ''}
-                  <input
-                    onChange={(event) => updateCard(provider, { apiKeyDraft: event.target.value })}
-                    type="password"
-                    value={card.apiKeyDraft}
-                  />
-                </label>
-                <button
-                  className={styles.primaryButton}
-                  disabled={card.busy || (!card.apiKeyDraft && !current?.hasApiKey)}
-                  onClick={() => void validateKey(provider)}
-                  type="button"
-                >
-                  Validar e listar modelos
-                </button>
-                {card.models.length > 0 ? (
-                  <label className={styles.field}>
-                    Modelo
-                    <select
-                      onChange={(event) => updateCard(provider, { modelDraft: event.target.value })}
-                      value={card.modelDraft}
-                    >
-                      {card.models.map((model) => (
-                        <option key={model.id} value={model.id}>
-                          {model.id}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                ) : null}
-                {card.models.length > 0 ? (
-                  <ul className={styles.helpText}>
-                    {card.models
-                      .filter((model) => model.id === card.modelDraft)
-                      .map((model) => (
-                        <li key={model.id}>
-                          Contexto: {formatTokens(model.metadata.contextWindowTokens)} · Saída
-                          máxima: {formatTokens(model.metadata.maxOutputTokens)} · Entrada:{' '}
-                          {formatPrice(model.metadata.inputPricePerMillionTokensUsd)} · Saída:{' '}
-                          {formatPrice(model.metadata.outputPricePerMillionTokensUsd)}
-                        </li>
-                      ))}
-                  </ul>
-                ) : null}
-                <button
-                  className={styles.primaryButton}
-                  disabled={card.busy || !card.modelDraft}
-                  onClick={() => void saveKey(provider)}
-                  type="button"
-                >
-                  Salvar
-                </button>
-                {current?.hasApiKey ? (
-                  <button
-                    disabled={card.busy}
-                    onClick={() => void setActive(provider, !current.isActive)}
-                    type="button"
-                  >
-                    {current.isActive ? 'Desativar' : 'Usar este provedor'}
-                  </button>
-                ) : null}
-              </div>
-              {card.message ? (
-                <p className={styles.status} role="status">
-                  {card.message}
-                </p>
-              ) : null}
-            </section>
-          );
-        })}
-      </div>
+      <label className={styles.field}>
+        Qual IA deseja configurar?
+        <select
+          onChange={(event) => setSelectedProvider(event.target.value as AiProvider)}
+          value={selectedProvider}
+        >
+          {PROVIDERS.map((provider) => (
+            <option key={provider} value={provider}>
+              {PROVIDER_LABELS[provider]}
+              {providers[provider]?.isActive ? ' — ativo' : ''}
+            </option>
+          ))}
+        </select>
+      </label>
+      <section className={styles.card}>
+        <h2>
+          {PROVIDER_LABELS[selectedProvider]}
+          {current?.isActive ? ' — ativo' : ''}
+        </h2>
+        {current?.lastValidationError ? (
+          <p className={styles.status} role="status">
+            Última validação falhou: {current.lastValidationError}
+          </p>
+        ) : null}
+        <div className={styles.formGrid}>
+          <label className={styles.field}>
+            Chave de API
+            <input
+              onChange={(event) =>
+                updateCard(selectedProvider, { apiKeyDraft: event.target.value })
+              }
+              placeholder={current?.hasApiKey ? `•••• ${current.keyPreview}` : 'Cole a chave aqui'}
+              type="password"
+              value={card.apiKeyDraft}
+            />
+          </label>
+          <p className={styles.helpText}>
+            {current?.hasApiKey
+              ? `Chave configurada termina em "${current.keyPreview}" — compare com a chave que você está prestes a colar antes de substituir. Deixe o campo em branco para manter a atual e só trocar o modelo. Modelo atual: ${current.model ?? '—'}.`
+              : 'Nenhuma chave configurada para este provedor ainda.'}
+          </p>
+          <button
+            className={styles.primaryButton}
+            disabled={card.busy || (!card.apiKeyDraft && !current?.hasApiKey)}
+            onClick={() => void validateKey(selectedProvider)}
+            type="button"
+          >
+            Validar e listar modelos
+          </button>
+          {card.models.length > 0 ? (
+            <label className={styles.field}>
+              Modelo
+              <select
+                onChange={(event) =>
+                  updateCard(selectedProvider, { modelDraft: event.target.value })
+                }
+                value={card.modelDraft}
+              >
+                {card.models.map((model) => (
+                  <option key={model.id} value={model.id}>
+                    {model.id}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          {card.models.length > 0 ? (
+            <ul className={styles.helpText}>
+              {card.models
+                .filter((model) => model.id === card.modelDraft)
+                .map((model) => (
+                  <li key={model.id}>
+                    Contexto: {formatTokens(model.metadata.contextWindowTokens)} · Saída máxima:{' '}
+                    {formatTokens(model.metadata.maxOutputTokens)} · Entrada:{' '}
+                    {formatPrice(model.metadata.inputPricePerMillionTokensUsd)} · Saída:{' '}
+                    {formatPrice(model.metadata.outputPricePerMillionTokensUsd)}
+                  </li>
+                ))}
+            </ul>
+          ) : null}
+          <button
+            className={styles.primaryButton}
+            disabled={card.busy || !card.modelDraft}
+            onClick={() => void saveKey(selectedProvider)}
+            type="button"
+          >
+            Salvar
+          </button>
+          {current?.hasApiKey ? (
+            <button
+              disabled={card.busy}
+              onClick={() => void setActive(selectedProvider, !current.isActive)}
+              type="button"
+            >
+              {current.isActive ? 'Desativar' : 'Usar este provedor'}
+            </button>
+          ) : null}
+        </div>
+        {card.message ? (
+          <p className={styles.status} role="status">
+            {card.message}
+          </p>
+        ) : null}
+      </section>
     </main>
   );
 }

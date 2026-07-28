@@ -27,7 +27,7 @@ describe('secret-cipher', () => {
     expect(() => decryptSecret(tampered.toString('base64'), 'secret')).toThrow();
   });
 
-  it('masks a key down to its last 4 characters', () => {
-    expect(maskedKeyPreview('sk-ant-abcdef1234')).toBe('1234');
+  it('masks a key down to its last 5 characters', () => {
+    expect(maskedKeyPreview('sk-ant-abcdef1234')).toBe('f1234');
   });
 });

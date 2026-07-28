@@ -33,7 +33,7 @@ export function decryptSecret(payload: string, secret: string): string {
   return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8');
 }
 
-/** Last 4 characters of the real key, for a masked UI preview like "•••• ab12". */
+/** Last 5 characters of the real key, for a masked UI preview like "•••• ab123". */
 export function maskedKeyPreview(plaintext: string): string {
-  return plaintext.slice(-4);
+  return plaintext.slice(-5);
 }
