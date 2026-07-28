@@ -100,6 +100,14 @@ export class SubscriptionsRepository {
     return withLimits!;
   }
 
+  /** Same query AdminGuard uses to gate the admin panel itself — reused here so checkEntitlement() can bypass plan limits for admins without duplicating this check at every call site. */
+  async isAdmin(userId: string): Promise<boolean> {
+    const [role] = await this.database.client<{ allowed: boolean }[]>`
+      SELECT true AS allowed FROM user_roles WHERE user_id = ${userId} AND role = 'admin'
+    `;
+    return role !== undefined;
+  }
+
   /** Fallback plan for users with no active paid subscription (área 6 gating). */
   async getDefaultPlan(): Promise<PlanWithLimits | null> {
     const [plan] = await this.database.client<PlanRow[]>`

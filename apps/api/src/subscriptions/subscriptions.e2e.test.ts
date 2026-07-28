@@ -140,6 +140,40 @@ describeDatabase('subscription plans database integration (área 6/7)', () => {
     expect(before[0]!.count).toBe(0);
   });
 
+  it('site admins bypass every plan limit through the real API, even one their own default plan denies outright', async () => {
+    const created = await app.inject({
+      headers: auth(admin),
+      method: 'POST',
+      payload: { isDefault: true, limits: [], name: 'Free D (sem partidas)', priceCents: 0 },
+      url: '/v1/admin/subscription-plans',
+    });
+    expect(created.statusCode, created.body).toBe(201);
+    createdPlanIds.push(created.json().id);
+
+    // A plain member has no active subscription, so they fall back to this
+    // default plan - which doesn't include games_per_day at all, so it's
+    // blocked outright (absent from a plan's limits = not granted, same
+    // rule already covered above for exercises_per_day/social_access).
+    const memberAttempt = await app.inject({
+      headers: auth(member),
+      method: 'POST',
+      payload: { botDifficulty: 'beginner', playerColor: 'white', timeControlCode: 'blitz-3-0' },
+      url: '/v1/matchmaking/bot-games',
+    });
+    expect(memberAttempt.statusCode, memberAttempt.body).toBe(403);
+
+    // The admin has the exact same (lack of) subscription, so the exact
+    // same default plan applies to them too - but admins bypass every
+    // plan limit regardless of what plan is attached to their account.
+    const adminAttempt = await app.inject({
+      headers: auth(admin),
+      method: 'POST',
+      payload: { botDifficulty: 'beginner', playerColor: 'white', timeControlCode: 'blitz-3-0' },
+      url: '/v1/matchmaking/bot-games',
+    });
+    expect(adminAttempt.statusCode, adminAttempt.body).toBe(201);
+  });
+
   it('rejects a duplicate payment ledger row for the same provider transaction id (idempotency)', async () => {
     const plan = await app.inject({
       headers: auth(admin),

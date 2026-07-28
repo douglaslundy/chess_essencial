@@ -97,8 +97,18 @@ export class SubscriptionsService {
    * "no subscription = unlimited" rule now that plans can gate real
    * features (área 6). If no plan is marked default (misconfiguration),
    * falls back to unrestricted rather than silently locking everyone out.
+   *
+   * Site admins always bypass every plan limit, regardless of whatever
+   * plan happens to be attached to their account (their stored plan is
+   * never touched just to grant this — the bypass lives here, not in the
+   * data). Centralized in this single method rather than at each of the
+   * ~12 call sites across games/exercises/lessons/matchmaking/social so
+   * there's exactly one place this rule can be gotten wrong.
    */
   async checkEntitlement(userId: string, featureKey: PlanFeatureKey): Promise<PlanFeatureUsage> {
+    if (await this.repository.isAdmin(userId)) {
+      return { allowed: true, featureKey, limit: null, used: 0 };
+    }
     const active = await this.repository.getActiveSubscriptionForUser(userId);
     const plan = active?.plan ?? (await this.repository.getDefaultPlan());
     if (!plan) return { allowed: true, featureKey, limit: null, used: 0 };

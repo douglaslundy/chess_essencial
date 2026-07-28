@@ -17,6 +17,7 @@ class FakeSubscriptionsRepository {
   active: ActiveSubscription | null = null;
   defaultPlan: PlanWithLimits | null = null;
   usage = 0;
+  isAdminUser = false;
   // Simulates whether activateOneTimePayment finds a matching `pending` row
   // — false reproduces the "already active" case a renewal notification
   // hits (bug 1's regression scenario).
@@ -46,6 +47,10 @@ class FakeSubscriptionsRepository {
     providerTransactionId: string;
     rawNotification: unknown;
   }[] = [];
+
+  async isAdmin() {
+    return this.isAdminUser;
+  }
 
   async getActiveSubscriptionForUser() {
     return this.active;
@@ -215,6 +220,31 @@ describe('SubscriptionsService.checkEntitlement', () => {
 
   it('blocks a feature the active plan does not include', async () => {
     const repository = new FakeSubscriptionsRepository();
+    repository.active = active(plan([]));
+    const service = new SubscriptionsService(repository as never, {} as never, {} as never);
+
+    const result = await service.checkEntitlement('user-1', 'games_per_day');
+
+    expect(result).toEqual({ allowed: false, featureKey: 'games_per_day', limit: 0, used: 0 });
+  });
+
+  it('admins bypass every plan limit, even a feature the active plan explicitly excludes', async () => {
+    const repository = new FakeSubscriptionsRepository();
+    repository.isAdminUser = true;
+    // Deliberately the most restrictive setup possible - no plan at all
+    // includes this feature - to prove the bypass short-circuits before
+    // any plan lookup happens, not just that it wins some tie-break.
+    repository.active = active(plan([]));
+    const service = new SubscriptionsService(repository as never, {} as never, {} as never);
+
+    const result = await service.checkEntitlement('admin-1', 'games_per_day');
+
+    expect(result).toEqual({ allowed: true, featureKey: 'games_per_day', limit: null, used: 0 });
+  });
+
+  it('ordinary users (not admins) remain subject to their plan as before', async () => {
+    const repository = new FakeSubscriptionsRepository();
+    repository.isAdminUser = false;
     repository.active = active(plan([]));
     const service = new SubscriptionsService(repository as never, {} as never, {} as never);
 
