@@ -425,3 +425,13 @@
     width: min(100%, calc(100dvh - 19rem));
   }
 }
+@media (max-height: 500px) and (orientation: landscape) {
+  /* A phone turned sideways has very little height to spare — the desktop/
+     portrait subtraction (19-20rem) would leave next to nothing, or a
+     negative value clamped to 0. There's little room for the heading/
+     controls either way in landscape, so the offset only needs to cover
+     the header bar itself. */
+  .guidedTraining .boardArea {
+    width: min(100%, calc(100dvh - 6rem));
+  }
+}
