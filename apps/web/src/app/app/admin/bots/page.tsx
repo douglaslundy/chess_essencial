@@ -57,10 +57,15 @@ export default function AdminBotsPage() {
   return (
     <main className="dashboardPage">
       <header className="pageHeader">
-        <h1>Bots sociais</h1>
+        <div>
+          <p className="eyebrow">Administração</p>
+          <h1>Bots sociais</h1>
+        </div>
         <p>Visão geral das contas-bot que povoam amizades, presença e partidas da plataforma.</p>
       </header>
-      <p role="status">{message}</p>
+      <p className="status" role="status">
+        {message}
+      </p>
       {stats ? (
         <div className="adminHubGrid">
           {tiles.map((tile) =>
@@ -87,15 +92,21 @@ export default function AdminBotsPage() {
       {onlineBots !== null ? (
         <section aria-label="Bots online agora" className="cardGrid">
           <h2>Bots online agora ({onlineBots.length})</h2>
-          <p role="status">{onlineMessage}</p>
-          <div className="adminUserTable" role="table">
+          <p className="status" role="status">
+            {onlineMessage}
+          </p>
+          <div className="adminUserTable" role="table" aria-label="Bots online agora">
+            <div className="adminUserRow adminUserTableHeader" role="row">
+              <span role="columnheader">Jogador</span>
+              <span role="columnheader">Rating alvo</span>
+            </div>
             {onlineBots.map((bot) => (
               <div className="adminUserRow" key={bot.userId} role="row">
-                <div>
+                <div role="cell">
                   <Avatar avatarUrl={bot.avatarUrl} name={bot.displayName} />
                   <strong>{bot.displayName}</strong> <span>@{bot.username}</span>
                 </div>
-                <span>{bot.targetRating} XE</span>
+                <span role="cell">{bot.targetRating} XE</span>
               </div>
             ))}
           </div>

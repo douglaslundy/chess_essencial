@@ -9,7 +9,7 @@
 .heading span,
 .card > span,
 .moduleCard header span {
-  color: #e5c56f;
+  color: var(--red);
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.08em;

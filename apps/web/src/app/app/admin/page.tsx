@@ -59,7 +59,10 @@ export default function AdminHubPage() {
   return (
     <main className="dashboardPage">
       <header className="pageHeader">
-        <h1>Administração</h1>
+        <div>
+          <p className="eyebrow">Painel administrativo</p>
+          <h1>Administração</h1>
+        </div>
         <p>Ferramentas restritas a administradores da plataforma.</p>
       </header>
       <div className="adminHubGrid">

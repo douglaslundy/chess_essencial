@@ -273,6 +273,7 @@ export default function AdminAiProvidersPage() {
           </button>
           {current?.hasApiKey ? (
             <button
+              className="adminActionButton"
               disabled={card.busy}
               onClick={() => void setActive(selectedProvider, !current.isActive)}
               type="button"

@@ -1,10 +1,11 @@
 'use client';
 
 import type { AdminUser, AdminUserRole, SubscriptionPlan } from '@xadrez/contracts';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Avatar } from '@/components/ui/avatar';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useDialogA11y } from '@/components/ui/dialog-a11y';
 import { api } from '@/lib/api/client';
 
 const statusLabels: Record<string, string> = {
@@ -73,6 +74,17 @@ export default function AdminUsersPage() {
   const [form, setForm] = useState<EditFormState | null>(null);
   const [editMessage, setEditMessage] = useState('');
   const [confirmingEdit, setConfirmingEdit] = useState(false);
+  const editCloseButtonRef = useRef<HTMLButtonElement>(null);
+
+  // The sensitive-change ConfirmDialog stacks on top of this one — only the
+  // topmost dialog should react to Escape, so this is "armed" only while
+  // that confirmation isn't showing.
+  useDialogA11y({
+    busy: busyId === editing?.id,
+    initialFocusRef: editCloseButtonRef,
+    onCancel: closeEdit,
+    open: editing !== null && !confirmingEdit,
+  });
 
   const load = useCallback(async () => {
     const token = window.localStorage.getItem('xadrez.access_token');
@@ -122,6 +134,11 @@ export default function AdminUsersPage() {
       const token = window.localStorage.getItem('xadrez.access_token');
       if (token) api.adminListSubscriptionPlans(token).then((list) => setPlans(list.items));
     }
+  }
+
+  function closeEdit() {
+    setEditing(null);
+    setForm(null);
   }
 
   function requestSaveEdit() {
@@ -176,7 +193,10 @@ export default function AdminUsersPage() {
   return (
     <main className="dashboardPage">
       <header className="pageHeader">
-        <h1>Usuários</h1>
+        <div>
+          <p className="eyebrow">Administração</p>
+          <h1>Usuários</h1>
+        </div>
         <p>{total} usuário(s). Excluir é reversível (soft-delete).</p>
       </header>
       <div className="adminSearch">
@@ -189,21 +209,28 @@ export default function AdminUsersPage() {
           Buscar
         </button>
       </div>
-      <p role="status">{message}</p>
+      <p className="status" role="status">
+        {message}
+      </p>
       <div className="adminUserTable" role="table" aria-label="Usuários">
+        <div className="adminUserRow adminUserTableHeader" role="row">
+          <span role="columnheader">Usuário</span>
+          <span role="columnheader">Status</span>
+          <span role="columnheader">Ações</span>
+        </div>
         {users.map((user) => (
           <div className="adminUserRow" role="row" key={user.id}>
-            <div>
+            <div role="cell">
               <Avatar avatarUrl={user.avatarUrl} name={user.displayName ?? user.username} />
               <strong>{user.username}</strong>
               {user.isAdmin ? <span className="adminBadge">admin</span> : null}
               {user.planName ? <span className="adminBadge">{user.planName}</span> : null}
               <span className="adminUserEmail">{user.email}</span>
             </div>
-            <span className={`adminStatus adminStatus-${user.status}`}>
+            <span className={`adminStatus adminStatus-${user.status}`} role="cell">
               {statusLabels[user.status] ?? user.status}
             </span>
-            <div className="adminUserActions">
+            <div className="adminUserActions" role="cell">
               <button disabled={busyId === user.id} onClick={() => openEdit(user)} type="button">
                 Editar
               </button>
@@ -267,10 +294,7 @@ export default function AdminUsersPage() {
         <div
           className="dialogBackdrop"
           onMouseDown={(event) => {
-            if (event.currentTarget === event.target && busyId !== editing.id) {
-              setEditing(null);
-              setForm(null);
-            }
+            if (event.currentTarget === event.target && busyId !== editing.id) closeEdit();
           }}
           role="presentation"
         >
@@ -284,23 +308,21 @@ export default function AdminUsersPage() {
                 aria-label="Fechar"
                 className="dialogClose"
                 disabled={busyId === editing.id}
-                onClick={() => {
-                  setEditing(null);
-                  setForm(null);
-                }}
+                onClick={closeEdit}
+                ref={editCloseButtonRef}
                 type="button"
               >
                 ×
               </button>
             </div>
-            <label>
+            <label className="adminFormField">
               Nome de exibição
               <input
                 onChange={(event) => setForm({ ...form, displayName: event.target.value })}
                 value={form.displayName}
               />
             </label>
-            <label>
+            <label className="adminFormField">
               E-mail
               <input
                 onChange={(event) => setForm({ ...form, email: event.target.value })}
@@ -308,7 +330,7 @@ export default function AdminUsersPage() {
                 value={form.email}
               />
             </label>
-            <label>
+            <label className="adminFormField">
               Plano
               <select
                 onChange={(event) => setForm({ ...form, planId: event.target.value })}
@@ -336,16 +358,13 @@ export default function AdminUsersPage() {
               ))}
             </fieldset>
             <p>Redefinição de senha não é feita por aqui — use o fluxo de recuperação de senha.</p>
-            {editMessage ? <p role="status">{editMessage}</p> : null}
+            {editMessage ? (
+              <p className="status" role="status">
+                {editMessage}
+              </p>
+            ) : null}
             <div className="dialogActions">
-              <button
-                disabled={busyId === editing.id}
-                onClick={() => {
-                  setEditing(null);
-                  setForm(null);
-                }}
-                type="button"
-              >
+              <button disabled={busyId === editing.id} onClick={closeEdit} type="button">
                 Cancelar
               </button>
               <button

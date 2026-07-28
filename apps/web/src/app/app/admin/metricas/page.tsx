@@ -42,10 +42,15 @@ export default function AdminMetricsPage() {
   return (
     <main className="dashboardPage">
       <header className="pageHeader">
-        <h1>Métricas da plataforma</h1>
+        <div>
+          <p className="eyebrow">Administração</p>
+          <h1>Métricas da plataforma</h1>
+        </div>
         <p>Visão geral de uso: usuários, partidas, exercícios, aulas, assinaturas e indicações.</p>
       </header>
-      <p role="status">{message}</p>
+      <p className="status" role="status">
+        {message}
+      </p>
       {metrics ? (
         <>
           <div className="adminHubGrid">

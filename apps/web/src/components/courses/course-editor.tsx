@@ -94,9 +94,11 @@ export function CourseEditor() {
   const lesson = parsed.success ? (parsed.data as InteractiveLesson) : null;
   return (
     <main className="courseEditorPage">
-      <header className="pageHeading">
-        <span className="eyebrow">CMS editorial</span>
-        <h1>Editor do curso</h1>
+      <header className="pageHeader">
+        <div>
+          <p className="eyebrow">Administração</p>
+          <h1>Editor do curso</h1>
+        </div>
         <p>Edite o schema da aula e confira o preview antes de versionar.</p>
       </header>
       <section className="courseEditorToolbar">
@@ -168,7 +170,9 @@ export function CourseEditor() {
           )}
         </article>
       </section>
-      <p role="status">{message}</p>
+      <p className="status" role="status">
+        {message}
+      </p>
     </main>
   );
 }

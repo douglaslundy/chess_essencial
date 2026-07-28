@@ -149,28 +149,28 @@ export default function AdminSubscriptionPlansPage() {
       </p>
 
       {plans.length > 0 ? (
-        <section className={styles.tableCard} aria-label="Planos existentes">
-          <div className={styles.planTableHeader}>
-            <span>Nome</span>
-            <span>Preço</span>
-            <span>Status</span>
-            <span>Recursos</span>
-            <span>Ações</span>
+        <section className={styles.tableCard} aria-label="Planos existentes" role="table">
+          <div className={styles.planTableHeader} role="row">
+            <span role="columnheader">Nome</span>
+            <span role="columnheader">Preço</span>
+            <span role="columnheader">Status</span>
+            <span role="columnheader">Recursos</span>
+            <span role="columnheader">Ações</span>
           </div>
           {plans.map((plan) => (
-            <div className={styles.planTableRow} key={plan.id}>
-              <span>{plan.name}</span>
-              <span>
+            <div className={styles.planTableRow} key={plan.id} role="row">
+              <span role="cell">{plan.name}</span>
+              <span role="cell">
                 {(plan.priceCents / 100).toLocaleString('pt-BR', {
                   style: 'currency',
                   currency: 'BRL',
                 })}
               </span>
-              <span>
+              <span role="cell">
                 {plan.status === 'active' ? 'Ativo' : 'Arquivado'}
                 {plan.isDefault ? ' · Padrão (grátis)' : ''}
               </span>
-              <small>
+              <small role="cell">
                 {plan.limits.length === 0
                   ? 'Nenhum'
                   : plan.limits
@@ -182,11 +182,15 @@ export default function AdminSubscriptionPlansPage() {
                       })
                       .join(' · ')}
               </small>
-              <div>
-                <button onClick={() => startEdit(plan)} type="button">
+              <div role="cell">
+                <button className="adminActionButton" onClick={() => startEdit(plan)} type="button">
                   Editar
                 </button>
-                <button onClick={() => void toggleStatus(plan)} type="button">
+                <button
+                  className="adminActionButton"
+                  onClick={() => void toggleStatus(plan)}
+                  type="button"
+                >
                   {plan.status === 'active' ? 'Arquivar' : 'Reativar'}
                 </button>
               </div>
@@ -263,7 +267,7 @@ export default function AdminSubscriptionPlansPage() {
             {editingId ? 'Salvar alterações' : 'Criar plano'}
           </button>
           {editingId ? (
-            <button onClick={startCreate} type="button">
+            <button className="adminActionButton" onClick={startCreate} type="button">
               Cancelar edição
             </button>
           ) : null}

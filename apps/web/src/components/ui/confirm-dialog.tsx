@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useId, useRef } from 'react';
+import { useId, useRef } from 'react';
+
+import { useDialogA11y } from './dialog-a11y';
 
 type ConfirmDialogProps = {
   busy?: boolean;
@@ -30,25 +32,8 @@ export function ConfirmDialog({
   const titleId = useId();
   const descriptionId = useId();
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
-  const onCancelRef = useRef(onCancel);
 
-  useEffect(() => {
-    onCancelRef.current = onCancel;
-  }, [onCancel]);
-
-  useEffect(() => {
-    if (!open) return;
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !busy) onCancelRef.current();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    cancelButtonRef.current?.focus();
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      previouslyFocused?.focus();
-    };
-  }, [busy, open]);
+  useDialogA11y({ busy, initialFocusRef: cancelButtonRef, onCancel, open });
 
   if (!open) return null;
 
