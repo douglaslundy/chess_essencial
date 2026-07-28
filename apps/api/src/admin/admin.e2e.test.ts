@@ -168,7 +168,7 @@ describeDatabase('admin user management database integration', () => {
 
   it('assigns a plan to a user directly, bypassing payment', async () => {
     const target = await createIdentity('plan-target@example.com', 'plan_target_user');
-    const [plan] = await database.client<{ id: string }[]>`
+    const [planA] = await database.client<{ id: string }[]>`
       INSERT INTO subscription_plans (name, slug, status, price_cents)
       VALUES ('Plano de Teste Admin', 'plano-teste-admin', 'active', 1990)
       RETURNING id
@@ -177,11 +177,39 @@ describeDatabase('admin user management database integration', () => {
     const granted = await app.inject({
       headers: auth(admin),
       method: 'PATCH',
-      payload: { planId: plan!.id },
+      payload: { planId: planA!.id },
       url: `/v1/admin/users/${target.userId}`,
     });
     expect(granted.statusCode, granted.body).toBe(200);
-    expect(granted.json()).toMatchObject({ planId: plan!.id, planName: 'Plano de Teste Admin' });
+    expect(granted.json()).toMatchObject({ planId: planA!.id, planName: 'Plano de Teste Admin' });
+
+    // Reassigning a user who already has an active plan straight to a
+    // DIFFERENT plan (not via null first) is the scenario the user
+    // reported as broken — asserted against the real DB row, not just the
+    // PATCH response, so this actually proves persistence rather than
+    // trusting an echoed request body.
+    const [planB] = await database.client<{ id: string }[]>`
+      INSERT INTO subscription_plans (name, slug, status, price_cents)
+      VALUES ('Plano de Teste Admin B', 'plano-teste-admin-b', 'active', 2990)
+      RETURNING id
+    `;
+    const reassigned = await app.inject({
+      headers: auth(admin),
+      method: 'PATCH',
+      payload: { planId: planB!.id },
+      url: `/v1/admin/users/${target.userId}`,
+    });
+    expect(reassigned.statusCode, reassigned.body).toBe(200);
+    expect(reassigned.json()).toMatchObject({
+      planId: planB!.id,
+      planName: 'Plano de Teste Admin B',
+    });
+
+    const activeRows = await database.client<{ planId: string }[]>`
+      SELECT plan_id AS "planId" FROM user_subscriptions
+       WHERE user_id = ${target.userId} AND status = 'active'
+    `;
+    expect(activeRows).toEqual([{ planId: planB!.id }]);
 
     const revoked = await app.inject({
       headers: auth(admin),
