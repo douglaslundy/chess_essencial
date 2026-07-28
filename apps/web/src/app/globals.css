@@ -3200,6 +3200,14 @@ input:focus-visible {
   gap: 0.7rem;
 }
 
+.stageCompletionBadge {
+  margin: 0;
+  text-align: center;
+  color: var(--gold);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
 .stageCompletionStats {
   display: flex;
   justify-content: space-between;

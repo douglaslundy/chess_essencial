@@ -27,6 +27,11 @@ export class LearningPathController {
     return this.learningPath.getProgress(request.auth.userId);
   }
 
+  @Get('badges')
+  badges(@Req() request: AuthenticatedRequest) {
+    return this.learningPath.listBadges(request.auth.userId);
+  }
+
   @Post('stages/:stageId/start')
   startStage(@Req() request: AuthenticatedRequest, @Param('stageId') stageId: string) {
     return this.learningPath.startStage(request.auth.userId, parseInput(idSchema, stageId));

@@ -1,5 +1,6 @@
 import type {
   CompleteLearningStageResult,
+  LearningBadge,
   LearningLevelDetail,
   LearningLevelStatus,
   LearningMap,
@@ -199,17 +200,21 @@ export class LearningPathService {
 
     const completion = await this.repository.getOrStartCompletion(userId, stageId);
     if (completion.status === 'completed') {
-      const [levelCompleted, worldCompleted] = await Promise.all([
+      const [levelCompleted, worldCompleted, progress] = await Promise.all([
         this.repository.isLevelFullyCompleted(userId, context.levelId),
         this.repository.isCapstoneLevel(context.levelId),
+        this.repository.getOrInitProgress(userId),
       ]);
       return {
         correctFirstTry: completion.attempts <= 1,
         hintsUsed: completion.hintsUsed,
         levelCompleted,
+        newBadges: [],
         stageId,
         status: 'completed',
+        streakDays: progress?.streakDays ?? 0,
         worldCompleted: levelCompleted && worldCompleted,
+        xpAwarded: 0,
       };
     }
 
@@ -239,13 +244,57 @@ export class LearningPathService {
       worldCompleted = isCapstone;
     }
 
+    // Gamificação (FASE 15 do spec): escopo modesto, atrelado a marcos reais
+    // já computados acima — nunca inventa progresso paralelo. XP: base fixa
+    // + bônus por acertar de primeira, nunca reconcedido (só nesta ramificação
+    // de "primeira conclusão da etapa", não no early-return acima).
+    const xpAwarded = 10 + (correctFirstTry ? 5 : 0);
+    await this.repository.addXp(userId, xpAwarded);
+    const streakDays = await this.repository.bumpStreak(userId);
+
+    const newBadges: Omit<LearningBadge, 'earnedAt'>[] = [];
+    const totalCompleted = await this.repository.countCompletedStages(userId);
+    if (totalCompleted === 1) {
+      const label = 'Primeiros passos';
+      if (await this.repository.awardBadge(userId, 'first_stage', label)) {
+        newBadges.push({ badgeKey: 'first_stage', label });
+      }
+    }
+    if (levelCompleted && (await this.repository.isLevelPerfectFirstTry(userId, context.levelId))) {
+      const label = 'Nível perfeito';
+      if (await this.repository.awardBadge(userId, 'perfect_level', label)) {
+        newBadges.push({ badgeKey: 'perfect_level', label });
+      }
+    }
+    if (worldCompleted) {
+      const worldTitle = await this.repository.getWorldTitle(context.worldId);
+      const badgeKey = `world_completed:${context.worldId}`;
+      const label = `Mundo concluído: ${worldTitle ?? '?'}`;
+      if (await this.repository.awardBadge(userId, badgeKey, label)) {
+        newBadges.push({ badgeKey, label });
+      }
+    }
+    if (streakDays >= 7) {
+      const label = 'Sequência de 7 dias';
+      if (await this.repository.awardBadge(userId, 'streak_7', label)) {
+        newBadges.push({ badgeKey: 'streak_7', label });
+      }
+    }
+
     return {
       correctFirstTry,
       hintsUsed: 0,
       levelCompleted,
+      newBadges,
       stageId,
       status: 'completed',
+      streakDays,
       worldCompleted,
+      xpAwarded,
     };
+  }
+
+  async listBadges(userId: string): Promise<LearningBadge[]> {
+    return this.repository.listBadges(userId);
   }
 }

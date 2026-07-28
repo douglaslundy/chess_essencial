@@ -340,6 +340,89 @@ export class LearningPathRepository {
     const structural = new Set(['challenge', 'lichess', 'classico']);
     return (row?.tags ?? []).filter((tag) => !structural.has(tag));
   }
+
+  async addXp(userId: string, amount: number): Promise<void> {
+    const sql = this.database.client;
+    await sql`
+      UPDATE user_learning_progress SET xp = xp + ${amount}, updated_at = now()
+       WHERE user_id = ${userId}
+    `;
+  }
+
+  /** Bumps the daily activity streak (UTC calendar day) and returns the new value. */
+  async bumpStreak(userId: string): Promise<number> {
+    const sql = this.database.client;
+    const [row] = await sql<{ streakDays: number }[]>`
+      UPDATE user_learning_progress
+         SET streak_days = CASE
+               WHEN last_activity_date = current_date THEN streak_days
+               WHEN last_activity_date = current_date - 1 THEN streak_days + 1
+               ELSE 1
+             END,
+             last_activity_date = current_date,
+             updated_at = now()
+       WHERE user_id = ${userId}
+       RETURNING streak_days AS "streakDays"
+    `;
+    return row?.streakDays ?? 0;
+  }
+
+  async countCompletedStages(userId: string): Promise<number> {
+    const sql = this.database.client;
+    const [row] = await sql<{ count: number }[]>`
+      SELECT count(*)::int AS count FROM user_stage_completions
+       WHERE user_id = ${userId} AND status = 'completed'
+    `;
+    return row?.count ?? 0;
+  }
+
+  /** True when every completed stage in this level was solved on the first try. */
+  async isLevelPerfectFirstTry(userId: string, levelId: string): Promise<boolean> {
+    const sql = this.database.client;
+    const [row] = await sql<{ allPerfect: boolean }[]>`
+      SELECT bool_and(usc.correct_first_try IS TRUE) AS "allPerfect"
+        FROM learning_stages ls
+        JOIN user_stage_completions usc
+          ON usc.stage_id = ls.id AND usc.user_id = ${userId} AND usc.status = 'completed'
+       WHERE ls.level_id = ${levelId}
+    `;
+    return row?.allPerfect ?? false;
+  }
+
+  async getWorldTitle(worldId: string): Promise<string | null> {
+    const sql = this.database.client;
+    const [row] = await sql<{ title: string }[]>`
+      SELECT title FROM learning_worlds WHERE id = ${worldId}
+    `;
+    return row?.title ?? null;
+  }
+
+  /** Idempotent: returns true only when this call newly granted the badge. */
+  async awardBadge(userId: string, badgeKey: string, label: string): Promise<boolean> {
+    const sql = this.database.client;
+    const result = await sql`
+      INSERT INTO user_learning_badges (user_id, badge_key, label)
+      VALUES (${userId}, ${badgeKey}, ${label})
+      ON CONFLICT (user_id, badge_key) DO NOTHING
+    `;
+    return result.count > 0;
+  }
+
+  async listBadges(userId: string): Promise<BadgeRow[]> {
+    const sql = this.database.client;
+    return sql<BadgeRow[]>`
+      SELECT badge_key AS "badgeKey", label, earned_at AS "earnedAt"
+        FROM user_learning_badges
+       WHERE user_id = ${userId}
+       ORDER BY earned_at DESC
+    `;
+  }
+}
+
+export interface BadgeRow {
+  badgeKey: string;
+  earnedAt: string;
+  label: string;
 }
 
 export interface StageContextRow {

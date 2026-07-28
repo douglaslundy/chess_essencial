@@ -44,6 +44,7 @@ import type {
   ExerciseTheme,
   ExerciseTrainingView,
   CompleteLearningStageResult,
+  LearningBadge,
   LearningLevelDetail,
   LearningMap,
   LearningProgress,
@@ -403,6 +404,7 @@ export const api = {
     request<LearningLevelDetail>(`/learning-path/levels/${levelId}`, token),
   getLearningProgress: (token: string) =>
     request<LearningProgress>('/learning-path/progress', token),
+  getLearningBadges: (token: string) => request<LearningBadge[]>('/learning-path/badges', token),
   startLearningStage: (stageId: string, token: string) =>
     request<StartLearningStageResult>(`/learning-path/stages/${stageId}/start`, token, {
       method: 'POST',

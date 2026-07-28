@@ -61,13 +61,22 @@ export const startLearningStageResultSchema = z.object({
   type: learningStageTypeSchema,
 });
 
+export const learningBadgeSchema = z.object({
+  badgeKey: z.string(),
+  earnedAt: z.string().datetime(),
+  label: z.string(),
+});
+
 export const completeLearningStageResultSchema = z.object({
   correctFirstTry: z.boolean(),
   hintsUsed: z.number().int(),
   levelCompleted: z.boolean(),
+  newBadges: z.array(learningBadgeSchema.omit({ earnedAt: true })),
   stageId: z.string().uuid(),
   status: learningStageStatusSchema,
+  streakDays: z.number().int(),
   worldCompleted: z.boolean(),
+  xpAwarded: z.number().int(),
 });
 
 export type LearningStageType = z.infer<typeof learningStageTypeSchema>;
@@ -81,3 +90,4 @@ export type LearningLevelDetail = z.infer<typeof learningLevelDetailSchema>;
 export type LearningProgress = z.infer<typeof learningProgressSchema>;
 export type StartLearningStageResult = z.infer<typeof startLearningStageResultSchema>;
 export type CompleteLearningStageResult = z.infer<typeof completeLearningStageResultSchema>;
+export type LearningBadge = z.infer<typeof learningBadgeSchema>;

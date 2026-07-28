@@ -325,6 +325,7 @@ export {
 } from './safety.js';
 export {
   completeLearningStageResultSchema,
+  learningBadgeSchema,
   learningLevelDetailSchema,
   learningLevelStatusSchema,
   learningLevelSummarySchema,
@@ -336,6 +337,7 @@ export {
   learningWorldSummarySchema,
   startLearningStageResultSchema,
   type CompleteLearningStageResult,
+  type LearningBadge,
   type LearningLevelDetail,
   type LearningLevelStatus,
   type LearningLevelSummary,

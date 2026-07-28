@@ -1,6 +1,12 @@
 'use client';
 
-import type { MyReferralInfo, PublicUser, UpdateMeInput } from '@xadrez/contracts';
+import type {
+  LearningBadge,
+  LearningProgress,
+  MyReferralInfo,
+  PublicUser,
+  UpdateMeInput,
+} from '@xadrez/contracts';
 import { useEffect, useState, type FormEvent } from 'react';
 
 import { api } from '@/lib/api/client';
@@ -44,6 +50,8 @@ export default function MyDataPage() {
     useVoicePreference();
   const [voiceOptions, setVoiceOptions] = useState<VoiceOption[]>([]);
   const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
+  const [learningProgress, setLearningProgress] = useState<LearningProgress | null>(null);
+  const [badges, setBadges] = useState<LearningBadge[]>([]);
 
   useEffect(() => {
     listVoiceOptions()
@@ -73,6 +81,14 @@ export default function MyDataPage() {
           setReferral(info);
           setReferralLink(`${window.location.origin}/entrar?ref=${info.code}`);
         })
+        .catch(() => undefined);
+      api
+        .getLearningProgress(token)
+        .then(setLearningProgress)
+        .catch(() => undefined);
+      api
+        .getLearningBadges(token)
+        .then(setBadges)
         .catch(() => undefined);
     });
   }, []);
@@ -321,6 +337,43 @@ export default function MyDataPage() {
             />{' '}
             Narrar os lances por voz no resumo/revisão pós-partida
           </label>
+        </section>
+      ) : null}
+      {learningProgress ? (
+        <section className={styles.formCard} aria-label="Jornada de Aprendizagem">
+          <h2>Jornada de Aprendizagem</h2>
+          <div className={styles.formGrid}>
+            <label className={styles.field}>
+              Pontos de experiência
+              <input disabled value={`${learningProgress.xp} XP`} />
+            </label>
+            <label className={styles.field}>
+              Sequência de dias
+              <input
+                disabled
+                value={
+                  learningProgress.streakDays === 1
+                    ? '1 dia'
+                    : `${learningProgress.streakDays} dias`
+                }
+              />
+            </label>
+          </div>
+          {badges.length > 0 ? (
+            <ul className={styles.formGrid} aria-label="Conquistas">
+              {badges.map((badge) => (
+                <li key={badge.badgeKey}>
+                  🏆 {badge.label}
+                  <br />
+                  <small>{new Date(badge.earnedAt).toLocaleDateString('pt-BR')}</small>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className={styles.status} role="status">
+              Nenhuma conquista ainda — resolva etapas em Treinamento para ganhar as primeiras.
+            </p>
+          )}
         </section>
       ) : null}
       {referral ? (

@@ -304,8 +304,16 @@ export function StageRunner({ stageId }: { stageId: string }) {
       ) : null}
       {phase === 'solved' && result ? (
         <section className="stageCompletionCard">
+          {result.newBadges.length > 0 ? (
+            <p className="stageCompletionBadge" role="status">
+              {result.newBadges.map((badge) => `🏆 Nova conquista: ${badge.label}`).join(' · ')}
+            </p>
+          ) : null}
           <div className="stageCompletionStats">
-            <span>{score !== null ? `${score} pontos` : '—'}</span>
+            <span>
+              {score !== null ? `${score} pontos` : '—'}
+              {result.xpAwarded > 0 ? ` · +${result.xpAwarded} XP` : ''}
+            </span>
             <span>
               {formatElapsed(elapsedMs)} · {attemptCount}{' '}
               {attemptCount === 1 ? 'tentativa' : 'tentativas'}
