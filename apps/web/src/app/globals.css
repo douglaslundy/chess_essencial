@@ -1284,6 +1284,160 @@ input:focus-visible {
   opacity: 0.4;
 }
 
+.plansStatus {
+  color: var(--muted);
+}
+.plansCurrentBanner {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold);
+  border-radius: 0.6rem;
+  background: rgba(216, 182, 108, 0.08);
+  padding: 0.75rem 1rem;
+  color: var(--text);
+}
+.plansGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+  align-items: stretch;
+}
+.planCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1.6rem 1.4rem 1.4rem;
+  border: 1px solid var(--border);
+  border-radius: 1.1rem;
+  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 100%);
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.planCard:hover {
+  transform: translateY(-3px);
+  border-color: rgba(216, 182, 108, 0.4);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+.planCard--current {
+  border-color: var(--gold);
+  box-shadow:
+    0 0 0 1px var(--gold),
+    0 12px 30px rgba(0, 0, 0, 0.35);
+}
+.planBadge {
+  position: absolute;
+  top: -0.65rem;
+  right: 1.2rem;
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  background: var(--gold);
+  color: #1c1917;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.planBadge--free {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+}
+.planName {
+  margin: 0;
+  font-size: var(--font-card-title);
+  color: var(--text);
+}
+.planPrice {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  margin: 0;
+}
+.planPriceValue {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text);
+}
+.planPricePeriod {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.planBillingToggle {
+  display: inline-flex;
+  gap: 0.15rem;
+  width: fit-content;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--surface);
+  padding: 0.2rem;
+}
+.planBillingToggle button {
+  border: 0;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--muted);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.planBillingToggle button[aria-pressed='true'] {
+  background: var(--gold);
+  color: #1c1917;
+}
+.planFeatureList {
+  display: grid;
+  flex: 1;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.planFeatureList li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  color: var(--text);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+.planFeatureCheck {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 999px;
+  background: rgba(22, 163, 74, 0.15);
+  color: var(--success);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+.planCta {
+  margin-top: auto;
+  border: 0;
+  border-radius: 0.6rem;
+  padding: 0.8rem 1rem;
+  background: var(--gold);
+  color: #1c1917;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.planCta:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.planCta--current {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+}
+
 .adminHubGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));

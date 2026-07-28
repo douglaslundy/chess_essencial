@@ -85,9 +85,11 @@ export default function PlansPage() {
         <h1>Planos</h1>
         <p>Assine um plano para liberar mais acesso diário aos recursos da plataforma.</p>
       </header>
-      <p role="status">{message}</p>
+      <p className="plansStatus" role="status">
+        {message}
+      </p>
       {mySubscription?.plan ? (
-        <p role="status">
+        <p className="plansCurrentBanner" role="status">
           Seu plano atual: <strong>{mySubscription.plan.name}</strong>
           {mySubscription.billingPeriod === 'annual' ? ' (anual)' : ''}
           {mySubscription.currentPeriodEnd
@@ -95,61 +97,80 @@ export default function PlansPage() {
             : ''}
         </p>
       ) : null}
-      <div className="adminHubGrid">
+      <div className="plansGrid">
         {plans.map((plan) => {
           const period = billingPeriods[plan.id] ?? 'monthly';
           const hasAnnual = plan.annualPriceCents !== null;
+          const isCurrent = mySubscription?.plan?.id === plan.id;
+          const displayedPriceCents =
+            period === 'annual' && hasAnnual ? plan.annualPriceCents! : plan.priceCents;
           return (
-            <div className="adminHubCard" key={plan.id}>
-              <strong>{plan.name}</strong>
+            <article className={`planCard${isCurrent ? ' planCard--current' : ''}`} key={plan.id}>
+              {isCurrent ? (
+                <span className="planBadge">Seu plano atual</span>
+              ) : plan.isDefault ? (
+                <span className="planBadge planBadge--free">Gratuito</span>
+              ) : null}
+              <h2 className="planName">{plan.name}</h2>
+              <p className="planPrice">
+                <span className="planPriceValue">{formatPrice(displayedPriceCents)}</span>
+                <span className="planPricePeriod">/{period === 'annual' ? 'ano' : 'mês'}</span>
+              </p>
               {hasAnnual ? (
-                <div role="radiogroup" aria-label={`Periodicidade — ${plan.name}`}>
-                  <label>
-                    <input
-                      checked={period === 'monthly'}
-                      name={`billing-${plan.id}`}
-                      onChange={() =>
-                        setBillingPeriods((current) => ({ ...current, [plan.id]: 'monthly' }))
-                      }
-                      type="radio"
-                    />{' '}
-                    Mensal — {formatPrice(plan.priceCents)}/mês
-                  </label>
-                  <label>
-                    <input
-                      checked={period === 'annual'}
-                      name={`billing-${plan.id}`}
-                      onChange={() =>
-                        setBillingPeriods((current) => ({ ...current, [plan.id]: 'annual' }))
-                      }
-                      type="radio"
-                    />{' '}
-                    Anual (pagamento único) — {formatPrice(plan.annualPriceCents!)}/ano
-                  </label>
+                <div
+                  aria-label={`Periodicidade — ${plan.name}`}
+                  className="planBillingToggle"
+                  role="group"
+                >
+                  <button
+                    aria-pressed={period === 'monthly'}
+                    onClick={() =>
+                      setBillingPeriods((current) => ({ ...current, [plan.id]: 'monthly' }))
+                    }
+                    type="button"
+                  >
+                    Mensal
+                  </button>
+                  <button
+                    aria-pressed={period === 'annual'}
+                    onClick={() =>
+                      setBillingPeriods((current) => ({ ...current, [plan.id]: 'annual' }))
+                    }
+                    type="button"
+                  >
+                    Anual
+                  </button>
                 </div>
-              ) : (
-                <span>{formatPrice(plan.priceCents)} / mês</span>
-              )}
-              <ul>
+              ) : null}
+              <ul className="planFeatureList">
                 {plan.limits.map((limit) => {
                   const label =
                     planFeatureCatalog.find((feature) => feature.key === limit.featureKey)?.label ??
                     limit.featureKey;
                   return (
                     <li key={limit.featureKey}>
-                      {label}: {limit.dailyLimit === 0 ? 'ilimitado' : `${limit.dailyLimit}/dia`}
+                      <span aria-hidden="true" className="planFeatureCheck">
+                        ✓
+                      </span>
+                      <span>
+                        {label} —{' '}
+                        <strong>
+                          {limit.dailyLimit === 0 ? 'ilimitado' : `${limit.dailyLimit}/dia`}
+                        </strong>
+                      </span>
                     </li>
                   );
                 })}
               </ul>
               <button
-                disabled={busyPlanId === plan.id || mySubscription?.plan?.id === plan.id}
+                className={`planCta${isCurrent ? ' planCta--current' : ''}`}
+                disabled={busyPlanId === plan.id || isCurrent}
                 onClick={() => void subscribe(plan.id)}
                 type="button"
               >
-                {mySubscription?.plan?.id === plan.id ? 'Plano atual' : 'Assinar'}
+                {isCurrent ? 'Plano atual' : 'Assinar'}
               </button>
-            </div>
+            </article>
           );
         })}
       </div>
