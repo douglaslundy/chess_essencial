@@ -286,6 +286,16 @@ export class GamesGateway
    */
   private broadcast(gameId: string, event: string, data: unknown) {
     this.broadcastLocal(gameId, event, data);
+    // Skip entirely rather than let ioredis queue the command while the
+    // shared client is disconnected/reconnecting: a relay message delivered
+    // late (once Redis comes back) would be stale for a realtime game
+    // anyway, and every queued command from a disconnected client gets
+    // flushed together as a single batch once the connection gives up -
+    // that batched rejection was leaking past this .catch() as a genuine
+    // unhandled rejection in environments with no Redis at all (some CI
+    // jobs, this sandbox), intermittently failing whichever e2e test file
+    // happened to be running when the batch fired.
+    if (this.redis.client.status !== 'ready') return;
     const payload: GameEventMessage = { data, event, gameId, originInstanceId: this.instanceId };
     this.redis.client
       .publish(GAME_EVENTS_CHANNEL, JSON.stringify(payload))

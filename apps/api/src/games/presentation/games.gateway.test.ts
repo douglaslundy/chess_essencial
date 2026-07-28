@@ -35,6 +35,7 @@ function fakeRedisService() {
         subscribe: vi.fn().mockResolvedValue(undefined),
       }),
       publish,
+      status: 'ready',
     },
   };
 }
