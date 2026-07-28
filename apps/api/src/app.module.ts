@@ -12,6 +12,7 @@ import { FeedModule } from './feed/feed.module.js';
 import { GamesModule } from './games/games.module.js';
 import { HealthController } from './health/health.controller.js';
 import { HealthService } from './health/health.service.js';
+import { LearningPathModule } from './learning-path/learning-path.module.js';
 import { LessonRuntimeModule } from './lesson-runtime/lesson-runtime.module.js';
 import { MatchmakingModule } from './matchmaking/matchmaking.module.js';
 import { MessagesModule } from './messages/messages.module.js';
@@ -35,6 +36,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module.js';
     ExercisesModule,
     FeedModule,
     GamesModule,
+    LearningPathModule,
     LessonRuntimeModule,
     MatchmakingModule,
     MessagesModule,

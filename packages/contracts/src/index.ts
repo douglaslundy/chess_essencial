@@ -323,3 +323,23 @@ export {
   type ReportReceipt,
   type UpdatePrivacyInput,
 } from './safety.js';
+export {
+  learningLevelDetailSchema,
+  learningLevelStatusSchema,
+  learningLevelSummarySchema,
+  learningMapSchema,
+  learningProgressSchema,
+  learningStageStatusSchema,
+  learningStageSummarySchema,
+  learningStageTypeSchema,
+  learningWorldSummarySchema,
+  type LearningLevelDetail,
+  type LearningLevelStatus,
+  type LearningLevelSummary,
+  type LearningMap,
+  type LearningProgress,
+  type LearningStageStatus,
+  type LearningStageSummary,
+  type LearningStageType,
+  type LearningWorldSummary,
+} from './learning-path.js';
