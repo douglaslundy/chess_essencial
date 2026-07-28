@@ -2992,7 +2992,16 @@ input:focus-visible {
 /* Jornada de Aprendizagem */
 
 .worldSection {
-  margin-bottom: 2.5rem;
+  margin-bottom: 3rem;
+}
+
+.worldSectionHeading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .worldSection h2 {
@@ -3001,51 +3010,134 @@ input:focus-visible {
   margin-bottom: 0.2rem;
 }
 
-.worldSection > p {
+.worldSection > div > p {
   color: var(--muted);
   margin-top: 0;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
+}
+
+.worldProgress {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+  min-width: 8rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.worldProgressTrack {
+  width: 100%;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: var(--surface-2, #19191f);
+  overflow: hidden;
+}
+
+.worldProgressFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--gold, #d8b66c);
+  transition: width 0.4s ease;
+}
+
+/* The winding path: an SVG connector line sits behind an absolutely
+   positioned column of nodes, both sharing the same 0-100 (x%) / row-index
+   (y) coordinate space set up in learning-map.tsx, so no pixel measurement
+   is needed for them to line up. --path-rows/--row/--x are set inline per
+   world/node from real data (level count and each node's computed wave
+   position) — nothing here is hardcoded per world. */
+.levelPathWrap {
+  --row-height: 6.5rem;
+  --node-size: 3.4rem;
+  position: relative;
+  width: 100%;
+  height: calc(var(--path-rows) * var(--row-height) + var(--node-size) + 2.5rem);
+}
+
+.levelPathLine {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.levelPathLine path {
+  stroke: var(--border);
+  stroke-width: 3;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
 }
 
 .levelPath {
   list-style: none;
   margin: 0;
-  padding: 0 0 0 1.5rem;
-  border-left: 0.2rem solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 1.1rem;
+  padding: 0;
+  position: relative;
 }
 
-.levelPathItem:nth-child(even) {
-  margin-left: 2rem;
+.levelPathItem {
+  position: absolute;
+  top: calc(var(--row) * var(--row-height));
+  left: var(--x);
+  transform: translateX(-50%);
+  width: 8.5rem;
+  text-align: center;
 }
 
 .levelNodeLink {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.9rem;
+  gap: 0.5rem;
   text-decoration: none;
   color: var(--text);
-  width: fit-content;
 }
 
 .levelNodeLink--disabled {
   cursor: default;
-  opacity: 0.55;
+  opacity: 0.5;
+}
+
+.levelNodeLink--current .levelNode {
+  animation: levelNodePulse 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .levelNodeLink--current .levelNode {
+    animation: none;
+  }
+}
+
+@keyframes levelNodePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0.3rem rgba(216, 182, 108, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 0.55rem rgba(216, 182, 108, 0.12);
+  }
 }
 
 .levelNode {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.6rem;
-  height: 2.6rem;
-  min-width: 2.6rem;
+  width: var(--node-size, 3.4rem);
+  height: var(--node-size, 3.4rem);
+  min-width: var(--node-size, 3.4rem);
   border-radius: 999px;
-  font-size: 1.2rem;
+  font-size: 1.35rem;
   border: 0.15rem solid var(--border);
   background: var(--surface);
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.levelNodeLink:not(.levelNodeLink--disabled):hover .levelNode {
+  transform: translateY(-0.15rem);
 }
 
 .levelNode--completed {
@@ -3068,11 +3160,26 @@ input:focus-visible {
   display: flex;
   flex-direction: column;
   font-weight: 600;
+  font-size: 0.85rem;
+  line-height: 1.25;
 }
 
 .levelNodeLabel small {
   color: var(--muted);
   font-weight: 400;
+}
+
+@media (max-width: 560px) {
+  .levelPathWrap {
+    --row-height: 5.5rem;
+    --node-size: 2.9rem;
+  }
+  .levelPathItem {
+    width: 6.5rem;
+  }
+  .levelNodeLabel {
+    font-size: 0.75rem;
+  }
 }
 
 .stageList {
