@@ -144,6 +144,21 @@ export default function AdminAiProvidersPage() {
     }
   }
 
+  async function testKey(provider: AiProvider) {
+    const token = window.localStorage.getItem('xadrez.access_token');
+    if (!token) return;
+    updateCard(provider, { busy: true, message: 'Testando conexão…' });
+    try {
+      const { generatedText } = await api.adminTestAiProviderKey(provider, token);
+      updateCard(provider, { busy: false, message: `IA respondeu: "${generatedText}"` });
+    } catch (error) {
+      updateCard(provider, {
+        busy: false,
+        message: error instanceof Error ? error.message : 'Falha ao testar a conexão.',
+      });
+    }
+  }
+
   async function setActive(provider: AiProvider, isActive: boolean) {
     const token = window.localStorage.getItem('xadrez.access_token');
     if (!token) return;
@@ -183,20 +198,37 @@ export default function AdminAiProvidersPage() {
       <p className={styles.status} role="status">
         {loadMessage}
       </p>
-      <label className={styles.field}>
-        Qual IA deseja configurar?
-        <select
-          onChange={(event) => setSelectedProvider(event.target.value as AiProvider)}
-          value={selectedProvider}
-        >
-          {PROVIDERS.map((provider) => (
-            <option key={provider} value={provider}>
-              {PROVIDER_LABELS[provider]}
-              {providers[provider]?.isActive ? ' — ativo' : ''}
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className={styles.inlineFieldRow}>
+        <label className={styles.field}>
+          Qual IA deseja configurar?
+          <select
+            onChange={(event) => setSelectedProvider(event.target.value as AiProvider)}
+            value={selectedProvider}
+          >
+            {PROVIDERS.map((provider) => (
+              <option key={provider} value={provider}>
+                {PROVIDER_LABELS[provider]}
+                {providers[provider]?.isActive ? ' — ativo' : ''}
+              </option>
+            ))}
+          </select>
+        </label>
+        {card.models.length > 0 ? (
+          <label className={styles.field}>
+            Modelo
+            <select
+              onChange={(event) => updateCard(selectedProvider, { modelDraft: event.target.value })}
+              value={card.modelDraft}
+            >
+              {card.models.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.id}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+      </div>
       <section className={styles.card}>
         <h2>
           {PROVIDER_LABELS[selectedProvider]}
@@ -228,27 +260,11 @@ export default function AdminAiProvidersPage() {
             className={styles.primaryButton}
             disabled={card.busy || (!card.apiKeyDraft && !current?.hasApiKey)}
             onClick={() => void validateKey(selectedProvider)}
+            style={{ alignSelf: 'start' }}
             type="button"
           >
             Validar e listar modelos
           </button>
-          {card.models.length > 0 ? (
-            <label className={styles.field}>
-              Modelo
-              <select
-                onChange={(event) =>
-                  updateCard(selectedProvider, { modelDraft: event.target.value })
-                }
-                value={card.modelDraft}
-              >
-                {card.models.map((model) => (
-                  <option key={model.id} value={model.id}>
-                    {model.id}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
           {card.models.length > 0 ? (
             <ul className={styles.helpText}>
               {card.models
@@ -279,6 +295,16 @@ export default function AdminAiProvidersPage() {
               type="button"
             >
               {current.isActive ? 'Desativar' : 'Usar este provedor'}
+            </button>
+          ) : null}
+          {current?.hasApiKey ? (
+            <button
+              className="adminActionButton"
+              disabled={card.busy}
+              onClick={() => void testKey(selectedProvider)}
+              type="button"
+            >
+              Testar
             </button>
           ) : null}
         </div>
