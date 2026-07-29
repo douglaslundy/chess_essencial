@@ -20,6 +20,7 @@
 ### Task 1: Contract schema + OpenAPI spec for the test endpoint
 
 **Files:**
+
 - Modify: `packages/contracts/src/ai-providers.ts`
 - Modify: `packages/contracts/src/index.ts`
 - Modify: `api/openapi.yaml`
@@ -27,6 +28,7 @@
 - Modify: `packages/sdk/src/generated/openapi.ts` (regenerated, not hand-edited)
 
 **Interfaces:**
+
 - Produces: `aiProviderTestResultSchema` (Zod) and `AiProviderTestResult` (`{ generatedText: string }`) — Task 2 (backend service) and Task 4 (frontend client) both import `AiProviderTestResult` from `@xadrez/contracts`.
 
 - [ ] **Step 1: Add the schema to `packages/contracts/src/ai-providers.ts`**
@@ -59,31 +61,36 @@ Expected: no errors.
 Add a new path entry right after the existing `/admin/ai-providers/{provider}/models` block (before `/admin/ai-providers/{provider}:`):
 
 ```yaml
-  /admin/ai-providers/{provider}/test:
-    post:
-      summary: Make a real completion call with the already-saved key, to confirm it works (admin only)
-      operationId: adminTestAiProviderKey
-      parameters:
-        - {name: provider, in: path, required: true, schema: {type: string, enum: [anthropic, openai, gemini]}}
-      responses:
-        '200':
-          description: The literal text the model generated
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/AiProviderTestResult'}
-        '400': {$ref: '#/components/responses/Problem'}
-        '401': {$ref: '#/components/responses/Problem'}
-        '403': {$ref: '#/components/responses/Problem'}
+/admin/ai-providers/{provider}/test:
+  post:
+    summary: Make a real completion call with the already-saved key, to confirm it works (admin only)
+    operationId: adminTestAiProviderKey
+    parameters:
+      - {
+          name: provider,
+          in: path,
+          required: true,
+          schema: { type: string, enum: [anthropic, openai, gemini] },
+        }
+    responses:
+      '200':
+        description: The literal text the model generated
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AiProviderTestResult' }
+      '400': { $ref: '#/components/responses/Problem' }
+      '401': { $ref: '#/components/responses/Problem' }
+      '403': { $ref: '#/components/responses/Problem' }
 ```
 
 Add a new schema right after the existing `AiProviderModelList:` schema (in `components/schemas`):
 
 ```yaml
-    AiProviderTestResult:
-      type: object
-      required: [generatedText]
-      properties:
-        generatedText: {type: string}
+AiProviderTestResult:
+  type: object
+  required: [generatedText]
+  properties:
+    generatedText: { type: string }
 ```
 
 - [ ] **Step 5: Regenerate the web and SDK OpenAPI clients**
@@ -105,10 +112,12 @@ git commit -m "feat(contracts): add AiProviderTestResult schema and the test end
 ### Task 2: Backend — `AiProvidersService.test()` (TDD)
 
 **Files:**
+
 - Modify: `apps/api/src/ai-providers/ai-providers.service.ts`
 - Test: `apps/api/src/ai-providers/ai-providers.service.test.ts`
 
 **Interfaces:**
+
 - Consumes: `aiProviderTestResultSchema`'s inferred type `AiProviderTestResult` (Task 1); `callLlm(config: {apiKey, model, provider}, system: string, userMessage: string): Promise<string>` and `class LlmRequestError extends Error` from `apps/api/src/games/narration/llm-client.ts` (both already exist, unchanged); the existing private `AiProvidersService.resolvePlainApiKey(provider, row, apiKey?)` (already exists at `ai-providers.service.ts:110`, unchanged) and `AiProvidersRepository.get(provider)` (already exists, unchanged).
 - Produces: `AiProvidersService.test(provider: AiProvider): Promise<AiProviderTestResult>` — Task 3 (controller) calls this exact method/signature.
 
@@ -127,7 +136,7 @@ import { callLlm, LlmRequestError } from '../games/narration/llm-client.js';
 const mockedCallLlm = vi.mocked(callLlm);
 ```
 
-Add this import and helper right after the `mockedCallLlm` declaration above — real AES-256-GCM ciphertext is needed for the two tests below where `callLlm` is expected to actually run (`resolvePlainApiKey` must decrypt successfully first), the same way the "no longer decryptable" test elsewhere in this file uses a deliberately *invalid* ciphertext (`'not-real-ciphertext'`) to prove the opposite case:
+Add this import and helper right after the `mockedCallLlm` declaration above — real AES-256-GCM ciphertext is needed for the two tests below where `callLlm` is expected to actually run (`resolvePlainApiKey` must decrypt successfully first), the same way the "no longer decryptable" test elsewhere in this file uses a deliberately _invalid_ ciphertext (`'not-real-ciphertext'`) to prove the opposite case:
 
 ```typescript
 import { encryptSecret } from '../common/crypto/secret-cipher.js';
@@ -291,10 +300,12 @@ git commit -m "feat(ai-providers): add AiProvidersService.test() for a real end-
 ### Task 3: Backend — controller endpoint + e2e coverage
 
 **Files:**
+
 - Modify: `apps/api/src/ai-providers/ai-providers.controller.ts`
 - Modify: `apps/api/src/ai-providers/ai-providers.e2e.test.ts`
 
 **Interfaces:**
+
 - Consumes: `AiProvidersService.test(provider: AiProvider): Promise<AiProviderTestResult>` (Task 2).
 - Produces: `POST /v1/admin/ai-providers/:provider/test` — Task 4's frontend client calls this exact route.
 
@@ -316,15 +327,15 @@ In `apps/api/src/ai-providers/ai-providers.controller.ts`, add this method right
 Add this test to `apps/api/src/ai-providers/ai-providers.e2e.test.ts`, right after the `'refuses to activate a provider that has no key configured'` test (same file already documents, at the top, that a real provider call can't be exercised in this environment — this test only covers the no-key-configured path, consistent with that documented limitation):
 
 ```typescript
-  it('refuses to test a provider that has no key configured', async () => {
-    await database.client`DELETE FROM ai_provider_keys WHERE provider = 'gemini'`;
-    const response = await app.inject({
-      headers: auth(admin),
-      method: 'POST',
-      url: '/v1/admin/ai-providers/gemini/test',
-    });
-    expect(response.statusCode, response.body).toBe(400);
+it('refuses to test a provider that has no key configured', async () => {
+  await database.client`DELETE FROM ai_provider_keys WHERE provider = 'gemini'`;
+  const response = await app.inject({
+    headers: auth(admin),
+    method: 'POST',
+    url: '/v1/admin/ai-providers/gemini/test',
   });
+  expect(response.statusCode, response.body).toBe(400);
+});
 ```
 
 - [ ] **Step 3: Run the API test suite**
@@ -349,9 +360,11 @@ git commit -m "feat(ai-providers): expose POST /admin/ai-providers/:provider/tes
 ### Task 4: Frontend — API client method
 
 **Files:**
+
 - Modify: `apps/web/src/lib/api/client.ts`
 
 **Interfaces:**
+
 - Consumes: `AiProviderTestResult` type (Task 1), `POST /admin/ai-providers/:provider/test` (Task 3).
 - Produces: `api.adminTestAiProviderKey(provider: AiProvider, token: string): Promise<AiProviderTestResult>` — Task 5's UI calls this exact function.
 
@@ -387,9 +400,11 @@ git commit -m "feat(web): add adminTestAiProviderKey to the API client"
 ### Task 5: Frontend — "Testar" button in `/app/admin/ia`
 
 **Files:**
+
 - Modify: `apps/web/src/app/app/admin/ia/page.tsx`
 
 **Interfaces:**
+
 - Consumes: `api.adminTestAiProviderKey(provider, token)` (Task 4).
 
 - [ ] **Step 1: Add the `testKey` handler**
@@ -397,20 +412,20 @@ git commit -m "feat(web): add adminTestAiProviderKey to the API client"
 In `apps/web/src/app/app/admin/ia/page.tsx`, add this function right after `saveKey()` and before `setActive()`:
 
 ```typescript
-  async function testKey(provider: AiProvider) {
-    const token = window.localStorage.getItem('xadrez.access_token');
-    if (!token) return;
-    updateCard(provider, { busy: true, message: 'Testando conexão…' });
-    try {
-      const { generatedText } = await api.adminTestAiProviderKey(provider, token);
-      updateCard(provider, { busy: false, message: `IA respondeu: "${generatedText}"` });
-    } catch (error) {
-      updateCard(provider, {
-        busy: false,
-        message: error instanceof Error ? error.message : 'Falha ao testar a conexão.',
-      });
-    }
+async function testKey(provider: AiProvider) {
+  const token = window.localStorage.getItem('xadrez.access_token');
+  if (!token) return;
+  updateCard(provider, { busy: true, message: 'Testando conexão…' });
+  try {
+    const { generatedText } = await api.adminTestAiProviderKey(provider, token);
+    updateCard(provider, { busy: false, message: `IA respondeu: "${generatedText}"` });
+  } catch (error) {
+    updateCard(provider, {
+      busy: false,
+      message: error instanceof Error ? error.message : 'Falha ao testar a conexão.',
+    });
   }
+}
 ```
 
 - [ ] **Step 2: Add the button next to "Usar este provedor" / "Desativar"**
@@ -418,41 +433,47 @@ In `apps/web/src/app/app/admin/ia/page.tsx`, add this function right after `save
 Find this existing block (the activate/deactivate button):
 
 ```tsx
-          {current?.hasApiKey ? (
-            <button
-              className="adminActionButton"
-              disabled={card.busy}
-              onClick={() => void setActive(selectedProvider, !current.isActive)}
-              type="button"
-            >
-              {current.isActive ? 'Desativar' : 'Usar este provedor'}
-            </button>
-          ) : null}
+{
+  current?.hasApiKey ? (
+    <button
+      className="adminActionButton"
+      disabled={card.busy}
+      onClick={() => void setActive(selectedProvider, !current.isActive)}
+      type="button"
+    >
+      {current.isActive ? 'Desativar' : 'Usar este provedor'}
+    </button>
+  ) : null;
+}
 ```
 
 Add a second button right after it, inside the same `{current?.hasApiKey ? (...) : null}` conditional (so both buttons render together, or neither):
 
 ```tsx
-          {current?.hasApiKey ? (
-            <button
-              className="adminActionButton"
-              disabled={card.busy}
-              onClick={() => void setActive(selectedProvider, !current.isActive)}
-              type="button"
-            >
-              {current.isActive ? 'Desativar' : 'Usar este provedor'}
-            </button>
-          ) : null}
-          {current?.hasApiKey ? (
-            <button
-              className="adminActionButton"
-              disabled={card.busy}
-              onClick={() => void testKey(selectedProvider)}
-              type="button"
-            >
-              Testar
-            </button>
-          ) : null}
+{
+  current?.hasApiKey ? (
+    <button
+      className="adminActionButton"
+      disabled={card.busy}
+      onClick={() => void setActive(selectedProvider, !current.isActive)}
+      type="button"
+    >
+      {current.isActive ? 'Desativar' : 'Usar este provedor'}
+    </button>
+  ) : null;
+}
+{
+  current?.hasApiKey ? (
+    <button
+      className="adminActionButton"
+      disabled={card.busy}
+      onClick={() => void testKey(selectedProvider)}
+      type="button"
+    >
+      Testar
+    </button>
+  ) : null;
+}
 ```
 
 - [ ] **Step 3: Typecheck, lint, and build the web app**
