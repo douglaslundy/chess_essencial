@@ -31,6 +31,11 @@ export class AiProvidersController {
     return { models };
   }
 
+  @Post(':provider/test')
+  test(@Param('provider') provider: string) {
+    return this.aiProviders.test(parseInput(aiProviderSchema, provider));
+  }
+
   @Put(':provider')
   update(
     @Req() request: AuthenticatedRequest,

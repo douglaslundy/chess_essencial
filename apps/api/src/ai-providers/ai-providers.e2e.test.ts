@@ -124,6 +124,16 @@ describeDatabase('AI provider keys database integration', () => {
     expect(response.statusCode, response.body).toBe(404);
   });
 
+  it('refuses to test a provider that has no key configured', async () => {
+    await database.client`DELETE FROM ai_provider_keys WHERE provider = 'gemini'`;
+    const response = await app.inject({
+      headers: auth(admin),
+      method: 'POST',
+      url: '/v1/admin/ai-providers/gemini/test',
+    });
+    expect(response.statusCode, response.body).toBe(400);
+  });
+
   it('enforces at most one active provider at a time, including via the database constraint', async () => {
     await database.client`DELETE FROM ai_provider_keys`;
     await database.client`
