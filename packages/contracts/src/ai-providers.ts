@@ -55,11 +55,16 @@ export const aiProviderModelListSchema = z.object({
   models: z.array(aiProviderModelSchema),
 });
 
+export const aiProviderTestResultSchema = z.object({
+  generatedText: z.string(),
+});
+
 export type AiProvider = z.infer<typeof aiProviderSchema>;
 export type AiProviderModel = z.infer<typeof aiProviderModelSchema>;
 export type AiProviderModelMetadata = z.infer<typeof aiProviderModelMetadataSchema>;
 export type AiProviderKey = z.infer<typeof aiProviderKeySchema>;
 export type AiProviderModelList = z.infer<typeof aiProviderModelListSchema>;
+export type AiProviderTestResult = z.infer<typeof aiProviderTestResultSchema>;
 export type ListAiProviderModelsInput = z.infer<typeof listAiProviderModelsInputSchema>;
 export type UpdateAiProviderKeyInput = z.infer<typeof updateAiProviderKeyInputSchema>;
 export type UpdateAiProviderActiveInput = z.infer<typeof updateAiProviderActiveInputSchema>;

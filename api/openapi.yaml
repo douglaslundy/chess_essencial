@@ -738,6 +738,21 @@ paths:
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
+  /admin/ai-providers/{provider}/test:
+    post:
+      summary: Make a real completion call with the already-saved key, to confirm it works (admin only)
+      operationId: adminTestAiProviderKey
+      parameters:
+        - {name: provider, in: path, required: true, schema: {type: string, enum: [anthropic, openai, gemini]}}
+      responses:
+        '200':
+          description: The literal text the model generated
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AiProviderTestResult'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
   /admin/ai-providers/{provider}:
     put:
       summary: Save and validate an AI provider's key/model (admin only)
@@ -2216,6 +2231,11 @@ components:
       required: [models]
       properties:
         models: {type: array, items: {$ref: '#/components/schemas/AiProviderModel'}}
+    AiProviderTestResult:
+      type: object
+      required: [generatedText]
+      properties:
+        generatedText: {type: string}
     PlanFeatureLimit:
       type: object
       required: [featureKey, dailyLimit]

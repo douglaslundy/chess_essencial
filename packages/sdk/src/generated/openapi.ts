@@ -760,6 +760,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/admin/ai-providers/{provider}/test': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Make a real completion call with the already-saved key, to confirm it works (admin only) */
+    post: operations['adminTestAiProviderKey'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/admin/ai-providers/{provider}': {
     parameters: {
       query?: never;
@@ -2054,6 +2071,9 @@ export interface components {
     };
     AiProviderModelList: {
       models: components['schemas']['AiProviderModel'][];
+    };
+    AiProviderTestResult: {
+      generatedText: string;
     };
     PlanFeatureLimit: {
       featureKey: string;
@@ -3936,6 +3956,31 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['AiProviderModelList'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  adminTestAiProviderKey: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        provider: 'anthropic' | 'openai' | 'gemini';
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The literal text the model generated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AiProviderTestResult'];
         };
       };
       400: components['responses']['Problem'];
