@@ -3,6 +3,7 @@ import {
   lookupModelMetadata,
   type AiProvider,
   type AiProviderKey,
+  type AiProviderTestResult,
   type UpdateAiProviderKeyInput,
 } from '@xadrez/contracts';
 import {
@@ -18,6 +19,7 @@ import { AuditService } from '../observability/audit.service.js';
 import { decryptSecret, encryptSecret, maskedKeyPreview } from '../common/crypto/secret-cipher.js';
 import { SettingsRepository } from '../settings/settings.repository.js';
 import { AiProvidersRepository, type AiProviderKeyRow } from './ai-providers.repository.js';
+import { callLlm, LlmRequestError } from '../games/narration/llm-client.js';
 import {
   AiProviderKeyInvalidError,
   listModelsForProvider,
@@ -28,6 +30,11 @@ import {
 // plaintext key, one provider at a time. Migrated once at boot, then never
 // read again.
 const LEGACY_NARRATION_AI_SETTINGS_KEY = 'ai.narration';
+
+const TEST_CONNECTION_SYSTEM_PROMPT =
+  'Você é um teste de conectividade da plataforma Xadrez Essencial.';
+const TEST_CONNECTION_USER_MESSAGE =
+  'Confirme em português, em até 20 palavras, que a conexão com você está funcionando.';
 
 interface LegacyNarrationAiConfig {
   apiKey: string | null;
@@ -252,6 +259,33 @@ export class AiProvidersService implements OnModuleInit {
       {},
     );
     return this.toPublic(provider, row);
+  }
+
+  /**
+   * Makes one real completion call with the key already on file — proves
+   * the saved key actually works end to end (not just that model-listing
+   * accepts it), without changing anything in storage. Same
+   * test-without-persisting shape as SettingsService#testMercadoPagoConnection().
+   */
+  async test(provider: AiProvider): Promise<AiProviderTestResult> {
+    const existing = await this.repository.get(provider);
+    if (!existing?.encryptedApiKey || !existing.model) {
+      throw new BadRequestException(
+        'Configure e salve uma chave e um modelo para este provedor antes de testar.',
+      );
+    }
+    const plainApiKey = this.resolvePlainApiKey(provider, existing);
+    try {
+      const generatedText = await callLlm(
+        { apiKey: plainApiKey, model: existing.model, provider },
+        TEST_CONNECTION_SYSTEM_PROMPT,
+        TEST_CONNECTION_USER_MESSAGE,
+      );
+      return { generatedText };
+    } catch (error) {
+      if (error instanceof LlmRequestError) throw new BadRequestException(error.message);
+      throw error;
+    }
   }
 
   /** Used by narration-consuming code (game-narration-job's config comes from the DB directly instead — see there for why). */

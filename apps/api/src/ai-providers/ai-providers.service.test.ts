@@ -9,12 +9,27 @@ vi.mock('./model-listing.js', async (importOriginal) => {
   return { ...actual, listModelsForProvider: vi.fn() };
 });
 
+vi.mock('../games/narration/llm-client.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../games/narration/llm-client.js')>();
+  return { ...actual, callLlm: vi.fn() };
+});
+
 import { AiProviderKeyInvalidError, listModelsForProvider } from './model-listing.js';
+import { callLlm, LlmRequestError } from '../games/narration/llm-client.js';
 
 const mockedListModels = vi.mocked(listModelsForProvider);
+const mockedCallLlm = vi.mocked(callLlm);
+
+import { encryptSecret } from '../common/crypto/secret-cipher.js';
+
+const testEncryptionKey = 'unit-test-encryption-key';
+function seededKey(plaintext: string) {
+  return encryptSecret(plaintext, testEncryptionKey);
+}
 
 afterEach(() => {
   mockedListModels.mockReset();
+  mockedCallLlm.mockReset();
 });
 
 class FakeAiProvidersRepository {
@@ -129,5 +144,71 @@ describe('AiProvidersService.update', () => {
     expect(mockedListModels).not.toHaveBeenCalled();
     // The unreadable row is left untouched.
     expect(repository.rows.get('anthropic')!.encryptedApiKey).toBe('not-real-ciphertext');
+  });
+});
+
+describe('AiProvidersService.test', () => {
+  it('refuses to test a provider with no key/model configured', async () => {
+    const repository = new FakeAiProvidersRepository();
+
+    await expect(service(repository).test('gemini')).rejects.toThrow(/configure e salve/i);
+    expect(mockedCallLlm).not.toHaveBeenCalled();
+  });
+
+  it('reports a clean, actionable error instead of a bare 500 when the stored key can no longer be decrypted', async () => {
+    const repository = new FakeAiProvidersRepository();
+    repository.rows.set('anthropic', {
+      encryptedApiKey: 'not-real-ciphertext',
+      isActive: false,
+      keyPreview: 'xxxxx',
+      lastValidatedAt: null,
+      lastValidationError: null,
+      model: 'claude-sonnet-5',
+      provider: 'anthropic',
+    });
+
+    await expect(service(repository).test('anthropic')).rejects.toThrow(/chave|criptografia/i);
+    expect(mockedCallLlm).not.toHaveBeenCalled();
+  });
+
+  it("propagates the provider's real error message instead of a bare 500", async () => {
+    const repository = new FakeAiProvidersRepository();
+    repository.rows.set('openai', {
+      encryptedApiKey: seededKey('sk-any-test-value'),
+      isActive: false,
+      keyPreview: 'aaaaa',
+      lastValidatedAt: null,
+      lastValidationError: null,
+      model: 'gpt-5.6-luna',
+      provider: 'openai',
+    });
+    mockedCallLlm.mockRejectedValue(new LlmRequestError('OpenAI API respondeu 401: invalid key'));
+
+    await expect(service(repository).test('openai')).rejects.toThrow(
+      'OpenAI API respondeu 401: invalid key',
+    );
+  });
+
+  it('returns the real generated text on success', async () => {
+    const repository = new FakeAiProvidersRepository();
+    repository.rows.set('gemini', {
+      encryptedApiKey: seededKey('sk-any-test-value'),
+      isActive: true,
+      keyPreview: 'bbbbb',
+      lastValidatedAt: new Date(),
+      lastValidationError: null,
+      model: 'gemini-2.5-flash',
+      provider: 'gemini',
+    });
+    mockedCallLlm.mockResolvedValue('Conexão funcionando, tudo certo!');
+
+    const result = await service(repository).test('gemini');
+
+    expect(result).toEqual({ generatedText: 'Conexão funcionando, tudo certo!' });
+    expect(mockedCallLlm).toHaveBeenCalledTimes(1);
+    expect(mockedCallLlm.mock.calls[0]![0]).toMatchObject({
+      model: 'gemini-2.5-flash',
+      provider: 'gemini',
+    });
   });
 });
