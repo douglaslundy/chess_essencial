@@ -2407,6 +2407,26 @@ input:focus-visible {
     grid-template-columns: 1fr;
   }
 }
+@media (max-width: 640px) {
+  /* .reviewHeader is a single row (title + 3 action buttons) with no wrap —
+     on a narrow phone that row simply doesn't fit, so it either overflows
+     or squashes the buttons into an oversized, left-hugging mess. Stack the
+     title above the actions and let the actions wrap/shrink instead. */
+  .reviewHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .reviewHeaderActions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .reviewHeaderActions button {
+    flex: 1 1 auto;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.85rem;
+  }
+}
 
 .courseEditorPage {
   padding: var(--page-padding);

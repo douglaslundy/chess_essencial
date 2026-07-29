@@ -30,6 +30,9 @@ describeDatabase('learning path database integration', () => {
   let lessonStageId: string;
   let lessonPlacementExerciseId: string;
   const lessonId = '00000000-0000-4000-8000-000000000998';
+  let replayWorldId: string;
+  let replayStageId: string;
+  let replayExerciseId: string;
 
   beforeAll(async () => {
     app = await createApp();
@@ -171,12 +174,47 @@ describeDatabase('learning path database integration', () => {
       RETURNING id
     `;
     lessonStageId = lessonStage!.id;
+
+    // A fourth, non-overlapping band (above the lesson band, below the
+    // review-exercise-selection band) dedicated to the replay/"Repetir"
+    // regression test below.
+    const [replayExercise] = await database.client<{ id: string }[]>`
+      INSERT INTO exercises (
+        external_id, title, prompt_md, solution_md, difficulty, fen, side_to_move,
+        solution_lines, position_type, status, difficulty_score, hints
+      )
+      VALUES (
+        'learning-path-test-007', 'Teste replay', 'Encontre o melhor lance.', 'e2e4', 'expert',
+        'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 'white',
+        '[["e2e4"]]'::jsonb, 'legal_position', 'published', 4400, '["Mova o peão do rei."]'::jsonb
+      )
+      RETURNING id
+    `;
+    replayExerciseId = replayExercise!.id;
+    const [replayWorld] = await database.client<{ id: string }[]>`
+      INSERT INTO learning_worlds (position, title, description, difficulty_min, difficulty_max)
+      VALUES (1002, 'Mundo de Replay de Teste', 'Só para o e2e.', 4200, 4700)
+      RETURNING id
+    `;
+    replayWorldId = replayWorld!.id;
+    const [replayLevel] = await database.client<{ id: string }[]>`
+      INSERT INTO learning_levels (world_id, position, title, difficulty_min, difficulty_max, challenge_count)
+      VALUES (${replayWorldId}, 1, 'Nível de Replay', 4200, 4700, 1)
+      RETURNING id
+    `;
+    const [replayStage] = await database.client<{ id: string }[]>`
+      INSERT INTO learning_stages (level_id, position, type, exercise_id)
+      VALUES (${replayLevel!.id}, 1, 'challenge', ${replayExercise!.id})
+      RETURNING id
+    `;
+    replayStageId = replayStage!.id;
   });
 
   afterAll(async () => {
     await database.client`DELETE FROM learning_worlds WHERE id = ${worldId}`;
     await database.client`DELETE FROM learning_worlds WHERE id = ${advancedWorldId}`;
     await database.client`DELETE FROM learning_worlds WHERE id = ${lessonWorldId}`;
+    await database.client`DELETE FROM learning_worlds WHERE id = ${replayWorldId}`;
     await database.client`DELETE FROM exercises WHERE external_id LIKE 'learning-path-test-%'`;
     await database.client`UPDATE user_course_enrollments SET last_lesson_id = NULL WHERE last_lesson_id = ${lessonId}`;
     await database.client`DELETE FROM lessons WHERE id = ${lessonId}`;
@@ -351,6 +389,67 @@ describeDatabase('learning path database integration', () => {
     expect(
       completeBody.newBadges.map((badge: { badgeKey: string }) => badge.badgeKey).sort(),
     ).toEqual(['first_stage', 'perfect_level'].sort());
+  });
+
+  it('lets a stage be replayed after it was already completed, with a fresh training session', async () => {
+    const learner = await createIdentity(
+      'learning-path-replay@example.com',
+      'learning_path_replay',
+    );
+    for (let i = 0; i < 10; i += 1) {
+      await database.client`
+        INSERT INTO exercise_attempts (user_id, exercise_id, submitted_line, correct)
+        VALUES (${learner.userId}, ${replayExerciseId}, '["e2e4"]'::jsonb, true)
+      `;
+    }
+
+    const firstStart = await app.inject({
+      headers: auth(learner),
+      method: 'POST',
+      url: `/v1/learning-path/stages/${replayStageId}/start`,
+    });
+    expect(firstStart.statusCode, firstStart.body).toBe(200);
+    const { exerciseId, trainingSessionId: firstSessionId } = firstStart.json();
+
+    const firstEvaluate = await app.inject({
+      headers: auth(learner),
+      method: 'POST',
+      payload: { playedMoves: ['e2e4'], trainingSessionId: firstSessionId },
+      url: `/v1/exercises/${exerciseId}/evaluate-line`,
+    });
+    expect(firstEvaluate.statusCode, firstEvaluate.body).toBe(200);
+    expect(firstEvaluate.json().status).toBe('solved');
+
+    const complete = await app.inject({
+      headers: auth(learner),
+      method: 'POST',
+      url: `/v1/learning-path/stages/${replayStageId}/complete`,
+    });
+    expect(complete.statusCode, complete.body).toBe(200);
+
+    // This is the "Repetir" action on an already-completed stage: start()
+    // is called again. Before the fix, this returned the SAME (now
+    // exhausted) session, and the evaluate-line call below failed with
+    // "Exercício não é o atual nesta sessão de treino" — reproducing the
+    // reported bug exactly (board effectively unusable after "Repetir").
+    const replayStart = await app.inject({
+      headers: auth(learner),
+      method: 'POST',
+      url: `/v1/learning-path/stages/${replayStageId}/start`,
+    });
+    expect(replayStart.statusCode, replayStart.body).toBe(200);
+    const replayBody = replayStart.json();
+    expect(replayBody.exerciseId).toBe(exerciseId);
+    expect(replayBody.trainingSessionId).not.toBe(firstSessionId);
+
+    const replayEvaluate = await app.inject({
+      headers: auth(learner),
+      method: 'POST',
+      payload: { playedMoves: ['e2e4'], trainingSessionId: replayBody.trainingSessionId },
+      url: `/v1/exercises/${exerciseId}/evaluate-line`,
+    });
+    expect(replayEvaluate.statusCode, replayEvaluate.body).toBe(200);
+    expect(replayEvaluate.json().status).toBe('solved');
   });
 
   it('rejects an unknown level id with 404', async () => {

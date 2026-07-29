@@ -163,13 +163,31 @@ export class LearningPathService {
     return exerciseId;
   }
 
-  /** Ensures a real (1-item) training session backs this exercise, so the client can reuse evaluate-line(). */
+  /**
+   * Ensures a real (1-item) training session backs this exercise, so the client can reuse evaluate-line().
+   *
+   * A single-item session is exhausted the moment it's solved once — solving
+   * advances its current_position past its only item and flips its status to
+   * 'completed' (see ExercisesRepository#attempt/evaluateLine), so
+   * evaluate-line() rejects any further move against that same session with
+   * "Exercício não é o atual nesta sessão de treino". Once the stage itself
+   * is already completed, startStage() is being called again to REPLAY it
+   * (the "Repetir" action, or simply revisiting a finished stage) — that
+   * always needs a fresh, disposable session. The completion row's own
+   * trainingSessionId stays untouched in that case: it's the historical
+   * record of the session that actually earned the completion (hintsUsed
+   * etc. are read from it in completeStage()), not a slot to keep
+   * overwriting.
+   */
   private async resolveTrainingSession(
     userId: string,
     stageId: string,
     exerciseId: string,
-    completion: { trainingSessionId: string | null },
+    completion: { status: string; trainingSessionId: string | null },
   ): Promise<string> {
+    if (completion.status === 'completed') {
+      return this.exercises.createSingleItemSession(userId, exerciseId);
+    }
     if (completion.trainingSessionId) return completion.trainingSessionId;
     const sessionId = await this.exercises.createSingleItemSession(userId, exerciseId);
     await this.repository.setTrainingSession(userId, stageId, sessionId);

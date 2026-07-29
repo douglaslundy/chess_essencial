@@ -66,7 +66,6 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
   const [narration, setNarration] = useState<GameNarration | null>(null);
   const [ply, setPly] = useState(0);
   const [comment, setComment] = useState('');
-  const [highlight, setHighlight] = useState('');
   const [arrowFrom, setArrowFrom] = useState('');
   const [arrowTo, setArrowTo] = useState('');
   const [message, setMessage] = useState('Carregando revisão…');
@@ -165,7 +164,6 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
   useEffect(() => {
     queueMicrotask(() => {
       setComment(current?.comment ?? '');
-      setHighlight(current?.highlights[0]?.square ?? '');
       setArrowFrom(current?.arrows[0]?.from ?? '');
       setArrowTo(current?.arrows[0]?.to ?? '');
     });
@@ -186,7 +184,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
         {
           arrows: arrowFrom && arrowTo ? [{ color: 'gold', from: arrowFrom, to: arrowTo }] : [],
           comment: comment.trim() || null,
-          highlights: highlight ? [{ color: 'gold', square: highlight }] : [],
+          highlights: [],
           ply,
         },
         token,
@@ -348,7 +346,6 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
           orientation={orientation}
           pieceTheme={pieceTheme}
         />
-        {highlight ? <p className="annotationPreview">Destaque: {highlight}</p> : null}
         {arrowFrom && arrowTo ? (
           <p className="annotationPreview">
             Seta: {arrowFrom} → {arrowTo}
@@ -398,15 +395,6 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
           />
         </label>
         <div className="annotationFields">
-          <label>
-            Destaque
-            <input
-              maxLength={2}
-              onChange={(event) => setHighlight(event.target.value.toLowerCase())}
-              placeholder="e4"
-              value={highlight}
-            />
-          </label>
           <label>
             Seta de
             <input

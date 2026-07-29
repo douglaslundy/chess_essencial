@@ -4,6 +4,7 @@ import type {
   CompleteLearningStageResult,
   ExerciseSummary,
   LearningLevelDetail,
+  StartLearningStageResult,
 } from '@xadrez/contracts';
 import { Chess } from 'chess.js';
 import Link from 'next/link';
@@ -38,7 +39,7 @@ function formatElapsed(ms: number) {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
-type Phase = 'loading' | 'playing' | 'evaluating' | 'incorrect' | 'solved' | 'error';
+type Phase = 'loading' | 'restarting' | 'playing' | 'evaluating' | 'incorrect' | 'solved' | 'error';
 type StageKind = 'exercise' | 'lesson';
 
 interface LessonStageInfo {
@@ -52,6 +53,7 @@ const INSTRUCTOR_MESSAGE: Record<Phase, string> = {
   incorrect: 'Essa não é a melhor jogada aqui. Observe a posição de novo e tente outra vez.',
   loading: 'Preparando a etapa…',
   playing: 'Encontre a melhor jogada para a posição abaixo.',
+  restarting: 'Preparando um novo tabuleiro…',
   solved: 'Muito bem! Você encontrou a ideia certa.',
 };
 
@@ -98,6 +100,42 @@ export function StageRunner({ stageId }: { stageId: string }) {
           ? `Esta etapa é uma aula: ${lessonInfo?.title ?? ''}. Termine-a e volte aqui para concluir a etapa.`
           : INSTRUCTOR_MESSAGE[phase];
 
+  // Shared by the initial load and by repeatStage() — both need to apply a
+  // fresh StartLearningStageResult (levelId + either a lesson or a live
+  // exercise/session) onto the same set of board/lesson state.
+  async function applyStart(start: StartLearningStageResult, token: string) {
+    setLevelId(start.levelId);
+    if (start.type === 'lesson') {
+      const overview = await api.getLesson(start.lessonId, token);
+      setStageKind('lesson');
+      setLessonInfo({ lessonId: start.lessonId, title: overview.title });
+      setStartedAt(Date.now());
+      setPhase('playing');
+      return;
+    }
+    const detail = await api.getExerciseById(start.exerciseId, token);
+    if (!detail.fen || detail.positionType !== 'legal_position') {
+      setPhase('error');
+      setErrorMessage('Esta etapa ainda não tem um tabuleiro jogável.');
+      return;
+    }
+    setStageKind('exercise');
+    setExercise(detail);
+    setTrainingSessionId(start.trainingSessionId);
+    setHints([]);
+    setHintsRemaining(detail.hintsAvailable);
+    setStartingFen(detail.fen);
+    setBoardFen(detail.fen);
+    setPlayedMoves([]);
+    setPlayerMoves([]);
+    setViewingAt(null);
+    setAttemptCount(0);
+    setScore(null);
+    setResult(null);
+    setStartedAt(Date.now());
+    setPhase('playing');
+  }
+
   useEffect(() => {
     const token = window.localStorage.getItem('xadrez.access_token');
     if (!token) {
@@ -112,31 +150,7 @@ export function StageRunner({ stageId }: { stageId: string }) {
       try {
         const start = await api.startLearningStage(stageId, token);
         if (!active) return;
-        setLevelId(start.levelId);
-        if (start.type === 'lesson') {
-          const overview = await api.getLesson(start.lessonId, token);
-          if (!active) return;
-          setStageKind('lesson');
-          setLessonInfo({ lessonId: start.lessonId, title: overview.title });
-          setStartedAt(Date.now());
-          setPhase('playing');
-          return;
-        }
-        const detail = await api.getExerciseById(start.exerciseId, token);
-        if (!active) return;
-        if (!detail.fen || detail.positionType !== 'legal_position') {
-          setPhase('error');
-          setErrorMessage('Esta etapa ainda não tem um tabuleiro jogável.');
-          return;
-        }
-        setStageKind('exercise');
-        setExercise(detail);
-        setTrainingSessionId(start.trainingSessionId);
-        setHintsRemaining(detail.hintsAvailable);
-        setStartingFen(detail.fen);
-        setBoardFen(detail.fen);
-        setStartedAt(Date.now());
-        setPhase('playing');
+        await applyStart(start, token);
       } catch (error) {
         if (!active) return;
         setPhase('error');
@@ -268,19 +282,26 @@ export function StageRunner({ stageId }: { stageId: string }) {
     setViewingAt(clamped === playedMoves.length ? null : clamped);
   }
 
-  function repeatStage() {
-    setBoardFen(startingFen);
-    setPlayedMoves([]);
-    setPlayerMoves([]);
-    setViewingAt(null);
-    setHints([]);
-    setAttemptCount(0);
-    setScore(null);
-    setResult(null);
+  // Re-plays this stage from a fresh training session — not just a local
+  // state reset. The original session was single-item and already got
+  // consumed by solving it once (evaluate-line/attempt() advance it past
+  // its only item), so reusing it for a second attempt always failed with
+  // "Exercício não é o atual nesta sessão de treino" the moment a move was
+  // played. startLearningStage() issues a brand-new disposable session for
+  // an already-completed stage instead of the exhausted one.
+  async function repeatStage() {
+    const token = window.localStorage.getItem('xadrez.access_token');
+    if (!token) return;
     setLessonMessage('');
-    setStartedAt(Date.now());
     setSpokenMessage('');
-    setPhase('playing');
+    setPhase('restarting');
+    try {
+      const start = await api.startLearningStage(stageId, token);
+      await applyStart(start, token);
+    } catch (error) {
+      setPhase('error');
+      setErrorMessage(error instanceof Error ? error.message : 'Falha ao reiniciar a etapa.');
+    }
   }
 
   function goToNextStage() {
@@ -406,15 +427,11 @@ export function StageRunner({ stageId }: { stageId: string }) {
           <div className="stageCompletionActions">
             {stageKind === 'lesson' && lessonInfo ? (
               <Link href={`/app/aula/${lessonInfo.lessonId}`}>Rever aula</Link>
-            ) : (
-              <button onClick={() => goToMove(0)} type="button">
-                Analisar
-              </button>
-            )}
+            ) : null}
             <button className="stageCompletionPrimary" onClick={goToNextStage} type="button">
               Próximo
             </button>
-            <button onClick={repeatStage} type="button">
+            <button onClick={() => void repeatStage()} type="button">
               Repetir
             </button>
           </div>
