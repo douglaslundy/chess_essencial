@@ -187,6 +187,34 @@ describeDatabase('AI provider keys database integration', () => {
     expect(row!.encryptedApiKey).toBe(undecryptable);
   });
 
+  it('returns a valid ISO lastValidatedAt instead of crashing once a key has actually been validated', async () => {
+    // Regression for a production incident (2026-07-29): saving/listing keys
+    // shared DatabaseService.client (raw tagged-template queries) with
+    // DatabaseService.db (Drizzle) — Drizzle's postgres-js adapter
+    // reconfigures that Sql instance's global type parsers as a side
+    // effect of wrapping it, which silently turned every raw query's
+    // timestamptz columns into plain strings instead of Date objects.
+    // AiProvidersService.toPublic() calls `row.lastValidatedAt.toISOString()`,
+    // which only breaks once the column is non-null — i.e. the very first
+    // time any key is actually saved/validated in a fresh environment.
+    await database.client`DELETE FROM ai_provider_keys`;
+    await database.client`
+      INSERT INTO ai_provider_keys (provider, encrypted_api_key, key_preview, model, is_active, last_validated_at)
+      VALUES ('anthropic', 'seeded-ciphertext', 'ab12', 'claude-sonnet-5', false, now())
+    `;
+    const response = await app.inject({
+      headers: auth(admin),
+      method: 'GET',
+      url: '/v1/admin/ai-providers',
+    });
+    expect(response.statusCode, response.body).toBe(200);
+    const anthropic = (
+      response.json() as { lastValidatedAt: string | null; provider: string }[]
+    ).find((entry) => entry.provider === 'anthropic');
+    expect(anthropic?.lastValidatedAt).not.toBeNull();
+    expect(new Date(anthropic!.lastValidatedAt!).toString()).not.toBe('Invalid Date');
+  });
+
   it('never returns the encrypted key or a full key preview over the API', async () => {
     await database.client`DELETE FROM ai_provider_keys`;
     await database.client`
