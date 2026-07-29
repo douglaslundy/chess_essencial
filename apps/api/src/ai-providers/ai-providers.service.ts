@@ -284,6 +284,9 @@ export class AiProvidersService implements OnModuleInit {
       return { generatedText };
     } catch (error) {
       if (error instanceof LlmRequestError) throw new BadRequestException(error.message);
+      if (error instanceof Error) {
+        throw new BadRequestException(`Não foi possível contatar o provedor: ${error.message}`);
+      }
       throw error;
     }
   }

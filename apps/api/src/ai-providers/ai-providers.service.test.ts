@@ -189,6 +189,22 @@ describe('AiProvidersService.test', () => {
     );
   });
 
+  it('reports a clean message instead of a bare 500 when the provider call fails at the transport level (timeout/network)', async () => {
+    const repository = new FakeAiProvidersRepository();
+    repository.rows.set('openai', {
+      encryptedApiKey: seededKey('sk-any-test-value'),
+      isActive: false,
+      keyPreview: 'aaaaa',
+      lastValidatedAt: null,
+      lastValidationError: null,
+      model: 'gpt-5.6-luna',
+      provider: 'openai',
+    });
+    mockedCallLlm.mockRejectedValue(new Error('fetch failed'));
+
+    await expect(service(repository).test('openai')).rejects.toThrow(/não foi possível contatar/i);
+  });
+
   it('returns the real generated text on success', async () => {
     const repository = new FakeAiProvidersRepository();
     repository.rows.set('gemini', {
