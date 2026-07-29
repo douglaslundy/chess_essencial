@@ -7,6 +7,7 @@ import type {
   AiProvider,
   AiProviderKey,
   AiProviderModelList,
+  AiProviderTestResult,
   AssistedGameSettings,
   ListAiProviderModelsInput,
   UpdateAdminUserInput,
@@ -474,6 +475,10 @@ export const api = {
     request<AiProviderModelList>(`/admin/ai-providers/${provider}/models`, token, {
       method: 'POST',
       body: JSON.stringify(input),
+    }),
+  adminTestAiProviderKey: (provider: AiProvider, token: string) =>
+    request<AiProviderTestResult>(`/admin/ai-providers/${provider}/test`, token, {
+      method: 'POST',
     }),
   adminUpdateAiProviderKey: (
     provider: AiProvider,
