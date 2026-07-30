@@ -158,7 +158,7 @@ export default function AuthPage() {
             Senha
             <input
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-              minLength={mode === 'register' ? 12 : 1}
+              minLength={mode === 'register' ? 6 : 1}
               name="password"
               required
               type="password"

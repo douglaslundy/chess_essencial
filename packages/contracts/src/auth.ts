@@ -10,7 +10,7 @@ const usernameSchema = z
 export const registerInputSchema = z.object({
   email: z.string().trim().email().max(254),
   username: usernameSchema,
-  password: z.string().min(12).max(128),
+  password: z.string().min(6).max(128),
   displayName: z.string().trim().min(2).max(80),
   referralCode: z.string().trim().min(1).max(20).optional(),
 });
@@ -40,7 +40,7 @@ export const forgotPasswordInputSchema = z.object({
 
 export const resetPasswordInputSchema = z.object({
   token: z.string().min(20).max(2_048),
-  newPassword: z.string().min(12).max(128),
+  newPassword: z.string().min(6).max(128),
 });
 
 const MIN_BIRTH_DATE = '1900-01-01';

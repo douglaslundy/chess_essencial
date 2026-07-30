@@ -8,8 +8,8 @@ if (process.env.DEMO_SEED_ENABLED !== 'true') {
 }
 
 const password = process.env.DEMO_USER_PASSWORD;
-if (!password || password.length < 12) {
-  throw new Error('DEMO_USER_PASSWORD with at least 12 characters is required');
+if (!password || password.length < 6) {
+  throw new Error('DEMO_USER_PASSWORD with at least 6 characters is required');
 }
 
 const demoUsers = [

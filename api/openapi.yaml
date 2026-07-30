@@ -1948,7 +1948,7 @@ components:
       properties:
         email: {type: string, format: email}
         username: {type: string, minLength: 3, maxLength: 30}
-        password: {type: string, minLength: 12}
+        password: {type: string, minLength: 6}
         displayName: {type: string, minLength: 2, maxLength: 80}
         referralCode: {type: string, minLength: 1, maxLength: 20}
     ResendVerificationInput:
@@ -1974,7 +1974,7 @@ components:
       required: [token, newPassword]
       properties:
         token: {type: string, minLength: 20, maxLength: 2048}
-        newPassword: {type: string, minLength: 12, maxLength: 128}
+        newPassword: {type: string, minLength: 6, maxLength: 128}
       additionalProperties: false
     LoginInput:
       type: object
