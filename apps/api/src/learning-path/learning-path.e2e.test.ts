@@ -361,7 +361,7 @@ describeDatabase('learning path database integration', () => {
       method: 'POST',
       url: `/v1/learning-path/stages/${lessonStageId}/start`,
     });
-    expect(start.statusCode, start.body).toBe(200);
+    expect(start.statusCode, start.body).toBe(201);
     const startBody = start.json();
     expect(startBody).toMatchObject({ lessonId, stageId: lessonStageId, type: 'lesson' });
     const attemptId = startBody.lessonAttemptId as string;
@@ -389,7 +389,7 @@ describeDatabase('learning path database integration', () => {
       payload: { type: 'continue' },
       url: `/v1/lesson-attempts/${attemptId}/actions`,
     });
-    expect(finished.statusCode, finished.body).toBe(200);
+    expect(finished.statusCode, finished.body).toBe(201);
     expect(finished.json().status).toBe('completed');
 
     const complete = await app.inject({
@@ -397,7 +397,7 @@ describeDatabase('learning path database integration', () => {
       method: 'POST',
       url: `/v1/learning-path/stages/${lessonStageId}/complete`,
     });
-    expect(complete.statusCode, complete.body).toBe(200);
+    expect(complete.statusCode, complete.body).toBe(201);
     const completeBody = complete.json();
     // A single-stage level with no checkpoint/boss stage isn't a capstone,
     // so it completes the level but not the world. This user's first-ever
@@ -431,7 +431,7 @@ describeDatabase('learning path database integration', () => {
       method: 'POST',
       url: `/v1/learning-path/stages/${replayStageId}/start`,
     });
-    expect(firstStart.statusCode, firstStart.body).toBe(200);
+    expect(firstStart.statusCode, firstStart.body).toBe(201);
     const { exerciseId, trainingSessionId: firstSessionId } = firstStart.json();
 
     const firstEvaluate = await app.inject({
@@ -440,7 +440,7 @@ describeDatabase('learning path database integration', () => {
       payload: { playedMoves: ['e2e4'], trainingSessionId: firstSessionId },
       url: `/v1/exercises/${exerciseId}/evaluate-line`,
     });
-    expect(firstEvaluate.statusCode, firstEvaluate.body).toBe(200);
+    expect(firstEvaluate.statusCode, firstEvaluate.body).toBe(201);
     expect(firstEvaluate.json().status).toBe('solved');
 
     const complete = await app.inject({
@@ -448,7 +448,7 @@ describeDatabase('learning path database integration', () => {
       method: 'POST',
       url: `/v1/learning-path/stages/${replayStageId}/complete`,
     });
-    expect(complete.statusCode, complete.body).toBe(200);
+    expect(complete.statusCode, complete.body).toBe(201);
 
     // This is the "Repetir" action on an already-completed stage: start()
     // is called again. Before the fix, this returned the SAME (now
@@ -460,7 +460,7 @@ describeDatabase('learning path database integration', () => {
       method: 'POST',
       url: `/v1/learning-path/stages/${replayStageId}/start`,
     });
-    expect(replayStart.statusCode, replayStart.body).toBe(200);
+    expect(replayStart.statusCode, replayStart.body).toBe(201);
     const replayBody = replayStart.json();
     expect(replayBody.exerciseId).toBe(exerciseId);
     expect(replayBody.trainingSessionId).not.toBe(firstSessionId);
@@ -471,7 +471,7 @@ describeDatabase('learning path database integration', () => {
       payload: { playedMoves: ['e2e4'], trainingSessionId: replayBody.trainingSessionId },
       url: `/v1/exercises/${exerciseId}/evaluate-line`,
     });
-    expect(replayEvaluate.statusCode, replayEvaluate.body).toBe(200);
+    expect(replayEvaluate.statusCode, replayEvaluate.body).toBe(201);
     expect(replayEvaluate.json().status).toBe('solved');
   });
 
@@ -500,7 +500,7 @@ describeDatabase('learning path database integration', () => {
       method: 'POST',
       url: `/v1/learning-path/stages/${stageOneId}/start`,
     });
-    expect(startFirst.statusCode, startFirst.body).toBe(200);
+    expect(startFirst.statusCode, startFirst.body).toBe(201);
     const { exerciseId, trainingSessionId } = startFirst.json();
     expect(typeof trainingSessionId).toBe('string');
 
@@ -519,7 +519,7 @@ describeDatabase('learning path database integration', () => {
       method: 'POST',
       url: `/v1/exercise-training-sessions/${trainingSessionId}/hints`,
     });
-    expect(hint.statusCode, hint.body).toBe(200);
+    expect(hint.statusCode, hint.body).toBe(201);
 
     // Exercises evaluate-line() requires a real training session (see
     // migration 0038) — proves the session created by start() actually
@@ -531,7 +531,7 @@ describeDatabase('learning path database integration', () => {
       payload: { playedMoves: ['e2e4'], trainingSessionId },
       url: `/v1/exercises/${exerciseId}/evaluate-line`,
     });
-    expect(evaluated.statusCode, evaluated.body).toBe(200);
+    expect(evaluated.statusCode, evaluated.body).toBe(201);
     expect(evaluated.json().status).toBe('solved');
 
     const completeFirst = await app.inject({
@@ -539,7 +539,7 @@ describeDatabase('learning path database integration', () => {
       method: 'POST',
       url: `/v1/learning-path/stages/${stageOneId}/complete`,
     });
-    expect(completeFirst.statusCode, completeFirst.body).toBe(200);
+    expect(completeFirst.statusCode, completeFirst.body).toBe(201);
     // This is this fresh test user's very first stage completion ever, so
     // it also exercises the gamification side effects (FASE 15 of the
     // spec): base XP + first-try bonus, streak starting at 1, and the
@@ -570,7 +570,7 @@ describeDatabase('learning path database integration', () => {
       method: 'POST',
       url: `/v1/learning-path/stages/${stageTwoId}/complete`,
     });
-    expect(completeSecond.statusCode, completeSecond.body).toBe(200);
+    expect(completeSecond.statusCode, completeSecond.body).toBe(201);
     const completeSecondBody = completeSecond.json();
     // Both stages of this capstone level were solved on the first try, so
     // completing it earns both the "nível perfeito" badge and the
