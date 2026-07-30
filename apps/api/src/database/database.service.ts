@@ -8,7 +8,11 @@ import * as schema from './schema.js';
 const rawJsonType = {
   from: [114, 3802],
   parse: (value: string): unknown => JSON.parse(value),
-  serialize: (value: unknown): string => JSON.stringify(value),
+  // Raw repositories already pass JSON.stringify(...) in tagged-template
+  // parameters. Preserve those strings instead of encoding them a second
+  // time; still support object values supplied through sql.json(...).
+  serialize: (value: unknown): string =>
+    typeof value === 'string' ? value : JSON.stringify(value),
   to: 114,
 };
 

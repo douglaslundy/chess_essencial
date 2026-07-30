@@ -22,5 +22,7 @@ describe('DatabaseService raw type parsers', () => {
     expect(service.client.options.parsers[114]!('{"ok":true}')).toEqual({ ok: true });
     expect(service.client.options.parsers[3802]!('["ok"]')).toEqual(['ok']);
     expect(service.client.options.parsers[1184]!('2026-07-30T12:00:00.000Z')).toBeInstanceOf(Date);
+    expect(service.client.options.serializers[3802]!(JSON.stringify(['ok']))).toBe('["ok"]');
+    expect(service.client.options.serializers[3802]!({ ok: true })).toBe('{"ok":true}');
   });
 });

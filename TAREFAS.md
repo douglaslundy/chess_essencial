@@ -5,7 +5,7 @@
 - [x] Corrigir desafios do nível atual exibidos como concluídos por rank global calculado depois do filtro.
 - [x] Adicionar regressão PostgreSQL para garantir que a primeira etapa do nível atual fique disponível.
 - [x] Revisar o fluxo Testar conexão da IA e cobrir sucesso/erro na interface administrativa.
-- [x] Restaurar desserialização de JSON/JSONB no cliente de consultas raw e reativar os testes de banco afetados.
+- [x] Restaurar serialização e desserialização de JSON/JSONB no cliente de consultas raw e reativar os testes de banco afetados.
 
 ## Regra de execução
 

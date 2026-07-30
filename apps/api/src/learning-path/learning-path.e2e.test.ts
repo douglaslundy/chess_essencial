@@ -168,6 +168,10 @@ describeDatabase('learning path database integration', () => {
       ON CONFLICT (id) DO UPDATE SET status = 'published'
     `;
     await database.client`DELETE FROM lesson_steps WHERE lesson_id = ${lessonId}`;
+    await database.client`DELETE FROM lesson_source_pages WHERE lesson_id = ${lessonId}`;
+    await database.client`
+      INSERT INTO lesson_source_pages (lesson_id, page) VALUES (${lessonId}, 1)
+    `;
     await database.client`
       INSERT INTO lesson_steps (lesson_id, step_key, position, step_type, body_md, orientation, expected_actions, feedback, next_step_rules)
       VALUES

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { z } from 'zod';
 
 import { AccessTokenGuard, type AuthenticatedRequest } from '../auth/access-token.guard.js';
@@ -33,11 +33,13 @@ export class LearningPathController {
   }
 
   @Post('stages/:stageId/start')
+  @HttpCode(HttpStatus.OK)
   startStage(@Req() request: AuthenticatedRequest, @Param('stageId') stageId: string) {
     return this.learningPath.startStage(request.auth.userId, parseInput(idSchema, stageId));
   }
 
   @Post('stages/:stageId/complete')
+  @HttpCode(HttpStatus.OK)
   completeStage(@Req() request: AuthenticatedRequest, @Param('stageId') stageId: string) {
     return this.learningPath.completeStage(request.auth.userId, parseInput(idSchema, stageId));
   }

@@ -8,7 +8,7 @@
 
 As pendências encontradas no log do Claude foram concluídas e publicadas no commit 0ad3d57. Na validação posterior, o CI revelou uma regressão de desserialização JSON; o usuário também relatou o estado visual incorreto dos desafios do Treinamento e pediu verificação do botão de teste da IA.
 
-A nova leva corrige os três pontos: rank global dos níveis calculado corretamente, parser JSON/JSONB explícito no cliente PostgreSQL e teste de interface do botão Testar conexão. A suíte e2e da Jornada foi adicionada ao job PostgreSQL do CI para impedir retorno dessa regressão.
+A nova leva corrige os três pontos: rank global dos níveis calculado corretamente, serialização e parser JSON/JSONB explícitos no cliente PostgreSQL e teste de interface do botão Testar conexão. A suíte e2e da Jornada foi adicionada ao job PostgreSQL do CI para impedir retorno dessa regressão.
 
 ## Resumo executivo
 
