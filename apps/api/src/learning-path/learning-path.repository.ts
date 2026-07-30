@@ -169,10 +169,14 @@ export class LearningPathRepository {
   async getLevelRank(levelId: string): Promise<number | null> {
     const sql = this.database.client;
     const [row] = await sql<{ rank: number }[]>`
-      SELECT (ROW_NUMBER() OVER (ORDER BY lw.position, ll.position))::int AS rank
-        FROM learning_levels ll
-        JOIN learning_worlds lw ON lw.id = ll.world_id
-       WHERE ll.id = ${levelId}
+      SELECT rank
+        FROM (
+          SELECT ll.id,
+                 (ROW_NUMBER() OVER (ORDER BY lw.position, ll.position))::int AS rank
+            FROM learning_levels ll
+            JOIN learning_worlds lw ON lw.id = ll.world_id
+        ) ranked_levels
+       WHERE id = ${levelId}
     `;
     return row?.rank ?? null;
   }

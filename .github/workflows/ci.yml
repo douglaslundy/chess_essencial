@@ -155,6 +155,7 @@ jobs:
           src/courses/courses.e2e.test.ts
           src/courses/lesson-importer.e2e.test.ts
           src/lesson-runtime/lesson-runtime.e2e.test.ts
+          src/learning-path/learning-path.e2e.test.ts
           src/exercises/exercise-importer.e2e.test.ts
           src/exercises/exercises.e2e.test.ts
           src/games/games.e2e.test.ts

@@ -25,6 +25,7 @@ describeDatabase('learning path database integration', () => {
   let advancedWorldId: string;
   let advancedLevelId: string;
   let advancedExerciseId: string;
+  let advancedStageId: string;
   let lessonWorldId: string;
   let lessonLevelId: string;
   let lessonStageId: string;
@@ -119,6 +120,12 @@ describeDatabase('learning path database integration', () => {
       RETURNING id
     `;
     advancedLevelId = advancedLevel!.id;
+    const [advancedStage] = await database.client<{ id: string }[]>`
+      INSERT INTO learning_stages (level_id, position, type, exercise_id)
+      VALUES (${advancedLevelId}, 1, 'challenge', ${advancedExerciseId})
+      RETURNING id
+    `;
+    advancedStageId = advancedStage!.id;
 
     // Third, non-overlapping band (well above the advanced one too) reached
     // by its own dedicated placement exercise, holding a single 'lesson'
@@ -318,6 +325,18 @@ describeDatabase('learning path database integration', () => {
     expect(progress.json()).toMatchObject({
       currentLevelId: advancedLevelId,
       currentWorldId: advancedWorldId,
+    });
+
+    const level = await app.inject({
+      headers: auth(placed),
+      method: 'GET',
+      url: `/v1/learning-path/levels/${advancedLevelId}`,
+    });
+    expect(level.statusCode, level.body).toBe(200);
+    expect(level.json()).toMatchObject({
+      completedStageCount: 0,
+      status: 'current',
+      stages: [{ id: advancedStageId, status: 'available' }],
     });
   });
 

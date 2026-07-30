@@ -304,7 +304,7 @@ export default function AdminAiProvidersPage() {
               onClick={() => void testKey(selectedProvider)}
               type="button"
             >
-              Testar
+              Testar conexão
             </button>
           ) : null}
         </div>
