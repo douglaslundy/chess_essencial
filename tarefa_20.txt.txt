@@ -1,0 +1,2422 @@
+MISSÃO — AUDITORIA, COMPARAÇÃO E EVOLUÇÃO COMPLETA DA PLATAFORMA DE XADREZ
+
+Você atuará simultaneamente como:
+
+- Principal Software Architect;
+- Senior Full-Stack Engineer;
+- Product Manager;
+- UX Architect;
+- Game Systems Designer;
+- especialista em plataformas educacionais;
+- especialista em sistemas de xadrez;
+- especialista em gamificação;
+- especialista em analytics;
+- especialista em arquitetura evolutiva;
+- especialista em sistemas adaptativos de aprendizagem.
+
+Você recebeu um projeto de uma plataforma de xadrez já funcional.
+
+NÃO estamos construindo uma plataforma do zero.
+
+O projeto já possui funcionalidades, regras, arquitetura, componentes, banco, APIs, tabuleiro, desafios e outros recursos.
+
+Sua responsabilidade é:
+
+1. auditar profundamente o sistema existente;
+2. descobrir exatamente o que ele já faz;
+3. identificar funcionalidades parcialmente implementadas;
+4. identificar funcionalidades ausentes;
+5. identificar funcionalidades que já são melhores que as referências;
+6. comparar o produto com os requisitos descritos neste documento;
+7. propor melhorias;
+8. implementar aquilo que for tecnicamente adequado;
+9. preservar aquilo que já estiver melhor;
+10. NÃO substituir funcionalidades maduras sem autorização;
+11. integrar os módulos do produto em um ciclo contínuo de aprendizagem;
+12. priorizar funcionalidades que aumentem efetivamente a capacidade do usuário de jogar, aprender, treinar, analisar e evoluir.
+
+A referência de produto utilizada para esta auditoria é a experiência observada no Chess.com, especialmente:
+
+- Home;
+- Problemas;
+- Puzzle Journey;
+- Aprender;
+- Coach/Instrutor;
+- análise;
+- prática;
+- estatísticas;
+- conquistas;
+- amigos;
+- rankings;
+- clubes;
+- configurações;
+- personalização do tabuleiro;
+- configurações sociais;
+- gamificação;
+- recomendações.
+
+A referência serve para identificar padrões de produto e oportunidades.
+
+NÃO copie:
+
+- código;
+- textos;
+- assets;
+- personagens;
+- ilustrações;
+- mapas;
+- marcas;
+- identidade visual;
+- nomes proprietários;
+- layouts literalmente;
+- conteúdo educacional proprietário.
+
+O produto deve possuir identidade própria.
+
+==================================================
+REGRA FUNDAMENTAL
+==================================================
+
+NÃO PRESUMA QUE UMA FUNCIONALIDADE ESTÁ AUSENTE.
+
+Investigue primeiro.
+
+Para cada requisito deste documento, classifique o sistema atual como:
+
+EXISTING_SUPERIOR
+EXISTING_EQUIVALENT
+EXISTING_PARTIAL
+EXISTING_INFERIOR
+NOT_IMPLEMENTED
+NOT_APPLICABLE
+UNKNOWN
+
+EXISTING_SUPERIOR:
+nosso sistema já possui solução que você considera superior.
+
+EXISTING_EQUIVALENT:
+já existe solução equivalente.
+
+EXISTING_PARTIAL:
+parte da funcionalidade existe.
+
+EXISTING_INFERIOR:
+existe, mas há benefício objetivo em evoluí-la.
+
+NOT_IMPLEMENTED:
+não existe.
+
+NOT_APPLICABLE:
+não faz sentido para o produto.
+
+UNKNOWN:
+não foi possível concluir após investigação.
+
+==================================================
+REGRA DE PROTEÇÃO DO SISTEMA EXISTENTE
+==================================================
+
+Se encontrar:
+
+EXISTING_SUPERIOR
+
+NÃO ALTERE.
+
+Explique:
+
+- o que existe;
+- onde existe;
+- por que considera superior;
+- qual funcionalidade de referência seria substituída;
+- possíveis vantagens;
+- possíveis desvantagens.
+
+Depois pergunte explicitamente ao usuário se deseja substituir/refatorar.
+
+Não prossiga nessa funcionalidade sem confirmação.
+
+Se encontrar:
+
+EXISTING_EQUIVALENT
+
+preserve por padrão.
+
+Somente proponha alterações se houver ganho mensurável de:
+
+- UX;
+- arquitetura;
+- desempenho;
+- acessibilidade;
+- confiabilidade;
+- manutenção;
+- consistência.
+
+Se a alteração mudar significativamente comportamento ou UX, solicite autorização.
+
+Se encontrar:
+
+EXISTING_PARTIAL
+
+aproveite a implementação atual e complete-a.
+
+NÃO reimplemente do zero sem justificativa técnica.
+
+==================================================
+FASE 0 — NÃO CODIFIQUE AINDA
+==================================================
+
+Antes de qualquer implementação:
+
+investigue todo o projeto.
+
+Produza:
+
+PRODUCT_AUDIT.md
+FEATURE_MATRIX.md
+ARCHITECTURE_AUDIT.md
+IMPLEMENTATION_PLAN.md
+ROADMAP.md
+
+Somente depois da auditoria avance para alterações.
+
+==================================================
+FASE 1 — DESCOBERTA DO PROJETO
+==================================================
+
+Determine:
+
+- stack;
+- framework;
+- linguagem;
+- frontend;
+- backend;
+- banco;
+- ORM;
+- autenticação;
+- autorização;
+- APIs;
+- serviços;
+- cache;
+- armazenamento;
+- realtime;
+- notificações;
+- analytics;
+- engine de xadrez;
+- motor de análise;
+- filas/jobs;
+- testes;
+- CI/CD;
+- deployment;
+- arquitetura de estado;
+- design system.
+
+Mapeie diretórios.
+
+Identifique:
+
+pages
+routes
+screens
+components
+hooks
+stores
+services
+repositories
+models
+schemas
+controllers
+API routes
+workers
+engines
+tests
+
+==================================================
+FASE 2 — INVENTÁRIO DE FUNCIONALIDADES
+==================================================
+
+Faça busca sistemática pelo código.
+
+Investigue funcionalidades relacionadas a:
+
+HOME
+
+dashboard
+recommendations
+recentGames
+suggestedOpponent
+nextChallenge
+learningRecommendation
+dailyChallenge
+bots
+coach
+streak
+
+PROBLEMAS
+
+puzzle
+challenge
+tactic
+rating
+difficulty
+theme
+hint
+mistake
+timer
+progress
+streak
+points
+level
+journey
+
+APRENDER
+
+lesson
+course
+learning
+path
+opening
+library
+training
+practice
+
+TREINADOR
+
+coach
+trainer
+instructor
+mentor
+avatar
+hint
+feedback
+voice
+reminder
+
+ANÁLISE
+
+analysis
+engine
+evaluation
+stockfish
+bestMove
+threat
+arrow
+variation
+PGN
+FEN
+
+SOCIAL
+
+friend
+challenge
+message
+club
+ranking
+leaderboard
+
+GAMIFICAÇÃO
+
+achievement
+badge
+award
+streak
+XP
+level
+tier
+points
+
+CONFIGURAÇÕES
+
+settings
+preferences
+boardSettings
+sound
+haptic
+coordinates
+animation
+
+==================================================
+FASE 3 — MATRIZ COMPARATIVA
+==================================================
+
+Crie uma tabela:
+
+FEATURE_MATRIX.md
+
+com:
+
+| Domínio | Funcionalidade | Estado | Implementação atual | Referência | Recomendação | Risco | Prioridade |
+
+Exemplo:
+
+Puzzle | Dicas | EXISTING_PARTIAL | hint() existente | dicas progressivas | evoluir | baixo | P0
+
+Faça isso para TODOS os requisitos abaixo.
+
+==================================================
+CICLO CENTRAL DO PRODUTO
+==================================================
+
+Toda decisão de produto, arquitetura e implementação deve considerar este ciclo como o fluxo central da plataforma:
+
+JOGAR
+→ ANALISAR
+→ ENTENDER O ERRO
+→ RECOMENDAR TREINAMENTO
+→ APRENDER
+→ PRATICAR
+→ RESOLVER DESAFIOS
+→ MEDIR DOMÍNIO
+→ JOGAR NOVAMENTE
+
+Este ciclo NÃO é apenas conceitual.
+
+Ele deve existir tecnicamente no produto e conectar os diferentes módulos da plataforma.
+
+A plataforma deve ser projetada como um sistema contínuo de evolução do jogador, e não como um conjunto de telas ou funcionalidades independentes.
+
+==================================================
+1. JOGAR
+==================================================
+
+O usuário joga uma partida.
+
+Ao finalizar, registrar os dados necessários para permitir análise posterior, respeitando a arquitetura existente.
+
+Possíveis dados:
+
+- movimentos;
+- resultado;
+- modalidade;
+- controle de tempo;
+- rating quando aplicável;
+- duração;
+- PGN;
+- posição final;
+- metadados relevantes;
+- adversário;
+- origem da partida;
+- tipo da partida;
+- se foi treino, casual ou competitivo.
+
+A partida deve alimentar o restante do ciclo.
+
+Não duplicar armazenamento se o sistema já possui histórico adequado.
+
+==================================================
+2. ANALISAR
+==================================================
+
+Após a partida, oferecer análise quando disponível.
+
+A análise deve procurar:
+
+- erros;
+- imprecisões;
+- oportunidades perdidas;
+- problemas de abertura;
+- padrões táticos;
+- problemas estratégicos;
+- problemas de final;
+- decisões críticas;
+- mudanças relevantes de avaliação.
+
+Não limitar a análise a mostrar avaliação do engine.
+
+O objetivo é produzir informação utilizável pelo sistema de aprendizagem.
+
+==================================================
+3. ENTENDER O ERRO
+==================================================
+
+Transformar erros detectados em explicações compreensíveis.
+
+Exemplo:
+
+NÃO apenas:
+
+"Blunder: -3.4"
+
+Preferir algo como:
+
+"Este lance permitiu um garfo que atacou duas peças."
+
+Quando tecnicamente possível, associar o erro a uma skill da taxonomia interna.
+
+Exemplo:
+
+mistake
+→ tacticalPattern
+→ fork
+
+ou:
+
+mistake
+→ endgame
+→ opposition
+
+Criar relação conceitual:
+
+Game
+→ Analysis
+→ Mistake
+→ Skill
+
+Cada erro relevante deverá, quando possível, possuir:
+
+mistakeType
+severity
+skill
+position
+movePlayed
+recommendedMove
+explanation
+confidence
+
+Não inventar explicações sem base técnica suficiente.
+
+==================================================
+4. RECOMENDAR TREINAMENTO
+==================================================
+
+O RecommendationService deve consumir os resultados da análise.
+
+Exemplo:
+
+3 partidas recentes apresentam dificuldade em:
+
+kingSafety
+
+Então recomendar:
+
+"Treinar segurança do rei"
+
+Outro exemplo:
+
+usuário perdeu repetidamente finais de torres.
+
+Recomendar:
+
+"Praticar finais de torres"
+
+As recomendações devem possuir justificativa rastreável.
+
+Evitar recomendações aleatórias.
+
+Cada recomendação deverá poder registrar:
+
+reason
+source
+skill
+priority
+createdAt
+completedAt
+
+Exemplo:
+
+Recommendation {
+ type: TRAIN_WEAKNESS,
+ skill: "fork",
+ reason: "3 erros relacionados nas últimas 5 partidas"
+}
+
+==================================================
+5. APRENDER
+==================================================
+
+Se existir conteúdo educacional relacionado à fraqueza:
+
+direcionar o usuário para ele.
+
+Exemplo:
+
+fraqueza:
+backRankMate
+
+→ aula:
+Fundamentos de mate na última fileira
+
+Após conclusão:
+
+atualizar LearningProgress.
+
+Não criar aulas fictícias se não houver conteúdo correspondente.
+
+Se não houver aula adequada:
+
+oferecer prática ou desafio relacionado.
+
+==================================================
+6. PRATICAR
+==================================================
+
+Depois da explicação teórica, oferecer prática dirigida.
+
+Exemplo:
+
+aula sobre oposição
+
+→ exercícios de oposição
+
+ou:
+
+fraqueza em finais de torres
+
+→ prática de finais de torres.
+
+O Practice Engine deve utilizar SkillMastery para selecionar exercícios adequados quando houver dados suficientes.
+
+A prática pode ser:
+
+guiada
+livre
+adaptativa
+revisão
+reforço
+
+==================================================
+7. RESOLVER DESAFIOS
+==================================================
+
+Conectar desafios existentes à taxonomia de skills.
+
+Exemplo:
+
+Puzzle {
+ skills: [
+   "fork",
+   "doubleAttack"
+ ]
+}
+
+Quando o usuário resolver:
+
+atualizar:
+
+PuzzleRating
+PuzzleProgress
+SkillMastery
+
+quando aplicável.
+
+Não alterar desafios existentes apenas para encaixá-los artificialmente nessa arquitetura.
+
+Temas antigos podem continuar como metadados.
+
+==================================================
+8. MEDIR DOMÍNIO
+==================================================
+
+SkillMastery deve consolidar sinais provenientes de diferentes atividades.
+
+Possíveis fontes:
+
+partidas
+puzzles
+practice
+lessons
+training
+analysis
+
+Exemplo conceitual:
+
+SkillMastery {
+ skill: "fork",
+
+ puzzlePerformance: ...,
+ gamePerformance: ...,
+ practicePerformance: ...,
+ lessonProgress: ...,
+
+ confidence: ...,
+ score: ...,
+ lastUpdatedAt: ...
+}
+
+Não usar média simples sem justificativa.
+
+A metodologia deve considerar:
+
+- quantidade de observações;
+- recência;
+- dificuldade;
+- contexto;
+- confiabilidade da evidência.
+
+Também deve distinguir:
+
+"não existem dados suficientes"
+
+de:
+
+"o usuário possui domínio baixo".
+
+==================================================
+9. JOGAR NOVAMENTE
+==================================================
+
+Depois de treinamento relevante, incentivar o usuário a aplicar o aprendizado em partida real ou de treinamento.
+
+Exemplo:
+
+"Você treinou finais de torres. Agora experimente aplicar isso em uma partida."
+
+O ciclo então reinicia:
+
+JOGAR
+→ ANALISAR
+→ ENTENDER
+→ RECOMENDAR
+→ APRENDER
+→ PRATICAR
+→ RESOLVER
+→ MEDIR
+→ JOGAR
+
+==================================================
+LOOP DE APRENDIZAGEM
+==================================================
+
+Arquiteturalmente, pensar no sistema como:
+
+GameService
+      ↓
+AnalysisService
+      ↓
+MistakeClassifier
+      ↓
+SkillMasteryService
+      ↓
+RecommendationService
+      ↓
+Learning / Practice / Puzzle
+      ↓
+SkillMasteryService
+      ↓
+RecommendationService
+      ↓
+Game
+
+Os nomes reais devem respeitar a arquitetura existente.
+
+Não crie serviços duplicados se equivalentes já existirem.
+
+==================================================
+CONTEXTO ENTRE MÓDULOS
+==================================================
+
+Ao navegar entre módulos, preservar o motivo da recomendação quando útil.
+
+Exemplo:
+
+Partida
+→ erro de garfo
+→ recomendação
+→ treino de garfo
+
+O módulo de treino deve saber que o usuário chegou ali por causa daquela fraqueza.
+
+Após completar:
+
+registrar que o treinamento foi realizado.
+
+Isso permite posteriormente avaliar se houve melhora.
+
+==================================================
+FEEDBACK LOOP
+==================================================
+
+O sistema deve conseguir responder:
+
+"O treinamento recomendado realmente ajudou?"
+
+Exemplo:
+
+ANTES:
+desempenho baixo em fork.
+
+TREINAMENTO:
+12 puzzles de fork.
+
+DEPOIS:
+novas partidas apresentam melhor desempenho nessa skill.
+
+Então:
+
+SkillMastery aumenta.
+
+Se não houver melhora:
+
+RecommendationService poderá recomendar:
+
+- treinamento adicional;
+- conteúdo mais básico;
+- prática diferente;
+- revisão conceitual.
+
+==================================================
+HOME COMO ORQUESTRADOR
+==================================================
+
+A Home deve refletir o ciclo.
+
+Ela não deve apenas listar funcionalidades.
+
+Deve responder:
+
+"Qual é a próxima ação mais útil para este jogador?"
+
+Exemplos:
+
+"Revisar sua última partida"
+
+"Continuar treinamento de finais"
+
+"Você melhorou em garfos"
+
+"Praticar defesa"
+
+"Continuar aula"
+
+"Resolver problema diário"
+
+"Jogar novamente"
+
+A Home deve priorizar continuidade.
+
+==================================================
+PRINCÍPIO DE CONTINUIDADE
+==================================================
+
+Evitar becos sem saída.
+
+Após uma ação importante, sempre avaliar qual próximo passo faz sentido.
+
+Exemplos:
+
+PARTIDA FINALIZADA
+→ analisar
+
+ANÁLISE FINALIZADA
+→ treinar fraqueza
+
+AULA FINALIZADA
+→ praticar
+
+PRÁTICA FINALIZADA
+→ resolver desafios relacionados
+
+TREINO FINALIZADO
+→ jogar
+
+PUZZLE JOURNEY
+→ continuar progressão ou aplicar habilidade
+
+Isso NÃO significa obrigar o usuário a seguir o fluxo.
+
+São recomendações contextuais.
+
+O usuário continua livre para navegar normalmente.
+
+==================================================
+REGRA DE IMPLEMENTAÇÃO DO CICLO
+==================================================
+
+Ao implementar qualquer feature, responda internamente:
+
+1. Onde ela entra no ciclo?
+
+2. Que dados recebe do estágio anterior?
+
+3. Que dados produz?
+
+4. Qual próximo estágio pode consumir esses dados?
+
+5. Como essa informação melhora SkillMastery?
+
+6. Como influencia RecommendationService?
+
+7. Como medir se trouxe benefício?
+
+Se uma feature não se conectar ao ciclo, classifique-a como:
+
+SUPPORTING_FEATURE
+
+Exemplos:
+
+tema do tabuleiro
+sons
+haptic
+configurações visuais
+
+Esses recursos podem existir, mas não devem competir em prioridade com funcionalidades que fortalecem o ciclo central.
+
+==================================================
+REGRA DE PRIORIDADE DO CICLO
+==================================================
+
+Ao decidir entre duas implementações de complexidade semelhante, priorize aquela que fortalece mais o ciclo:
+
+JOGAR
+→ ANALISAR
+→ ENTENDER
+→ RECOMENDAR
+→ APRENDER
+→ PRATICAR
+→ RESOLVER
+→ MEDIR
+→ JOGAR
+
+A plataforma deve funcionar como um sistema contínuo de melhoria do jogador, e não como uma coleção de funcionalidades independentes.
+
+==================================================
+HOME / HUB
+==================================================
+
+Avalie a criação ou evolução de uma Home baseada em recomendações.
+
+Possíveis cards:
+
+Continuar progresso
+Problemas
+Próxima aula
+Treinar
+Jogar contra Instrutor
+Jogar contra bot
+Problema diário
+Revisar erros
+Continuar análise
+Confronto recomendado
+
+A Home NÃO deve virar uma coleção aleatória de cards.
+
+Criar Recommendation Engine simples inicialmente.
+
+Possíveis sinais:
+
+lastActivity
+currentLearningLevel
+weakSkills
+unfinishedSession
+recentMistakes
+dailyChallengeStatus
+streak
+preferredMode
+
+Exemplo:
+
+Usuário começou um nível e não terminou:
+
+"Continuar nível 12"
+
+Usuário perdeu várias posições de finais:
+
+"Treinar finais"
+
+Usuário terminou partida:
+
+"Revisar sua última partida"
+
+==================================================
+PROBLEMAS — NOVA EXPERIÊNCIA
+==================================================
+
+Preserve desafios existentes.
+
+Não recrie posições.
+
+Criar progressão dirigida.
+
+Separar:
+
+Puzzle Rating
+Puzzle Progression
+
+Puzzle Rating representa habilidade estimada.
+
+Progression representa avanço no sistema.
+
+Não misturar os dois números.
+
+Criar:
+
+PuzzleJourney
+PuzzleTier
+PuzzleLevel
+PuzzleProgress
+PuzzleAttempt
+
+A progressão visual poderá usar:
+
+tiers
+levels
+checkpoints
+milestones
+
+mas com identidade própria.
+
+==================================================
+DIFICULDADE ADAPTATIVA
+==================================================
+
+Criar níveis como:
+
+STANDARD
+HARD
+EXTRA_HARD
+
+ou nomenclatura própria.
+
+A dificuldade deve ser RELATIVA ao rating do jogador.
+
+Não definir:
+
+Hard = rating 1500
+
+Definir algo conceitualmente semelhante a:
+
+targetPuzzleRating =
+userPuzzleRating + difficultyOffset
+
+Os valores reais devem ser calibrados com dados.
+
+==================================================
+PUZZLE POINTS / PROGRESSÃO
+==================================================
+
+Criar sistema de pontos independente de rating.
+
+Exemplo:
+
+PuzzleProgress {
+ points
+ level
+ tier
+ streak
+}
+
+Pontuação poderá considerar:
+
+difficulty
+firstTry
+hintsUsed
+completion
+
+Não recompensar velocidade de maneira que prejudique aprendizado.
+
+==================================================
+PUZZLE STREAK
+==================================================
+
+Registrar sequências de resolução.
+
+Definir claramente:
+
+streak de puzzles
+streak diário
+
+São conceitos diferentes.
+
+Não misturar.
+
+==================================================
+OBJETIVO DO PROBLEMA
+==================================================
+
+Permitir:
+
+showPuzzleGoal
+
+Instrutor poderá informar:
+
+"Encontre o mate."
+
+"Ganhe material."
+
+"Encontre a melhor continuação."
+
+Essa configuração deve poder ser desligada.
+
+==================================================
+FEEDBACK DE ERRO
+==================================================
+
+Criar:
+
+showMistakeFeedback
+
+Quando usuário errar:
+
+não mostrar apenas:
+
+"Errado."
+
+Explicar quando possível:
+
+- peça perdida;
+- ameaça ignorada;
+- oportunidade tática;
+- defesa disponível;
+- mate perdido;
+- avaliação piorada.
+
+Usar engine existente se apropriado.
+
+==================================================
+DICAS
+==================================================
+
+Criar:
+
+showHints
+
+Sistema progressivo.
+
+Hint 1:
+conceitual.
+
+Hint 2:
+região/peça.
+
+Hint 3:
+casa.
+
+Hint 4:
+jogada.
+
+Registrar:
+
+hintsUsed.
+
+==================================================
+RELÓGIO DE PROBLEMAS
+==================================================
+
+Criar configuração:
+
+showPuzzleTimer
+
+Registrar internamente duração mesmo se visualmente oculto, respeitando políticas de privacidade aplicáveis.
+
+==================================================
+INSTRUTOR
+==================================================
+
+Criar Instrutor como subsistema transversal.
+
+Não acoplar ao módulo de puzzles.
+
+Estrutura:
+
+InstructorService
+InstructorContext
+InstructorAvatar
+InstructorBubble
+InstructorMessage
+InstructorPreferences
+
+Estados:
+
+neutral
+thinking
+explaining
+hint
+warning
+mistake
+success
+celebrating
+
+==================================================
+CONFIGURAÇÕES DO INSTRUTOR
+==================================================
+
+Investigar suporte para:
+
+enabled
+selectedInstructor
+reminders
+voice
+autoSaveInstructorGames
+
+E especificamente:
+
+puzzleGoals
+mistakeFeedback
+chatHints
+
+Se voz for implementada, criar abstração:
+
+InstructorVoiceProvider
+
+para não acoplar UI ao fornecedor de TTS.
+
+==================================================
+JOGAR CONTRA INSTRUTOR
+==================================================
+
+Avaliar modo:
+
+PLAY_WITH_INSTRUCTOR
+
+Durante a partida oferecer opcionalmente:
+
+Hint
+Undo
+Suggestion Arrows
+Threat Arrows
+Evaluation Bar
+Move Feedback
+
+A experiência deve ser pedagógica.
+
+Não transformar automaticamente partidas competitivas normais em partidas assistidas.
+
+==================================================
+AUTOSAVE
+==================================================
+
+Configuração:
+
+autoSaveInstructorGames
+
+Salvar partidas de treinamento no histórico.
+
+Identificar claramente:
+
+gameType = TRAINING
+
+para não contaminar ratings competitivos.
+
+==================================================
+APRENDER
+==================================================
+
+Criar/avaliar:
+
+LearningHub
+LearningPath
+LessonLibrary
+OpeningLearning
+Practice
+
+LearningHub poderá recomendar:
+
+Próxima aula
+Treinar com Instrutor
+Aprender abertura
+Biblioteca
+Revisar habilidade
+
+==================================================
+LEARNING PATH
+==================================================
+
+Estrutura:
+
+LearningPath
+SkillLevel
+Course
+Lesson
+LessonChallenge
+
+Progressão visual.
+
+Exemplo:
+
+Iniciante
+Fundamentos
+Intermediário
+Avançado
+
+Mas nomes devem pertencer ao produto.
+
+==================================================
+PRÁTICA / EXERCÍCIOS
+==================================================
+
+Avaliar módulo separado para treino estruturado.
+
+Categorias possíveis:
+
+Atacando
+Defendendo
+Fundamentos de finais
+Xeque-mates
+Táticas
+Peças
+Estratégia
+Posições personalizadas
+
+Registrar progresso:
+
+completedExercises
+totalExercises
+
+==================================================
+FINAIS
+==================================================
+
+Se houver conteúdo suficiente, organizar:
+
+checkmates
+pawnEndgames
+minorPieceEndgames
+rookEndgames
+queenEndgames
+
+Permitir futuramente:
+
+LEARN
+PRACTICE
+CHALLENGE
+
+Não inventar conteúdo se o banco atual não possuir posições suficientes.
+
+==================================================
+ANÁLISE — HUB
+==================================================
+
+Criar/avaliar tela de entrada com:
+
+Nova Análise
+Definir Posição
+Histórico de Partidas
+Importar PGN
+Importar FEN
+
+==================================================
+NOVA ANÁLISE
+==================================================
+
+Permitir iniciar posição inicial.
+
+==================================================
+EDITOR DE POSIÇÃO
+==================================================
+
+Permitir:
+
+adicionar peças
+remover peças
+lado a jogar
+roque
+en passant
+halfmove
+fullmove
+
+Gerar FEN válida.
+
+==================================================
+PGN / FEN
+==================================================
+
+Criar importador robusto.
+
+Validar input.
+
+Erros devem explicar:
+
+PGN inválida
+FEN inválida
+posição ilegal
+
+Não quebrar aplicação.
+
+==================================================
+ANÁLISE DE PARTIDA
+==================================================
+
+Avaliar:
+
+evaluationBar
+suggestionArrows
+threatArrows
+engineLines
+moveFeedback
+engineMaxTime
+
+==================================================
+BARRA DE AVALIAÇÃO
+==================================================
+
+Mostrar avaliação atual.
+
+Suportar:
+
+centipawn
+mate
+
+Exemplos:
+
++0.21
+-1.70
+M3
+
+==================================================
+SETAS
+==================================================
+
+Criar overlay reutilizável:
+
+BoardArrowLayer
+
+Tipos:
+
+SUGGESTION
+THREAT
+USER
+INSTRUCTOR
+
+==================================================
+LINHAS DO MOTOR
+==================================================
+
+Configuração:
+
+showEngineLines
+
+Permitir futuramente:
+
+MultiPV.
+
+Não executar análise excessivamente cara em dispositivos fracos.
+
+==================================================
+TEMPO DE ANÁLISE
+==================================================
+
+Configuração:
+
+engineMaxTime
+
+ou equivalente.
+
+Considerar:
+
+desempenho
+bateria
+latência
+qualidade
+
+==================================================
+COMENTÁRIO SOBRE JOGADAS
+==================================================
+
+Criar:
+
+moveFeedback
+
+Classificações, se suportadas tecnicamente:
+
+best
+excellent
+good
+inaccuracy
+mistake
+blunder
+
+Não inventar classificações apenas por diferença arbitrária sem metodologia consistente.
+
+==================================================
+EXPLORAR POSIÇÃO
+==================================================
+
+Durante análise permitir:
+
+avançar
+voltar
+explorar variantes
+retornar à linha principal
+
+==================================================
+CONFIGURAÇÕES DO TABULEIRO
+==================================================
+
+Auditar suporte para:
+
+sounds
+hapticFeedback
+showCoordinates
+highlightLastMove
+showLegalMoves
+animationSpeed
+pieceNotation
+castlingMethod
+themeAnimations
+resultAnimations
+victoryCelebration
+
+Adicionar apenas o que fizer sentido para plataforma/dispositivo.
+
+==================================================
+COORDENADAS
+==================================================
+
+Configuração:
+
+showCoordinates
+
+==================================================
+ÚLTIMO LANCE
+==================================================
+
+Configuração:
+
+highlightLastMove
+
+==================================================
+LANCES PERMITIDOS
+==================================================
+
+Configuração:
+
+showLegalMoves
+
+==================================================
+ANIMAÇÕES
+==================================================
+
+Criar preferência:
+
+animationSpeed
+
+e suporte a:
+
+reducedMotion.
+
+==================================================
+CELEBRAÇÕES
+==================================================
+
+Criar sistema configurável:
+
+NONE
+SUBTLE
+CONFETTI
+
+Não copiar efeitos específicos de terceiros.
+
+==================================================
+ESTATÍSTICAS
+==================================================
+
+Auditar estatísticas existentes.
+
+Criar dashboard por período:
+
+7D
+30D
+90D
+1Y
+ALL
+
+Possíveis métricas:
+
+gamesPlayed
+wins
+draws
+losses
+ratingChange
+puzzlesSolved
+puzzleRating
+puzzleProgress
+accuracy
+lessonsCompleted
+trainingTime
+
+==================================================
+ESTATÍSTICAS POR MODALIDADE
+==================================================
+
+Separar:
+
+Rapid
+Blitz
+Bullet
+Daily
+Puzzles
+Training
+
+Se alguma modalidade não existir no produto, não criar interface vazia.
+
+==================================================
+INSIGHTS
+==================================================
+
+Se houver dados suficientes:
+
+openings
+tactics
+strategy
+endgames
+
+Mostrar:
+
+strengths
+weaknesses
+progress
+
+Somente apresentar insights sustentados por dados reais.
+
+==================================================
+CONQUISTAS
+==================================================
+
+Criar/avaliar sistema:
+
+Achievement
+AchievementProgress
+AchievementUnlock
+
+Categorias possíveis:
+
+Tática
+Treino
+Partidas
+Aprendizado
+Exploração
+Consistência
+
+Não criar conquistas artificiais apenas para aumentar quantidade.
+
+==================================================
+RECOMPENSAS
+==================================================
+
+Possíveis:
+
+badges
+titles
+profileCosmetics
+mapCosmetics
+
+Evitar pay-to-win.
+
+==================================================
+AMIGOS
+==================================================
+
+Auditar:
+
+friendRequests
+friends
+searchUsers
+challengeFriend
+leaderboard
+
+Não implementar importação de contatos ou integração com redes sociais automaticamente.
+
+Esses recursos possuem implicações de:
+
+privacidade
+permissões
+dependências externas
+compliance
+
+Proponha separadamente se fizer sentido.
+
+==================================================
+DESAFIAR AMIGO
+==================================================
+
+Se multiplayer já existir:
+
+permitir criar desafio direto.
+
+Configurações possíveis:
+
+timeControl
+rated/unrated
+colorPreference
+
+==================================================
+RANKINGS
+==================================================
+
+Criar/avaliar:
+
+Leaderboard
+
+Categorias conforme modalidades existentes.
+
+Exemplo:
+
+Rapid
+Blitz
+Puzzle Progress
+Training
+
+Não mostrar rankings sem massa crítica suficiente.
+
+==================================================
+CLUBES
+==================================================
+
+NÃO implementar automaticamente.
+
+Primeiro determinar se produto possui comunidade suficiente.
+
+Se fizer sentido, propor arquitetura:
+
+Club
+ClubMember
+ClubRole
+ClubEvent
+ClubLeaderboard
+
+Possíveis funções:
+
+criar clube
+entrar
+sair
+administrar
+ranking
+desafios internos
+
+Antes de implementar, solicitar autorização porque é um subsistema grande.
+
+==================================================
+CONFIGURAÇÕES SOCIAIS
+==================================================
+
+Se recursos sociais existirem, implementar controles adequados de privacidade e segurança.
+
+Avaliar:
+
+friendRequests
+messages
+gameChat
+clubInvites
+tournamentInvites
+friendListVisibility
+
+NÃO copiar valores padrão de terceiros.
+
+Definir defaults conservadores.
+
+==================================================
+CONFIGURAÇÕES DE JOGO
+==================================================
+
+Avaliar:
+
+allowChallenges
+
+Filtros possíveis:
+
+minimumRating
+maximumRating
+
+Separar por modalidade se necessário.
+
+==================================================
+HISTÓRICO
+==================================================
+
+Garantir histórico consistente para:
+
+games
+trainingGames
+coachGames
+puzzles
+lessons
+analysis
+
+Não misturar tudo em uma única tabela sem tipagem adequada.
+
+==================================================
+PERFIL DO JOGADOR
+==================================================
+
+Criar visão consolidada:
+
+identity
+ratings
+progress
+achievements
+statistics
+recentActivity
+
+==================================================
+RECOMMENDATION ENGINE
+==================================================
+
+Criar serviço:
+
+RecommendationService
+
+Entrada:
+
+UserProfile
+Ratings
+LearningProgress
+SkillMastery
+RecentGames
+PuzzleHistory
+LessonHistory
+AnalysisHistory
+RecentMistakes
+
+Saída:
+
+Recommendation[]
+
+Tipos:
+
+CONTINUE_LEARNING
+TRAIN_WEAKNESS
+REVIEW_GAME
+DAILY_PUZZLE
+PLAY_TRAINER
+PRACTICE_ENDGAME
+CONTINUE_PUZZLE_JOURNEY
+PLAY_AGAIN
+REVIEW_SKILL
+
+Toda recomendação importante deve possuir motivo rastreável.
+
+==================================================
+MASTERY
+==================================================
+
+Criar modelo:
+
+SkillMastery
+
+Exemplo:
+
+{
+ skill: "fork",
+ score: 0.72,
+ attempts: 31,
+ successes: 23,
+ confidence: 0.81,
+ lastPracticedAt: ...
+}
+
+Usar mastery para recomendar treinamento.
+
+==================================================
+MODELO UNIFICADO DE SKILLS
+==================================================
+
+Criar taxonomia interna.
+
+Exemplo:
+
+TACTICS
+  fork
+  pin
+  skewer
+  discoveredAttack
+
+MATING
+  mate1
+  mate2
+  backRank
+
+ENDGAME
+  kingPawn
+  rook
+  opposition
+
+STRATEGY
+  weakSquare
+  openFile
+  pawnStructure
+
+OPENING
+  development
+  center
+  kingSafety
+
+Adaptar aos dados existentes.
+
+==================================================
+PROGRESSO GLOBAL
+==================================================
+
+Não criar um único número mágico representando habilidade total.
+
+Separar:
+
+Chess Rating
+Puzzle Rating
+Puzzle Progress
+Learning Progress
+Skill Mastery
+Achievements
+
+==================================================
+NAVEGAÇÃO
+==================================================
+
+Auditar navegação atual.
+
+Uma possível arquitetura:
+
+INÍCIO
+JOGAR
+TREINAR
+APRENDER
+MAIS
+
+Mas NÃO substitua navegação existente automaticamente.
+
+Comparar:
+
+descoberta
+frequência de uso
+profundidade
+clareza
+
+Se atual for melhor, preservar.
+
+==================================================
+DESIGN SYSTEM
+==================================================
+
+Não copiar Chess.com.
+
+Criar componentes próprios:
+
+Card
+SettingRow
+Toggle
+ProgressBar
+LevelNode
+Avatar
+StatCard
+LeaderboardRow
+AchievementCard
+RecommendationCard
+
+Reutilizar design system existente quando houver.
+
+==================================================
+CONFIGURAÇÕES
+==================================================
+
+Centralizar preferências.
+
+Possível estrutura:
+
+Settings
+├── Account
+├── Gameplay
+├── Board
+├── Instructor
+├── Puzzles
+├── Analysis
+├── Notifications
+├── Social
+├── Accessibility
+└── Privacy
+
+Mas adapte ao produto existente.
+
+==================================================
+PERSISTÊNCIA
+==================================================
+
+Preferências importantes devem persistir.
+
+Definir quais são:
+
+local
+server-side
+device-specific
+
+Exemplo:
+
+hapticFeedback → dispositivo
+boardTheme → usuário/dispositivo conforme arquitetura
+puzzleDifficulty → conta
+coachEnabled → conta
+
+==================================================
+MOBILE
+==================================================
+
+Priorizar:
+
+touch
+safe areas
+bottom navigation
+scroll
+performance
+board size
+orientation
+keyboard avoidance
+
+==================================================
+ACESSIBILIDADE
+==================================================
+
+Implementar:
+
+screen reader labels
+keyboard support quando aplicável
+contraste
+reduced motion
+touch targets
+text scaling
+
+Não depender apenas de cores.
+
+==================================================
+ANALYTICS
+==================================================
+
+Criar eventos de produto.
+
+Exemplos:
+
+home_opened
+recommendation_clicked
+
+game_completed
+analysis_started
+analysis_completed
+
+mistake_identified
+training_recommended
+training_started
+training_completed
+
+puzzle_started
+puzzle_solved
+puzzle_failed
+puzzle_hint_used
+puzzle_level_completed
+
+lesson_started
+lesson_completed
+
+practice_started
+practice_completed
+
+skill_mastery_updated
+
+instructor_hint_requested
+
+achievement_unlocked
+
+friend_challenged
+
+Não registrar dados desnecessários.
+
+==================================================
+MÉTRICAS DO CICLO
+==================================================
+
+Além de métricas isoladas, medir o funil:
+
+partida concluída
+→ análise iniciada
+→ fraqueza detectada
+→ recomendação aberta
+→ treino iniciado
+→ treino concluído
+→ nova partida jogada
+
+Exemplos:
+
+analysisAfterGameRate
+trainingRecommendationCTR
+trainingCompletionRate
+returnToPlayRate
+skillImprovementAfterTraining
+
+O objetivo é descobrir se o ciclo realmente melhora o aprendizado.
+
+==================================================
+OBSERVABILIDADE
+==================================================
+
+Auditar:
+
+error tracking
+logging
+performance
+API failures
+engine failures
+
+Adicionar instrumentação onde necessário.
+
+==================================================
+MIGRAÇÕES
+==================================================
+
+Toda mudança de banco deve:
+
+ser versionada
+ser reversível quando possível
+preservar dados existentes
+não resetar progresso
+
+Nunca apagar histórico para adaptar ao novo modelo.
+
+==================================================
+FEATURE FLAGS
+==================================================
+
+Funcionalidades grandes devem poder ser ativadas gradualmente.
+
+Exemplo:
+
+puzzleJourneyV2
+instructorV2
+learningHubV2
+recommendationsV2
+advancedAnalysisV2
+skillMasteryV2
+
+==================================================
+TESTES
+==================================================
+
+Criar testes unitários para regras de domínio.
+
+Exemplos:
+
+calculatePuzzleRating
+calculatePuzzleProgress
+unlockPuzzleLevel
+calculateMastery
+selectRecommendation
+calculateStreak
+completeLesson
+awardAchievement
+classifyMistake
+generateTrainingRecommendation
+
+Criar integração para:
+
+game
+→ analysis
+→ weakness
+→ recommendation
+
+e também:
+
+puzzle flow
+learning flow
+analysis import
+training flow
+
+Criar E2E para jornadas críticas.
+
+==================================================
+PERFORMANCE
+==================================================
+
+Avaliar especialmente:
+
+engine
+board rendering
+animations
+large histories
+leaderboards
+statistics
+learning map
+recommendations
+mastery aggregation
+
+Evitar carregar datasets completos no cliente.
+
+Usar paginação/cursor quando necessário.
+
+==================================================
+SEGURANÇA
+==================================================
+
+Auditar:
+
+authorization
+profile visibility
+social actions
+friend requests
+messages
+clubs
+PGN/FEN input
+API validation
+rate limiting
+
+Nunca confiar em estado do cliente para:
+
+rating
+points
+achievements
+progress
+leaderboards
+mastery.
+
+==================================================
+ETAPA DE DECISÃO
+==================================================
+
+Depois da auditoria, classifique funcionalidades em:
+
+P0 — alto impacto / baixa-média complexidade
+P1 — alto impacto / maior complexidade
+P2 — melhoria complementar
+P3 — experimental
+
+==================================================
+ROADMAP RECOMENDADO
+==================================================
+
+Considere como hipótese:
+
+P0
+
+Puzzle Journey
+Puzzle Progress
+Puzzle Settings
+Instructor
+Hints
+Mistake Feedback
+Learning Hub
+Analysis improvements
+Board settings
+Statistics improvements
+integração Game → Analysis
+classificação inicial de erros
+Recommendation Engine básico
+
+P1
+
+Skill Mastery
+Practice
+Achievements
+Advanced Statistics
+Trainer Games
+Recommendation Engine adaptativo
+integração completa do ciclo
+
+P2
+
+Friends improvements
+Leaderboards
+Daily challenges
+Streak systems
+
+P3
+
+Clubs
+complex social systems
+advanced personalization
+
+Mas altere essa ordem caso a auditoria revele prioridades diferentes.
+
+==================================================
+PROTOCOLO DE IMPLEMENTAÇÃO
+==================================================
+
+Para cada feature:
+
+1. localizar implementação atual;
+2. classificar estado;
+3. documentar;
+4. definir mudança;
+5. identificar dependências;
+6. explicar como entra no ciclo central;
+7. identificar dados recebidos;
+8. identificar dados produzidos;
+9. implementar;
+10. testar;
+11. executar lint;
+12. executar typecheck;
+13. testar regressão;
+14. documentar resultado.
+
+==================================================
+REGRA DE PARADA
+==================================================
+
+Se encontrar funcionalidade existente superior à proposta:
+
+PARE naquela funcionalidade.
+
+Apresente:
+
+FUNCIONALIDADE:
+IMPLEMENTAÇÃO ATUAL:
+PROPOSTA:
+POR QUE A ATUAL É MELHOR:
+O QUE SERIA PERDIDO:
+O QUE SERIA GANHO:
+
+Pergunte:
+
+"Seu sistema já possui uma solução que considero superior nesse aspecto. Deseja realmente substituí-la/refatorá-la?"
+
+Somente continue naquela feature após resposta.
+
+As demais funcionalidades independentes podem continuar sendo auditadas.
+
+==================================================
+PROIBIÇÕES
+==================================================
+
+Não:
+
+- reescrever projeto inteiro;
+- substituir engine sem necessidade;
+- substituir banco sem necessidade;
+- trocar framework;
+- remover funcionalidades existentes;
+- apagar dados;
+- copiar Chess.com;
+- inventar APIs existentes;
+- inventar arquivos;
+- afirmar que recurso existe sem encontrá-lo;
+- implementar recursos sociais enormes sem autorização;
+- criar dependências SaaS desnecessárias;
+- transformar tudo em premium;
+- sacrificar UX atual apenas para aproximar da referência;
+- criar sistemas de mastery sem base de dados mínima;
+- criar recomendações aleatórias;
+- duplicar serviços existentes;
+- quebrar o ciclo central criando módulos isolados.
+
+==================================================
+ENTREGA DA AUDITORIA
+==================================================
+
+Antes de implementação, quero receber:
+
+1. RESUMO EXECUTIVO
+
+2. MAPA DO SISTEMA ATUAL
+
+3. FEATURE MATRIX
+
+4. RECURSOS JÁ EXISTENTES
+
+5. RECURSOS EXISTENTES SUPERIORES À REFERÊNCIA
+
+6. RECURSOS PARCIAIS
+
+7. RECURSOS AUSENTES
+
+8. RECURSOS QUE NÃO FAZEM SENTIDO IMPLEMENTAR
+
+9. QUICK WINS
+
+10. RISCOS
+
+11. ALTERAÇÕES DE BANCO
+
+12. ALTERAÇÕES DE API
+
+13. ALTERAÇÕES DE UI
+
+14. ALTERAÇÕES DE ARQUITETURA
+
+15. ROADMAP P0/P1/P2/P3
+
+16. ESTIMATIVA RELATIVA:
+XS / S / M / L / XL
+
+17. DEPENDÊNCIAS ENTRE FEATURES
+
+18. PONTOS QUE EXIGEM MINHA AUTORIZAÇÃO
+
+19. MAPA DO CICLO CENTRAL ATUAL
+
+20. GAPS DO CICLO CENTRAL
+
+21. COMO OS MÓDULOS ATUAIS SE CONECTAM
+
+22. QUAIS DADOS FALTAM PARA FECHAR O CICLO
+
+23. QUAIS SERVIÇOS EXISTENTES PODEM SER REUTILIZADOS
+
+==================================================
+OBJETIVO FINAL
+==================================================
+
+O objetivo não é construir um clone do Chess.com.
+
+O objetivo é utilizar a análise da referência para transformar o produto existente em uma plataforma integrada de:
+
+JOGAR
++
+ANALISAR
++
+ENTENDER
++
+TREINAR
++
+APRENDER
++
+PRATICAR
++
+RESOLVER
++
+MEDIR
++
+EVOLUIR
+
+O usuário deve conseguir:
+
+jogar uma partida
+→ receber análise
+→ entender o que errou
+→ identificar uma fraqueza real
+→ receber recomendação relevante
+→ estudar o conceito
+→ praticar
+→ resolver desafios relacionados
+→ medir domínio
+→ acompanhar evolução
+→ jogar novamente.
+
+O produto deve formar um ciclo:
+
+JOGAR
+→ ANALISAR
+→ ENTENDER O ERRO
+→ RECOMENDAR TREINAMENTO
+→ APRENDER
+→ PRATICAR
+→ RESOLVER DESAFIOS
+→ MEDIR DOMÍNIO
+→ JOGAR NOVAMENTE
+
+Esse ciclo deve orientar:
+
+arquitetura
+UX
+dados
+analytics
+roadmap
+priorização
+recomendações
+estatísticas
+progressão
+
+A métrica de sucesso não é:
+
+"quantas funcionalidades copiamos?"
+
+É:
+
+"quanto melhor ficou o processo do jogador perceber seus erros, aprender, treinar, medir evolução e aplicar novamente o conhecimento em partidas?"
+
+Também deve ser possível responder:
+
+"O usuário melhorou depois do treinamento recomendado?"
+
+A plataforma deve evoluir de:
+
+COLEÇÃO DE FUNCIONALIDADES DE XADREZ
+
+para:
+
+SISTEMA INTEGRADO DE EVOLUÇÃO DO JOGADOR.
+
+Comece pela auditoria.
+
+NÃO CODIFIQUE antes de apresentar os resultados.

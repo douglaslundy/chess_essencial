@@ -2,6 +2,8 @@
 
 ## Última atualização
 
+2026-07-30 - **Tarefa 20 transformada em memória executável.** A auditoria foi decomposta em 17 tarefas documentais, com commit próprio, gates e proibição de deploy. Nenhum código de produto foi alterado. A próxima tarefa é registrar o baseline e criar os cinco artefatos.
+
 2026-07-30 - **Correção do estado visual dos desafios do Treinamento + homologação do botão Testar conexão da IA + estabilização de JSON no cliente PostgreSQL.** A causa dos desafios de um nível atual aparecerem como concluídos era a consulta de rank: o WHERE era aplicado antes de ROW_NUMBER(), portanto qualquer nível consultado recebia rank 1. O ranking agora é calculado no currículo inteiro em uma subconsulta e só depois filtrado pelo nível; uma regressão e2e posiciona o usuário em um nível avançado e exige uma etapa available, e a suíte da Jornada passou a integrar o job PostgreSQL obrigatório. O botão da IA foi revisado de ponta a ponta, renomeado para Testar conexão e ganhou testes de interface para resposta real e erro acionável. A falha do CI anterior, em que JSON/JSONB de narração e anotações saía como texto, foi fechada com serialização e parser explícitos e teste de preservação simultânea de JSON e timestamps. Typecheck de API/web, lint e testes unitários direcionados aprovados; o teste PostgreSQL completo fica coberto pelo CI de release.
 
 2026-07-30 - **Redução do mínimo de senha de 12 para 6 caracteres concluída + re-revisão final da conexão de IA.** A tarefa aberta deixada no log da sessão Claude foi retomada e concluída. Cadastro, redefinição de senha, OpenAPI, formulário web e seed de usuários de demonstração foram alinhados para o novo mínimo; testes de contrato cobrem explicitamente a fronteira (5 rejeitado, 6 aceito). A re-revisão do commit 338bf6d não encontrou nova falha. Gates locais: contratos 35/35, web 104/104, API 97/97 com 121 e2e de banco pulados sem RUN_DB_TESTS, mobile 18/18, typecheck/lint/format e build completos aprovados. A primeira tentativa de pnpm test em paralelo saturou os workers do Vitest no Windows; as suítes afetadas passaram integralmente quando repetidas isoladamente com um worker.
@@ -129,8 +131,18 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-Corrigir bug relatado pelo usuário: peças não se movem em nenhuma tela com tabuleiro (partida ao vivo, exercícios, desafios); cabeçalhos grandes forçando scroll; barra inicial sem navegação/login; exercícios com filtros demais; quiz das aulas escondendo o tabuleiro; poucos temas de Desafios.
+T20-A01 — Registrar baseline verificável e criar os esqueletos de `PRODUCT_AUDIT.md`, `FEATURE_MATRIX.md`, `ARCHITECTURE_AUDIT.md`, `IMPLEMENTATION_PLAN.md` e `ROADMAP.md`. Não alterar código de produto durante a Fase 0.
 ## Contexto necessário
+
+- `AGENTS.md`
+- `tarefa_20.txt.txt`
+- `MEMORIA_DESENVOLVIMENTO_TAREFA_20.md`
+- `TAREFAS.md`
+- `package.json` e manifests dos workspaces, somente na T20-A01
+- Estado do Git observado no início da T20-A01
+- Regra: um commit por tarefa; nenhum deploy sem pedido explícito
+
+## Contexto histórico anterior
 
 - Phase 15 merged through PR #15 at commit 8d9bb94; PR/main CI and automatic Git-pull deploy passed.
 - Current branch: main at commit aae9c80; CI final passou nos três jobs e deploy automático está em andamento.

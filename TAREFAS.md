@@ -14,6 +14,33 @@
 - Não iniciar a fase seguinte enquanto testes e critérios da fase atual não estiverem aprovados.
 - Mudanças de contrato exigem OpenAPI, cliente TypeScript e documentação atualizados.
 - Deploy continua exclusivamente por `main` e `deploy/auto-deploy.sh` com `git pull --ff-only`.
+- Fazer um commit por tarefa concluída e não executar deploy sem pedido explícito.
+
+## Tarefa 20 — Auditoria e evolução integrada (em andamento)
+
+Fonte: `tarefa_20.txt.txt`. Memória: `MEMORIA_DESENVOLVIMENTO_TAREFA_20.md`.
+
+- [x] T20-A00 — Preparar memória, regras, gates e sequência.
+- [ ] T20-A01 — Baseline e esqueletos dos cinco artefatos.
+- [ ] T20-A02 — Arquitetura, stack e módulos.
+- [ ] T20-A03 — Jogar, partidas, histórico e realtime.
+- [ ] T20-A04 — Análise, engine e entendimento do erro.
+- [ ] T20-A05 — Problemas, Jornada e progressão.
+- [ ] T20-A06 — Aprender, cursos, prática e instrutor.
+- [ ] T20-A07 — Recomendações, skills e mastery.
+- [ ] T20-A08 — Home, navegação e continuidade.
+- [ ] T20-A09 — Perfil, estatísticas, conquistas e gamificação.
+- [ ] T20-A10 — Social, rankings e privacidade.
+- [ ] T20-A11 — Configurações, tabuleiro, mobile e acessibilidade.
+- [ ] T20-A12 — Analytics, observabilidade, performance e segurança.
+- [ ] T20-A13 — Consolidar `FEATURE_MATRIX.md`.
+- [ ] T20-A14 — Soluções superiores e gates.
+- [ ] T20-A15 — Consolidar plano e roadmap.
+- [ ] T20-A16 — Validar e entregar a auditoria.
+
+Entregáveis: `PRODUCT_AUDIT.md`, `FEATURE_MATRIX.md`, `ARCHITECTURE_AUDIT.md`, `IMPLEMENTATION_PLAN.md` e `ROADMAP.md`.
+
+Soluções superiores, UX madura, migração destrutiva, clubes e integrações sociais sensíveis exigem autorização. As demais tarefas seguem pela opção recomendada.
 
 ## Fase 13 — Auditoria pós-release e saneamento documental (concluída)
 
