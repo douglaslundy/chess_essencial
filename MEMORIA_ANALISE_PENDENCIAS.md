@@ -1,5 +1,11 @@
 # Memória — análise de pendências do projeto
 
+## Marco Projeto 1.0
+
+A tag local projeto-1.0 identifica o checkpoint completo criado antes da próxima rodada robusta de mudanças. Quando o usuário pedir "retorne ao projeto 1.0", restaurar os arquivos rastreados exatamente para essa tag e descartar as alterações rastreadas posteriores. O diretório não rastreado livrocompleto/ não faz parte do checkpoint e não deve ser removido.
+
+Endereços e credenciais de infraestrutura local não devem ser registrados na memória, na documentação ou nos valores padrão do projeto. Não acessar hosts locais de teste sem uma instrução nova e explícita do usuário.
+
 ## Data da análise
 
 2026-07-30

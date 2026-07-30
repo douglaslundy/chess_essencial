@@ -1,6 +1,6 @@
 # Deploy por Git pull
 
-O GitHub `douglaslundy/chess_essencial` é a única origem de código. O host de teste atual é `192.168.0.233`, e o diretório `/home/lundy/xadrez-essencial` acompanha `origin/main`.
+O GitHub `douglaslundy/chess_essencial` é a única origem de código. O endereço do host de deploy é configurado fora do repositório, e o diretório `/home/lundy/xadrez-essencial` acompanha `origin/main`.
 
 ## Fluxo obrigatório
 

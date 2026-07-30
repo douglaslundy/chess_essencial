@@ -6,7 +6,7 @@ O GitHub `douglaslundy/chess_essencial` é a única origem de código. Depois qu
 
 ## Bootstrap único da VPS de teste
 
-Destino atual: `192.168.0.233`, usuário `lundy`. A senha não pertence ao repositório nem aos logs.
+O endereço e as credenciais do destino são configurados fora do repositório e não pertencem aos logs.
 
 Pré-requisitos: Git, Docker Engine com Compose v2, OpenSSL, curl, `flock`, systemd de usuário e uma deploy key do GitHub somente leitura. No bootstrap, SSH serve apenas para preparar o host:
 
@@ -52,9 +52,9 @@ docker compose --project-name xadrez-essencial --file deploy/docker-compose.vps.
 
 Validar externamente:
 
-- API: `http://192.168.0.233:4100/v1/health`;
-- worker: `http://192.168.0.233:4101/health`;
-- web: `http://192.168.0.233:3100/api/health`.
+- API: `http://<host-deploy>:4100/v1/health`;
+- worker: `http://<host-deploy>:4101/health`;
+- web: `http://<host-deploy>:3100/api/health`.
 
 ## Backup e restore
 
