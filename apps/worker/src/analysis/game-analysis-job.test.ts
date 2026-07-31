@@ -87,6 +87,22 @@ describe('runGameAnalysisJob', () => {
     );
     expect(moveAnalysisCalls[1]?.values).toContain('gafe');
 
+    const signals = calls.find((call) => call.text.includes('INSERT INTO game_error_signals'));
+    expect(signals?.text).toContain("gma.quality IN ('erro', 'gafe')");
+    expect(signals?.text).toContain('LEFT JOIN game_bots');
+    expect(signals?.text).toContain('ON CONFLICT (game_id, ply, user_id, skill_key) DO NOTHING');
+
+    const evidence = calls.find((call) => call.text.includes('INSERT INTO learning_evidence'));
+    expect(evidence?.text).toContain('ON CONFLICT (error_signal_id) DO NOTHING');
+    expect(evidence?.text).toContain('INSERT INTO skill_mastery');
+
+    const recommendations = calls.find((call) =>
+      call.text.includes('INSERT INTO learning_recommendations'),
+    );
+    expect(recommendations?.text).toContain('skill_tag_aliases');
+    expect(recommendations?.text).toContain("exercise.status = 'published'");
+    expect(recommendations?.text).toContain('ON CONFLICT (error_signal_id) DO NOTHING');
+
     expect(calls.some((call) => call.text.includes("SET status = 'completed'"))).toBe(true);
   });
 

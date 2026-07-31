@@ -117,6 +117,9 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
   const opponentName =
     state?.players.find((player) => player.color === opponentColor)?.displayName || 'Bot';
   const currentMoveAnalysis = analysis?.moves.find((move) => move.ply === ply) ?? null;
+  const learningSignals = analysis
+    ? Array.from(new Map(analysis.errorSignals.map((signal) => [signal.skillKey, signal])).values())
+    : [];
   const avatarForColor = (color: 'white' | 'black') =>
     state?.players.find((player) => player.color === color)?.avatarUrl ?? null;
   const summaryColumns: Array<{
@@ -253,6 +256,40 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
                     </div>
                   ))}
                 </div>
+              </div>
+            ))}
+          </section>
+        ) : null}
+        {learningSignals.length ? (
+          <section className="reviewNarration" aria-labelledby="learning-signals-title">
+            <div className="reviewNarrationHeader">
+              <h2 id="learning-signals-title">Próximos passos de estudo</h2>
+            </div>
+            {learningSignals.map((signal) => (
+              <div className="reviewNarrationSection" key={signal.id}>
+                <h3>
+                  Lance {signal.ply}: {signal.skillLabel}
+                </h3>
+                <p>
+                  {signal.signalType === 'missed_opportunity'
+                    ? 'O motor identificou uma oportunidade concreta que não foi aproveitada.'
+                    : 'O motor mediu uma perda relevante de avaliação após este lance.'}
+                </p>
+                {signal.recommendation ? (
+                  <p>
+                    <Link
+                      href={`/app/exercicios?exerciseId=${signal.recommendation.exerciseId}&q=${encodeURIComponent(
+                        signal.recommendation.exerciseTitle,
+                      )}`}
+                    >
+                      Praticar: {signal.recommendation.exerciseTitle}
+                    </Link>
+                    {' — '}
+                    {signal.recommendation.rationale}
+                  </p>
+                ) : (
+                  <p>Ainda não há um exercício publicado compatível com esta habilidade.</p>
+                )}
               </div>
             ))}
           </section>

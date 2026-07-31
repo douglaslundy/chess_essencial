@@ -107,7 +107,7 @@ Soluções consideradas superiores e preservadas:
 Gaps:
 
 - outbox recebe eventos, mas não existe publisher/consumer nem atualização de `published_at`; a tabela tende a crescer e não integra módulos;
-- partida chega automaticamente à análise por polling, e os jobs de análise/narração usam lease, reclaim, tentativas limitadas e estado terminal; ainda não há vínculo comprovado Erro → Skill → Recomendação;
+- partida chega automaticamente à análise por polling, e os jobs usam lease/retry; a migration 0043 fecha o vínculo idempotente Erro → Skill → Recomendação para jogadores humanos;
 - modo `untimed` reutiliza o pool `correspondence` com relógio de 20 dias; não é uma modalidade Daily/correspondência real;
 - histórico usa paginação por offset; aceitável hoje, mas requer medição para volumes altos;
 - matchmaking continua em polling REST de 3 s; realtime cobre apenas partidas criadas;
@@ -130,7 +130,7 @@ Implementação confirmada:
 - fila e claim da narração paga exigem plano/cota de jogador humano, excluem bots, falham fechados sem plano explícito e reservam a cota antes da chamada ao LLM;
 - sem IA disponível, a web constrói uma narração determinística gratuita a partir da análise;
 - explicações de posições idênticas são reutilizadas por cache SHA-256 de FEN, lance, alternativa e qualidade;
-- `skill_mastery` e o vocabulário de `exercises.tags` já existem, mas hoje recebem sinais das etapas da Jornada, não das partidas.
+- `skill_mastery` recebe exercícios e erros de partida por um ledger aditivo; registry v1 e aliases preservam o vocabulário de `exercises.tags`.
 
 Evidências principais: `stockfish-engine.ts`, `game-analysis-job.ts`, `move-quality.ts`, `game-narration-job.ts`, `review-room.tsx`, migrations 0028/0032 e testes correspondentes.
 
@@ -143,16 +143,16 @@ Soluções consideradas superiores e preservadas:
 
 Gaps:
 
-- não existe diagnóstico semântico normalizado do erro — tema, motivo, fase, padrão tático e skill não são persistidos;
-- `patterns` e `study_plan` são texto livre do LLM, sem IDs de skill, confiança, evidência ou destino clicável;
-- nenhum processo converte `game_move_analyses` em `skill_mastery`, recomendação ou sessão de prática;
+- existe diagnóstico normalizado conservador para oportunidade perdida e segurança do lance; fase e motivos táticos específicos continuam ausentes por falta de detector objetivo;
+- `patterns` e `study_plan` do LLM continuam livres, mas `GameErrorSignal` expõe skill, versão, regra, confiança, evidência e exercício clicável sem depender desse texto;
+- o worker converte `game_move_analyses` em evidência, `skill_mastery` e recomendação de exercício; ainda não cria sessão dedicada nem cobre aulas;
 - a narração escolhe os seis maiores centipawn losses dos dois jogadores; isso pode omitir um erro instrutivo do aluno;
 - o worker cria um subprocesso Stockfish novo e sequencial para cada posição; protege a VPS compartilhada, mas tem baixo throughput;
 
 - profundidade fixa e centipawn loss absoluto não são calibrados por ritmo, fase ou nível do jogador;
 - não há telemetria confirmada de tempo de fila, duração, taxa de falha, custo ou utilidade da recomendação.
 
-Recomendação: preservar a arquitetura de verdade objetiva e acrescentar uma camada determinística `ErrorSignal` ligada ao catálogo de skills. Só então usar o LLM para explicar o sinal e gerar links rastreáveis para prática. Antes disso, preservar a seleção por entitlement/demanda e a recuperação de jobs já corrigidas, e avançar nas métricas. Não aumentar paralelismo do Stockfish sem benchmark e limites de CPU/memória, pois isso pode piorar a VPS compartilhada.
+Recomendação: preservar a camada determinística `ErrorSignal` e manter o LLM fora da classificação. Medir precisão, utilidade e diversidade antes de ampliar as duas skills v1 ou criar diagnósticos táticos específicos; preservar também entitlement e recuperação de jobs já corrigidos.
 
 ### Problemas, desafios e Jornada
 
@@ -249,7 +249,7 @@ Implementação confirmada:
 - tentativas já guardam acerto, score, dicas, duração e instante; exercícios possuem dificuldade numérica;
 - foram observadas 62 tags no acervo tático e 23 rótulos editoriais amplos no livro: metadado legado e skill canônica não são equivalentes;
 - `composition`, `allowed_themes`, `preferred_themes` e `instructional_metadata` existem no schema, mas não dirigem o runtime;
-- não existem contrato, API, persistência, serviço ou UI de `Recommendation`.
+- contrato, persistência, API e UI de recomendação existem no elo análise → exercício; ainda não são transversais à Home e às aulas.
 
 Evidências principais: migration 0036, `learning-path.repository.ts`, `learning-path.service.ts`, e2e da Jornada, `exercises.repository.ts`, contratos, migrations de conteúdo e datasets canônicos.
 
@@ -263,20 +263,20 @@ Soluções superiores preservadas:
 
 Gaps:
 
-- só exercícios concluídos dentro da Jornada atualizam mastery; prática livre, aulas, partidas e análises não contribuem;
+- exercícios e erros de partida atualizam mastery; prática livre e aulas ainda não contribuem via ledger;
 - score é média histórica simples, sem recência, dificuldade, dicas, duração, contexto, peso ou confiança;
 - uma observação pode virar “skill mais fraca”; não há `insufficient_data`;
 - todas as tags não estruturais recebem o mesmo resultado, misturando peça, padrão, subtipo e tema amplo;
-- não há registro canônico com ID, categoria, aliases, versão e relações;
+- registry v1 possui chave, versão e aliases; categorias e relações pedagógicas mais finas ainda não existem;
 - campos de composição e temas permanecem sem uso;
 - prática livre usa filtros manuais e não consulta mastery;
-- não há API/UI de mastery nem ledger que explique os eventos por trás do agregado;
+- o ledger explica erros de partida, mas exercícios históricos e demais fontes ainda não foram migrados;
 - não há repetição espaçada, `next_review_at` ou decaimento;
-- não existe ligação partida → `ErrorSignal` → skill → recomendação → conteúdo/prática;
-- não há recomendação com motivo, fonte, destino, prioridade, ciclo de vida e contexto;
+- a ligação partida → `ErrorSignal` → skill → exercício existe; aulas e sessão dedicada permanecem fora da v1;
+- recomendação possui motivo, fonte, destino e ciclo de vida; prioridade/expiração e consumo transversal ainda faltam;
 - não se mede treinamento recomendado → nova partida → redução do mesmo erro.
 
-Recomendação: implementar na ordem: (1) registry versionado de skills com aliases para tags legadas; (2) ledger idempotente `LearningEvidence` com fonte, evento, dificuldade, resultado, dicas, instante e peso; (3) projeção de mastery que diferencie dados insuficientes de baixo domínio; (4) mapeamento rastreável entre `ErrorSignal`, skills, aulas e exercícios; (5) `RecommendationService` determinístico com motivo, fonte, destino e estado; (6) analytics do efeito após o treino. Não criar primeiro cards personalizados nem substituir tags existentes.
+Recomendação: consolidar o que a COR-T20-003 entregou e seguir com: (1) migrar outras fontes para `LearningEvidence`; (2) distinguir dados insuficientes de baixo domínio e aplicar recência/dificuldade; (3) mapear aulas; (4) extrair recomendação transversal quando houver outro consumidor; (5) medir efeito e diversidade. Não substituir tags nem usar o LLM como classificador.
 
 ### Perfil, estatísticas e gamificação
 
@@ -468,7 +468,7 @@ Gate: nenhuma dessas soluções pode ser removida, enfraquecida ou substituída 
 
 ### Recursos parciais
 
-Continuidade da Home e pós-fluxos; entendimento pedagógico do erro; prática/endgames e vínculos de conteúdo; recomendações e mastery sem sinais reais; estatísticas por período; paridade mobile; acessibilidade transversal; observabilidade fora da API; carga, uploads e backup externo.
+Continuidade da Home e demais pós-fluxos; ErrorSignal conservador ainda sem temas finos; prática/endgames e vínculos de conteúdo; recomendação limitada ao elo análise → exercício; mastery sem recência/incerteza; estatísticas por período; paridade mobile; acessibilidade transversal; observabilidade fora da API; carga, uploads e backup externo.
 
 ### Recursos inferiores
 
@@ -476,7 +476,7 @@ Dica mantendo perfeição; tabuleiro mobile sem semântica assistiva; preferênc
 
 ### Recursos ausentes
 
-Taxonomia canônica de skills; `ErrorSignal` real vindo de partidas; mastery baseada em evidência; funil de produto; alertas/SLO; cópia externa de backup; Home agregadora; dashboard temporal; pipeline assinado de release mobile. Clubes/equipes/eventos também não existem, mas permanecem fora do plano automático.
+Taxonomia completa para aulas e temas finos; mastery com recência/incerteza; funil de produto; alertas/SLO; cópia externa de backup; Home agregadora; dashboard temporal; pipeline assinado de release mobile. Clubes/equipes/eventos também não existem, mas permanecem fora do plano automático.
 
 ### Recursos não aplicáveis
 
@@ -486,15 +486,15 @@ Rating FIDE oficial, conteúdo proprietário de terceiros e cópia literal de in
 
 ### Mapa atual
 
-`GameService/realtime → game_move_analyses → análise/narração → revisão`; em paralelo, `courses/lesson-runtime`, `exercises` e `learning-path` registram progresso. Há seleções locais por menor mastery e próximos passos fixos, mas não existe `RecommendationService` transversal. Home e navegação expõem os módulos, porém não transportam um contexto pedagógico comum entre eles.
+`GameService/realtime → game_move_analyses → ErrorSignal/evidência → mastery/recomendação → revisão/exercício`; em paralelo, cursos, exercícios e Jornada registram progresso. O primeiro handoff pedagógico está fechado, mas Home e aulas ainda não consomem recomendação transversal.
 
 ### Gaps
 
-O erro de jogo não vira skill/evidência; a revisão não entrega prática rastreável; conclusão de aula/prática não conduz a uma aplicação em jogo; a Home não escolhe o próximo passo; o resultado desse treino não retorna como evidência comparável para confirmar melhora.
+O elo erro de jogo → skill/evidência → exercício está fechado; conclusão de aula/prática ainda não conduz a aplicação em jogo, a Home não escolhe o próximo passo e o resultado do treino não retorna como evidência comparável.
 
 ### Dados faltantes
 
-Taxonomia/versionamento de skills, proveniência e confiança do sinal, vínculo conteúdo↔skill, dificuldade normalizada, janela/recência de evidência, motivo da recomendação, eventos idempotentes do funil e resultado posterior em contexto comparável.
+Mapeamento de aulas e temas táticos objetivos, dificuldade/recência de evidência, prioridade/expiração da recomendação, eventos idempotentes do funil e resultado posterior em contexto comparável.
 
 ### Serviços reutilizáveis
 
@@ -505,8 +505,8 @@ Taxonomia/versionamento de skills, proveniência e confiança do sinal, vínculo
 ### Banco
 
 - adicionar lease, tentativa, próxima execução e erro terminal aos jobs, preservando registros existentes;
-- criar registry versionado de skills e aliases sobre as tags legadas, sem reescrevê-las;
-- criar ledgers aditivos de `ErrorSignal` e `LearningEvidence`, seguidos por projeções de mastery e recomendações rastreáveis;
+- preservar o registry versionado e os aliases entregues na migration 0043, sem reescrever tags legadas;
+- ampliar os ledgers aditivos de `ErrorSignal`/`LearningEvidence` já entregues para as demais fontes, mantendo projeções e recomendações idempotentes;
 - registrar ciclo de vida e decisão de denúncias sem apagar evidências;
 - adicionar índices/retenção para outbox e eventos do funil; toda migration deve ser nova, reversível quando seguro e testada em upgrade.
 

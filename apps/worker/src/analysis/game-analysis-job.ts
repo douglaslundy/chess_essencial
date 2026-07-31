@@ -179,4 +179,110 @@ async function analyzeGame(sql: Sql, gameId: string, depth: number): Promise<voi
       ON CONFLICT (game_id, ply) DO NOTHING
     `;
   }
+
+  await recordLearningSignals(sql, gameId);
+}
+
+/**
+ * Builds the smallest defensible learning loop from objective engine facts.
+ * A centipawn loss cannot prove a fork, pin, or opening misconception, so
+ * v1 emits only two broad skills. Every write is idempotent: a reclaimed
+ * analysis lease can safely run this projection again.
+ */
+async function recordLearningSignals(sql: Sql, gameId: string): Promise<void> {
+  await sql`
+    INSERT INTO game_error_signals (
+      game_id, ply, user_id, skill_key, signal_type, confidence, rule_version, evidence
+    )
+    SELECT
+      gma.game_id,
+      gma.ply,
+      gp.user_id,
+      CASE WHEN gma.missed_win THEN 'tactical_awareness' ELSE 'move_safety' END,
+      CASE WHEN gma.missed_win THEN 'missed_opportunity' ELSE 'unsafe_move' END,
+      CASE WHEN gma.missed_win THEN 0.950 WHEN gma.quality = 'gafe' THEN 0.900 ELSE 0.800 END,
+      'stockfish_error_signal_v1',
+      jsonb_build_object(
+        'centipawnLoss', gma.centipawn_loss,
+        'missedWin', gma.missed_win,
+        'quality', gma.quality
+      )
+    FROM game_move_analyses gma
+    JOIN game_players gp ON gp.game_id = gma.game_id AND gp.color = gma.color
+    LEFT JOIN game_bots gb ON gb.game_id = gp.game_id AND gb.bot_user_id = gp.user_id
+    WHERE gma.game_id = ${gameId}
+      AND gb.game_id IS NULL
+      AND (gma.missed_win OR gma.quality IN ('erro', 'gafe'))
+    ON CONFLICT (game_id, ply, user_id, skill_key) DO NOTHING
+  `;
+
+  await sql`
+    WITH inserted AS (
+      INSERT INTO learning_evidence (
+        error_signal_id, user_id, skill_key, source_type, outcome, weight, occurred_at
+      )
+      SELECT id, user_id, skill_key, 'game_error', 'error', confidence, created_at
+      FROM game_error_signals
+      WHERE game_id = ${gameId}
+      ON CONFLICT (error_signal_id) DO NOTHING
+      RETURNING user_id, skill_key
+    ), totals AS (
+      SELECT user_id, skill_key, count(*)::integer AS error_count
+      FROM inserted
+      GROUP BY user_id, skill_key
+    )
+    INSERT INTO skill_mastery (
+      user_id, skill, attempts, success_count, error_count, score, last_seen_at
+    )
+    SELECT user_id, skill_key, error_count, 0, error_count, 0, now()
+    FROM totals
+    ON CONFLICT (user_id, skill) DO UPDATE SET
+      attempts = skill_mastery.attempts + EXCLUDED.attempts,
+      error_count = skill_mastery.error_count + EXCLUDED.error_count,
+      score = ROUND(
+        skill_mastery.success_count::numeric
+          / (skill_mastery.attempts + EXCLUDED.attempts) * 100
+      ),
+      last_seen_at = now(),
+      updated_at = now()
+  `;
+
+  await sql`
+    INSERT INTO learning_recommendations (
+      error_signal_id, user_id, skill_key, exercise_id, rationale
+    )
+    SELECT
+      signal.id,
+      signal.user_id,
+      signal.skill_key,
+      practice.id,
+      CASE signal.skill_key
+        WHEN 'tactical_awareness' THEN 'Pratique a identificação de oportunidades concretas.'
+        ELSE 'Pratique a verificação de ameaças antes de confirmar o lance.'
+      END
+    FROM game_error_signals signal
+    JOIN LATERAL (
+      SELECT exercise.id
+      FROM skill_tag_aliases alias
+      JOIN exercises exercise ON alias.tag = ANY(exercise.tags)
+      WHERE alias.skill_key = signal.skill_key
+        AND exercise.status = 'published'
+        AND exercise.position_type = 'legal_position'
+        AND exercise.title IS NOT NULL
+        AND COALESCE(exercise.import_metadata->>'answerFormat', 'move_sequence') = 'move_sequence'
+        AND jsonb_array_length(exercise.solution_lines) > 0
+      ORDER BY
+        EXISTS (
+          SELECT 1 FROM exercise_attempts attempt
+          WHERE attempt.user_id = signal.user_id
+            AND attempt.exercise_id = exercise.id
+            AND attempt.correct = true
+        ),
+        (jsonb_array_length(exercise.hints) = 0),
+        exercise.id
+      LIMIT 1
+    ) practice ON true
+    WHERE signal.game_id = ${gameId}
+    ON CONFLICT (error_signal_id) DO NOTHING
+  `;
 }

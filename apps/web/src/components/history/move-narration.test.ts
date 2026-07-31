@@ -77,6 +77,7 @@ function qualityCounts(
 
 function analysis(overrides: Partial<GameAnalysis> = {}): GameAnalysis {
   return {
+    errorSignals: [],
     moves: [move({ centipawnLoss: 0, ply: 1, quality: 'otimo' })],
     status: 'completed',
     summary: { black: qualityCounts(), white: qualityCounts({ otimo: 1 }) },

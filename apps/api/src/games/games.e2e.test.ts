@@ -156,7 +156,12 @@ describeDatabase('games database integration', () => {
       url: `/v1/games/${gameId}/analysis`,
     });
     expect(pending.statusCode, pending.body).toBe(200);
-    expect(pending.json()).toEqual({ moves: [], status: 'pending', summary: null });
+    expect(pending.json()).toEqual({
+      errorSignals: [],
+      moves: [],
+      status: 'pending',
+      summary: null,
+    });
 
     // Simulates the worker's analysis job having already run, without
     // spawning a real Stockfish subprocess here — this only verifies the
@@ -173,7 +178,26 @@ describeDatabase('games database integration', () => {
         best_move_uci, centipawn_loss, quality, missed_win
       ) VALUES
         (${gameId}, 1, 'white', 20, null, 15, null, 'e2e4', 5, 'otimo', false),
-        (${gameId}, 4, 'black', -400, null, null, 1, null, 0, 'otimo', false)
+        (${gameId}, 4, 'black', -400, null, null, 1, null, 400, 'gafe', false)
+    `;
+    await database.client`
+      WITH signal AS (
+        INSERT INTO game_error_signals (
+          game_id, ply, user_id, skill_key, signal_type, confidence, rule_version, evidence
+        ) VALUES (
+          ${gameId}, 4, ${black.userId}, 'move_safety', 'unsafe_move', 0.9,
+          'stockfish_error_signal_v1',
+          '{"centipawnLoss":400,"missedWin":false,"quality":"gafe"}'::jsonb
+        )
+        RETURNING id
+      )
+      INSERT INTO learning_recommendations (
+        error_signal_id, user_id, skill_key, exercise_id, rationale
+      )
+      SELECT id, ${black.userId}, 'move_safety',
+        '11000000-0000-4000-8000-000000000003',
+        'Pratique a verificação de ameaças antes de confirmar o lance.'
+      FROM signal
     `;
 
     const completed = await app.inject({
@@ -186,10 +210,26 @@ describeDatabase('games database integration', () => {
       status: 'completed',
       summary: {
         white: { bom: 0, erro: 0, excelente: 0, gafe: 0, imprecisao: 0, missedWin: 0, otimo: 1 },
-        black: { bom: 0, erro: 0, excelente: 0, gafe: 0, imprecisao: 0, missedWin: 0, otimo: 1 },
+        black: { bom: 0, erro: 0, excelente: 0, gafe: 1, imprecisao: 0, missedWin: 0, otimo: 0 },
       },
     });
     expect(completed.json().moves).toHaveLength(2);
+    expect(completed.json().errorSignals).toEqual([
+      expect.objectContaining({
+        confidence: 0.9,
+        evidence: { centipawnLoss: 400, missedWin: false, quality: 'gafe' },
+        ply: 4,
+        recommendation: expect.objectContaining({
+          exerciseId: '11000000-0000-4000-8000-000000000003',
+          exerciseTitle: 'Salvar o rei: interposição',
+        }),
+        ruleVersion: 'stockfish_error_signal_v1',
+        signalType: 'unsafe_move',
+        skillKey: 'move_safety',
+        skillLabel: 'Segurança do lance',
+        taxonomyVersion: 1,
+      }),
+    ]);
 
     const outsider = await createIdentity('analysis-outsider@example.com', 'game_analysis_out');
     const forbidden = await app.inject({

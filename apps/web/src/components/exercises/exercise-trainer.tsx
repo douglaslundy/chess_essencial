@@ -74,6 +74,7 @@ interface ExerciseTrainerProps {
   description?: string;
   guided?: boolean;
   initialDifficulty?: string;
+  initialExerciseId?: string | undefined;
   initialQuery?: string;
   positionType?: 'legal_position' | 'illustrative_diagram' | 'text_only';
   showSourceFilter?: boolean;
@@ -86,6 +87,7 @@ export function ExerciseTrainer({
   description = 'Busque por tema e módulo; as respostas são avaliadas e persistidas pelo servidor.',
   guided = false,
   initialDifficulty = '',
+  initialExerciseId,
   initialQuery = '',
   positionType,
   showSourceFilter = false,
@@ -93,6 +95,9 @@ export function ExerciseTrainer({
   storageKey = 'xadrez.challenge_training_session',
   title = 'Exercícios de Xadrez Essencial',
 }: ExerciseTrainerProps = {}) {
+  const effectiveStorageKey = initialExerciseId
+    ? storageKey + ':recommendation:' + initialExerciseId
+    : storageKey;
   const [category, setCategory] = useState('');
   const { theme: pieceTheme } = usePieceTheme();
   const { hasFeature } = useEntitlements();
@@ -201,7 +206,8 @@ export function ExerciseTrainer({
             filters: {
               ...(search.get('category') ? { category: search.get('category')! } : {}),
               ...(search.get('difficulty') ? { difficulty: search.get('difficulty')! } : {}),
-              limit: 10,
+              ...(initialExerciseId ? { exerciseId: initialExerciseId } : {}),
+              limit: initialExerciseId ? 1 : 10,
               ...(parsedModule ? { module: Number(parsedModule) } : {}),
               ...(search.get('q') ? { q: search.get('q')! } : {}),
               ...(search.get('positionType')
@@ -221,7 +227,7 @@ export function ExerciseTrainer({
         setTraining(value);
         if (guided) {
           window.localStorage.setItem(
-            sessionStorageKey(storageKey, effectiveSource, effectiveTheme),
+            sessionStorageKey(effectiveStorageKey, effectiveSource, effectiveTheme),
             value.sessionId,
           );
         }
@@ -234,7 +240,7 @@ export function ExerciseTrainer({
         setMessage(error instanceof Error ? error.message : 'Falha ao iniciar treino.');
       }
     },
-    [filters, guided, source, storageKey, theme],
+    [effectiveStorageKey, filters, guided, initialExerciseId, source, theme],
   );
 
   const resumeOrStart = useCallback(
@@ -242,7 +248,7 @@ export function ExerciseTrainer({
       const effectiveSource = overrides.source ?? source;
       const effectiveTheme = overrides.theme ?? theme;
       const accessToken = token();
-      const key = sessionStorageKey(storageKey, effectiveSource, effectiveTheme);
+      const key = sessionStorageKey(effectiveStorageKey, effectiveSource, effectiveTheme);
       const savedSession = accessToken ? window.localStorage.getItem(key) : null;
       if (accessToken && savedSession) {
         try {
@@ -264,7 +270,7 @@ export function ExerciseTrainer({
       }
       await startTraining(overrides);
     },
-    [startTraining, storageKey, source, theme],
+    [effectiveStorageKey, startTraining, source, theme],
   );
 
   useEffect(() => {

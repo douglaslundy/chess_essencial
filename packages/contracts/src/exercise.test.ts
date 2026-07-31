@@ -21,6 +21,13 @@ describe('exercise contracts', () => {
     });
   });
 
+  it('accepts a traceable exercise target for a one-item training session', () => {
+    const exerciseId = '11111111-1111-4111-8111-111111111111';
+    expect(startExerciseTrainingInputSchema.parse({ filters: { exerciseId, limit: 1 } })).toEqual({
+      filters: { exerciseId, limit: 1 },
+    });
+  });
+
   it('rejects empty or excessive attempt lines', () => {
     expect(() =>
       submitExerciseAttemptInputSchema.parse({ durationMs: 10, submittedLine: [] }),

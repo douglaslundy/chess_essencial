@@ -102,6 +102,7 @@ export class ExercisesRepository {
       category: query.category ?? null,
       chapter: query.chapter ?? null,
       difficulty: query.difficulty ?? null,
+      exerciseId: 'exerciseId' in query ? (query.exerciseId ?? null) : null,
       lessonId: query.lessonId ?? null,
       module: query.module ?? null,
       positionType: query.positionType ?? null,
@@ -212,6 +213,7 @@ export class ExercisesRepository {
               END AS difficulty_rank
               FROM exercises e
              WHERE e.status = 'published'
+               AND (${filter.exerciseId}::uuid IS NULL OR e.id = ${filter.exerciseId})
                AND (${filter.category}::text IS NULL OR e.category = ${filter.category})
                AND (${filter.chapter}::integer IS NULL OR e.chapter_number = ${filter.chapter})
                AND (${filter.difficulty}::text IS NULL OR e.difficulty = ${filter.difficulty})
@@ -223,11 +225,18 @@ export class ExercisesRepository {
                  WHEN 'lichess' THEN 'lichess' = ANY(e.tags)
                  WHEN 'book' THEN NOT ('classico' = ANY(e.tags)) AND NOT ('challenge' = ANY(e.tags))
                  ELSE true END)
-               AND (${filter.q}::text IS NOT NULL OR NOT ('challenge' = ANY(e.tags)))
-         AND (${filter.theme}::text IS NULL OR ${filter.theme} = ANY(e.tags))
-               AND NOT EXISTS (
-                 SELECT 1 FROM exercise_attempts a
-                  WHERE a.exercise_id = e.id AND a.user_id = ${userId} AND a.correct = true
+               AND (
+                 ${filter.q}::text IS NOT NULL
+                 OR ${filter.exerciseId}::uuid IS NOT NULL
+                 OR NOT ('challenge' = ANY(e.tags))
+               )
+               AND (${filter.theme}::text IS NULL OR ${filter.theme} = ANY(e.tags))
+               AND (
+                 ${filter.exerciseId}::uuid IS NOT NULL
+                 OR NOT EXISTS (
+                   SELECT 1 FROM exercise_attempts a
+                    WHERE a.exercise_id = e.id AND a.user_id = ${userId} AND a.correct = true
+                 )
                )
                AND (${filter.lessonId}::uuid IS NULL OR EXISTS (
                  SELECT 1 FROM lesson_exercises le WHERE le.exercise_id = e.id AND le.lesson_id = ${filter.lessonId}

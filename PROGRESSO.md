@@ -1,3 +1,5 @@
+2026-07-31 - **COR-T20-003 concluída: erro objetivo agora gera prática rastreável.** A migration 0043 introduz taxonomia versionada com aliases legados, `game_error_signals`, `learning_evidence` e `learning_recommendations`, incluindo backfill e rollback que preserva evidência alheia. O worker exclui bots e deriva apenas duas classes defensáveis dos fatos do Stockfish, atualiza mastery idempotentemente e recomenda exercício publicado ainda não resolvido quando possível. API, OpenAPI/SDK e revisão exibem skill, confiança, regra, evidência e CTA. Gates locais: typecheck/lint/build aprovados; 44 testes worker, 100 API e 107 web passaram. O e2e PostgreSQL ficou preparado, mas não executou localmente porque Docker/PostgreSQL não estão disponíveis. Risco residual virou COR-T20-017. Nenhum deploy foi realizado. Próxima tarefa: COR-T20-004.
+
 # Progresso do Projeto
 
 ## Última atualização
@@ -175,7 +177,7 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-COR-T20-003 — Ligar erro de partida a skill e prática recomendada, sem deploy.
+COR-T20-004 — Corrigir a semântica de dica versus perfeição, sem deploy.
 ## Contexto necessário
 
 - `AGENTS.md`

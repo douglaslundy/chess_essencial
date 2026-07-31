@@ -129,6 +129,22 @@ describeDatabase('exercise runtime database integration', () => {
     expect(attempt.json()).toMatchObject({ correct: true, score: 100 });
   });
 
+  it('starts the exact recommended exercise by UUID even when it is a solved challenge', async () => {
+    const recommendedId = '11000000-0000-4000-8000-000000000001';
+    const started = await app.inject({
+      headers: auth(),
+      method: 'POST',
+      payload: { filters: { exerciseId: recommendedId, limit: 1 } },
+      url: '/v1/exercise-training-sessions',
+    });
+    expect(started.statusCode, started.body).toBe(201);
+    expect(started.json()).toMatchObject({
+      currentExercise: { id: recommendedId },
+      status: 'started',
+      total: 1,
+    });
+  });
+
   it('runs training, reveals one hint and scores the server-validated answer', async () => {
     const started = await app.inject({
       headers: auth(),

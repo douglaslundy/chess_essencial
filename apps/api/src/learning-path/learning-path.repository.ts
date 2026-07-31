@@ -252,15 +252,23 @@ export class LearningPathRepository {
     `;
   }
 
-  /** Skill (exercises.tags entry) this user is weakest at, optionally restricted to a level's allowed themes. */
+  /** Weakest canonical skill, optionally restricted by canonical keys or legacy exercise tags. */
   async pickWeakestSkill(userId: string, allowedThemes: string[] | null): Promise<string | null> {
     const sql = this.database.client;
     const [row] = await sql<{ skill: string }[]>`
-      SELECT skill FROM skill_mastery
-       WHERE user_id = ${userId}
-         AND (${allowedThemes}::text[] IS NULL OR skill = ANY(${allowedThemes}))
-       ORDER BY score ASC, attempts DESC
-       LIMIT 1
+      SELECT mastery.skill
+      FROM skill_mastery mastery
+      WHERE mastery.user_id = ${userId}
+        AND (
+          ${allowedThemes}::text[] IS NULL
+          OR mastery.skill = ANY(${allowedThemes})
+          OR EXISTS (
+            SELECT 1 FROM skill_tag_aliases alias
+            WHERE alias.skill_key = mastery.skill AND alias.tag = ANY(${allowedThemes})
+          )
+        )
+      ORDER BY mastery.score ASC, mastery.attempts DESC
+      LIMIT 1
     `;
     return row?.skill ?? null;
   }
@@ -286,7 +294,13 @@ export class LearningPathRepository {
         SELECT e.id FROM exercises e
          WHERE e.status = 'published' AND e.position_type = 'legal_position'
            AND e.difficulty_score IS NOT NULL
-           AND ${skill} = ANY(e.tags)
+           AND (
+             ${skill} = ANY(e.tags)
+             OR EXISTS (
+               SELECT 1 FROM skill_tag_aliases alias
+               WHERE alias.skill_key = ${skill} AND alias.tag = ANY(e.tags)
+             )
+           )
            AND e.difficulty_score BETWEEN ${difficultyMin} AND ${difficultyMax}
            AND COALESCE(e.import_metadata->>'answerFormat', 'move_sequence') = 'move_sequence'
            AND jsonb_array_length(e.hints) > 0
@@ -438,11 +452,15 @@ export class LearningPathRepository {
 
   async getExerciseTags(exerciseId: string): Promise<string[]> {
     const sql = this.database.client;
-    const [row] = await sql<{ tags: string[] }[]>`
-      SELECT tags FROM exercises WHERE id = ${exerciseId}
+    const rows = await sql<{ skill: string }[]>`
+      SELECT DISTINCT COALESCE(alias.skill_key, tag.value) AS skill
+      FROM exercises exercise
+      CROSS JOIN LATERAL unnest(exercise.tags) AS tag(value)
+      LEFT JOIN skill_tag_aliases alias ON alias.tag = tag.value
+      WHERE exercise.id = ${exerciseId}
+        AND tag.value NOT IN ('challenge', 'lichess', 'classico')
     `;
-    const structural = new Set(['challenge', 'lichess', 'classico']);
-    return (row?.tags ?? []).filter((tag) => !structural.has(tag));
+    return rows.map((row) => row.skill);
   }
 
   async addXp(userId: string, amount: number): Promise<void> {

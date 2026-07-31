@@ -195,12 +195,36 @@ export const gameAnalysisQualityCountsSchema = z.object({
   missedWin: z.number().int().nonnegative(),
 });
 
+export const gameErrorSignalSchema = z.object({
+  id: z.string().uuid(),
+  ply: z.number().int().positive(),
+  skillKey: z.string(),
+  skillLabel: z.string(),
+  taxonomyVersion: z.number().int().positive(),
+  signalType: z.enum(['missed_opportunity', 'unsafe_move']),
+  confidence: z.number().min(0).max(1),
+  ruleVersion: z.string(),
+  evidence: z.object({
+    centipawnLoss: z.number().int(),
+    missedWin: z.boolean(),
+    quality: moveQualitySchema,
+  }),
+  recommendation: z
+    .object({
+      exerciseId: z.string().uuid(),
+      exerciseTitle: z.string(),
+      rationale: z.string(),
+    })
+    .nullable(),
+});
+
 export const gameAnalysisSchema = z.object({
   status: z.enum(['pending', 'processing', 'completed', 'failed']),
   summary: z
     .object({ white: gameAnalysisQualityCountsSchema, black: gameAnalysisQualityCountsSchema })
     .nullable(),
   moves: z.array(gameMoveAnalysisSchema),
+  errorSignals: z.array(gameErrorSignalSchema),
 });
 
 export const gameNarrationKeyMomentSchema = z.object({
@@ -264,6 +288,7 @@ export type MoveQuality = z.infer<typeof moveQualitySchema>;
 export type GameMoveAnalysis = z.infer<typeof gameMoveAnalysisSchema>;
 export type GameAnalysisQualityCounts = z.infer<typeof gameAnalysisQualityCountsSchema>;
 export type GameAnalysis = z.infer<typeof gameAnalysisSchema>;
+export type GameErrorSignal = z.infer<typeof gameErrorSignalSchema>;
 export type GameNarrationKeyMoment = z.infer<typeof gameNarrationKeyMomentSchema>;
 export type GameNarration = z.infer<typeof gameNarrationSchema>;
 export type LiveNarrationRequest = z.infer<typeof liveNarrationRequestSchema>;

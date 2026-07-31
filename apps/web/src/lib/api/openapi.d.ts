@@ -1705,6 +1705,8 @@ export interface components {
       offset: number;
     };
     ExerciseTrainingFilters: {
+      /** Format: uuid */
+      exerciseId?: string;
       q?: string;
       category?: string;
       difficulty?: string;
@@ -2758,6 +2760,29 @@ export interface components {
       gafe: number;
       missedWin: number;
     };
+    GameErrorSignal: {
+      /** Format: uuid */
+      id: string;
+      ply: number;
+      skillKey: string;
+      skillLabel: string;
+      taxonomyVersion: number;
+      /** @enum {string} */
+      signalType: 'missed_opportunity' | 'unsafe_move';
+      confidence: number;
+      ruleVersion: string;
+      evidence: {
+        centipawnLoss: number;
+        missedWin: boolean;
+        quality: components['schemas']['MoveQuality'];
+      };
+      recommendation: {
+        /** Format: uuid */
+        exerciseId: string;
+        exerciseTitle: string;
+        rationale: string;
+      } | null;
+    };
     GameAnalysis: {
       /** @enum {string} */
       status: 'pending' | 'processing' | 'completed' | 'failed';
@@ -2766,6 +2791,7 @@ export interface components {
         black: components['schemas']['GameAnalysisQualityCounts'];
       } | null;
       moves: components['schemas']['GameMoveAnalysis'][];
+      errorSignals: components['schemas']['GameErrorSignal'][];
     };
     GameNarrationKeyMoment: {
       ply: number;

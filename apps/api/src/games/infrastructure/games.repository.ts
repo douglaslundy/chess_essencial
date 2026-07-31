@@ -10,6 +10,7 @@ import type {
   GameAnalysisQualityCounts,
   GameHistoryPage,
   GameHistoryQuery,
+  GameErrorSignal,
   GameMove,
   GameMoveAnalysis,
   GameNarration,
@@ -511,7 +512,42 @@ export class GamesRepository {
       ORDER BY gma.ply
     `;
     const moves = rows.map((row) => ({ ...row, ply: Number(row.ply) }));
-    return { moves, status, summary: status === 'completed' ? summarizeAnalysis(moves) : null };
+    const signalRows = await this.database.client<
+      Array<Omit<GameErrorSignal, 'ply'> & { ply: number | string }>
+    >`
+      SELECT
+        signal.id,
+        signal.ply,
+        signal.skill_key AS "skillKey",
+        skill.label AS "skillLabel",
+        skill.taxonomy_version AS "taxonomyVersion",
+        signal.signal_type AS "signalType",
+        signal.confidence::float AS confidence,
+        signal.rule_version AS "ruleVersion",
+        signal.evidence,
+        CASE
+          WHEN recommendation.id IS NULL THEN NULL
+          ELSE jsonb_build_object(
+            'exerciseId', exercise.id,
+            'exerciseTitle', exercise.title,
+            'rationale', recommendation.rationale
+          )
+        END AS recommendation
+      FROM game_error_signals signal
+      JOIN skill_definitions skill ON skill.skill_key = signal.skill_key
+      LEFT JOIN learning_recommendations recommendation
+        ON recommendation.error_signal_id = signal.id AND recommendation.status = 'active'
+      LEFT JOIN exercises exercise ON exercise.id = recommendation.exercise_id
+      WHERE signal.game_id = ${gameId} AND signal.user_id = ${userId}
+      ORDER BY signal.confidence DESC, signal.ply, signal.created_at
+    `;
+    const errorSignals = signalRows.map((row) => ({ ...row, ply: Number(row.ply) }));
+    return {
+      errorSignals,
+      moves,
+      status,
+      summary: status === 'completed' ? summarizeAnalysis(moves) : null,
+    };
   }
 
   async getNarration(gameId: string, userId: string): Promise<GameNarration> {

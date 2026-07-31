@@ -53,7 +53,10 @@ export const exerciseSearchResultSchema = z.object({
 
 export const exerciseTrainingFiltersSchema = exerciseSearchQuerySchema
   .omit({ limit: true, offset: true })
-  .extend({ limit: z.number().int().min(1).max(50).default(10) });
+  .extend({
+    exerciseId: z.string().uuid().optional(),
+    limit: z.number().int().min(1).max(50).default(10),
+  });
 
 export const startExerciseTrainingInputSchema = z.object({
   filters: exerciseTrainingFiltersSchema.default({ limit: 10 }),

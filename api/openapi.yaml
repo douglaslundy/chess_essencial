@@ -1733,6 +1733,7 @@ components:
     ExerciseTrainingFilters:
       type: object
       properties:
+        exerciseId: {type: string, format: uuid}
         q: {type: string}
         category: {type: string}
         difficulty: {type: string}
@@ -2980,9 +2981,35 @@ components:
         erro: {type: integer, minimum: 0}
         gafe: {type: integer, minimum: 0}
         missedWin: {type: integer, minimum: 0}
+    GameErrorSignal:
+      type: object
+      required: [id, ply, skillKey, skillLabel, taxonomyVersion, signalType, confidence, ruleVersion, evidence, recommendation]
+      properties:
+        id: {type: string, format: uuid}
+        ply: {type: integer, minimum: 1}
+        skillKey: {type: string}
+        skillLabel: {type: string}
+        taxonomyVersion: {type: integer, minimum: 1}
+        signalType: {type: string, enum: [missed_opportunity, unsafe_move]}
+        confidence: {type: number, minimum: 0, maximum: 1}
+        ruleVersion: {type: string}
+        evidence:
+          type: object
+          required: [centipawnLoss, missedWin, quality]
+          properties:
+            centipawnLoss: {type: integer}
+            missedWin: {type: boolean}
+            quality: {$ref: '#/components/schemas/MoveQuality'}
+        recommendation:
+          type: [object, 'null']
+          required: [exerciseId, exerciseTitle, rationale]
+          properties:
+            exerciseId: {type: string, format: uuid}
+            exerciseTitle: {type: string}
+            rationale: {type: string}
     GameAnalysis:
       type: object
-      required: [status, summary, moves]
+      required: [status, summary, moves, errorSignals]
       properties:
         status: {type: string, enum: [pending, processing, completed, failed]}
         summary:
@@ -2992,6 +3019,7 @@ components:
             white: {$ref: '#/components/schemas/GameAnalysisQualityCounts'}
             black: {$ref: '#/components/schemas/GameAnalysisQualityCounts'}
         moves: {type: array, items: {$ref: '#/components/schemas/GameMoveAnalysis'}}
+        errorSignals: {type: array, items: {$ref: '#/components/schemas/GameErrorSignal'}}
     GameNarrationKeyMoment:
       type: object
       required: [ply, color, san, quality, narrative]
