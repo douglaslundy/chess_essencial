@@ -29,7 +29,7 @@ Fonte: `tarefa_20.txt.txt`. Memória: `MEMORIA_DESENVOLVIMENTO_TAREFA_20.md`.
 - [x] T20-A06 — Aprender, cursos, prática e instrutor.
 - [x] T20-A07 — Recomendações, skills e mastery.
 - [x] T20-A08 — Home, navegação e continuidade.
-- [ ] T20-A09 — Perfil, estatísticas, conquistas e gamificação.
+- [x] T20-A09 — Perfil, estatísticas, conquistas e gamificação.
 - [ ] T20-A10 — Social, rankings e privacidade.
 - [ ] T20-A11 — Configurações, tabuleiro, mobile e acessibilidade.
 - [ ] T20-A12 — Analytics, observabilidade, performance e segurança.

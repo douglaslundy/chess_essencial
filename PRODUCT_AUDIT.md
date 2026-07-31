@@ -3,7 +3,7 @@
 ## Estado
 
 - Missão: Tarefa 20.
-- Fase atual: T20-A08 concluída; T20-A09 é a próxima frente.
+- Fase atual: T20-A09 concluída; T20-A10 é a próxima frente.
 - Base Git: `main` em `0203a67e3762e1756438b498d2f9e8e81864022c`.
 - Data do baseline: 2026-07-30.
 - Regra: nenhuma afirmação de presença ou ausência é definitiva sem evidência.
@@ -278,7 +278,50 @@ Recomendação: implementar na ordem: (1) registry versionado de skills com alia
 
 ### Perfil, estatísticas e gamificação
 
-Estado: `UNKNOWN`.
+Estado consolidado: `EXISTING_SUPERIOR` na separação de ratings e na gamificação enxuta, `EXISTING_PARTIAL` no perfil/indicadores atuais e `NOT_IMPLEMENTED` para dashboard temporal e insights sustentados.
+
+Implementação confirmada:
+
+- perfil web edita identidade, avatar, bio, país, data de nascimento, locale, timezone, privacidade, tema, voz e preferências do Treinador;
+- menu do usuário mostra ratings separados por Bullet, Blitz, Rapid, Classical e Correspondence;
+- cada rating possui jogos, vitórias, empates, derrotas, pico, provisional e ledger/histórico imutável;
+- ranking também é separado por pool e deixa explícito que o rating é interno à plataforma;
+- exercícios mostram tentativas, acertos, precisão e duração média;
+- Jornada expõe XP, streak, nível atual e badges;
+- XP concede 10 por etapa e bônus de 5 por primeira tentativa; replay não reconcede;
+- catálogo de badges é pequeno: primeira etapa, primeiro nível perfeito, mundos concluídos e streak de 7 dias;
+- badges são idempotentes; mundo usa chave contextual;
+- mobile Perfil exibe somente nome, username e logout;
+- não existe endpoint/dashboard unificado de estatísticas do jogador.
+
+Evidências principais: contratos/repository de ratings, ledger e testes, `auth-status.tsx`, `meus-dados/page.tsx`, métricas de exercícios, learning path service/repository, migration 0039, e2e da Jornada, public profile social e perfil mobile.
+
+Soluções superiores preservadas:
+
+1. rating competitivo, progresso, XP, mastery e conquistas são conceitos separados;
+2. rating usa ledger imutável, pools reais, provisional e reversão;
+3. gamificação evita dezenas de badges artificiais, conteúdo diário vazio e pay-to-win;
+4. replay não duplica XP ou badges;
+5. estatísticas inexistentes não são simuladas com cards vazios.
+
+Gaps:
+
+- “Meus dados” mistura configurações com progresso e não funciona como perfil consolidado;
+- histórico de rating existe na API, mas não há gráfico/tendência na UI;
+- não há períodos 7D/30D/90D/1Y/ALL nem agregação de partidas, aulas, treino e puzzles;
+- métricas de exercícios são vitalícias e globais, sem origem, dificuldade, skill ou período;
+- não há precisão agregada de partidas, aberturas, forças, fraquezas ou evolução por domínio;
+- não há puzzle rating distinto; há apenas rating de xadrez, progresso da Jornada e mastery parcial;
+- XP/streak/badges são efeitos sequenciais depois de marcar a etapa concluída, sem transação/ledger único; falha intermediária pode deixar progresso sem recompensa e o retry não recompensa;
+- streak usa o dia do banco/UTC e ignora timezone do perfil;
+- dica ainda pode preservar first try, bônus de XP e “Nível perfeito”;
+- badge `perfect_level` não possui contexto do nível e só pode ser concedido uma vez;
+- XP não possui ledger explicável;
+- perfil público expõe ratings, mas não progresso/conquistas com granularidade de consentimento;
+- mobile não mostra ratings, progresso, badges, edição ou métricas;
+- não há teste de utilidade pedagógica ou impacto da gamificação.
+
+Recomendação: primeiro tornar conclusão + XP + streak + badges atômicos ou baseados em ledger idempotente e corrigir a semântica de dica/perfeição. Depois criar um `PlayerStatsService` que agregue fontes existentes por período sem fundi-las em um score global. Expor rating/histórico, partidas, exercícios, aulas, Jornada e mastery em seções distintas, com timezone correto e explicações de origem. Só gerar insights quando T20-A07 fornecer evidência/confiança. Preservar o catálogo pequeno de conquistas; não adicionar cosméticos ou recompensas antes de medir valor.
 
 ### Social, rankings e privacidade
 

@@ -2,6 +2,8 @@
 
 ## Última atualização
 
+2026-07-30 - **T20-A09 concluída: perfil, estatísticas, conquistas e gamificação auditados sem alterar produto.** Ratings por modalidade e gamificação enxuta foram preservados como superiores. Não existe dashboard temporal ou insights confiáveis. Prioridade P0: tornar conclusão da etapa e XP/streak/badges atômicos/idempotentes; hoje uma falha intermediária pode deixar a etapa concluída sem recompensa. Também foram registrados timezone do streak e dica preservando perfeição. Próxima tarefa: T20-A10.
+
 2026-07-30 - **T20-A08 concluída: Home, navegação e continuidade auditadas sem alterar produto.** Partidas e aulas possuem retomada autoritativa superior, mas a Home web só prioriza uma partida ativa e dois atalhos estáticos; mobile não possui hub. O pós-partida é o beco sem saída mais crítico: o resultado só fecha, sem revisão ou próximo jogo. Foi recomendado um endpoint agregador de continuidade antes de ampliar cards. A sidebar atual será preservada até existir telemetria; nenhuma reorganização especulativa será aplicada. Próxima tarefa: T20-A09.
 
 2026-07-30 - **T20-A07 concluída: recomendações, skills e mastery auditados sem alterar produto.** Não existe `RecommendationService`; mastery é parcial, alimentado só por exercícios concluídos na Jornada e calculado por média simples, sem confiança, recência ou evidência multiorigem. Review por skill fraca é base útil, mas campos adaptativos não dirigem o runtime. Preservar tags legadas e criar registry/aliases e ledger antes de personalizar. O usuário negou tornar opcional o salvamento das partidas do Treinador; always-save permanece protegido. Próxima tarefa: T20-A08.
