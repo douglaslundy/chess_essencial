@@ -2,6 +2,16 @@
 
 ## Última atualização
 
+2026-07-30 - **T20-A05 concluída: exercícios, Jornada, progressão, dicas, mastery e gamificação auditados sem alterar produto.** A composição da Jornada sobre os runtimes autoritativos de aula/exercício e o replay sem reconceder progresso foram preservados como superiores. Gaps centrais: mastery só recebe a Jornada, usa média histórica sem recência/confiança e não agenda repetição espaçada; dica sem erro ainda concede first try/perfeição; e erros não viram sinais pedagógicos estruturados. Desafio diário continua sem navegação vazia. Próxima tarefa: T20-A06.
+
+2026-07-30 - **T20-A04 concluída: análise, Stockfish, classificação de erro, revisão e narração auditados sem alterar produto.** Foi preservada como superior a separação em que Stockfish fornece fatos e o LLM apenas explica, com fallback determinístico e cache. Foram registrados gaps P0: nenhuma ligação partida → `ErrorSignal` → skill/prática; jobs sem lease/retry podem ficar em `processing`; e narrações pagas são geradas para todas as análises antes do gate de entitlement. Aumentar paralelismo do motor sem benchmark foi marcado como potencial regressão para a VPS compartilhada e não será feito automaticamente. Próxima tarefa: T20-A05.
+
+2026-07-30 - **T20-A03 concluída: partidas, histórico, rating, matchmaking e realtime auditados sem alterar produto.** O núcleo autoritativo foi classificado como superior: relógio do PostgreSQL, idempotência, reconstrução por UCI/FEN, locks, rating com ledger/reversão e reconexão versionada com relay Redis devem ser preservados. O principal gap é o outbox sem publisher/consumer nem avanço de `published_at`; também falta comprovar o elo pós-partida Erro → Skill → Recomendação. Daily real permanece fora do produto, sem criar navegação vazia. Próxima tarefa: T20-A04.
+
+2026-07-30 - **T20-A02 concluída: arquitetura, stack e limites dos módulos auditados sem alterar produto.** `ARCHITECTURE_AUDIT.md` registra monorepo, API/web/mobile/worker, dados, realtime, engine, contratos, segurança, observabilidade, testes, CI e deploy. Foram confirmados 12 achados, com destaque para drift do OpenAPI, deploy sem gate de CI, rate limit por processo e tokens web em localStorage. Decisões maduras foram preservadas; próxima tarefa é T20-A03.
+
+2026-07-30 - **T20-A01 concluída: baseline verificável e cinco artefatos preparados.** Registrados `main@0203a67`, workspaces, scripts, stack inicial, fontes de verdade e o diretório não rastreado `livrocompleto/`, que permanece intocado. Criados os esqueletos de produto, matriz, arquitetura e plano; `ROADMAP.md` foi preservado como histórico e recebeu o gate da auditoria. Nenhum código de produto foi alterado e nenhum deploy foi executado.
+
 2026-07-30 - **Tarefa 20 transformada em memória executável.** A auditoria foi decomposta em 17 tarefas documentais, com commit próprio, gates e proibição de deploy. Nenhum código de produto foi alterado. A próxima tarefa é registrar o baseline e criar os cinco artefatos.
 
 2026-07-30 - **Correção do estado visual dos desafios do Treinamento + homologação do botão Testar conexão da IA + estabilização de JSON no cliente PostgreSQL.** A causa dos desafios de um nível atual aparecerem como concluídos era a consulta de rank: o WHERE era aplicado antes de ROW_NUMBER(), portanto qualquer nível consultado recebia rank 1. O ranking agora é calculado no currículo inteiro em uma subconsulta e só depois filtrado pelo nível; uma regressão e2e posiciona o usuário em um nível avançado e exige uma etapa available, e a suíte da Jornada passou a integrar o job PostgreSQL obrigatório. O botão da IA foi revisado de ponta a ponta, renomeado para Testar conexão e ganhou testes de interface para resposta real e erro acionável. A falha do CI anterior, em que JSON/JSONB de narração e anotações saía como texto, foi fechada com serialização e parser explícitos e teste de preservação simultânea de JSON e timestamps. Typecheck de API/web, lint e testes unitários direcionados aprovados; o teste PostgreSQL completo fica coberto pelo CI de release.
@@ -131,15 +141,19 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-T20-A01 — Registrar baseline verificável e criar os esqueletos de `PRODUCT_AUDIT.md`, `FEATURE_MATRIX.md`, `ARCHITECTURE_AUDIT.md`, `IMPLEMENTATION_PLAN.md` e `ROADMAP.md`. Não alterar código de produto durante a Fase 0.
+T20-A06 — Auditar Aprender, cursos, prática e instrutor, sem alterar código de produto.
 ## Contexto necessário
 
 - `AGENTS.md`
 - `tarefa_20.txt.txt`
 - `MEMORIA_DESENVOLVIMENTO_TAREFA_20.md`
 - `TAREFAS.md`
-- `package.json` e manifests dos workspaces, somente na T20-A01
-- Estado do Git observado no início da T20-A01
+- `ARCHITECTURE_AUDIT.md`
+- `apps/api/src/courses/` e `apps/api/src/lesson-runtime/`
+- `apps/web/src/components/lessons/` e páginas de cursos
+- telas mobile de cursos e aulas
+- contratos, migrations, importer/seeds e testes de cursos, aulas e progresso
+- vínculos entre conteúdo, exercícios, Jornada e recomendações
 - Regra: um commit por tarefa; nenhum deploy sem pedido explícito
 
 ## Contexto histórico anterior

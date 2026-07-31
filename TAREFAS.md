@@ -21,11 +21,11 @@
 Fonte: `tarefa_20.txt.txt`. Memória: `MEMORIA_DESENVOLVIMENTO_TAREFA_20.md`.
 
 - [x] T20-A00 — Preparar memória, regras, gates e sequência.
-- [ ] T20-A01 — Baseline e esqueletos dos cinco artefatos.
-- [ ] T20-A02 — Arquitetura, stack e módulos.
-- [ ] T20-A03 — Jogar, partidas, histórico e realtime.
-- [ ] T20-A04 — Análise, engine e entendimento do erro.
-- [ ] T20-A05 — Problemas, Jornada e progressão.
+- [x] T20-A01 — Baseline e esqueletos dos cinco artefatos.
+- [x] T20-A02 — Arquitetura, stack e módulos.
+- [x] T20-A03 — Jogar, partidas, histórico e realtime.
+- [x] T20-A04 — Análise, engine e entendimento do erro.
+- [x] T20-A05 — Problemas, Jornada e progressão.
 - [ ] T20-A06 — Aprender, cursos, prática e instrutor.
 - [ ] T20-A07 — Recomendações, skills e mastery.
 - [ ] T20-A08 — Home, navegação e continuidade.

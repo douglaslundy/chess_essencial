@@ -1,168 +1,235 @@
 # Memória de desenvolvimento — Tarefa 20
 
-## Objetivo e regra de trabalho
+## Estado desta memória
 
-Auditar a plataforma existente e preparar sua evolução para o ciclo:
+- Data de criação: 2026-07-30.
+- Fonte primária: `tarefa_20.txt.txt`.
+- Estado: planejamento da auditoria; nenhuma funcionalidade da Tarefa 20 foi implementada.
+- Regra de execução: concluir e apresentar a auditoria antes de alterar produto, arquitetura, banco, APIs ou UX.
+- Identidade do produto: a referência Chess.com serve apenas para comparação de padrões; não autoriza copiar código, textos, assets, personagens, mapas, marcas, nomes, conteúdo ou layouts.
 
-`JOGAR → ANALISAR → ENTENDER → RECOMENDAR → APRENDER → PRATICAR → RESOLVER → MEDIR → JOGAR NOVAMENTE`
+## Objetivo
 
-Esta memória transforma `tarefa_20.txt.txt` em backlog executável. Nenhum código de produto será alterado antes da entrega da auditoria.
+Evoluir a plataforma existente de um conjunto de recursos de xadrez para um sistema integrado de evolução do jogador, orientado pelo ciclo:
 
-- Investigar antes de classificar; sustentar conclusões com evidências.
-- Usar `EXISTING_SUPERIOR`, `EXISTING_EQUIVALENT`, `EXISTING_PARTIAL`, `EXISTING_INFERIOR`, `NOT_IMPLEMENTED`, `NOT_APPLICABLE` ou `UNKNOWN`.
-- Preservar soluções superiores/equivalentes e completar as parciais pela arquitetura existente.
-- Manter o servidor autoritativo para regras, relógio, resultado, rating, progresso, conquistas e mastery.
-- Fazer um commit por tarefa concluída.
-- Antes do commit: testes pertinentes, `git diff --check` e charset quando houver texto visível.
-- Não fazer deploy sem pedido explícito do usuário.
-- Preservar `livrocompleto/` e alterações não relacionadas.
+`JOGAR -> ANALISAR -> ENTENDER O ERRO -> RECOMENDAR TREINAMENTO -> APRENDER -> PRATICAR -> RESOLVER DESAFIOS -> MEDIR DOMÍNIO -> JOGAR NOVAMENTE`
 
-## Entregáveis obrigatórios
+O resultado deve permitir responder, com dados rastreáveis: **o jogador melhorou depois do treinamento recomendado?**
 
-1. `PRODUCT_AUDIT.md`
-2. `FEATURE_MATRIX.md`
-3. `ARCHITECTURE_AUDIT.md`
-4. `IMPLEMENTATION_PLAN.md`
-5. `ROADMAP.md`
+## Leitura crítica inicial
 
-Os documentos cobrirão os 23 itens da missão: resumo, mapa atual, recursos superiores/parciais/ausentes, riscos, impactos em banco/API/UI/arquitetura, prioridades, estimativas, dependências, autorizações e ciclo central.
+1. A Tarefa 20 não é uma autorização para reconstruir o produto. Ela exige investigação antes de qualquer conclusão sobre ausência ou inferioridade de uma funcionalidade.
+2. O projeto está maduro e o histórico registra implementações recentes de Jornada de Aprendizagem, exercícios, partidas, análise, instrutor, configurações administrativas, IA, ratings, recursos sociais e mobile. Esses registros são pistas, não prova final; cada item ainda deve ser confirmado no código, contratos, banco, testes e interface.
+3. O roadmap P0/P1/P2/P3 contido na tarefa é uma hipótese. Ele não deve ser copiado para o backlog sem a matriz comparativa.
+4. A Tarefa 20 contém iniciativas que podem piorar o produto se forem aplicadas sem evidência: substituir navegação madura, acrescentar pontos ou streaks artificiais, mostrar rankings sem massa crítica, executar análise de engine cara em dispositivos fracos, criar clubes/mensagens prematuramente, duplicar históricos e introduzir um número mágico de habilidade. Essas iniciativas ficam bloqueadas por gates de decisão.
+5. A auditoria deve distinguir falta de evidência (`UNKNOWN`) de ausência (`NOT_IMPLEMENTED`) e falta de dados de domínio baixo.
+6. O servidor permanece autoritativo para regras, relógio, resultado, rating, progresso, conquistas, leaderboard e mastery. Nenhuma evolução pode confiar nesses valores enviados pelo cliente.
 
-## Fila de auditoria
+## Classificação obrigatória
 
-Cada item é uma tarefa e termina em commit próprio.
+Cada requisito deve receber exatamente um estado, acompanhado de evidência:
 
-### T20-A00 — Memória e governança
+| Estado                | Uso                                                              | Ação padrão                                                    |
+| --------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------- |
+| `EXISTING_SUPERIOR`   | A solução atual é objetivamente melhor que a referência/proposta | Preservar e pedir autorização antes de substituir ou refatorar |
+| `EXISTING_EQUIVALENT` | A solução atual atende de forma equivalente                      | Preservar; mudar apenas com ganho mensurável                   |
+| `EXISTING_PARTIAL`    | Há base reutilizável, mas o fluxo está incompleto                | Completar incrementalmente; não reimplementar do zero          |
+| `EXISTING_INFERIOR`   | Existe, mas há deficiência objetiva e demonstrável               | Propor evolução com métricas, risco e regressões cobertas      |
+| `NOT_IMPLEMENTED`     | A busca sistemática confirmou ausência                           | Planejar somente se houver valor e dependências viáveis        |
+| `NOT_APPLICABLE`      | Não faz sentido para o produto/plataforma atual                  | Não implementar e justificar                                   |
+| `UNKNOWN`             | Evidência insuficiente mesmo após investigação                   | Registrar a lacuna e a verificação necessária; não presumir    |
 
-- [x] Ler regras, progresso, backlog e missão.
-- [x] Registrar artefatos, gates, sequência e proibição de deploy.
+## Evidência mínima por item
 
-### T20-A01 — Baseline verificável
+Uma classificação só é válida quando registrar, conforme aplicável:
 
-- [ ] Registrar branch, commit-base, Git e não rastreados.
-- [ ] Mapear workspaces, scripts, stack e comandos de validação.
-- [ ] Separar fontes atuais de documentos históricos.
-- [ ] Criar o esqueleto dos cinco entregáveis.
+- arquivos, módulos, rotas, componentes, serviços e testes encontrados;
+- tabelas, migrations, índices, seeds e política de rollback;
+- contratos/OpenAPI, validação, autorização e comportamento de erro;
+- fluxo de UI, estados vazio/erro/carregamento e persistência de preferências;
+- dados recebidos e produzidos no ciclo central;
+- métricas/analytics já emitidos;
+- limitações observadas e grau de confiança da conclusão.
 
-### T20-A02 — Descoberta arquitetural
+Busca por palavra-chave isolada não comprova implementação. Documento histórico ou checkbox vazio também não comprova presença ou ausência.
 
-- [ ] Mapear frontend, backend, mobile, banco/ORM, auth, APIs, realtime, cache, storage, jobs, analytics, engine, testes, CI/CD, deploy, estado e design system.
-- [ ] Mapear páginas, rotas, componentes, hooks, stores, serviços, repositórios, modelos, schemas, controllers, workers, engines e testes.
+## Entregáveis obrigatórios antes de código
 
-### T20-A03 — Jogar, partidas, histórico e realtime
+- [ ] `PRODUCT_AUDIT.md`: resumo executivo, mapa do produto, inventário validado, recursos superiores/equivalentes/parciais/inferiores/ausentes/não aplicáveis e quick wins.
+- [ ] `FEATURE_MATRIX.md`: todos os requisitos da Tarefa 20 com estado, evidência atual, referência, recomendação, risco, prioridade, estimativa e dependências.
+- [ ] `ARCHITECTURE_AUDIT.md`: stack, limites de módulos, dados, APIs, realtime, jobs, engine, segurança, observabilidade, testes, CI/CD, deploy e dívidas.
+- [ ] `IMPLEMENTATION_PLAN.md`: ondas de entrega, critérios de aceite, arquivos previstos, migrations/rollback, contratos, testes, feature flags, métricas e plano de rollout.
+- [ ] `ROADMAP.md`: reconciliado com a auditoria e com o roadmap existente; não substituir o conteúdo atual sem preservar decisões válidas.
+- [ ] Apresentação dos 23 tópicos pedidos em “Entrega da auditoria”, incluindo pontos que exigem autorização.
 
-- [ ] Inventariar jogo humano, bots/treinador, controles de tempo, PGN/FEN, rating e histórico.
-- [ ] Confirmar autoridade, idempotência, reconstrução e dados entregues ao ciclo.
+## Plano de execução
 
-### T20-A04 — Análise, engine e entendimento do erro
+### Fase A — Preparação e baseline
 
-- [ ] Inventariar análise, avaliação, linhas, setas, variantes, feedback e limites.
-- [ ] Verificar metodologia de classificação e relações Partida → Análise → Erro → Skill.
-- [ ] Não aceitar explicações sem base técnica.
+- [ ] A01. Registrar commit/branch de referência, estado do Git e arquivos não rastreados, sem incorporar alterações do usuário.
+- [ ] A02. Ler somente as fontes de contexto necessárias: `AGENTS.md`, `PROGRESSO.md`, `TAREFAS.md`, `README.md`, documentos de arquitetura e contratos relevantes.
+- [ ] A03. Levantar scripts de build, lint, typecheck, testes, migrations, seeds e deploy.
+- [ ] A04. Definir o catálogo único de requisitos da Tarefa 20 e atribuir um ID estável a cada linha da futura matriz.
+- [ ] A05. Definir critérios objetivos de superioridade, equivalência, risco e prioridade antes de classificar features.
 
-### T20-A05 — Problemas, Jornada e progressão
+Saída: escopo auditável, baseline reproduzível e catálogo sem duplicatas.
 
-- [ ] Inventariar puzzles, desafios, Jornada, dificuldade, temas, dicas, timer, rating, progresso, pontos, níveis e streak.
-- [ ] Verificar persistência, autoridade, adaptação e conexão com skills.
+### Fase B — Descoberta arquitetural
 
-### T20-A06 — Aprender, cursos, prática e instrutor
+- [ ] B01. Mapear monorepo, aplicações web/mobile/API/worker, pacotes compartilhados e fronteiras de responsabilidade.
+- [ ] B02. Confirmar linguagem, frameworks, banco, ORM/query layer, cache, storage, filas/jobs e realtime.
+- [ ] B03. Mapear autenticação, autorização, planos/entitlements, papéis administrativos e privacidade.
+- [ ] B04. Mapear API versionada, OpenAPI/SDK, Problem Details e validação de entrada, especialmente PGN/FEN.
+- [ ] B05. Mapear engine de xadrez/análise, limites de execução, cache, falhas e comportamento em dispositivos fracos.
+- [ ] B06. Mapear estado de frontend, design system, navegação, acessibilidade, responsividade e persistência local/servidor/dispositivo.
+- [ ] B07. Mapear testes unitários, integração com PostgreSQL/Redis, e2e, CI, release, deploy e rollback.
+- [ ] B08. Mapear logs, métricas, tracing/error tracking, alertas, backups e restauração.
 
-- [ ] Inventariar aulas, cursos, learning path, biblioteca, aberturas, prática, finais e treinador.
-- [ ] Verificar retomada, progresso, recomendações, autosave e preferências.
-- [ ] Reutilizar conteúdo real; não criar aulas fictícias.
+Saída: `ARCHITECTURE_AUDIT.md` e mapa do sistema atual.
 
-### T20-A07 — Recomendações, skills e mastery
+### Fase C — Inventário funcional por domínio
 
-- [ ] Identificar serviços, modelos, dados e taxonomias existentes.
-- [ ] Distinguir ausência de evidência de domínio baixo.
-- [ ] Avaliar recência, dificuldade, contexto, quantidade e confiança.
-- [ ] Rejeitar média simples e recomendações aleatórias.
+Em todos os itens: localizar implementação, provar o comportamento, identificar dados/contratos/testes, classificar e registrar lacunas.
 
-### T20-A08 — Home, navegação e continuidade
+- [ ] C01. **Home/hub:** dashboard, recomendações, partidas recentes, próximo desafio, aprendizado, desafio diário, bots, instrutor e streak; verificar se a Home orquestra o próximo passo do ciclo.
+- [ ] C02. **Jogar:** modalidades, controles de tempo, casual/competitivo/treino, histórico, PGN, posição final, adversário, origem e alimentação da análise.
+- [ ] C03. **Problemas/desafios:** catálogo, Jornada, dificuldade adaptativa, objetivo, rating, pontos/progressão separados, streak, timer, dicas progressivas, feedback de erro e seleção do próximo desafio.
+- [ ] C04. **Aprender:** cursos, aulas, biblioteca, trilha, aberturas, progresso, retomada, ligação entre fraqueza e conteúdo real.
+- [ ] C05. **Instrutor/treinador:** personalidade própria, hints, feedback, voz, lembretes, autosave, configurações e partida contra instrutor.
+- [ ] C06. **Prática/exercícios/finais:** prática guiada, livre, adaptativa, revisão/reforço, finais disponíveis e seleção por dificuldade/mastery.
+- [ ] C07. **Análise:** hub, nova análise, editor, importação PGN/FEN, análise pós-partida, avaliação centipawn/mate, linhas, tempo máximo, feedback de lance, exploração de variantes e ameaças.
+- [ ] C08. **Tabuleiro e preferências:** sons, haptic, coordenadas, último lance, lances legais, animações, notação, roque, reduced motion e celebrações.
+- [ ] C09. **Estatísticas/insights:** períodos, modalidades reais, partidas, ratings, puzzles, aulas, treino, precisão, forças e fraquezas sustentadas por dados.
+- [ ] C10. **Conquistas/recompensas:** modelos, progresso, desbloqueios, badges/títulos/cosméticos, autoridade do servidor e ausência de pay-to-win.
+- [ ] C11. **Social:** solicitações, amigos, busca, desafios, mensagens, privacidade, filtros de rating, rankings e massa crítica.
+- [ ] C12. **Clubes:** apenas diagnóstico de viabilidade e arquitetura; não implementar nesta fase.
+- [ ] C13. **Perfil/histórico:** identidade, ratings por pool, progresso, conquistas, estatísticas e atividade recente, com históricos tipados e não misturados indevidamente.
+- [ ] C14. **Navegação/design system/configurações:** arquitetura de informação atual, componentes reutilizáveis, preferências centralizadas e identidade visual própria.
+- [ ] C15. **Mobile/acessibilidade:** touch, safe areas, orientação, teclado, tamanho do tabuleiro, performance, screen reader, contraste, alvo de toque e escala de texto.
+- [ ] C16. **Analytics/observabilidade:** eventos de produto, minimização de dados, funil do ciclo, falhas de API/engine e métricas de melhoria após treino.
+- [ ] C17. **Segurança/performance:** autorização, rate limiting, visibilidade, inputs de xadrez, paginação, histories, leaderboards, engine, animações e agregações.
 
-- [ ] Avaliar dashboard, recomendações, recentes, próximo desafio, streak, bots e coach.
-- [ ] Mapear entradas/saídas, becos sem saída e perda de contexto.
-- [ ] Preservar navegação madura equivalente ou superior.
+Saída: inventário evidenciado para `PRODUCT_AUDIT.md` e `FEATURE_MATRIX.md`.
 
-### T20-A09 — Perfil, estatísticas, conquistas e gamificação
+### Fase D — Auditoria do ciclo central
 
-- [ ] Inventariar perfil, ratings, estatísticas, insights, atividade, conquistas e recompensas.
-- [ ] Exigir dados reais; evitar número mágico global, conquistas artificiais e pay-to-win.
+- [ ] D01. Desenhar o ciclo atual com serviços, eventos, entidades e transições realmente existentes.
+- [ ] D02. Verificar se uma partida concluída produz dados suficientes para análise posterior sem duplicação.
+- [ ] D03. Verificar se a análise identifica decisões críticas e erros com base técnica, não só score do engine.
+- [ ] D04. Verificar o vínculo conceitual e persistido `Game -> Analysis -> Mistake -> Skill`.
+- [ ] D05. Verificar se explicações têm tipo, gravidade, posição, lance, recomendação e confiança sem conteúdo inventado.
+- [ ] D06. Verificar se recomendações têm motivo, origem, skill, prioridade e rastreabilidade.
+- [ ] D07. Verificar se a fraqueza leva a aula real ou, na ausência dela, a prática/desafio correspondente.
+- [ ] D08. Verificar a ligação de puzzles e práticas à taxonomia de skills sem adulterar metadados legados.
+- [ ] D09. Verificar se mastery consolida quantidade, recência, dificuldade, contexto e confiança, distinguindo falta de dados de domínio baixo.
+- [ ] D10. Verificar o retorno a jogo com contexto da recomendação preservado entre módulos.
+- [ ] D11. Verificar continuidade: toda tela concluída deve oferecer próximo passo útil ou retorno claro.
+- [ ] D12. Mapear dados ausentes, serviços reutilizáveis e contratos/eventos necessários para fechar gaps.
 
-### T20-A10 — Social, rankings e privacidade
+Saída: mapa atual, gaps, conexões, dados faltantes e serviços reutilizáveis.
 
-- [ ] Inventariar amigos, solicitações, desafios, mensagens, leaderboards e privacidade.
-- [ ] Verificar autorização, visibilidade, rate limiting e massa crítica.
-- [ ] Não implementar clubes, contatos ou redes sociais automaticamente.
+### Fase E — Matriz, decisão e roadmap
 
-### T20-A11 — Configurações, tabuleiro, mobile e acessibilidade
+- [ ] E01. Preencher todas as linhas de `FEATURE_MATRIX.md`; nenhuma linha pode ficar sem evidência ou justificativa de `UNKNOWN`.
+- [ ] E02. Consolidar duplicidades entre módulos, preferências e fluxos para evitar serviços/tabelas paralelos.
+- [ ] E03. Identificar quick wins de alto impacto e baixo risco.
+- [ ] E04. Registrar riscos de UX, arquitetura, desempenho, segurança, privacidade, custo e operação.
+- [ ] E05. Listar mudanças potenciais de banco, API, UI e arquitetura, ainda sem implementá-las.
+- [ ] E06. Estimar cada proposta em XS/S/M/L/XL e declarar dependências.
+- [ ] E07. Priorizar P0/P1/P2/P3 pela evidência da auditoria, impacto no ciclo e custo, substituindo a hipótese inicial quando necessário.
+- [ ] E08. Separar explicitamente itens preservados, itens recomendados e itens bloqueados por autorização.
+- [ ] E09. Apresentar os resultados ao usuário antes de qualquer implementação.
 
-- [ ] Inventariar preferências e classificar persistência local, por dispositivo ou conta.
-- [ ] Avaliar toque, safe areas, orientação, performance, teclado, contraste, leitor de tela, escala e reduced motion.
+Saída: cinco entregáveis concluídos e decisão informada sobre execução.
 
-### T20-A12 — Analytics, observabilidade, performance e segurança
+### Fase F — Implementação posterior, somente após a auditoria
 
-- [ ] Inventariar eventos, métricas e funil do ciclo.
-- [ ] Auditar logs, falhas, dados sensíveis, históricos, agregações e engine.
-- [ ] Auditar PGN/FEN, autorização, rate limiting e confiança no cliente.
+Para cada feature aprovada/recomendada:
 
-### T20-A13 — Feature Matrix
+- [ ] F01. Reconfirmar a implementação atual e sua classificação.
+- [ ] F02. Definir mudança mínima, dependências, dados recebidos/produzidos e contribuição ao ciclo.
+- [ ] F03. Definir critérios de aceite, métricas de sucesso e plano de regressão.
+- [ ] F04. Projetar contrato versionado, migrations preservando dados e rollback documentado.
+- [ ] F05. Adicionar feature flag para iniciativas grandes ou de rollout arriscado.
+- [ ] F06. Implementar reutilizando serviços e componentes maduros.
+- [ ] F07. Cobrir regras críticas com testes unitários e fluxos com integração/e2e.
+- [ ] F08. Validar acessibilidade, mobile, performance, segurança e observabilidade pertinentes.
+- [ ] F09. Executar lint, typecheck, testes, build e validação de contratos/conteúdo pertinentes.
+- [ ] F10. Atualizar OpenAPI, SDK, documentação, `PROGRESSO.md` e a matriz com o resultado real.
+- [ ] F11. Antes de commit/push/deploy: executar `git diff --check`, varredura de charset/mojibake e secrets.
+- [ ] F12. Fazer rollout gradual e medir se a mudança melhorou o funil e o desempenho do jogador.
 
-- [ ] Cobrir todos os requisitos sem presumir ausência.
-- [ ] Preencher estado, evidência, referência, recomendação, risco e prioridade.
-- [ ] Usar `UNKNOWN` quando não houver conclusão segura e revisar contradições.
+## Gates de autorização — não executar automaticamente
 
-### T20-A14 — Soluções superiores e autorizações
+Solicitar autorização prévia, com comparação de ganhos e perdas, quando ocorrer qualquer caso abaixo:
 
-- [ ] Documentar implementação atual, proposta, ganhos, perdas e justificativa.
-- [ ] Separar decisões automáticas das bloqueadas.
-- [ ] Não alterar funcionalidades bloqueadas.
+1. Uma funcionalidade for classificada como `EXISTING_SUPERIOR` e a proposta pretender substituí-la ou refatorá-la.
+2. Uma funcionalidade `EXISTING_EQUIVALENT` sofrer mudança significativa de comportamento ou UX.
+3. A mudança substituir navegação madura, engine, banco, framework, design system ou fronteira arquitetural estável.
+4. Houver remoção de funcionalidade, perda de compatibilidade, reset/reprocessamento arriscado de progresso ou alteração destrutiva de dados.
+5. A proposta envolver clubes, mensagens/comunidade ampla, importação de contatos, redes sociais ou dependência externa relevante.
+6. A proposta introduzir custo recorrente relevante de IA/engine/SaaS, coleta adicional de dados pessoais ou mudança de defaults de privacidade.
+7. Rankings forem propostos sem massa crítica; mastery sem evidência suficiente; recomendações sem motivo rastreável; pontos/streaks/conquistas sem valor pedagógico demonstrável.
+8. Análise, animações ou MultiPV puderem degradar bateria, latência, estabilidade ou acessibilidade em dispositivos suportados.
 
-### T20-A15 — Plano e roadmap
+Formato da solicitação:
 
-- [ ] Produzir quick wins, P0/P1/P2/P3 e XS/S/M/L/XL.
-- [ ] Registrar dependências, migrações, contratos, UI, arquitetura, flags e testes.
-- [ ] Priorizar o fechamento do ciclo, não volume de features.
+```text
+FUNCIONALIDADE:
+IMPLEMENTAÇÃO ATUAL:
+PROPOSTA:
+POR QUE A ATUAL É MELHOR OU A MUDANÇA É ARRISCADA:
+O QUE SERIA PERDIDO:
+O QUE SERIA GANHO:
+RECOMENDAÇÃO:
+```
 
-### T20-A16 — Validação e entrega
+Pergunta obrigatória: “Seu sistema já possui uma solução que considero superior nesse aspecto, ou a mudança pode piorá-lo. Deseja realmente substituí-la/refatorá-la?”
 
-- [ ] Confirmar os 23 itens, validar documentação, diff e charset.
-- [ ] Apresentar resumo, riscos e autorizações.
-- [ ] Não iniciar código de produto no mesmo commit.
+As frentes independentes de auditoria podem continuar enquanto esse item aguarda decisão.
 
-## Depois da auditoria
+## Riscos já identificados antes da auditoria
 
-As features concretas serão criadas em `IMPLEMENTATION_PLAN.md` e `TAREFAS.md`. Cada uma seguirá: localizar/classificar; definir critérios, dados, dependências e impacto; reutilizar módulos; implementar; testar; atualizar migration/rollback, OpenAPI e docs; validar; commitar; não fazer deploy.
+| Risco                                               | Consequência                                           | Tratamento                                                          |
+| --------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------- |
+| Tratar o roadmap hipotético como lista de ausências | Duplicação e regressão de recursos maduros             | Exigir matriz e evidência antes do backlog                          |
+| Usar Chess.com como especificação literal           | Perda de identidade e risco de propriedade intelectual | Comparar padrões, nunca copiar expressão concreta                   |
+| Criar módulos isolados                              | O ciclo central continua fragmentado                   | Exigir entrada, saída, consumidor e métrica para cada feature       |
+| Explicação ou recomendação sem base                 | Perda de confiança e treino incorreto                  | Registrar confiança, fonte e fallback honesto                       |
+| Mastery com poucos dados ou média simples           | Diagnóstico enganoso                                   | Modelo explícito de evidência, recência, dificuldade e incerteza    |
+| Gamificação artificial                              | Otimização por cliques em vez de aprendizado           | Vincular recompensa a comportamento pedagógico útil                 |
+| Engine/análise excessiva no cliente                 | Bateria, latência e travamentos                        | Limites configuráveis, capacidade do dispositivo e execução gradual |
+| Social/clubs prematuros                             | Grande custo, moderação, abuso e privacidade           | Gate de autorização e estudo de massa crítica                       |
+| Preferências duplicadas local/servidor              | Estados inconsistentes                                 | Definir autoridade e escopo por preferência                         |
+| Histórico ou schema unificado à força               | Perda semântica e migração arriscada                   | Tipagem explícita, preservação e rollback                           |
 
-## Gates de autorização
+## Hipótese de dependências
 
-Pausar somente a funcionalidade afetada antes de:
+Esta ordem é provisória e será recalculada pela auditoria:
 
-- substituir/refatorar `EXISTING_SUPERIOR`;
-- mudar significativamente uma UX `EXISTING_EQUIVALENT`;
-- remover funcionalidade madura ou histórico;
-- trocar framework, banco, engine ou arquitetura central;
-- criar clubes ou subsistema social grande;
-- importar contatos, integrar redes ou adotar SaaS/dados pessoais adicionais;
-- executar migração destrutiva, reset ou exclusão;
-- piorar performance, segurança, acessibilidade, confiabilidade ou UX.
+1. Inventário e taxonomia de skills existente.
+2. Qualidade e completude dos dados de partida/análise.
+3. Classificação tecnicamente defensável de erros.
+4. Vínculo entre erro, skill e conteúdo/prática/puzzle.
+5. RecommendationService rastreável.
+6. SkillMastery com evidência suficiente.
+7. Home/hub como orquestrador e retorno a jogo.
+8. Analytics do funil e avaliação de melhoria após treinamento.
 
-As demais tarefas independentes seguem automaticamente pela opção recomendada.
+RecommendationService adaptativo depende de análise e taxonomia confiáveis. SkillMastery depende de sinais consistentes. Home personalizada depende de recomendações. Insights e rankings dependem de dados e massa crítica. Nenhum desses componentes deve ser antecipado com placeholders enganosos.
 
-## Itens preventivamente fora da fila automática
+## Critérios de conclusão da auditoria
 
-- ranking sem massa crítica;
-- mastery com poucos dados ou média simples;
-- recomendações aleatórias;
-- análise pesada indiscriminada no cliente;
-- conteúdo ou insights fictícios;
-- gamificação artificial ou pay-to-win;
-- navegação/design copiados;
-- histórico único sem tipagem;
-- degradar desafios para forçar uma taxonomia.
+A Fase 0 estará concluída somente quando:
 
-## Retomada
+- todos os requisitos tiverem estado e evidência, ou justificativa clara de `UNKNOWN`;
+- os cinco documentos obrigatórios estiverem coerentes entre si;
+- os 23 tópicos de entrega estiverem respondidos;
+- recursos superiores e mudanças potencialmente regressivas estiverem destacados;
+- alterações de banco, API, UI e arquitetura estiverem identificadas, sem terem sido aplicadas;
+- roadmap, estimativas e dependências refletirem o sistema real;
+- o usuário tiver recebido os resultados e os pontos que exigem autorização.
 
-- Concluído: `T20-A00`.
-- Próxima: `T20-A01 — Baseline verificável`.
-- Contexto: `AGENTS.md`, `PROGRESSO.md`, `TAREFAS.md`, `tarefa_20.txt.txt` e esta memória.
-- Deploy proibido até solicitação explícita.
+## Próxima ação automática recomendada
+
+Executar `T20-A06 — Aprender, cursos, prática e instrutor`, verificando catálogo, consumo de aula, progresso, exercícios vinculados e continuidade para a prática. Não iniciar implementação de produto até concluir e apresentar a auditoria.
