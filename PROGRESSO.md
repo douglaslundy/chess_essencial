@@ -2,6 +2,8 @@
 
 ## Última atualização
 
+2026-07-31 - **COR-T20-006 concluída: controles de privacidade agora produzem efeito real.** Perfil privado retorna 404 para estranhos, permanece acessível ao próprio usuário e amigos, é excluído do leaderboard, e novos pedidos respeitam `allow_friend_requests` com erro genérico. Typecheck, lint, build e 98 testes da API passaram; 122 integrações de banco ficaram corretamente puladas porque Docker/PostgreSQL não estão disponíveis nesta máquina. Nenhum deploy foi realizado. Próxima tarefa: COR-T20-007.
+
 2026-07-31 - **T20-A16 concluída: auditoria validada e entregue nos cinco documentos obrigatórios.** Os 23 tópicos estão respondidos, a matriz tem 131 requisitos sem IDs duplicados ou colunas inválidas, plano/roadmap e gates estão coerentes e as 16 correções permanecem rastreáveis. A execução automática foi liberada a partir da COR-T20-006; nenhum deploy foi realizado. Próxima tarefa: COR-T20-006.
 
 2026-07-31 - **T20-A15 concluída: plano e roadmap transformados em ondas executáveis.** Segurança/privacidade/recuperação vêm primeiro; acessibilidade e confiança do cliente em seguida; o ciclo pedagógico depende de taxonomia, ErrorSignal, mastery e recomendação rastreável; analytics e otimização só avançam com dados e capacidade medidos. P3 permanece bloqueado por autorização. Próxima tarefa: T20-A16.
@@ -165,7 +167,7 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-COR-T20-006 — Aplicar efetivamente os controles de privacidade, sem deploy.
+COR-T20-007 — Aplicar bloqueio em toda interação social, sem deploy.
 ## Contexto necessário
 
 - `AGENTS.md`

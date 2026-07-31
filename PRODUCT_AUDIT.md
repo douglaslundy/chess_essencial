@@ -354,9 +354,7 @@ Soluções consideradas superiores e preservadas:
 
 Gaps e falhas confirmadas:
 
-- `publicProfile()` ignora `is_profile_public` e bloqueios, expondo nome, avatar, presença e ratings mesmo com perfil privado;
-- leaderboard também ignora `is_profile_public`, expondo username, nome, avatar e rating;
-- `sendRequest()` não consulta `allow_friend_requests`; o controle persistido não produz efeito;
+- COR-T20-006 concluída: perfil privado passou a aceitar somente self/amigos, saiu do leaderboard e pedidos respeitam `allow_friend_requests`; bloqueios transversais continuam na COR-T20-007;
 - bloquear remove desafios pendentes, mas não encerra amizade, não impede mensagens e não exclui posts/feed já acessíveis;
 - `like()`/`getPost()` validam existência, não se o usuário pode visualizar o post;
 - web só permite alterar “Perfil público”; não há UI para pedidos/desafios, lista de bloqueados ou denúncia; mobile não oferece controles de segurança;

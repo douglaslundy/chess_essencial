@@ -270,7 +270,9 @@ export class RatingsRepository {
       FROM rating_profiles
       JOIN users ON users.id = rating_profiles.user_id
       JOIN user_profiles ON user_profiles.user_id = rating_profiles.user_id
-      WHERE rating_profiles.pool = ${pool}::rating_pool AND users.status = 'active'
+      WHERE rating_profiles.pool = ${pool}::rating_pool
+        AND users.status = 'active'
+        AND user_profiles.is_profile_public = true
       ORDER BY rating_profiles.rating DESC, rating_profiles.games_count DESC, rating_profiles.user_id
       LIMIT ${limit}
     `;

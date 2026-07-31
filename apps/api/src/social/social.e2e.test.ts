@@ -185,6 +185,57 @@ describeDatabase('social database integration', () => {
     expect(strangerProfile.json()).toMatchObject({ friendshipStatus: 'none' });
   });
 
+  it('enforces profile and friend-request privacy without hiding the owner from themself', async () => {
+    const privacy = await app.inject({
+      headers: auth(bob),
+      method: 'PATCH',
+      payload: { allowFriendRequests: false, isProfilePublic: false },
+      url: '/v1/me/privacy',
+    });
+    expect(privacy.statusCode, privacy.body).toBe(200);
+
+    const friendProfile = await app.inject({
+      headers: auth(alice),
+      method: 'GET',
+      url: `/v1/users/${bob.username}`,
+    });
+    expect(friendProfile.statusCode, friendProfile.body).toBe(200);
+    expect(friendProfile.json()).toMatchObject({ friendshipStatus: 'friends' });
+
+    const privateProfile = await app.inject({
+      headers: auth(carol),
+      method: 'GET',
+      url: `/v1/users/${bob.username}`,
+    });
+    expect(privateProfile.statusCode).toBe(404);
+
+    const selfProfile = await app.inject({
+      headers: auth(bob),
+      method: 'GET',
+      url: `/v1/users/${bob.username}`,
+    });
+    expect(selfProfile.statusCode, selfProfile.body).toBe(200);
+    expect(selfProfile.json()).toMatchObject({ friendshipStatus: 'self' });
+
+    const refusedRequest = await app.inject({
+      headers: auth(carol),
+      method: 'POST',
+      payload: { username: bob.username },
+      url: '/v1/friends/requests',
+    });
+    expect(refusedRequest.statusCode).toBe(400);
+
+    const leaderboard = await app.inject({
+      headers: auth(carol),
+      method: 'GET',
+      url: '/v1/ratings/blitz/leaderboard',
+    });
+    expect(leaderboard.statusCode, leaderboard.body).toBe(200);
+    expect(
+      leaderboard.json().some((entry: { username: string }) => entry.username === bob.username),
+    ).toBe(false);
+  });
+
   it('removes a friend so neither side sees the other anymore', async () => {
     const remove = await app.inject({
       headers: auth(alice),
@@ -199,5 +250,12 @@ describeDatabase('social database integration', () => {
       url: '/v1/friends',
     });
     expect(aliceFriends.json()).toEqual([]);
+
+    const formerFriendProfile = await app.inject({
+      headers: auth(alice),
+      method: 'GET',
+      url: `/v1/users/${bob.username}`,
+    });
+    expect(formerFriendProfile.statusCode).toBe(404);
   });
 });

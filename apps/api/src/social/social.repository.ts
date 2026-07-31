@@ -24,8 +24,11 @@ export class SocialRepository {
 
   private async targetUser(username: string) {
     const sql = this.database.client;
-    const [user] = await sql<{ id: string; status: string }[]>`
-      SELECT id, status FROM users WHERE username = ${username}
+    const [user] = await sql<{ allow_friend_requests: boolean; id: string; status: string }[]>`
+      SELECT u.id, u.status, p.allow_friend_requests
+        FROM users u
+        JOIN user_profiles p ON p.user_id = u.id
+       WHERE u.username = ${username}
     `;
     return user ?? null;
   }
@@ -47,6 +50,9 @@ export class SocialRepository {
       throw new NotFoundException('Usuário não encontrado');
     if (target.id === requesterId) throw new BadRequestException('Você não pode se adicionar.');
     if (await this.isBlockedEitherWay(requesterId, target.id)) {
+      throw new BadRequestException('Não é possível enviar pedido para este usuário.');
+    }
+    if (!target.allow_friend_requests) {
       throw new BadRequestException('Não é possível enviar pedido para este usuário.');
     }
     const [existing] = await sql<{ status: string }[]>`
@@ -159,18 +165,17 @@ export class SocialRepository {
         avatar_url: string | null;
         display_name: string;
         id: string;
+        is_profile_public: boolean;
         last_seen_at: Date | string | null;
         username: string;
       }[]
     >`
-      SELECT u.id, u.username::text, p.display_name, p.avatar_url, u.last_seen_at
+      SELECT u.id, u.username::text, p.display_name, p.avatar_url, p.is_profile_public,
+             u.last_seen_at
         FROM users u JOIN user_profiles p ON p.user_id = u.id
        WHERE u.username = ${username} AND u.status = 'active'
     `;
     if (!row) throw new NotFoundException('Usuário não encontrado');
-    const ratings = await sql<{ pool: string; rating: number }[]>`
-      SELECT pool, rating FROM rating_profiles WHERE user_id = ${row.id} ORDER BY pool
-    `;
     let friendshipStatus: 'none' | 'pending_outgoing' | 'pending_incoming' | 'friends' | 'self' =
       'none';
     if (viewerId) {
@@ -188,6 +193,12 @@ export class SocialRepository {
         }
       }
     }
+    if (!row.is_profile_public && !['friends', 'self'].includes(friendshipStatus)) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+    const ratings = await sql<{ pool: string; rating: number }[]>`
+      SELECT pool, rating FROM rating_profiles WHERE user_id = ${row.id} ORDER BY pool
+    `;
     return {
       avatarUrl: row.avatar_url,
       displayName: row.display_name,

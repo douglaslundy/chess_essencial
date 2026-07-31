@@ -232,4 +232,4 @@ A Fase 0 estará concluída somente quando:
 
 ## Próxima ação automática recomendada
 
-Executar `COR-T20-006 — Fazer os controles de privacidade produzirem efeito real`, primeira correção P0 da onda de segurança. Preservar os gates, fazer um commit ao concluir e não realizar deploy.
+Executar `COR-T20-007 — Aplicar bloqueio em toda interação social`, encerrando contato entre as partes em amizade, mensagens, feed, likes, perfil e presença sem apagar evidências de moderação. Preservar os gates, fazer um commit ao concluir e não realizar deploy.
