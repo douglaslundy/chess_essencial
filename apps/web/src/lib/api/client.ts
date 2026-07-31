@@ -4,6 +4,9 @@ import type {
   AdminOnlineBot,
   AdminUser,
   AdminUserList,
+  ModerateReportInput,
+  ModerationReportDetail,
+  ModerationReportList,
   AiProvider,
   AiProviderKey,
   AiProviderModelList,
@@ -431,6 +434,15 @@ export const api = {
   adminGetBotStats: (token: string) => request<AdminBotStats>('/admin/bots/stats', token),
   adminListOnlineBots: (token: string) => request<AdminOnlineBot[]>('/admin/bots/online', token),
   adminGetMetrics: (token: string) => request<AdminMetrics>('/admin/metrics', token),
+  adminListReports: (query: URLSearchParams, token: string) =>
+    request<ModerationReportList>(`/admin/reports?${query.toString()}`, token),
+  adminGetReport: (reportId: string, token: string) =>
+    request<ModerationReportDetail>(`/admin/reports/${reportId}`, token),
+  adminModerateReport: (reportId: string, input: ModerateReportInput, token: string) =>
+    request<ModerationReportDetail>(`/admin/reports/${reportId}`, token, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    }),
   adminGetSmtpSettings: (token: string) => request<SmtpSettings>('/admin/settings/smtp', token),
   adminUpdateSmtpSettings: (input: UpdateSmtpSettingsInput, token: string) =>
     request<SmtpSettings>('/admin/settings/smtp', token, {

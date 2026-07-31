@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createReportInputSchema,
+  moderateReportInputSchema,
+  moderationQueueQuerySchema,
   privacySettingsSchema,
   updatePrivacyInputSchema,
 } from './safety.js';
@@ -32,5 +34,23 @@ describe('safety contracts', () => {
         isProfilePublic: false,
       }),
     ).toBeDefined();
+  });
+
+  it('normalizes moderation filters and requires a terminal decision', () => {
+    expect(moderationQueueQuerySchema.parse({ status: 'open' })).toEqual({
+      limit: 50,
+      offset: 0,
+      status: 'open',
+    });
+    expect(moderateReportInputSchema.parse({ status: 'reviewing' })).toEqual({
+      status: 'reviewing',
+    });
+    expect(moderateReportInputSchema.safeParse({ status: 'resolved' }).success).toBe(false);
+    expect(
+      moderateReportInputSchema.parse({
+        note: 'Conteúdo confirmado e tratado',
+        status: 'resolved',
+      }),
+    ).toMatchObject({ status: 'resolved' });
   });
 });

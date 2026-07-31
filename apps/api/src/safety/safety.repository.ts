@@ -153,6 +153,13 @@ export class SafetyRepository {
         `;
         if (!report) throw new Error('Failed to create moderation report');
         await transaction`
+          INSERT INTO moderation_report_events (
+            report_id, actor_user_id, from_status, to_status, note
+          ) VALUES (
+            ${report.id}, ${reporterUserId}, NULL, 'open', 'Denúncia criada'
+          )
+        `;
+        await transaction`
           INSERT INTO audit_logs (actor_user_id, action, entity_type, entity_id, metadata)
           VALUES (
             ${reporterUserId}, 'moderation.report_created', 'moderation_report', ${report.id},

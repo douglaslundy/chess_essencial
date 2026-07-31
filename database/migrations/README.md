@@ -63,5 +63,7 @@ pnpm --filter @xadrez/api db:rollback
 
 `0040_learning_path_lesson_stages.down.sql` drops `lesson_attempt_id` from `user_stage_completions`. The linked `lesson_attempts` row itself is untouched (owned by the lesson-runtime domain, same relationship as `training_session_id`/`exercise_training_sessions` in `0038`) — only the cross-reference is lost, and the next stage start recreates or re-links one.
 
+`0041_moderation_workflow.down.sql` remove o histórico de transições e os metadados de resolução adicionados ao fluxo administrativo. As denúncias originais e seu estado atual permanecem, mas justificativa, responsável e data da decisão deixam de existir após o rollback.
+
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.

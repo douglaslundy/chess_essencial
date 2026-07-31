@@ -268,8 +268,23 @@ export const moderationReports = pgTable('moderation_reports', {
   category: varchar('category', { length: 30 }).notNull(),
   description: varchar('description', { length: 1000 }),
   status: varchar('status', { length: 20 }).notNull().default('open'),
+  resolution: text('resolution'),
+  resolvedBy: uuid('resolved_by').references(() => users.id, { onDelete: 'set null' }),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const moderationReportEvents = pgTable('moderation_report_events', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  reportId: uuid('report_id')
+    .notNull()
+    .references(() => moderationReports.id, { onDelete: 'cascade' }),
+  actorUserId: uuid('actor_user_id').references(() => users.id, { onDelete: 'set null' }),
+  fromStatus: varchar('from_status', { length: 20 }),
+  toStatus: varchar('to_status', { length: 20 }).notNull(),
+  note: varchar('note', { length: 1000 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const auditLogs = pgTable('audit_logs', {

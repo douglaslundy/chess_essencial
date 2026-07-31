@@ -232,4 +232,4 @@ A Fase 0 estará concluída somente quando:
 
 ## Próxima ação automática recomendada
 
-Executar `COR-T20-008 — Criar fluxo administrativo mínimo de denúncias`, com fila RBAC, decisão, histórico e auditoria antes de ampliar recursos sociais. Preservar os gates, fazer um commit ao concluir e não realizar deploy.
+Executar `COR-T20-001 — Aplicar entitlement antes de gerar narração paga`, impedindo custo de IA antes da autorização de plano/cota e preservando o fallback determinístico gratuito. Preservar os gates, fazer um commit ao concluir e não realizar deploy.

@@ -587,6 +587,43 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/admin/reports': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List moderation reports (admin only) */
+    get: operations['adminListReports'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/reports/{reportId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reportId: string;
+      };
+      cookie?: never;
+    };
+    /** Get a report and its decision history (admin only) */
+    get: operations['adminGetReport'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Triage or close a moderation report (admin only) */
+    patch: operations['adminModerateReport'];
+    trace?: never;
+  };
   '/admin/bots/stats': {
     parameters: {
       query?: never;
@@ -2154,6 +2191,63 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
+    /** @enum {string} */
+    ModerationReportStatus: 'open' | 'reviewing' | 'resolved' | 'dismissed';
+    ModerateReportInput:
+      | {
+          /** @enum {string} */
+          status: 'reviewing';
+          note?: string;
+        }
+      | {
+          /** @enum {string} */
+          status: 'resolved' | 'dismissed';
+          note: string;
+        };
+    ModerationUserRef: {
+      /** Format: uuid */
+      id: string;
+      username: string | null;
+      displayName?: string | null;
+    };
+    ModerationReportSummary: {
+      /** Format: uuid */
+      id: string;
+      category: components['schemas']['ReportCategory'];
+      description: string | null;
+      status: components['schemas']['ModerationReportStatus'];
+      /** Format: uuid */
+      gameId: string | null;
+      reporter: components['schemas']['ModerationUserRef'];
+      reportedUser: components['schemas']['ModerationUserRef'] | null;
+      resolution: string | null;
+      resolvedBy: components['schemas']['ModerationUserRef'] | null;
+      /** Format: date-time */
+      resolvedAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      /** Format: date-time */
+      slaDueAt: string;
+      overdue: boolean;
+    };
+    ModerationReportEvent: {
+      id: number;
+      actor: components['schemas']['ModerationUserRef'] | null;
+      fromStatus: components['schemas']['ModerationReportStatus'] | null;
+      toStatus: components['schemas']['ModerationReportStatus'];
+      note: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    ModerationReportDetail: components['schemas']['ModerationReportSummary'] & {
+      history: components['schemas']['ModerationReportEvent'][];
+    };
+    ModerationReportList: {
+      items: components['schemas']['ModerationReportSummary'][];
+      total: number;
+    };
     UploadAvatarInput: {
       /** @enum {string} */
       contentType: 'image/jpeg' | 'image/png' | 'image/webp';
@@ -3643,6 +3737,88 @@ export interface operations {
       };
       401: components['responses']['Problem'];
       403: components['responses']['Problem'];
+    };
+  };
+  adminListReports: {
+    parameters: {
+      query?: {
+        status?: components['schemas']['ModerationReportStatus'];
+        limit?: number;
+        offset?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Moderation queue */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ModerationReportList'];
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  adminGetReport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reportId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Moderation report detail */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ModerationReportDetail'];
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  adminModerateReport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        reportId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ModerateReportInput'];
+      };
+    };
+    responses: {
+      /** @description Updated moderation report */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ModerationReportDetail'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+      409: components['responses']['Problem'];
     };
   };
   adminGetBotStats: {

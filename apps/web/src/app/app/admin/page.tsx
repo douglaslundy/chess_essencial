@@ -53,6 +53,11 @@ const sections = [
     title: 'Métricas',
     description: 'Usuários, partidas, exercícios, aulas, assinaturas e indicações em um só lugar.',
   },
+  {
+    href: '/app/admin/denuncias',
+    title: 'Denúncias',
+    description: 'Triar denúncias, acompanhar o SLA e registrar decisões auditáveis.',
+  },
 ];
 
 export default function AdminHubPage() {

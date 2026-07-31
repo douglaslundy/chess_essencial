@@ -36,6 +36,69 @@ export const reportReceiptSchema = z.object({
   createdAt: z.string().datetime(),
 });
 
+export const moderationReportStatusSchema = z.enum(['open', 'reviewing', 'resolved', 'dismissed']);
+
+export const moderationQueueQuerySchema = z.object({
+  status: moderationReportStatusSchema.optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+export const moderateReportInputSchema = z
+  .object({
+    status: z.enum(['reviewing', 'resolved', 'dismissed']),
+    note: z.string().trim().min(3).max(1000).optional(),
+  })
+  .refine((value) => value.status === 'reviewing' || value.note !== undefined, {
+    message: 'Informe a decisão para encerrar a denúncia',
+    path: ['note'],
+  });
+
+export type ModerationReportStatus = z.infer<typeof moderationReportStatusSchema>;
+export type ModerationQueueQuery = z.infer<typeof moderationQueueQuerySchema>;
+export type ModerateReportInput = z.infer<typeof moderateReportInputSchema>;
+
+export interface ModerationUserRef {
+  id: string;
+  username: string | null;
+  displayName?: string | null;
+}
+
+export interface ModerationReportSummary {
+  id: string;
+  category: string;
+  description: string | null;
+  status: ModerationReportStatus;
+  gameId: string | null;
+  reporter: ModerationUserRef;
+  reportedUser: ModerationUserRef | null;
+  resolution: string | null;
+  resolvedBy: ModerationUserRef | null;
+  resolvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  slaDueAt: string;
+  overdue: boolean;
+}
+
+export interface ModerationReportEvent {
+  id: number;
+  actor: ModerationUserRef | null;
+  fromStatus: ModerationReportStatus | null;
+  toStatus: ModerationReportStatus;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface ModerationReportDetail extends ModerationReportSummary {
+  history: ModerationReportEvent[];
+}
+
+export interface ModerationReportList {
+  items: ModerationReportSummary[];
+  total: number;
+}
+
 export const blockedUserSchema = z.object({
   id: z.string().uuid(),
   username: z.string(),

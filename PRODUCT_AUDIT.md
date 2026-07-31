@@ -327,7 +327,7 @@ Recomendação: primeiro tornar conclusão + XP + streak + badges atômicos ou b
 
 ### Social, rankings e privacidade
 
-Estado consolidado do domínio: `EXISTING_EQUIVALENT` em amizades, presença, feed, mensagens, desafios e ranking; `EXISTING_INFERIOR` na aplicação efetiva de privacidade/bloqueio; `EXISTING_PARTIAL` em moderação.
+Estado consolidado do domínio: `EXISTING_EQUIVALENT` em amizades, presença, feed, mensagens, desafios e ranking; `EXISTING_EQUIVALENT` em privacidade, bloqueio transversal e moderação administrativa mínima.
 
 Implementação confirmada:
 
@@ -338,7 +338,7 @@ Implementação confirmada:
 - mensagens diretas paginadas entre amigos, unread/read e lista de conversas;
 - ranking interno por cinco pools, provisório, número de partidas e avatar;
 - controles persistidos `is_profile_public`, `allow_challenges` e `allow_friend_requests`;
-- bloqueio direcional, denúncias sanitizadas/rate-limited e audit log;
+- bloqueio bilateral, denúncias sanitizadas/rate-limited, fila administrativa RBAC, histórico de decisões, SLA de 72 horas e audit log;
 - gate de plano `social_access` nas rotas sociais, preservando presença/perfil usados por outros fluxos;
 - web cobre amigos, feed, mensagens, ranking e privacidade parcial; mobile cobre feed, amigos, mensagens e ranking.
 
@@ -354,14 +354,14 @@ Soluções consideradas superiores e preservadas:
 
 Gaps e falhas confirmadas:
 
-- COR-T20-006 e COR-T20-007 concluídas: privacidade e bloqueio bilateral agora encerram relação e acesso social; mensagens/posts/likes anteriores permanecem apenas como evidência persistida;
+- COR-T20-006, COR-T20-007 e COR-T20-008 concluídas: privacidade, bloqueio bilateral e triagem administrativa agora têm efeito real; mensagens/posts/likes e denúncias permanecem como evidência persistida;
 - web só permite alterar “Perfil público”; não há UI para pedidos/desafios, lista de bloqueados ou denúncia; mobile não oferece controles de segurança;
-- denúncia cria estado `open`, mas não existe endpoint/UI administrativo confirmado para fila, decisão, histórico ou SLA;
+- a triagem administrativa possui fila RBAC, estados `open`/`reviewing`/`resolved`/`dismissed`, justificativa terminal, histórico imutável, SLA de 72 horas e auditoria;
 - mensagens e notificações sociais usam polling; não há realtime, push ou preferências granulares;
 - não foram confirmadas métricas de massa crítica, abuso, tempo de resposta da moderação ou retenção social;
 - clubes, equipes, fóruns e eventos não existem — adicionar agora ampliaria custo de moderação e privacidade sem evidência.
 
-Recomendação: corrigir primeiro os controles já prometidos. Centralizar uma política `SocialRelationshipPolicy` aplicada a perfil, ranking, amizade, feed, likes, mensagens, desafios e presença; bloquear deve cortar comunicação imediatamente sem apagar evidência necessária à moderação. Criar fila administrativa mínima de denúncias com RBAC/auditoria. Só depois medir uso e decidir notificações/realtime. Clubes permanecem bloqueados por autorização e estudo de massa crítica.
+Recomendação: corrigir primeiro os controles já prometidos. Centralizar uma política `SocialRelationshipPolicy` aplicada a perfil, ranking, amizade, feed, likes, mensagens, desafios e presença; bloquear deve cortar comunicação imediatamente sem apagar evidência necessária à moderação. Preservar a fila administrativa mínima de denúncias com RBAC/auditoria. Só depois medir uso e decidir notificações/realtime. Clubes permanecem bloqueados por autorização e estudo de massa crítica.
 
 ### Configurações, tabuleiro, mobile e acessibilidade
 

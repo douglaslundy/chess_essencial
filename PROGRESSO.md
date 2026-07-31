@@ -2,6 +2,8 @@
 
 ## Última atualização
 
+2026-07-31 - **COR-T20-008 concluída: fluxo administrativo mínimo de denúncias entregue.** A API agora oferece fila protegida por RBAC, filtro por estado, detalhe e transições auditadas; decisões terminais exigem justificativa, o histórico é preservado em eventos e o SLA de 72 horas sinaliza atrasos. A página `/app/admin/denuncias`, contratos, OpenAPI e SDK foram atualizados. Gates locais: typecheck/lint/build aprovados, 36 testes de contratos, 98 testes da API sem banco, 107 testes web e 3 testes do SDK passaram; 123 integrações PostgreSQL ficaram puladas porque Docker não está disponível. Nenhum deploy foi realizado. Próxima tarefa: COR-T20-001.
+
 2026-07-31 - **COR-T20-007 concluída: bloqueio transversal aplicado sem apagar evidências.** A policy bilateral centralizada em Safety agora encerra amizade/pedidos e desafios, oculta perfil/presença/feed/conversas e impede novas mensagens/likes. Mensagens, posts e likes existentes permanecem no banco para moderação. Typecheck, lint, build e 98 testes da API passaram; o e2e PostgreSQL novo ficou pronto para a CI, pois Docker não existe nesta máquina. Nenhum deploy foi realizado. Próxima tarefa: COR-T20-008.
 
 2026-07-31 - **COR-T20-006 concluída: controles de privacidade agora produzem efeito real.** Perfil privado retorna 404 para estranhos, permanece acessível ao próprio usuário e amigos, é excluído do leaderboard, e novos pedidos respeitam `allow_friend_requests` com erro genérico. Typecheck, lint, build e 98 testes da API passaram; 122 integrações de banco ficaram corretamente puladas porque Docker/PostgreSQL não estão disponíveis nesta máquina. Nenhum deploy foi realizado. Próxima tarefa: COR-T20-007.
@@ -169,7 +171,7 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-COR-T20-008 — Criar fluxo administrativo mínimo de denúncias, sem deploy.
+COR-T20-001 — Aplicar entitlement antes de gerar narração paga, sem deploy.
 ## Contexto necessário
 
 - `AGENTS.md`

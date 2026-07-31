@@ -70,6 +70,82 @@ describeDatabase('admin user management database integration', () => {
     expect(response.statusCode).toBe(403);
   });
 
+  it('triages reports with RBAC, SLA, decision history and audit trail', async () => {
+    const created = await app.inject({
+      headers: auth(member),
+      method: 'POST',
+      payload: {
+        category: 'harassment',
+        description: 'Conduta inadequada para análise administrativa',
+        reportedUserId: admin.userId,
+      },
+      url: '/v1/reports',
+    });
+    expect(created.statusCode, created.body).toBe(201);
+
+    const forbidden = await app.inject({
+      headers: auth(member),
+      method: 'GET',
+      url: '/v1/admin/reports',
+    });
+    expect(forbidden.statusCode).toBe(403);
+
+    const queue = await app.inject({
+      headers: auth(admin),
+      method: 'GET',
+      url: '/v1/admin/reports?status=open',
+    });
+    expect(queue.statusCode, queue.body).toBe(200);
+    const queuedReport = queue
+      .json()
+      .items.find((item: { id: string }) => item.id === created.json().id);
+    expect(queuedReport).toMatchObject({
+      id: created.json().id,
+      overdue: false,
+      status: 'open',
+    });
+    expect(queuedReport.slaDueAt).toBeTypeOf('string');
+
+    const reviewing = await app.inject({
+      headers: auth(admin),
+      method: 'PATCH',
+      payload: { note: 'Triagem iniciada', status: 'reviewing' },
+      url: `/v1/admin/reports/${created.json().id}`,
+    });
+    expect(reviewing.statusCode, reviewing.body).toBe(200);
+    expect(reviewing.json()).toMatchObject({ status: 'reviewing' });
+
+    const resolved = await app.inject({
+      headers: auth(admin),
+      method: 'PATCH',
+      payload: { note: 'Denúncia confirmada e providência registrada', status: 'resolved' },
+      url: `/v1/admin/reports/${created.json().id}`,
+    });
+    expect(resolved.statusCode, resolved.body).toBe(200);
+    expect(resolved.json()).toMatchObject({
+      resolution: 'Denúncia confirmada e providência registrada',
+      status: 'resolved',
+    });
+    expect(resolved.json().history).toHaveLength(3);
+    expect(resolved.json().resolvedBy).toMatchObject({ id: admin.userId });
+
+    const duplicateDecision = await app.inject({
+      headers: auth(admin),
+      method: 'PATCH',
+      payload: { note: 'Tentativa inválida', status: 'dismissed' },
+      url: `/v1/admin/reports/${created.json().id}`,
+    });
+    expect(duplicateDecision.statusCode).toBe(409);
+
+    const [audit] = await database.client<{ count: number }[]>`
+      SELECT count(*)::integer AS count
+      FROM audit_logs
+      WHERE entity_id = ${created.json().id}
+        AND action = 'moderation.report_status_updated'
+    `;
+    expect(audit?.count).toBe(2);
+  });
+
   it('lists users for an admin', async () => {
     const response = await app.inject({
       headers: auth(admin),
