@@ -232,4 +232,4 @@ A Fase 0 estará concluída somente quando:
 
 ## Próxima ação automática recomendada
 
-Executar `COR-T20-002 — Recuperar jobs de análise e narração interrompidos`, adicionando lease/timeout, tentativas limitadas, idempotência e estado terminal observável sem elevar o paralelismo do Stockfish. Preservar os gates, fazer um commit ao concluir e não realizar deploy.
+Executar `COR-T20-003 — Ligar erro de partida a skill e prática recomendada`, usando a taxonomia/proveniência consolidadas para criar sinais determinísticos e destinos rastreáveis antes de qualquer texto livre do LLM. Preservar os gates, fazer um commit ao concluir e não realizar deploy.

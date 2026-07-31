@@ -65,5 +65,7 @@ pnpm --filter @xadrez/api db:rollback
 
 `0041_moderation_workflow.down.sql` remove o histórico de transições e os metadados de resolução adicionados ao fluxo administrativo. As denúncias originais e seu estado atual permanecem, mas justificativa, responsável e data da decisão deixam de existir após o rollback.
 
+`0042_job_recovery.down.sql` remove leases, contadores e agenda de retentativa, mas preserva análises, narrações, resultados e erros. Antes do rollback, jobs ainda em `processing` devem ser concluídos ou devolvidos manualmente a `pending`, pois a versão anterior não consegue recuperar esse estado sozinha.
+
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.

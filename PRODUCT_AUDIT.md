@@ -107,7 +107,7 @@ Soluções consideradas superiores e preservadas:
 Gaps:
 
 - outbox recebe eventos, mas não existe publisher/consumer nem atualização de `published_at`; a tabela tende a crescer e não integra módulos;
-- partida chega automaticamente à análise por polling, mas ainda não há vínculo comprovado Erro → Skill → Recomendação;
+- partida chega automaticamente à análise por polling, e os jobs de análise/narração usam lease, reclaim, tentativas limitadas e estado terminal; ainda não há vínculo comprovado Erro → Skill → Recomendação;
 - modo `untimed` reutiliza o pool `correspondence` com relógio de 20 dias; não é uma modalidade Daily/correspondência real;
 - histórico usa paginação por offset; aceitável hoje, mas requer medição para volumes altos;
 - matchmaking continua em polling REST de 3 s; realtime cobre apenas partidas criadas;
@@ -148,12 +148,11 @@ Gaps:
 - nenhum processo converte `game_move_analyses` em `skill_mastery`, recomendação ou sessão de prática;
 - a narração escolhe os seis maiores centipawn losses dos dois jogadores; isso pode omitir um erro instrutivo do aluno;
 - o worker cria um subprocesso Stockfish novo e sequencial para cada posição; protege a VPS compartilhada, mas tem baixo throughput;
-- uma queda após o claim deixa análise/narração em `processing`; não há lease, timeout de recuperação ou retry de `failed`;
 
 - profundidade fixa e centipawn loss absoluto não são calibrados por ritmo, fase ou nível do jogador;
 - não há telemetria confirmada de tempo de fila, duração, taxa de falha, custo ou utilidade da recomendação.
 
-Recomendação: preservar a arquitetura de verdade objetiva e acrescentar uma camada determinística `ErrorSignal` ligada ao catálogo de skills. Só então usar o LLM para explicar o sinal e gerar links rastreáveis para prática. Antes disso, preservar a seleção por entitlement/demanda já corrigida e avançar na recuperação de jobs e métricas. Não aumentar paralelismo do Stockfish sem benchmark e limites de CPU/memória, pois isso pode piorar a VPS compartilhada.
+Recomendação: preservar a arquitetura de verdade objetiva e acrescentar uma camada determinística `ErrorSignal` ligada ao catálogo de skills. Só então usar o LLM para explicar o sinal e gerar links rastreáveis para prática. Antes disso, preservar a seleção por entitlement/demanda e a recuperação de jobs já corrigidas, e avançar nas métricas. Não aumentar paralelismo do Stockfish sem benchmark e limites de CPU/memória, pois isso pode piorar a VPS compartilhada.
 
 ### Problemas, desafios e Jornada
 
@@ -473,7 +472,7 @@ Continuidade da Home e pós-fluxos; entendimento pedagógico do erro; prática/e
 
 ### Recursos inferiores
 
-Jobs sem lease/retry; dica mantendo perfeição; tabuleiro mobile sem semântica assistiva; preferências que silenciam falha; sessão web em `localStorage`; rate limit por processo; deploy sem gate de CI; OpenAPI divergente. Cada item possui correção COR-T20 rastreável e critério mensurável no plano.
+Dica mantendo perfeição; tabuleiro mobile sem semântica assistiva; preferências que silenciam falha; sessão web em `localStorage`; rate limit por processo; deploy sem gate de CI; OpenAPI divergente. Cada item possui correção COR-T20 rastreável e critério mensurável no plano.
 
 ### Recursos ausentes
 

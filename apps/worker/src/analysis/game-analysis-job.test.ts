@@ -29,12 +29,20 @@ function evaluation(overrides: Partial<EngineEvaluation> = {}): EngineEvaluation
 
 describe('runGameAnalysisJob', () => {
   it('does nothing when no analysis is pending', async () => {
-    const { sql } = fakeSql([]);
+    const { calls, sql } = fakeSql([]);
 
     const result = await runGameAnalysisJob(sql);
 
     expect(result).toEqual({ analyzedGameId: null });
     expect(evaluatePosition).not.toHaveBeenCalled();
+    const exhausted = calls.find((call) =>
+      call.text.includes("SET completed_at = now(), status = 'failed'"),
+    );
+    expect(exhausted?.values).toContain(3);
+    const claim = calls.find((call) => call.text.includes("SET status = 'processing'"));
+    expect(claim?.text).toContain('lease_expires_at IS NULL');
+    expect(claim?.text).toContain('attempt_count = target.attempt_count + 1');
+    expect(claim?.values).toContain(30);
   });
 
   it('analyzes every ply of the claimed game and marks it completed', async () => {
@@ -48,7 +56,7 @@ describe('runGameAnalysisJob', () => {
       { match: (text) => text.includes('INSERT INTO game_analyses'), rows: [] },
       {
         match: (text) => text.includes("SET status = 'processing'"),
-        rows: [{ engineDepth: 14, gameId: 'game-1' }],
+        rows: [{ attemptCount: 1, engineDepth: 14, gameId: 'game-1' }],
       },
       {
         match: (text) => text.includes('FROM game_moves'),
@@ -82,6 +90,30 @@ describe('runGameAnalysisJob', () => {
     expect(calls.some((call) => call.text.includes("SET status = 'completed'"))).toBe(true);
   });
 
+  it('returns a transient engine failure to pending with bounded backoff', async () => {
+    evaluatePosition.mockReset();
+    evaluatePosition.mockRejectedValueOnce(new Error('temporary engine failure'));
+
+    const { calls, sql } = fakeSql([
+      { match: (text) => text.includes('INSERT INTO game_analyses'), rows: [] },
+      {
+        match: (text) => text.includes("SET status = 'processing'"),
+        rows: [{ attemptCount: 1, engineDepth: 14, gameId: 'game-retry' }],
+      },
+      {
+        match: (text) => text.includes('FROM game_moves'),
+        rows: [{ color: 'white', fenAfter: 'FEN_AFTER', fenBefore: 'FEN_START', ply: 1 }],
+      },
+      { match: (text) => text.includes("SET status = 'pending'"), rows: [] },
+    ]);
+
+    expect(await runGameAnalysisJob(sql)).toEqual({ analyzedGameId: 'game-retry' });
+    const retry = calls.find((call) => call.text.includes("SET status = 'pending'"));
+    expect(retry?.values).toContain('temporary engine failure');
+    expect(retry?.values).toContain(1);
+    expect(calls.some((call) => call.text.includes("SET status = 'failed'"))).toBe(false);
+  });
+
   it('marks the analysis as failed instead of leaving it stuck if the engine throws', async () => {
     evaluatePosition.mockReset();
     evaluatePosition.mockRejectedValueOnce(new Error('engine crashed'));
@@ -90,7 +122,7 @@ describe('runGameAnalysisJob', () => {
       { match: (text) => text.includes('INSERT INTO game_analyses'), rows: [] },
       {
         match: (text) => text.includes("SET status = 'processing'"),
-        rows: [{ engineDepth: 14, gameId: 'game-2' }],
+        rows: [{ attemptCount: 3, engineDepth: 14, gameId: 'game-2' }],
       },
       {
         match: (text) => text.includes('FROM game_moves'),

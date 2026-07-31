@@ -18,6 +18,8 @@ const NARRATION_FEATURE_KEY = 'ai_narrations_per_day';
 // even though interactive entitlement checks fail open on plan misconfiguration.
 // The deterministic browser narration remains available without any LLM cost.
 const MAX_KEY_MOMENTS = 6;
+const NARRATION_LEASE_MINUTES = 15;
+const MAX_NARRATION_ATTEMPTS = 3;
 
 interface ActiveAiProviderKeyRow {
   encryptedApiKey: string | null;
@@ -76,15 +78,12 @@ export async function runGameNarrationJob(
     try {
       await narrateGame(sql, claimed.gameId, config);
       await sql`
-        UPDATE game_narrations SET status = 'completed', completed_at = now()
+        UPDATE game_narrations
+        SET status = 'completed', completed_at = now(), lease_expires_at = NULL
         WHERE game_id = ${claimed.gameId}
       `;
     } catch (error) {
-      await sql`
-        UPDATE game_narrations SET status = 'failed', completed_at = now(),
-          error = ${error instanceof Error ? error.message : String(error)}
-        WHERE game_id = ${claimed.gameId}
-      `;
+      await scheduleNarrationRetry(sql, claimed.gameId, claimed.attemptCount, error);
     }
     return { narratedGameId: claimed.gameId };
   } finally {
@@ -179,18 +178,43 @@ async function queuePendingNarrations(sql: Sql): Promise<void> {
   `;
 }
 
-async function claimNextNarration(sql: Sql): Promise<{ gameId: string } | null> {
+async function claimNextNarration(
+  sql: Sql,
+): Promise<{ attemptCount: number; gameId: string } | null> {
   // Re-check immediately before the paid call. This catches plan changes
   // after enqueue and also protects pending rows created by older releases.
   // The candidate row is excluded from its own quota count because it is the
-  // reservation currently being claimed.
-  const [claimed] = await sql<{ gameId: string }[]>`
+  // reservation currently being claimed. An expired/null lease makes an
+  // interrupted processing row eligible again without parallelizing work.
+  await sql`
+    UPDATE game_narrations
+    SET completed_at = now(), status = 'failed', lease_expires_at = NULL,
+        error = COALESCE(error, 'Lease expirou após o limite de tentativas')
+    WHERE attempt_count >= ${MAX_NARRATION_ATTEMPTS}
+      AND (
+        (status = 'pending' AND next_attempt_at <= now())
+        OR (
+          status = 'processing'
+          AND (lease_expires_at IS NULL OR lease_expires_at <= now())
+        )
+      )
+  `;
+  const [claimed] = await sql<{ attemptCount: number; gameId: string }[]>`
     UPDATE game_narrations AS target
-    SET status = 'processing', started_at = now()
+    SET status = 'processing', started_at = now(), completed_at = NULL,
+        error = NULL, attempt_count = target.attempt_count + 1,
+        lease_expires_at = now() + ${NARRATION_LEASE_MINUTES} * interval '1 minute'
     WHERE target.game_id = (
       SELECT candidate.game_id
       FROM game_narrations candidate
-      WHERE candidate.status = 'pending'
+      WHERE candidate.attempt_count < ${MAX_NARRATION_ATTEMPTS}
+        AND (
+          (candidate.status = 'pending' AND candidate.next_attempt_at <= now())
+          OR (
+            candidate.status = 'processing'
+            AND (candidate.lease_expires_at IS NULL OR candidate.lease_expires_at <= now())
+          )
+        )
         AND EXISTS (
           SELECT 1
           FROM game_players gp
@@ -251,9 +275,33 @@ async function claimNextNarration(sql: Sql): Promise<{ gameId: string } | null> 
       LIMIT 1
       FOR UPDATE OF candidate SKIP LOCKED
     )
-    RETURNING target.game_id AS "gameId"
+    RETURNING target.game_id AS "gameId", target.attempt_count AS "attemptCount"
   `;
   return claimed ?? null;
+}
+
+async function scheduleNarrationRetry(
+  sql: Sql,
+  gameId: string,
+  attemptCount: number,
+  error: unknown,
+): Promise<void> {
+  const message = error instanceof Error ? error.message : String(error);
+  if (attemptCount >= MAX_NARRATION_ATTEMPTS) {
+    await sql`
+      UPDATE game_narrations
+      SET status = 'failed', completed_at = now(), lease_expires_at = NULL, error = ${message}
+      WHERE game_id = ${gameId}
+    `;
+    return;
+  }
+  await sql`
+    UPDATE game_narrations
+    SET status = 'pending', completed_at = NULL, lease_expires_at = NULL,
+        error = ${message},
+        next_attempt_at = now() + ${attemptCount} * interval '1 minute'
+    WHERE game_id = ${gameId}
+  `;
 }
 
 function cacheKeyFor(moment: MomentFacts, fenBefore: string): string {

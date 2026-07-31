@@ -5,6 +5,8 @@ import { evaluatePosition, type EngineEvaluation } from '../engine/stockfish-eng
 
 const ANALYSIS_DEPTH = 14;
 const MAX_NEWLY_QUEUED_PER_TICK = 20;
+const ANALYSIS_LEASE_MINUTES = 30;
+const MAX_ANALYSIS_ATTEMPTS = 3;
 
 interface MoveRow {
   color: 'white' | 'black';
@@ -40,15 +42,12 @@ export async function runGameAnalysisJob(sql: Sql): Promise<{ analyzedGameId: st
     try {
       await analyzeGame(sql, claimed.gameId, claimed.engineDepth);
       await sql`
-        UPDATE game_analyses SET status = 'completed', completed_at = now()
+        UPDATE game_analyses
+        SET status = 'completed', completed_at = now(), lease_expires_at = NULL
         WHERE game_id = ${claimed.gameId}
       `;
     } catch (error) {
-      await sql`
-        UPDATE game_analyses SET status = 'failed', completed_at = now(),
-          error = ${error instanceof Error ? error.message : String(error)}
-        WHERE game_id = ${claimed.gameId}
-      `;
+      await scheduleAnalysisRetry(sql, claimed.gameId, claimed.attemptCount, error);
     }
     return { analyzedGameId: claimed.gameId };
   } finally {
@@ -71,19 +70,68 @@ async function queuePendingAnalyses(sql: Sql): Promise<void> {
 
 async function claimNextAnalysis(
   sql: Sql,
-): Promise<{ engineDepth: number; gameId: string } | null> {
-  const [claimed] = await sql<{ engineDepth: number; gameId: string }[]>`
-    UPDATE game_analyses SET status = 'processing', started_at = now()
-    WHERE game_id = (
-      SELECT game_id FROM game_analyses
-      WHERE status = 'pending'
-      ORDER BY created_at ASC
+): Promise<{ attemptCount: number; engineDepth: number; gameId: string } | null> {
+  await sql`
+    UPDATE game_analyses
+    SET completed_at = now(), status = 'failed', lease_expires_at = NULL,
+        error = COALESCE(error, 'Lease expirou após o limite de tentativas')
+    WHERE attempt_count >= ${MAX_ANALYSIS_ATTEMPTS}
+      AND (
+        (status = 'pending' AND next_attempt_at <= now())
+        OR (
+          status = 'processing'
+          AND (lease_expires_at IS NULL OR lease_expires_at <= now())
+        )
+      )
+  `;
+  const [claimed] = await sql<{ attemptCount: number; engineDepth: number; gameId: string }[]>`
+    UPDATE game_analyses AS target
+    SET status = 'processing', started_at = now(), completed_at = NULL,
+        error = NULL, attempt_count = target.attempt_count + 1,
+        lease_expires_at = now() + ${ANALYSIS_LEASE_MINUTES} * interval '1 minute'
+    WHERE target.game_id = (
+      SELECT candidate.game_id
+      FROM game_analyses candidate
+      WHERE candidate.attempt_count < ${MAX_ANALYSIS_ATTEMPTS}
+        AND (
+          (candidate.status = 'pending' AND candidate.next_attempt_at <= now())
+          OR (
+            candidate.status = 'processing'
+            AND (candidate.lease_expires_at IS NULL OR candidate.lease_expires_at <= now())
+          )
+        )
+      ORDER BY candidate.created_at
       LIMIT 1
-      FOR UPDATE SKIP LOCKED
+      FOR UPDATE OF candidate SKIP LOCKED
     )
-    RETURNING game_id AS "gameId", engine_depth AS "engineDepth"
+    RETURNING target.game_id AS "gameId", target.engine_depth AS "engineDepth",
+      target.attempt_count AS "attemptCount"
   `;
   return claimed ?? null;
+}
+
+async function scheduleAnalysisRetry(
+  sql: Sql,
+  gameId: string,
+  attemptCount: number,
+  error: unknown,
+): Promise<void> {
+  const message = error instanceof Error ? error.message : String(error);
+  if (attemptCount >= MAX_ANALYSIS_ATTEMPTS) {
+    await sql`
+      UPDATE game_analyses
+      SET status = 'failed', completed_at = now(), lease_expires_at = NULL, error = ${message}
+      WHERE game_id = ${gameId}
+    `;
+    return;
+  }
+  await sql`
+    UPDATE game_analyses
+    SET status = 'pending', completed_at = NULL, lease_expires_at = NULL,
+        error = ${message},
+        next_attempt_at = now() + ${attemptCount} * interval '1 minute'
+    WHERE game_id = ${gameId}
+  `;
 }
 
 function negate(evaluation: EngineEvaluation): { mate: number | null; scoreCp: number | null } {

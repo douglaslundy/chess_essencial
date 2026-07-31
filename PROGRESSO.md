@@ -2,6 +2,8 @@
 
 ## Última atualização
 
+2026-07-31 - **COR-T20-002 concluída: jobs interrompidos voltam à fila e falhas deixam estado terminal observável.** A migration 0042 adiciona tentativas, próximo horário e lease aos pipelines de análise e narração. Claims recuperam `processing` expirado, erros transitórios recebem backoff de 1/2 minutos e a terceira falha — inclusive lease esgotado — termina em `failed`; sucesso limpa o lease. O worker continua estritamente sequencial. Gates locais: typecheck/lint/build aprovados e 44 testes do worker passaram, incluindo Stockfish real fora do sandbox. Risco residual registrado na COR-T20-005: medir p99 antes de ajustar leases ou adicionar heartbeat. Nenhum deploy foi realizado. Próxima tarefa: COR-T20-003.
+
 2026-07-31 - **COR-T20-001 concluída: nenhum custo de narração pós-partida ocorre antes do entitlement.** A fila e o claim do worker agora exigem plano/cota explícitos de ao menos um jogador humano, excluem bots, reservam uma demanda por vez e reconfirmam o gate imediatamente antes da chamada ao LLM. Ausência de plano falha fechada, preservando a narração determinística gratuita. A janela diária usa o momento do claim para não liberar backlog antigo em lote após a meia-noite; a API permite ler o artefato que consumiu a última cota sem liberar o recurso para planos que não o incluem. Gates locais: typecheck/lint/build aprovados, 100 testes da API sem banco e 42 testes do worker passaram. Nenhum deploy foi realizado. Próxima tarefa: COR-T20-002.
 
 2026-07-31 - **COR-T20-008 concluída: fluxo administrativo mínimo de denúncias entregue.** A API agora oferece fila protegida por RBAC, filtro por estado, detalhe e transições auditadas; decisões terminais exigem justificativa, o histórico é preservado em eventos e o SLA de 72 horas sinaliza atrasos. A página `/app/admin/denuncias`, contratos, OpenAPI e SDK foram atualizados. Gates locais: typecheck/lint/build aprovados, 36 testes de contratos, 98 testes da API sem banco, 107 testes web e 3 testes do SDK passaram; 123 integrações PostgreSQL ficaram puladas porque Docker não está disponível. Nenhum deploy foi realizado. Próxima tarefa: COR-T20-001.
@@ -173,7 +175,7 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-COR-T20-002 — Recuperar jobs de análise e narração interrompidos, sem deploy.
+COR-T20-003 — Ligar erro de partida a skill e prática recomendada, sem deploy.
 ## Contexto necessário
 
 - `AGENTS.md`

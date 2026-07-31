@@ -77,6 +77,10 @@ describe('runGameNarrationJob', () => {
     expect(result).toEqual({ narratedGameId: null });
     expect(callLlm).not.toHaveBeenCalled();
     const queue = calls.find((call) => call.text.includes('INSERT INTO game_narrations'));
+    const exhausted = calls.find((call) =>
+      call.text.includes("SET completed_at = now(), status = 'failed'"),
+    );
+    expect(exhausted?.values).toContain(3);
     const claim = calls.find((call) => call.text.includes("SET status = 'processing'"));
     for (const guardedCall of [queue, claim]) {
       expect(guardedCall?.text).toContain('FROM user_subscriptions');
@@ -88,6 +92,9 @@ describe('runGameNarrationJob', () => {
       expect(guardedCall?.values).toContain('ai_narrations_per_day');
     }
     expect(queue?.values).toContain(1);
+    expect(claim?.text).toContain('lease_expires_at IS NULL');
+    expect(claim?.text).toContain('attempt_count = target.attempt_count + 1');
+    expect(claim?.values).toContain(15);
   });
 
   it('narrates key moments (reusing the cache when hit), synthesizes the summary, and completes', async () => {
@@ -99,7 +106,7 @@ describe('runGameNarrationJob', () => {
       { match: (text) => text.includes('INSERT INTO game_narrations'), rows: [] },
       {
         match: (text) => text.includes("SET status = 'processing'"),
-        rows: [{ gameId: 'game-1' }],
+        rows: [{ attemptCount: 1, gameId: 'game-1' }],
       },
       {
         match: (text) => text.includes('FROM games'),
@@ -162,6 +169,50 @@ describe('runGameNarrationJob', () => {
     expect(calls.some((call) => call.text.includes("SET status = 'completed'"))).toBe(true);
   });
 
+  it('returns a transient LLM failure to pending before the terminal attempt', async () => {
+    callLlm.mockReset();
+    callLlm.mockRejectedValue(new Error('temporary provider failure'));
+
+    const { calls, sql } = fakeSql([
+      { match: (text) => text.includes('FROM ai_provider_keys'), rows: AI_CONFIG_ROW },
+      { match: (text) => text.includes('INSERT INTO game_narrations'), rows: [] },
+      {
+        match: (text) => text.includes("SET status = 'processing'"),
+        rows: [{ attemptCount: 1, gameId: 'game-retry' }],
+      },
+      {
+        match: (text) => text.includes('FROM games'),
+        rows: [{ result: 'draw', termination: 'agreement', timeControl: 'Blitz 3+0' }],
+      },
+      {
+        match: (text) => text.includes('FROM game_move_analyses'),
+        rows: [
+          {
+            bestMoveUci: null,
+            centipawnLoss: 100,
+            color: 'white',
+            fenBefore: 'FEN_RETRY',
+            missedWin: false,
+            ply: 1,
+            quality: 'erro',
+            san: 'e4',
+            uci: 'e2e4',
+          },
+        ],
+      },
+      { match: (text) => text.includes('FROM move_narration_cache'), rows: [] },
+      { match: (text) => text.includes("SET status = 'pending'"), rows: [] },
+    ]);
+
+    expect(await runGameNarrationJob(sql, TEST_ENCRYPTION_KEY)).toEqual({
+      narratedGameId: 'game-retry',
+    });
+    const retry = calls.find((call) => call.text.includes("SET status = 'pending'"));
+    expect(retry?.values).toContain('temporary provider failure');
+    expect(retry?.values).toContain(1);
+    expect(calls.some((call) => call.text.includes("SET status = 'failed'"))).toBe(false);
+  });
+
   it('marks the narration as failed instead of leaving it stuck if the LLM call throws', async () => {
     callLlm.mockReset();
     callLlm.mockRejectedValue(new Error('anthropic api down'));
@@ -171,7 +222,7 @@ describe('runGameNarrationJob', () => {
       { match: (text) => text.includes('INSERT INTO game_narrations'), rows: [] },
       {
         match: (text) => text.includes("SET status = 'processing'"),
-        rows: [{ gameId: 'game-2' }],
+        rows: [{ attemptCount: 3, gameId: 'game-2' }],
       },
       {
         match: (text) => text.includes('FROM games'),
