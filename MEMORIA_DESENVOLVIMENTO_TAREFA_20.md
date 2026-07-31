@@ -232,4 +232,4 @@ A Fase 0 estará concluída somente quando:
 
 ## Próxima ação automática recomendada
 
-Executar `T20-A06 — Aprender, cursos, prática e instrutor`, verificando catálogo, consumo de aula, progresso, exercícios vinculados e continuidade para a prática. Não iniciar implementação de produto até concluir e apresentar a auditoria.
+Executar `T20-A07 — Recomendações, skills e mastery`, verificando sinais, taxonomia, evidência, confiança, rastreabilidade e agenda adaptativa. Não iniciar implementação de produto até concluir e apresentar a auditoria.

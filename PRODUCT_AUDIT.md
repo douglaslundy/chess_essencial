@@ -3,7 +3,7 @@
 ## Estado
 
 - Missão: Tarefa 20.
-- Fase atual: T20-A05 concluída; T20-A06 é a próxima frente.
+- Fase atual: T20-A06 concluída; T20-A07 é a próxima frente.
 - Base Git: `main` em `0203a67e3762e1756438b498d2f9e8e81864022c`.
 - Data do baseline: 2026-07-30.
 - Regra: nenhuma afirmação de presença ou ausência é definitiva sem evidência.
@@ -152,7 +152,44 @@ Recomendação: preservar a Jornada atual e unificar sinais de partida, treino e
 
 ### Aprender, prática e instrutor
 
-Estado: `UNKNOWN`.
+Estado consolidado: `EXISTING_SUPERIOR` no conteúdo versionado e no runtime autoritativo, `EXISTING_EQUIVALENT` na experiência web e `EXISTING_PARTIAL` na continuidade aula → prática e no instrutor transversal.
+
+Implementação confirmada:
+
+- catálogo canônico com 119 aulas reais, páginas de origem, pré-requisitos, versões, importação idempotente e publicação protegida;
+- runtime transacional que registra cada ação, avalia no servidor, retoma a tentativa iniciada e preserva snapshot imutável do conteúdo;
+- progresso por usuário e matrícula com `last_lesson_id` e percentual do curso;
+- 1.282 vínculos aula–exercício, consulta de estudo e validação server-side do vínculo;
+- conteúdo substancial de aberturas e finais já distribuído no curso;
+- player web com tabuleiro, quiz, feedback, histórico local e navegação anterior/próxima;
+- player mobile funcional, porém sem a navegação e continuidade completas da web;
+- modo Treinador web não ranqueado e persistido, com Stockfish local, voz e LLM opcional com fallback determinístico;
+- Jornada com bolha, avatar fixo, estados e mensagens do instrutor.
+
+Evidências principais: `courses.repository.ts`, `lesson-importer.ts`, `lesson-runtime.repository.ts`, contratos, migration 0007, testes e2e, `lesson-player.tsx`, player mobile, `game-room.tsx`, `useCoachEngine`, `speech.ts` e `stage-runner.tsx`.
+
+Soluções superiores preservadas:
+
+1. versões, proveniência, pré-requisitos e snapshot protegem tentativas contra alterações editoriais;
+2. autosave/resume usa log transacional do servidor, sem depender do cliente;
+3. aberturas e finais já têm conteúdo real; duplicá-lo criaria divergência;
+4. partidas do Treinador são sempre persistidas, reconstruíveis, não ranqueadas e marcadas `coach_mode`;
+5. voz e fallback determinístico mantêm o treino utilizável sem o provedor de IA.
+
+Gaps:
+
+- `last_lesson_id` é gravado, mas não há ação explícita de “continuar de onde parou”;
+- os vínculos são consumidos sobretudo como exercício → estudo; a conclusão da aula não oferece práticas relacionadas clicáveis;
+- após retomar, ações persistidas anteriores não são exibidas para revisão;
+- mobile não oferece overview, anterior/próxima ou retorno orientado ao curso;
+- não foram confirmados testes de UI dos players web/mobile;
+- aberturas e finais têm conteúdo, mas descoberta e passagem direta para prática são limitadas;
+- engine, mensagens, bolha, voz, narração e preferências não formam um domínio transversal único;
+- não há instrutor selecionável, lembretes pedagógicos ou Treinador mobile;
+- o Treinador web não possui setas de ameaça, barra de avaliação ou overlays equivalentes;
+- tornar opcional o salvamento das partidas permitiria perder histórico e sinais pedagógicos.
+
+Recomendação: preservar conteúdo, runtime e persistência. Priorizar aula → exercícios vinculados e “continuar aula”; depois corrigir paridade mobile e consolidar um contrato transversal do instrutor. Não duplicar cursos de abertura/final. `autoSaveInstructorGames` fica bloqueado: sempre salvar partidas de treino sem rating é superior e só deve ser enfraquecido com autorização explícita.
 
 ### Recomendações, skills e mastery
 
