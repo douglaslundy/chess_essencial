@@ -3,14 +3,16 @@
 ## Estado
 
 - Missão: Tarefa 20.
-- Fase atual: T20-A14 concluída; T20-A15 é a próxima frente.
+- Fase atual: T20-A15 concluída; T20-A16 é a próxima frente.
 - Base Git: `main` em `0203a67e3762e1756438b498d2f9e8e81864022c`.
 - Data do baseline: 2026-07-30.
 - Regra: nenhuma afirmação de presença ou ausência é definitiva sem evidência.
 
 ## Resumo executivo
 
-A preencher após o inventário dos domínios. O histórico indica uma plataforma madura, mas registros históricos não substituem verificação no código, contratos, banco, testes e fluxos atuais.
+A plataforma é madura e deve evoluir incrementalmente, não ser reconstruída. O núcleo de partidas é autoritativo e resiliente; ratings, análise Stockfish, Jornada, cursos e exercícios possuem bases reutilizáveis e, em vários pontos, superiores à referência. O maior problema do produto não é falta de módulos: é a ausência de uma conexão rastreável entre o erro observado em uma partida, a skill correspondente, a prática recomendada e a evidência posterior de melhora.
+
+Os riscos operacionais e de segurança mais urgentes são controles de privacidade e bloqueio sem efeito transversal, jobs que podem ficar presos, deploy sem gate da CI, backups no mesmo host, sessão web em `localStorage`, rate limit por processo e contrato OpenAPI divergente. Por isso o P0 começa por segurança, confiabilidade e fundações do ciclo, preservando todas as soluções classificadas como superiores. Clubes, gamificação expansiva, reorganização ampla da navegação e aumento de paralelismo do engine não entram no piloto automático.
 
 ## Fontes de verdade
 
@@ -488,7 +490,7 @@ Rating FIDE oficial, conteúdo proprietário de terceiros e cópia literal de in
 
 ### Mapa atual
 
-`GameService/realtime → game_move_analyses → análise/narração → revisão`; em paralelo, `courses/lesson-runtime`, `exercises` e `learning-path` registram progresso. `RecommendationService` atual lê estado explícito, não erros reais. Home e navegação expõem os módulos, porém não transportam um contexto pedagógico comum entre eles.
+`GameService/realtime → game_move_analyses → análise/narração → revisão`; em paralelo, `courses/lesson-runtime`, `exercises` e `learning-path` registram progresso. Há seleções locais por menor mastery e próximos passos fixos, mas não existe `RecommendationService` transversal. Home e navegação expõem os módulos, porém não transportam um contexto pedagógico comum entre eles.
 
 ### Gaps
 
@@ -500,7 +502,38 @@ Taxonomia/versionamento de skills, proveniência e confiança do sinal, vínculo
 
 ### Serviços reutilizáveis
 
-`GameService`, análise de lances, `LessonRuntimeService`, busca/treino de exercícios, `LearningPathService`, `RecommendationService`, ratings/ledger, outbox, audit log, entitlements, storage, Redis e contratos compartilhados. A implementação deve compor esses serviços antes de criar novos módulos.
+`GameService`, análise de lances, `LessonRuntimeService`, busca/treino de exercícios, `LearningPathService`, ratings/ledger, outbox, audit log, entitlements, storage, Redis e contratos compartilhados. O novo serviço de recomendação deve compor essas bases, sem duplicá-las.
+
+## Mudanças potenciais por camada
+
+### Banco
+
+- adicionar lease, tentativa, próxima execução e erro terminal aos jobs, preservando registros existentes;
+- criar registry versionado de skills e aliases sobre as tags legadas, sem reescrevê-las;
+- criar ledgers aditivos de `ErrorSignal` e `LearningEvidence`, seguidos por projeções de mastery e recomendações rastreáveis;
+- registrar ciclo de vida e decisão de denúncias sem apagar evidências;
+- adicionar índices/retenção para outbox e eventos do funil; toda migration deve ser nova, reversível quando seguro e testada em upgrade.
+
+### API e contratos
+
+- restaurar paridade OpenAPI/SDK para Jornada e narração ao vivo e criar gate automático de drift;
+- centralizar políticas de perfil, pedidos, bloqueio e visibilidade em todos os endpoints sociais;
+- expor continuidade, skills/evidências, recomendações e moderação somente quando os modelos subjacentes estiverem confiáveis;
+- manter Problem Details, validação server-side, paginação e compatibilidade dos clientes atuais.
+
+### UI
+
+- corrigir foco/teclado web, acessibilidade do tabuleiro mobile e falhas silenciosas de preferências;
+- acrescentar CTAs pós-partida, pós-análise e pós-aula antes de redesenhar a Home;
+- montar o hub contextual sobre um agregador real e estados de loading/erro/vazio;
+- expor privacidade, bloqueio, denúncia e preferências essenciais no mobile depois da política central.
+
+### Arquitetura e operação
+
+- transformar o outbox em pipeline idempotente e observável;
+- introduzir `SkillRegistry`, classificação determinística de erro, ledger de evidências e recomendação explicável em etapas;
+- distribuir rate limit, planejar sessão HttpOnly/CSRF, validar conteúdo real de uploads e preservar SecureStore;
+- bloquear deploy sem CI verde, copiar backup criptografado para fora da VPS e criar SLIs/alertas antes de elevar carga.
 
 ## Quick wins
 
@@ -541,26 +574,26 @@ Gates objetivos para implementação automática:
 
 ## Checklist dos 23 itens de entrega
 
-- [ ] 1. Resumo executivo
-- [ ] 2. Mapa do sistema atual
-- [ ] 3. Feature Matrix
-- [ ] 4. Recursos já existentes
-- [ ] 5. Recursos superiores à referência
-- [ ] 6. Recursos parciais
-- [ ] 7. Recursos ausentes
-- [ ] 8. Recursos não aplicáveis
-- [ ] 9. Quick wins
-- [ ] 10. Riscos
-- [ ] 11. Alterações de banco
-- [ ] 12. Alterações de API
-- [ ] 13. Alterações de UI
-- [ ] 14. Alterações de arquitetura
-- [ ] 15. Roadmap P0/P1/P2/P3
-- [ ] 16. Estimativas XS/S/M/L/XL
-- [ ] 17. Dependências entre features
-- [ ] 18. Pontos de autorização
-- [ ] 19. Mapa do ciclo central atual
-- [ ] 20. Gaps do ciclo central
-- [ ] 21. Conexões entre módulos
-- [ ] 22. Dados faltantes para fechar o ciclo
-- [ ] 23. Serviços existentes reutilizáveis
+- [x] 1. Resumo executivo
+- [x] 2. Mapa do sistema atual
+- [x] 3. Feature Matrix
+- [x] 4. Recursos já existentes
+- [x] 5. Recursos superiores à referência
+- [x] 6. Recursos parciais
+- [x] 7. Recursos ausentes
+- [x] 8. Recursos não aplicáveis
+- [x] 9. Quick wins
+- [x] 10. Riscos
+- [x] 11. Alterações de banco
+- [x] 12. Alterações de API
+- [x] 13. Alterações de UI
+- [x] 14. Alterações de arquitetura
+- [x] 15. Roadmap P0/P1/P2/P3
+- [x] 16. Estimativas XS/S/M/L/XL
+- [x] 17. Dependências entre features
+- [x] 18. Pontos de autorização
+- [x] 19. Mapa do ciclo central atual
+- [x] 20. Gaps do ciclo central
+- [x] 21. Conexões entre módulos
+- [x] 22. Dados faltantes para fechar o ciclo
+- [x] 23. Serviços existentes reutilizáveis

@@ -56,7 +56,7 @@ Fonte: `tarefa_20.txt.txt`. Memória: `MEMORIA_DESENVOLVIMENTO_TAREFA_20.md`.
 - [x] T20-A12 — Analytics, observabilidade, performance e segurança.
 - [x] T20-A13 — Consolidar `FEATURE_MATRIX.md`.
 - [x] T20-A14 — Soluções superiores e gates.
-- [ ] T20-A15 — Consolidar plano e roadmap.
+- [x] T20-A15 — Consolidar plano e roadmap.
 - [ ] T20-A16 — Validar e entregar a auditoria.
 
 Entregáveis: `PRODUCT_AUDIT.md`, `FEATURE_MATRIX.md`, `ARCHITECTURE_AUDIT.md`, `IMPLEMENTATION_PLAN.md` e `ROADMAP.md`.

@@ -232,4 +232,4 @@ A Fase 0 estará concluída somente quando:
 
 ## Próxima ação automática recomendada
 
-Executar `T20-A15 — Consolidar plano e roadmap`, transformando matriz, riscos e correções em ondas executáveis com contratos, dados, testes, dependências e critérios de aceite. Não iniciar implementação de produto até concluir e apresentar a auditoria.
+Executar `T20-A16 — Validar e entregar a auditoria`, eliminando placeholders, conferindo coerência dos cinco documentos, os 23 itens de entrega, UTF-8 e gates documentais. Depois da entrega, iniciar automaticamente a primeira correção liberada; nenhum deploy sem pedido explícito.

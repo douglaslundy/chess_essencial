@@ -2,6 +2,8 @@
 
 ## Última atualização
 
+2026-07-31 - **T20-A15 concluída: plano e roadmap transformados em ondas executáveis.** Segurança/privacidade/recuperação vêm primeiro; acessibilidade e confiança do cliente em seguida; o ciclo pedagógico depende de taxonomia, ErrorSignal, mastery e recomendação rastreável; analytics e otimização só avançam com dados e capacidade medidos. P3 permanece bloqueado por autorização. Próxima tarefa: T20-A16.
+
 2026-07-31 - **T20-A14 concluída: soluções superiores, classificações, ciclo central e gates consolidados.** Autoridade do servidor, ledger de ratings, autosave obrigatório do Treinador, runtime transacional, Jornada idempotente, tabuleiro web, SecureStore, CI/migrations e Git-pull ficaram protegidos contra regressão. Mudanças destrutivas, clubes, reescrita de navegação e paralelismo sem benchmark exigem autorização. Próxima tarefa: T20-A15.
 
 2026-07-31 - **T20-A13 concluída: matriz de funcionalidades consolidada.** A cobertura dos domínios auditados foi fechada, a duplicidade da Home removida e o placeholder de expansão substituído por regra de manutenção. Estados, riscos, prioridades, estimativas, dependências e autorizações ficaram prontos para os gates da T20-A14. Próxima tarefa: T20-A14.
@@ -161,7 +163,7 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-T20-A15 — Consolidar plano de implementação e roadmap, sem alterar código de produto.
+T20-A16 — Validar e entregar a auditoria, sem alterar código de produto.
 ## Contexto necessário
 
 - `AGENTS.md`
