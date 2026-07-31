@@ -3,7 +3,7 @@
 ## Estado
 
 - Missão: Tarefa 20.
-- Fase atual: T20-A07 concluída; T20-A08 é a próxima frente.
+- Fase atual: T20-A08 concluída; T20-A09 é a próxima frente.
 - Base Git: `main` em `0203a67e3762e1756438b498d2f9e8e81864022c`.
 - Data do baseline: 2026-07-30.
 - Regra: nenhuma afirmação de presença ou ausência é definitiva sem evidência.
@@ -32,7 +32,49 @@ Arquitetura confirmada em `ARCHITECTURE_AUDIT.md`: clientes Next.js/Expo consome
 
 ### Home e continuidade
 
-Estado: `UNKNOWN`.
+Estado consolidado: `EXISTING_PARTIAL` na Home web, `EXISTING_SUPERIOR` na retomada autoritativa de partidas e aulas e `EXISTING_INFERIOR` nos handoffs entre etapas e na cobertura mobile.
+
+Implementação confirmada:
+
+- a Home web consulta o histórico do usuário e prioriza a partida ativa mais recente;
+- sem partida ativa, oferece entrada no matchmaking e, como segundo card, o tabuleiro demonstrativo;
+- histórico também lista todas as partidas ativas com ação de retomada e partidas concluídas com revisão;
+- partida, aula e Jornada persistem estado no servidor; reconexão da partida é versionada e a aula retoma a tentativa iniciada;
+- exercícios persistem sessões no servidor, mas a descoberta da sessão em andamento depende do ID guardado no `localStorage` daquele navegador e filtro;
+- Jornada registra nível atual/desbloqueado e oferece próximo estágio/repetição dentro do próprio fluxo;
+- a aula concluída oferece próxima aula e retorno ao curso;
+- o shell web possui navegação responsiva, estado ativo e filtro por entitlement;
+- o mobile possui quatro tabs focadas — Jogar, Cursos, Social e Perfil — sem Home/hub.
+
+Evidências principais: `app/app/page.tsx`, `app-chrome.tsx`, `history-list.tsx`, `game-room.tsx`, `review-room.tsx`, `lesson-player.tsx`, `exercise-trainer.tsx`, componentes da Jornada, repositories de games/aulas/exercícios e tabs mobile.
+
+Soluções superiores preservadas:
+
+1. retomada de partida usa estado autoritativo, não snapshot do cliente;
+2. tentativas de aula usam snapshot e log transacional;
+3. navegação existente não será substituída sem evidência de descoberta/frequência;
+4. mobile mantém tab bar curta em vez de copiar os 13 itens da sidebar web;
+5. uma Home personalizada não será criada antes do motor rastreável definido em T20-A07.
+
+Gaps:
+
+- a Home não mostra Jornada atual, última aula, treino em andamento, análise pendente/concluída ou revisão recente;
+- não há endpoint agregador de continuidade; ampliar a Home hoje exigiria várias chamadas e lógica duplicada no cliente;
+- durante a consulta da partida ativa, a Home exibe inicialmente “Entrar na fila”, podendo trocar de CTA após a resposta;
+- não foram encontrados testes da Home;
+- o resultado de partida oferece apenas “Fechar”; não leva a revisar, jogar novamente ou treinar;
+- a revisão concluída volta somente ao histórico e não preserva erro/skill/destino;
+- aula concluída não oferece os exercícios vinculados; treino livre concluído só inicia outro desafio;
+- sessão de exercícios pode ser retomada apenas no mesmo navegador/perfil de filtro;
+- o nível atual da Jornada e `last_lesson_id` existem, mas não aparecem na Home;
+- a sidebar web é uma lista plana de 13 destinos, misturando ações frequentes, plano, regras e tabuleiro demonstrativo;
+- brand do shell aponta para a landing pública, não para a visão geral autenticada;
+- não há breadcrumb/título contextual no topbar;
+- o mobile não possui Jornada, exercícios, desafios, histórico ou revisão;
+- nenhum handoff transporta o motivo partida → fraqueza → treino;
+- `home_opened` e cliques de continuidade não foram confirmados.
+
+Recomendação: criar primeiro um `ContinuityService`/endpoint agregador que devolva somente próximos passos reais e autorizados: partida ativa, análise acionável, etapa atual, aula retomável e sessão de treino. A Home deve renderizar carregamento explícito, ordenar continuidade antes de descoberta e limitar cards. Em paralelo, fechar becos com CTAs determinísticos: partida → revisão/nova partida; aula → prática vinculada; treino → aplicar em jogo; Jornada → próximo estágio. Só adicionar cards de fraqueza após T20-A07. Preservar a navegação atual e medir uso antes de agrupar em Início/Jogar/Treinar/Aprender/Mais; não copiar a sidebar para o mobile.
 
 ### Jogar, partidas e histórico
 

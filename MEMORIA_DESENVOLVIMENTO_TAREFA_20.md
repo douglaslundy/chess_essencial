@@ -232,4 +232,4 @@ A Fase 0 estará concluída somente quando:
 
 ## Próxima ação automática recomendada
 
-Executar `T20-A08 — Home, navegação e continuidade`, verificando hub, próximos passos, retomada de partidas/análises/aulas e preservação do contexto entre módulos. Não iniciar implementação de produto até concluir e apresentar a auditoria.
+Executar `T20-A09 — Perfil, estatísticas, conquistas e gamificação`, verificando fontes dos indicadores, separação entre ratings/progresso/mastery, recompensas e utilidade pedagógica. Não iniciar implementação de produto até concluir e apresentar a auditoria.
