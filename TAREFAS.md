@@ -7,6 +7,27 @@
 - [x] Revisar o fluxo Testar conexão da IA e cobrir sucesso/erro na interface administrativa.
 - [x] Restaurar serialização e desserialização de JSON/JSONB no cliente de consultas raw e reativar os testes de banco afetados.
 
+## Correções identificadas pela Tarefa 20 (pendentes)
+
+Estas correções foram confirmadas pela auditoria, mas só podem ser implementadas depois da entrega da T20-A16. A ordem abaixo considera impacto, custo e dependências; nenhuma autoriza deploy.
+
+- [ ] **COR-T20-001 — P0 — Aplicar entitlement antes de gerar narração paga.** Hoje o worker produz narração para toda análise concluída e a API verifica plano/cota somente na leitura, depois do custo. Enfileirar apenas demanda autorizada e preservar o fallback determinístico gratuito.
+- [ ] **COR-T20-002 — P0 — Recuperar jobs de análise e narração interrompidos.** Claims não têm lease; uma queda pode deixar registros eternamente em `processing`, e `failed` não possui retry controlado. Adicionar lease/timeout, tentativas limitadas, idempotência e estado terminal observável.
+- [ ] **COR-T20-003 — P0 — Ligar erro de partida a skill e prática recomendada.** `game_move_analyses` ainda não gera `ErrorSignal`, não atualiza mastery e não aponta para exercício/aula rastreável. Implementar somente após consolidar a taxonomia e a proveniência na T20-A13–A15.
+- [ ] **COR-T20-004 — P1 — Corrigir a semântica de dica versus perfeição.** Usar dica sem errar ainda conta como `correctFirstTry`, concede XP cheio e pode gerar “Nível perfeito”. Definir critério único, cobrir regressões e preservar conclusões históricas.
+- [ ] **COR-T20-005 — P1 — Medir e limitar o throughput do Stockfish antes de otimizar.** O worker abre um subprocesso sequencial por FEN. Criar métricas e orçamento de CPU/memória; não elevar paralelismo sem benchmark, pois isso pode piorar a VPS compartilhada.
+- [ ] **COR-T20-006 — P0 — Fazer os controles de privacidade produzirem efeito real.** `is_profile_public` e `allow_friend_requests` são persistidos, mas perfil/ranking e pedidos de amizade ignoram as flags. Centralizar a política e cobrir negação por API.
+- [ ] **COR-T20-007 — P0 — Aplicar bloqueio em toda interação social.** Bloquear corta desafios, mas mantém amizade, mensagens, feed, likes, perfil e presença acessíveis. Encerrar contato imediatamente sem apagar evidências de moderação.
+- [ ] **COR-T20-008 — P0 — Criar fluxo administrativo mínimo de denúncias.** Denúncias entram como `open`, mas não existe fila RBAC, decisão, histórico ou SLA confirmados. Implementar triagem auditável antes de ampliar a comunidade.
+- [ ] **COR-T20-009 — P0 — Tornar o tabuleiro mobile utilizável por leitor de tela.** Adicionar nomes de casa/peça, role, estado selecionado, dica de ação e promoção sem letras cruas, com testes nativos de acessibilidade.
+- [ ] **COR-T20-010 — P1 — Corrigir teclado e foco nos diálogos de jogo web.** Impedir travessia h↔a pelas setas e aplicar foco inicial, Escape e restauração em promoção/resultado usando o hook já existente.
+- [ ] **COR-T20-011 — P1 — Não esconder falhas ao salvar preferências.** Tema e voz hoje mudam localmente mesmo quando a API falha. Informar/reverter erro e depois expor preferências compartilhadas essenciais no Perfil mobile.
+- [ ] **COR-T20-012 — P0 — Bloquear deploy até a CI do commit estar verde.** O timer acompanha `origin/main` e pode publicar commit reprovado. Manter Git pull, mas exigir status aprovado ou referência de promoção.
+- [ ] **COR-T20-013 — P0 — Manter backup recuperável fora da VPS.** Dumps com checksum existem, porém ficam no mesmo host. Criptografar, copiar para destino externo, definir retenção e testar restauração de desastre.
+- [ ] **COR-T20-014 — P0 — Endurecer sessão web e rate limit multi-réplica.** Planejar cookies HttpOnly + CSRF/CSP web e mover limites para Redis com fallback, sem quebrar refresh ou realtime.
+- [ ] **COR-T20-015 — P1 — Validar o conteúdo real dos uploads.** Não confiar apenas no MIME declarado; conferir magic bytes, normalizar a imagem e manter limites atuais.
+- [ ] **COR-T20-016 — P0 — Restaurar paridade entre controllers e OpenAPI.** Incluir Jornada e live narration, regenerar SDK e criar gate que detecte drift.
+
 ## Regra de execução
 
 - Executar uma fase por vez, na ordem de prioridade.
@@ -30,9 +51,9 @@ Fonte: `tarefa_20.txt.txt`. Memória: `MEMORIA_DESENVOLVIMENTO_TAREFA_20.md`.
 - [x] T20-A07 — Recomendações, skills e mastery.
 - [x] T20-A08 — Home, navegação e continuidade.
 - [x] T20-A09 — Perfil, estatísticas, conquistas e gamificação.
-- [ ] T20-A10 — Social, rankings e privacidade.
-- [ ] T20-A11 — Configurações, tabuleiro, mobile e acessibilidade.
-- [ ] T20-A12 — Analytics, observabilidade, performance e segurança.
+- [x] T20-A10 — Social, rankings e privacidade.
+- [x] T20-A11 — Configurações, tabuleiro, mobile e acessibilidade.
+- [x] T20-A12 — Analytics, observabilidade, performance e segurança.
 - [ ] T20-A13 — Consolidar `FEATURE_MATRIX.md`.
 - [ ] T20-A14 — Soluções superiores e gates.
 - [ ] T20-A15 — Consolidar plano e roadmap.
