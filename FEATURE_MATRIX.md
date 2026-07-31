@@ -6,7 +6,7 @@
 - Nenhuma ausência será presumida.
 - `UNKNOWN` é obrigatório enquanto a evidência for insuficiente.
 - A coluna “Evidência” deve apontar para arquivos, contratos, migrations, testes ou comportamento verificável.
-- A prioridade inicial é hipótese até a consolidação T20-A15.
+- Prioridade, estimativa e dependências foram consolidadas na T20-A13 e serão ordenadas no plano da T20-A15.
 
 ## Estados
 
@@ -148,12 +148,11 @@
 | BACKUP-002     | Recuperação     | Cópia externa e desastre total     | NOT_IMPLEMENTED     | Backups ficam na mesma VPS; sem cópia externa comprovada               | `backup-database.sh`                                  | Disaster recovery             | Criptografar, copiar e testar restauração externa   | Alto             | P0         | M          | Object storage/ops    | Não                           |
 | CONTRACT-001   | Contratos       | Paridade OpenAPI/controllers       | EXISTING_INFERIOR   | Jornada e live narration ativos não constam no OpenAPI                 | ARCHITECTURE_AUDIT/rotas                              | SDK completo                  | Gate automático de paridade                         | Alto             | P0         | M          | API/contracts/SDK     | Não                           |
 
-As linhas restantes serão adicionadas durante T20-A06 a T20-A12 e consolidadas em T20-A13.
+Cobertura consolidada na T20-A13. Estados, riscos, prioridades e dependências devem permanecer alinhados ao plano e às correções rastreáveis.
 
 ## Controle de cobertura
 
 - [x] Home/hub, navegação e continuidade
-- [ ] Home/hub e continuidade
 - [x] Jogar, partidas, rating e histórico
 - [x] Análise, engine e entendimento do erro
 - [x] Problemas, Journey, progressão, dicas e feedback

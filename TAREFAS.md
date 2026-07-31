@@ -54,7 +54,7 @@ Fonte: `tarefa_20.txt.txt`. Memória: `MEMORIA_DESENVOLVIMENTO_TAREFA_20.md`.
 - [x] T20-A10 — Social, rankings e privacidade.
 - [x] T20-A11 — Configurações, tabuleiro, mobile e acessibilidade.
 - [x] T20-A12 — Analytics, observabilidade, performance e segurança.
-- [ ] T20-A13 — Consolidar `FEATURE_MATRIX.md`.
+- [x] T20-A13 — Consolidar `FEATURE_MATRIX.md`.
 - [ ] T20-A14 — Soluções superiores e gates.
 - [ ] T20-A15 — Consolidar plano e roadmap.
 - [ ] T20-A16 — Validar e entregar a auditoria.

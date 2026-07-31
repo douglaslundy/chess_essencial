@@ -2,6 +2,8 @@
 
 ## Última atualização
 
+2026-07-31 - **T20-A13 concluída: matriz de funcionalidades consolidada.** A cobertura dos domínios auditados foi fechada, a duplicidade da Home removida e o placeholder de expansão substituído por regra de manutenção. Estados, riscos, prioridades, estimativas, dependências e autorizações ficaram prontos para os gates da T20-A14. Próxima tarefa: T20-A14.
+
 2026-07-30 - **T20-A12 concluída: analytics, observabilidade, performance, segurança, CI, deploy e recuperação auditados sem alterar produto.** CI/migrations e proteção da API foram preservadas como superiores. COR-T20-012–016 registram gate de CI no deploy, backup externo, sessão web/rate limit distribuído, validação real de uploads e paridade OpenAPI. Rollback automático destrutivo de schema foi rejeitado como regressão. Próxima tarefa: T20-A13.
 
 2026-07-30 - **T20-A11 concluída: configurações, tabuleiros, mobile e acessibilidade auditados sem alterar produto.** O tabuleiro web multimodal e o SecureStore mobile foram preservados como superiores. Viraram COR-T20-009–011: acessibilidade inexistente nas casas do tabuleiro mobile; bordas de teclado e foco/Escape em diálogos web; e preferências otimistas que silenciam falha de persistência. Próxima tarefa: T20-A12.
@@ -157,7 +159,7 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-T20-A13 — Consolidar `FEATURE_MATRIX.md`, sem alterar código de produto.
+T20-A14 — Consolidar soluções superiores e gates, sem alterar código de produto.
 ## Contexto necessário
 
 - `AGENTS.md`
