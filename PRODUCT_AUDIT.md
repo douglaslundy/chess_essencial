@@ -3,7 +3,7 @@
 ## Estado
 
 - Missão: Tarefa 20.
-- Fase atual: T20-A13 concluída; T20-A14 é a próxima frente.
+- Fase atual: T20-A14 concluída; T20-A15 é a próxima frente.
 - Base Git: `main` em `0203a67e3762e1756438b498d2f9e8e81864022c`.
 - Data do baseline: 2026-07-30.
 - Regra: nenhuma afirmação de presença ou ausência é definitiva sem evidência.
@@ -452,57 +452,92 @@ Recomendação: bloquear deploy até o commit ter CI verde; copiar backups cript
 
 ### Recursos existentes
 
-A preencher.
+Partidas autoritativas e realtime, matchmaking/bot/Treinador, ratings e histórico; análise Stockfish + narração; exercícios, desafios, Jornada, cursos, aulas e prática; recomendações explícitas; perfil, XP/streak/badges; amizades, presença, feed, mensagens, desafios e rankings; preferências, web/mobile, CI, migrations, backup local e operação Git-pull. O inventário detalhado e suas evidências estão nas 131 linhas de `FEATURE_MATRIX.md`.
 
 ### Recursos superiores à referência
 
-A preencher. Qualquer substituição ficará bloqueada por autorização.
+- servidor como autoridade exclusiva da partida, com sequência/versionamento e reconexão;
+- ledger de rating por pool e histórico imutável, sem chamar rating interno de FIDE;
+- autosave obrigatório de partidas do Treinador, sempre unrated, decisão já confirmada pelo usuário;
+- runtime de aula com snapshot e conclusão transacional; conteúdo versionado e validado;
+- Jornada server-side, determinística e idempotente, com gamificação enxuta;
+- presença Redis efêmera combinada com último acesso durável;
+- tabuleiro web multimodal e SecureStore no mobile;
+- CI que prova banco limpo, migrations, restore e rollback/reapply;
+- deploy por Git pull `--ff-only`, worktree limpa, lock, imagem por commit e backup pré-migration.
+
+Gate: nenhuma dessas soluções pode ser removida, enfraquecida ou substituída sem autorização explícita e prova comparativa de segurança, integridade, acessibilidade e operação.
 
 ### Recursos parciais
 
-A preencher.
+Continuidade da Home e pós-fluxos; entendimento pedagógico do erro; prática/endgames e vínculos de conteúdo; recomendações e mastery sem sinais reais; estatísticas por período; moderação; paridade mobile; acessibilidade transversal; observabilidade fora da API; carga, uploads e backup externo.
 
 ### Recursos inferiores
 
-A preencher com ganho objetivo e mensurável.
+Privacidade e bloqueio não aplicados de ponta a ponta; jobs sem lease/retry; custo de narração antes do entitlement; dica mantendo perfeição; tabuleiro mobile sem semântica assistiva; preferências que silenciam falha; sessão web em `localStorage`; rate limit por processo; deploy sem gate de CI; OpenAPI divergente. Cada item possui correção COR-T20 rastreável e critério mensurável no plano.
 
 ### Recursos ausentes
 
-A preencher somente após busca sistemática.
+Taxonomia canônica de skills; `ErrorSignal` real vindo de partidas; mastery baseada em evidência; funil de produto; alertas/SLO; cópia externa de backup; fila administrativa de denúncias; Home agregadora; dashboard temporal; pipeline assinado de release mobile. Clubes/equipes/eventos também não existem, mas permanecem fora do plano automático.
 
 ### Recursos não aplicáveis
 
-A preencher com justificativa de produto/plataforma.
+Rating FIDE oficial, conteúdo proprietário de terceiros e cópia literal de interfaces não são objetivos válidos. Unificar todos os ratings, históricos ou conteúdos em um único modelo também não é aplicável: os contextos possuem semânticas e autoridades distintas.
 
 ## Ciclo central
 
 ### Mapa atual
 
-A preencher com serviços, entidades, eventos e transições reais.
+`GameService/realtime → game_move_analyses → análise/narração → revisão`; em paralelo, `courses/lesson-runtime`, `exercises` e `learning-path` registram progresso. `RecommendationService` atual lê estado explícito, não erros reais. Home e navegação expõem os módulos, porém não transportam um contexto pedagógico comum entre eles.
 
 ### Gaps
 
-A preencher.
+O erro de jogo não vira skill/evidência; a revisão não entrega prática rastreável; conclusão de aula/prática não conduz a uma aplicação em jogo; a Home não escolhe o próximo passo; o resultado desse treino não retorna como evidência comparável para confirmar melhora.
 
 ### Dados faltantes
 
-A preencher.
+Taxonomia/versionamento de skills, proveniência e confiança do sinal, vínculo conteúdo↔skill, dificuldade normalizada, janela/recência de evidência, motivo da recomendação, eventos idempotentes do funil e resultado posterior em contexto comparável.
 
 ### Serviços reutilizáveis
 
-A preencher.
+`GameService`, análise de lances, `LessonRuntimeService`, busca/treino de exercícios, `LearningPathService`, `RecommendationService`, ratings/ledger, outbox, audit log, entitlements, storage, Redis e contratos compartilhados. A implementação deve compor esses serviços antes de criar novos módulos.
 
 ## Quick wins
 
-A preencher após a matriz comparativa.
+1. aplicar entitlement antes de enfileirar narração;
+2. corrigir dica versus perfeição;
+3. corrigir bordas de teclado e foco dos diálogos web;
+4. tornar falha de preferência visível/reversível;
+5. exigir CI verde antes do deploy;
+6. validar magic bytes dos uploads;
+7. completar OpenAPI e criar gate de paridade.
+
+Quick win não significa pular testes, migrations ou dependências.
 
 ## Riscos
 
-A preencher. Riscos preventivos já constam em `MEMORIA_DESENVOLVIMENTO_TAREFA_20.md`.
+Os maiores riscos são vazamento por privacidade/bloqueio ineficazes, perda de jobs, custo indevido de LLM, deploy de commit reprovado, perda simultânea de produção e backup, sessão web exposta a XSS, recomendações pedagógicas sem evidência e sobrecarga da VPS por paralelismo não medido. O backlog COR-T20-001–016 contém tratamentos iniciais; riscos preventivos adicionais constam em `MEMORIA_DESENVOLVIMENTO_TAREFA_20.md`.
 
 ## Pontos que exigem autorização
 
-A preencher conforme recursos superiores, mudanças significativas de UX, operações destrutivas e subsistemas sociais.
+- tornar opcional ou remover o autosave do Treinador: negado pelo usuário; preservar sempre;
+- substituir autoridade server-side, ledger de rating, runtime transacional, Jornada idempotente, tabuleiro web acessível, SecureStore, CI/migrations ou Git-pull;
+- reescrever migration aplicada, automatizar rollback destrutivo de schema ou unificar históricos/ratings com perda semântica;
+- substituir a navegação inteira antes de analytics e teste de UX;
+- criar clubes, equipes, fóruns, eventos ou feed público antes de massa crítica, privacidade e moderação;
+- inflar badges/streaks, duplicar conteúdo de aberturas/finais ou copiar expressão proprietária;
+- aumentar paralelismo do Stockfish/LLM sem benchmark e orçamento da VPS.
+
+Gates objetivos para implementação automática:
+
+1. toda mudança deve apontar para linha da matriz, COR-T20 ou entrega do plano;
+2. recurso superior permanece intacto; alternativa exige autorização;
+3. mudança de banco é aditiva/reversível, com migration nova e teste de upgrade/rollback quando seguro;
+4. contratos e OpenAPI mudam junto com API/clientes;
+5. privacidade, autorização, idempotência e negação têm testes;
+6. custo/performance possuem limite e observabilidade antes de elevar capacidade;
+7. `git diff --check`, charset, gates locais e commit individual passam;
+8. nenhum deploy ocorre sem pedido explícito do usuário.
 
 ## Checklist dos 23 itens de entrega
 
