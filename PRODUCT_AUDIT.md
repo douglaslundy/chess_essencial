@@ -3,7 +3,7 @@
 ## Estado
 
 - Missão: Tarefa 20.
-- Fase atual: T20-A06 concluída; T20-A07 é a próxima frente.
+- Fase atual: T20-A07 concluída; T20-A08 é a próxima frente.
 - Base Git: `main` em `0203a67e3762e1756438b498d2f9e8e81864022c`.
 - Data do baseline: 2026-07-30.
 - Regra: nenhuma afirmação de presença ou ausência é definitiva sem evidência.
@@ -189,11 +189,50 @@ Gaps:
 - o Treinador web não possui setas de ameaça, barra de avaliação ou overlays equivalentes;
 - tornar opcional o salvamento das partidas permitiria perder histórico e sinais pedagógicos.
 
-Recomendação: preservar conteúdo, runtime e persistência. Priorizar aula → exercícios vinculados e “continuar aula”; depois corrigir paridade mobile e consolidar um contrato transversal do instrutor. Não duplicar cursos de abertura/final. `autoSaveInstructorGames` fica bloqueado: sempre salvar partidas de treino sem rating é superior e só deve ser enfraquecido com autorização explícita.
+Recomendação: preservar conteúdo, runtime e persistência. Priorizar aula → exercícios vinculados e “continuar aula”; depois corrigir paridade mobile e consolidar um contrato transversal do instrutor. Não duplicar cursos de abertura/final. `autoSaveInstructorGames` permanece bloqueado. Em 2026-07-30, o usuário negou explicitamente tornar o salvamento opcional; as partidas de treino continuarão sempre salvas e sem afetar rating.
 
 ### Recomendações, skills e mastery
 
-Estado: `UNKNOWN`.
+Estado consolidado: `NOT_IMPLEMENTED` para recomendações transversais, `EXISTING_PARTIAL` para mastery/prática adaptativa e `EXISTING_SUPERIOR` como princípio na preservação das tags e runtimes atuais.
+
+Implementação confirmada:
+
+- `skill_mastery` registra score, tentativas, sucessos, erros e último contato por usuário e string de skill;
+- a conclusão de exercício na Jornada soma sucessos/falhas reais obtidos no servidor;
+- o vocabulário vem de `exercises.tags`, excluindo `challenge`, `lichess` e `classico`;
+- a etapa `review` escolhe a skill de menor score e prefere item jogável, ainda não resolvido, da mesma tag e faixa;
+- sem mastery ou item compatível, o seletor degrada para a faixa e, por último, permite repetição;
+- tentativas já guardam acerto, score, dicas, duração e instante; exercícios possuem dificuldade numérica;
+- foram observadas 62 tags no acervo tático e 23 rótulos editoriais amplos no livro: metadado legado e skill canônica não são equivalentes;
+- `composition`, `allowed_themes`, `preferred_themes` e `instructional_metadata` existem no schema, mas não dirigem o runtime;
+- não existem contrato, API, persistência, serviço ou UI de `Recommendation`.
+
+Evidências principais: migration 0036, `learning-path.repository.ts`, `learning-path.service.ts`, e2e da Jornada, `exercises.repository.ts`, contratos, migrations de conteúdo e datasets canônicos.
+
+Soluções superiores preservadas:
+
+1. mastery deriva de ações confirmadas pelo servidor;
+2. review reutiliza o runtime real e rejeita itens não jogáveis;
+3. tags legadas permanecem no conteúdo; aliases canônicos devem ser adicionados sem reescrever o acervo;
+4. falta de evidência causa fallback, não falsa afirmação de fraqueza;
+5. recomendações aleatórias não serão apresentadas como personalização.
+
+Gaps:
+
+- só exercícios concluídos dentro da Jornada atualizam mastery; prática livre, aulas, partidas e análises não contribuem;
+- score é média histórica simples, sem recência, dificuldade, dicas, duração, contexto, peso ou confiança;
+- uma observação pode virar “skill mais fraca”; não há `insufficient_data`;
+- todas as tags não estruturais recebem o mesmo resultado, misturando peça, padrão, subtipo e tema amplo;
+- não há registro canônico com ID, categoria, aliases, versão e relações;
+- campos de composição e temas permanecem sem uso;
+- prática livre usa filtros manuais e não consulta mastery;
+- não há API/UI de mastery nem ledger que explique os eventos por trás do agregado;
+- não há repetição espaçada, `next_review_at` ou decaimento;
+- não existe ligação partida → `ErrorSignal` → skill → recomendação → conteúdo/prática;
+- não há recomendação com motivo, fonte, destino, prioridade, ciclo de vida e contexto;
+- não se mede treinamento recomendado → nova partida → redução do mesmo erro.
+
+Recomendação: implementar na ordem: (1) registry versionado de skills com aliases para tags legadas; (2) ledger idempotente `LearningEvidence` com fonte, evento, dificuldade, resultado, dicas, instante e peso; (3) projeção de mastery que diferencie dados insuficientes de baixo domínio; (4) mapeamento rastreável entre `ErrorSignal`, skills, aulas e exercícios; (5) `RecommendationService` determinístico com motivo, fonte, destino e estado; (6) analytics do efeito após o treino. Não criar primeiro cards personalizados nem substituir tags existentes.
 
 ### Perfil, estatísticas e gamificação
 
