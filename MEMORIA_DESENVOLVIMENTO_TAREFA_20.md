@@ -232,4 +232,4 @@ A Fase 0 estará concluída somente quando:
 
 ## Próxima ação automática recomendada
 
-Executar `COR-T20-001 — Aplicar entitlement antes de gerar narração paga`, impedindo custo de IA antes da autorização de plano/cota e preservando o fallback determinístico gratuito. Preservar os gates, fazer um commit ao concluir e não realizar deploy.
+Executar `COR-T20-002 — Recuperar jobs de análise e narração interrompidos`, adicionando lease/timeout, tentativas limitadas, idempotência e estado terminal observável sem elevar o paralelismo do Stockfish. Preservar os gates, fazer um commit ao concluir e não realizar deploy.

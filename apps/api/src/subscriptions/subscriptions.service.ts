@@ -92,6 +92,19 @@ export class SubscriptionsService {
   }
 
   /**
+   * Checks whether the effective plan includes a feature without consuming
+   * or enforcing its daily quota. Use this only to read an artifact that was
+   * already generated; paid work must still call checkEntitlement first.
+   */
+  async hasFeatureAccess(userId: string, featureKey: PlanFeatureKey): Promise<boolean> {
+    if (await this.repository.isAdmin(userId)) return true;
+    const active = await this.repository.getActiveSubscriptionForUser(userId);
+    const plan = active?.plan ?? (await this.repository.getDefaultPlan());
+    if (!plan) return true;
+    return plan.limits.some((entry) => entry.featureKey === featureKey);
+  }
+
+  /**
    * Users with no active subscription fall back to the plan marked
    * `isDefault` (the admin-configured "Free" plan) — replacing the earlier
    * "no subscription = unlimited" rule now that plans can gate real

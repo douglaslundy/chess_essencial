@@ -12,7 +12,11 @@ import {
   type NarratedMoment,
 } from './prompts.js';
 
-const MAX_NEWLY_QUEUED_PER_TICK = 20;
+const MAX_NEWLY_QUEUED_PER_TICK = 1;
+const NARRATION_FEATURE_KEY = 'ai_narrations_per_day';
+// Paid generation deliberately fails closed when no effective plan exists,
+// even though interactive entitlement checks fail open on plan misconfiguration.
+// The deterministic browser narration remains available without any LLM cost.
 const MAX_KEY_MOMENTS = 6;
 
 interface ActiveAiProviderKeyRow {
@@ -106,12 +110,69 @@ async function resolveNarrationAiConfig(
 }
 
 async function queuePendingNarrations(sql: Sql): Promise<void> {
+  // Queue one game at a time: the row itself reserves one daily-quota slot
+  // for each human player. Enqueuing a batch from one pre-insert snapshot
+  // could reserve more games than a finite plan allows.
   await sql`
     INSERT INTO game_narrations (game_id, status)
     SELECT a.game_id, 'pending'
     FROM game_analyses a
     LEFT JOIN game_narrations n ON n.game_id = a.game_id
     WHERE a.status = 'completed' AND n.game_id IS NULL
+      AND EXISTS (
+        SELECT 1
+        FROM game_players gp
+        CROSS JOIN LATERAL (
+          SELECT COALESCE(
+            (
+              SELECT subscription.plan_id
+              FROM user_subscriptions subscription
+              WHERE subscription.user_id = gp.user_id AND subscription.status = 'active'
+              ORDER BY subscription.created_at DESC
+              LIMIT 1
+            ),
+            (
+              SELECT default_plan.id
+              FROM subscription_plans default_plan
+              WHERE default_plan.is_default = true
+              LIMIT 1
+            )
+          ) AS plan_id
+        ) effective_plan
+        WHERE gp.game_id = a.game_id
+          AND NOT EXISTS (
+            SELECT 1 FROM bot_personas persona WHERE persona.user_id = gp.user_id
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM game_bots bot
+            WHERE bot.game_id = a.game_id AND bot.bot_user_id = gp.user_id
+          )
+          AND (
+            EXISTS (
+              SELECT 1 FROM user_roles role
+              WHERE role.user_id = gp.user_id AND role.role = 'admin'
+            )
+            OR EXISTS (
+              SELECT 1
+              FROM subscription_plan_limits quota
+              WHERE quota.plan_id = effective_plan.plan_id
+                AND quota.feature_key = ${NARRATION_FEATURE_KEY}
+                AND (
+                  quota.daily_limit = 0
+                  OR (
+                    SELECT count(DISTINCT existing.game_id)::integer
+                    FROM game_narrations existing
+                    JOIN game_players existing_player
+                      ON existing_player.game_id = existing.game_id
+                    WHERE existing_player.user_id = gp.user_id
+                      AND COALESCE(existing.started_at, existing.created_at) >= date_trunc('day', now())
+                      AND COALESCE(existing.started_at, existing.created_at) <
+                        date_trunc('day', now()) + interval '1 day'
+                  ) < quota.daily_limit
+                )
+            )
+          )
+      )
     ORDER BY a.completed_at DESC
     LIMIT ${MAX_NEWLY_QUEUED_PER_TICK}
     ON CONFLICT (game_id) DO NOTHING
@@ -119,16 +180,78 @@ async function queuePendingNarrations(sql: Sql): Promise<void> {
 }
 
 async function claimNextNarration(sql: Sql): Promise<{ gameId: string } | null> {
+  // Re-check immediately before the paid call. This catches plan changes
+  // after enqueue and also protects pending rows created by older releases.
+  // The candidate row is excluded from its own quota count because it is the
+  // reservation currently being claimed.
   const [claimed] = await sql<{ gameId: string }[]>`
-    UPDATE game_narrations SET status = 'processing', started_at = now()
-    WHERE game_id = (
-      SELECT game_id FROM game_narrations
-      WHERE status = 'pending'
-      ORDER BY created_at ASC
+    UPDATE game_narrations AS target
+    SET status = 'processing', started_at = now()
+    WHERE target.game_id = (
+      SELECT candidate.game_id
+      FROM game_narrations candidate
+      WHERE candidate.status = 'pending'
+        AND EXISTS (
+          SELECT 1
+          FROM game_players gp
+          CROSS JOIN LATERAL (
+            SELECT COALESCE(
+              (
+                SELECT subscription.plan_id
+                FROM user_subscriptions subscription
+                WHERE subscription.user_id = gp.user_id AND subscription.status = 'active'
+                ORDER BY subscription.created_at DESC
+                LIMIT 1
+              ),
+              (
+                SELECT default_plan.id
+                FROM subscription_plans default_plan
+                WHERE default_plan.is_default = true
+                LIMIT 1
+              )
+            ) AS plan_id
+          ) effective_plan
+          WHERE gp.game_id = candidate.game_id
+            AND NOT EXISTS (
+              SELECT 1 FROM bot_personas persona WHERE persona.user_id = gp.user_id
+            )
+            AND NOT EXISTS (
+              SELECT 1 FROM game_bots bot
+              WHERE bot.game_id = candidate.game_id AND bot.bot_user_id = gp.user_id
+            )
+            AND (
+              EXISTS (
+                SELECT 1 FROM user_roles role
+                WHERE role.user_id = gp.user_id AND role.role = 'admin'
+              )
+              OR EXISTS (
+                SELECT 1
+                FROM subscription_plan_limits quota
+                WHERE quota.plan_id = effective_plan.plan_id
+                  AND quota.feature_key = ${NARRATION_FEATURE_KEY}
+                  AND (
+                    quota.daily_limit = 0
+                    OR (
+                      SELECT count(DISTINCT existing.game_id)::integer
+                      FROM game_narrations existing
+                      JOIN game_players existing_player
+                        ON existing_player.game_id = existing.game_id
+                      WHERE existing_player.user_id = gp.user_id
+                        AND existing.game_id <> candidate.game_id
+                        AND COALESCE(existing.started_at, existing.created_at) >=
+                          date_trunc('day', now())
+                        AND COALESCE(existing.started_at, existing.created_at) <
+                          date_trunc('day', now()) + interval '1 day'
+                    ) < quota.daily_limit
+                  )
+              )
+            )
+        )
+      ORDER BY candidate.created_at ASC
       LIMIT 1
-      FOR UPDATE SKIP LOCKED
+      FOR UPDATE OF candidate SKIP LOCKED
     )
-    RETURNING game_id AS "gameId"
+    RETURNING target.game_id AS "gameId"
   `;
   return claimed ?? null;
 }

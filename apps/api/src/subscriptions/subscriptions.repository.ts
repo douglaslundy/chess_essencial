@@ -591,9 +591,10 @@ export class SubscriptionsRepository {
         SELECT count(DISTINCT gn.game_id)::integer AS count
         FROM game_narrations gn
         JOIN game_players gp ON gp.game_id = gn.game_id
-       WHERE gp.user_id = ${userId} AND gn.status = 'completed'
-         AND gn.completed_at >= date_trunc('day', now())
-         AND gn.completed_at < date_trunc('day', now()) + interval '1 day'
+       WHERE gp.user_id = ${userId}
+         AND COALESCE(gn.started_at, gn.created_at) >= date_trunc('day', now())
+         AND COALESCE(gn.started_at, gn.created_at) <
+           date_trunc('day', now()) + interval '1 day'
       `;
       return row?.count ?? 0;
     }

@@ -127,6 +127,7 @@ Implementação confirmada:
 - posições terminais são tratadas antes do motor, evitando classificar mate como erro por ausência de score UCI;
 - revisão oferece resumo por jogador, navegação lance a lance, melhor alternativa, voz, PGN e anotações privadas;
 - narração por IA seleciona até seis momentos-chave, usa somente fatos do motor e produz resumo, padrões e plano de estudo;
+- fila e claim da narração paga exigem plano/cota de jogador humano, excluem bots, falham fechados sem plano explícito e reservam a cota antes da chamada ao LLM;
 - sem IA disponível, a web constrói uma narração determinística gratuita a partir da análise;
 - explicações de posições idênticas são reutilizadas por cache SHA-256 de FEN, lance, alternativa e qualidade;
 - `skill_mastery` e o vocabulário de `exercises.tags` já existem, mas hoje recebem sinais das etapas da Jornada, não das partidas.
@@ -148,11 +149,11 @@ Gaps:
 - a narração escolhe os seis maiores centipawn losses dos dois jogadores; isso pode omitir um erro instrutivo do aluno;
 - o worker cria um subprocesso Stockfish novo e sequencial para cada posição; protege a VPS compartilhada, mas tem baixo throughput;
 - uma queda após o claim deixa análise/narração em `processing`; não há lease, timeout de recuperação ou retry de `failed`;
-- quando existe provedor ativo, o worker gera narração paga para toda análise concluída; entitlement e cota só são verificados na leitura da API, depois do custo;
+
 - profundidade fixa e centipawn loss absoluto não são calibrados por ritmo, fase ou nível do jogador;
 - não há telemetria confirmada de tempo de fila, duração, taxa de falha, custo ou utilidade da recomendação.
 
-Recomendação: preservar a arquitetura de verdade objetiva e acrescentar uma camada determinística `ErrorSignal` ligada ao catálogo de skills. Só então usar o LLM para explicar o sinal e gerar links rastreáveis para prática. Antes disso, corrigir seleção por entitlement/demanda, recuperação de jobs e métricas. Não aumentar paralelismo do Stockfish sem benchmark e limites de CPU/memória, pois isso pode piorar a VPS compartilhada.
+Recomendação: preservar a arquitetura de verdade objetiva e acrescentar uma camada determinística `ErrorSignal` ligada ao catálogo de skills. Só então usar o LLM para explicar o sinal e gerar links rastreáveis para prática. Antes disso, preservar a seleção por entitlement/demanda já corrigida e avançar na recuperação de jobs e métricas. Não aumentar paralelismo do Stockfish sem benchmark e limites de CPU/memória, pois isso pode piorar a VPS compartilhada.
 
 ### Problemas, desafios e Jornada
 
@@ -468,15 +469,15 @@ Gate: nenhuma dessas soluções pode ser removida, enfraquecida ou substituída 
 
 ### Recursos parciais
 
-Continuidade da Home e pós-fluxos; entendimento pedagógico do erro; prática/endgames e vínculos de conteúdo; recomendações e mastery sem sinais reais; estatísticas por período; moderação; paridade mobile; acessibilidade transversal; observabilidade fora da API; carga, uploads e backup externo.
+Continuidade da Home e pós-fluxos; entendimento pedagógico do erro; prática/endgames e vínculos de conteúdo; recomendações e mastery sem sinais reais; estatísticas por período; paridade mobile; acessibilidade transversal; observabilidade fora da API; carga, uploads e backup externo.
 
 ### Recursos inferiores
 
-Privacidade e bloqueio não aplicados de ponta a ponta; jobs sem lease/retry; custo de narração antes do entitlement; dica mantendo perfeição; tabuleiro mobile sem semântica assistiva; preferências que silenciam falha; sessão web em `localStorage`; rate limit por processo; deploy sem gate de CI; OpenAPI divergente. Cada item possui correção COR-T20 rastreável e critério mensurável no plano.
+Jobs sem lease/retry; dica mantendo perfeição; tabuleiro mobile sem semântica assistiva; preferências que silenciam falha; sessão web em `localStorage`; rate limit por processo; deploy sem gate de CI; OpenAPI divergente. Cada item possui correção COR-T20 rastreável e critério mensurável no plano.
 
 ### Recursos ausentes
 
-Taxonomia canônica de skills; `ErrorSignal` real vindo de partidas; mastery baseada em evidência; funil de produto; alertas/SLO; cópia externa de backup; fila administrativa de denúncias; Home agregadora; dashboard temporal; pipeline assinado de release mobile. Clubes/equipes/eventos também não existem, mas permanecem fora do plano automático.
+Taxonomia canônica de skills; `ErrorSignal` real vindo de partidas; mastery baseada em evidência; funil de produto; alertas/SLO; cópia externa de backup; Home agregadora; dashboard temporal; pipeline assinado de release mobile. Clubes/equipes/eventos também não existem, mas permanecem fora do plano automático.
 
 ### Recursos não aplicáveis
 
@@ -533,7 +534,7 @@ Taxonomia/versionamento de skills, proveniência e confiança do sinal, vínculo
 
 ## Quick wins
 
-1. aplicar entitlement antes de enfileirar narração;
+1. preservar o entitlement fail-closed aplicado antes de enfileirar narração;
 2. corrigir dica versus perfeição;
 3. corrigir bordas de teclado e foco dos diálogos web;
 4. tornar falha de preferência visível/reversível;

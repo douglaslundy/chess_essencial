@@ -66,7 +66,7 @@ describe('runGameNarrationJob', () => {
 
   it('does nothing when no narration is pending', async () => {
     callLlm.mockReset();
-    const { sql } = fakeSql([
+    const { calls, sql } = fakeSql([
       { match: (text) => text.includes('FROM ai_provider_keys'), rows: AI_CONFIG_ROW },
       { match: (text) => text.includes('INSERT INTO game_narrations'), rows: [] },
       { match: (text) => text.includes("SET status = 'processing'"), rows: [] },
@@ -76,6 +76,18 @@ describe('runGameNarrationJob', () => {
 
     expect(result).toEqual({ narratedGameId: null });
     expect(callLlm).not.toHaveBeenCalled();
+    const queue = calls.find((call) => call.text.includes('INSERT INTO game_narrations'));
+    const claim = calls.find((call) => call.text.includes("SET status = 'processing'"));
+    for (const guardedCall of [queue, claim]) {
+      expect(guardedCall?.text).toContain('FROM user_subscriptions');
+      expect(guardedCall?.text).toContain('FROM subscription_plan_limits quota');
+      expect(guardedCall?.text).toContain('FROM bot_personas');
+      expect(guardedCall?.text).toContain('FROM game_bots');
+      expect(guardedCall?.text).toContain('COALESCE(existing.started_at, existing.created_at)');
+      expect(guardedCall?.text).not.toContain('OR effective_plan.plan_id IS NULL');
+      expect(guardedCall?.values).toContain('ai_narrations_per_day');
+    }
+    expect(queue?.values).toContain(1);
   });
 
   it('narrates key moments (reusing the cache when hit), synthesizes the summary, and completes', async () => {

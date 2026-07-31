@@ -289,6 +289,29 @@ describe('SubscriptionsService.checkEntitlement', () => {
   });
 });
 
+describe('SubscriptionsService.hasFeatureAccess', () => {
+  it('allows reading generated narration even when the daily quota is already full', async () => {
+    const repository = new FakeSubscriptionsRepository();
+    repository.active = active(plan([{ dailyLimit: 1, featureKey: 'ai_narrations_per_day' }]));
+    repository.usage = 1;
+    const service = new SubscriptionsService(repository as never, {} as never, {} as never);
+
+    expect(await service.hasFeatureAccess('user-1', 'ai_narrations_per_day')).toBe(true);
+    expect(await service.checkEntitlement('user-1', 'ai_narrations_per_day')).toMatchObject({
+      allowed: false,
+      used: 1,
+    });
+  });
+
+  it('still blocks plans that do not include AI narration', async () => {
+    const repository = new FakeSubscriptionsRepository();
+    repository.active = active(plan([]));
+    const service = new SubscriptionsService(repository as never, {} as never, {} as never);
+
+    expect(await service.hasFeatureAccess('user-1', 'ai_narrations_per_day')).toBe(false);
+  });
+});
+
 describe('SubscriptionsService.verifyWebhookSignature', () => {
   const webhookSecret = 'test-webhook-secret';
   const settings = {

@@ -516,12 +516,12 @@ export class GamesRepository {
 
   async getNarration(gameId: string, userId: string): Promise<GameNarration> {
     await this.assertPlayer(gameId, userId);
-    // Not entitled: behave exactly like "no AI narration exists yet" (the
-    // same shape already used when no provider is configured at all) — the
-    // free, non-LLM template summary the frontend falls back to is never
-    // gated, only the real AI-generated one is.
-    const entitlement = await this.subscriptions.checkEntitlement(userId, 'ai_narrations_per_day');
-    if (!entitlement.allowed) {
+    // Daily quota is reserved by the worker before generation. Reading an
+    // already-generated artifact has no provider cost, so only plan access
+    // is checked here; otherwise the narration that filled the last quota
+    // slot would become unreadable as soon as it completed.
+    const hasAccess = await this.subscriptions.hasFeatureAccess(userId, 'ai_narrations_per_day');
+    if (!hasAccess) {
       return { keyMoments: [], patterns: [], status: 'pending', studyPlan: [], summary: null };
     }
     const [row] = await this.database.client<
