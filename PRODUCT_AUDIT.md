@@ -325,15 +325,128 @@ Recomendação: primeiro tornar conclusão + XP + streak + badges atômicos ou b
 
 ### Social, rankings e privacidade
 
-Estado: `UNKNOWN`.
+Estado consolidado do domínio: `EXISTING_EQUIVALENT` em amizades, presença, feed, mensagens, desafios e ranking; `EXISTING_INFERIOR` na aplicação efetiva de privacidade/bloqueio; `EXISTING_PARTIAL` em moderação.
+
+Implementação confirmada:
+
+- pedidos de amizade recebidos/enviados, aceitar, recusar, cancelar e remover amizade;
+- presença por Redis com TTL de 90 segundos e `last_seen_at` durável;
+- desafios diretos com expiração, cancelamento, aceite/recusa, bloqueios e `allow_challenges`;
+- feed cronológico próprio + amigos, cursor temporal, texto/foto, like e exclusão do próprio post;
+- mensagens diretas paginadas entre amigos, unread/read e lista de conversas;
+- ranking interno por cinco pools, provisório, número de partidas e avatar;
+- controles persistidos `is_profile_public`, `allow_challenges` e `allow_friend_requests`;
+- bloqueio direcional, denúncias sanitizadas/rate-limited e audit log;
+- gate de plano `social_access` nas rotas sociais, preservando presença/perfil usados por outros fluxos;
+- web cobre amigos, feed, mensagens, ranking e privacidade parcial; mobile cobre feed, amigos, mensagens e ranking.
+
+Evidências principais: módulos `social`, `feed`, `messages`, `safety`, matchmaking/ratings, contracts correspondentes, migrations 0008/0016–0018 e testes e2e.
+
+Soluções consideradas superiores e preservadas:
+
+1. presença efêmera no Redis combinada com último acesso durável;
+2. feed restrito ao próprio usuário e amizades aceitas, sem alcance público algorítmico;
+3. mensagens restritas a amizades aceitas e desafios respeitando bloqueio nos dois sentidos;
+4. rating separado por pool e identificado como interno, sem alegar rating FIDE oficial;
+5. superfície social móvel agrupada e menor que a navegação web.
+
+Gaps e falhas confirmadas:
+
+- `publicProfile()` ignora `is_profile_public` e bloqueios, expondo nome, avatar, presença e ratings mesmo com perfil privado;
+- leaderboard também ignora `is_profile_public`, expondo username, nome, avatar e rating;
+- `sendRequest()` não consulta `allow_friend_requests`; o controle persistido não produz efeito;
+- bloquear remove desafios pendentes, mas não encerra amizade, não impede mensagens e não exclui posts/feed já acessíveis;
+- `like()`/`getPost()` validam existência, não se o usuário pode visualizar o post;
+- web só permite alterar “Perfil público”; não há UI para pedidos/desafios, lista de bloqueados ou denúncia; mobile não oferece controles de segurança;
+- denúncia cria estado `open`, mas não existe endpoint/UI administrativo confirmado para fila, decisão, histórico ou SLA;
+- mensagens e notificações sociais usam polling; não há realtime, push ou preferências granulares;
+- não foram confirmadas métricas de massa crítica, abuso, tempo de resposta da moderação ou retenção social;
+- clubes, equipes, fóruns e eventos não existem — adicionar agora ampliaria custo de moderação e privacidade sem evidência.
+
+Recomendação: corrigir primeiro os controles já prometidos. Centralizar uma política `SocialRelationshipPolicy` aplicada a perfil, ranking, amizade, feed, likes, mensagens, desafios e presença; bloquear deve cortar comunicação imediatamente sem apagar evidência necessária à moderação. Criar fila administrativa mínima de denúncias com RBAC/auditoria. Só depois medir uso e decidir notificações/realtime. Clubes permanecem bloqueados por autorização e estudo de massa crítica.
 
 ### Configurações, tabuleiro, mobile e acessibilidade
 
-Estado: `UNKNOWN`.
+Estado consolidado do domínio: `EXISTING_SUPERIOR` no tabuleiro web e armazenamento seguro mobile; `EXISTING_EQUIVALENT` nas preferências web; `EXISTING_INFERIOR` na acessibilidade do tabuleiro mobile e paridade de configurações.
+
+Implementação confirmada:
+
+- preferências server-side para tema de peças, sugestão do Treinador, voz e narração da revisão;
+- mute de som local por dispositivo e três temas de peças no web;
+- tabuleiro web responsivo com orientação, coordenadas, drag/click, promoção, casas legais, último lance e FEN ilustrativa;
+- grade ARIA web com uma casa focável, nomes em português e navegação por setas;
+- anúncios `aria-live` para xeque, captura, promoção e roque;
+- navegação web com sidebar, drawer móvel, `aria-expanded` e rotas protegidas por entitlement;
+- mobile com quatro tabs focadas, tema claro/escuro, tabuleiro tocável e promoção;
+- tokens mobile guardados em `expo-secure-store`; web mantém sessão em `localStorage`;
+- foco/Escape/restauração reutilizáveis existem em `useDialogA11y` e já atendem diálogos administrativos;
+- CSS web possui foco visível e `prefers-reduced-motion` em animações identificadas.
+
+Soluções consideradas superiores e preservadas:
+
+1. estado de preferência compartilhável é persistido no perfil, enquanto mute permanece local ao dispositivo;
+2. tabuleiro web aceita mouse, toque e teclado sobre a mesma regra local, sem substituir autoridade do servidor;
+3. FEN ilustrativa inválida pode ser renderizada sem permitir lance falso;
+4. sessão mobile usa SecureStore, não armazenamento comum;
+5. navegação mobile permanece menor e específica do dispositivo.
+
+Gaps e falhas confirmadas:
+
+- casas do tabuleiro mobile não possuem `accessibilityLabel`, role ou estado de seleção; promoção usa letras cruas e não possui semântica de diálogo;
+- Perfil mobile mostra somente nome/usuário/logout, sem temas, voz, som, Treinador, privacidade ou preferências;
+- promoção e resultado da partida web declaram `role=dialog`, mas não reutilizam foco inicial, Escape, restauração ou trap;
+- seta direita/esquerda no tabuleiro web usa índice linear e pode atravessar da coluna h para a coluna a de outra fileira;
+- testes do tabuleiro web não cobrem navegação por teclado, foco do diálogo, Escape ou leitor de tela; mobile cobre toque/promoção/orientação, não acessibilidade;
+- providers de tema/voz atualizam a UI otimisticamente e silenciam falha da API, podendo mostrar preferência não salva;
+- web usa access/refresh token em `localStorage`, ampliando impacto de XSS; mobile já demonstra a alternativa segura;
+- não houve homologação formal, rota por rota, com teclado, leitor de tela, zoom, contraste/forced-colors e dispositivos reais;
+- o mobile ainda possui lacunas funcionais já catalogadas em Home, revisão, Treinador, perfil e configurações.
+
+Recomendação: preservar o tabuleiro web e corrigir incrementalmente bordas de teclado e foco dos diálogos. Dar ao tabuleiro mobile nomes completos de casa/peça, estado selecionado, dica de ação e promoção acessível. Expor no mobile apenas preferências compartilhadas relevantes e reportar falha de persistência nos dois clientes. Planejar migração da sessão web para cookie HttpOnly como mudança de segurança separada, com proteção CSRF e testes de realtime/refresh.
 
 ### Analytics, observabilidade, performance e segurança
 
-Estado: `UNKNOWN`.
+Estado consolidado do domínio: `EXISTING_SUPERIOR` em CI/migrations e autoridade do backend; `EXISTING_EQUIVALENT` em observabilidade HTTP e operação Git-pull; `EXISTING_INFERIOR` em analytics de produto, gates de deploy, recuperação externa e segurança da sessão web.
+
+Implementação confirmada:
+
+- logs HTTP JSON com request ID, duração, rota/status e trace ID quando válido;
+- métricas Prometheus protegidas em produção, contadores HTTP/WS/rate-limit e uptime;
+- OpenTelemetry/OTLP opcional na API, sem impedir inicialização quando ausente;
+- healthchecks de PostgreSQL, Redis, API, worker e web, além de carga básica pós-release;
+- headers defensivos, no-store em rotas sensíveis, sanitização, Problem Details e rate limit HTTP/WS;
+- audit logs para ações sensíveis selecionadas;
+- CI com format, lint, typecheck, testes, build, imagens non-root, banco limpo, conteúdo, e2e, carga, backup/restore e rollback/reapply;
+- deploy exclusivamente por Git pull `--ff-only`, worktree limpa, lock, imagem por commit, backup pré-migration e healthchecks;
+- backups custom PostgreSQL com SHA-256, permissão 600, restore com confirmação e retenção local de 14 dias;
+- migrations up/down com checksum e documentação de perdas.
+
+Soluções consideradas superiores e preservadas:
+
+1. CI prova banco limpo, importação real, rollback/reapply e restauração de backup;
+2. deploy usa Git como fonte, lock, commit identificável e nunca edição/SSH manual de código;
+3. migrations aplicadas não são reescritas e têm checksum;
+4. falha de release não avança o marcador de sucesso;
+5. rollback destrutivo de schema não é automatizado; recuperação deve usar forward-fix ou restore deliberado.
+
+Gaps e riscos confirmados:
+
+- não existe analytics de produto para o ciclo Jogar → Analisar → Aprender/Praticar → Jogar;
+- métricas são `Map` em memória, reiniciam por processo e não possuem histograma de latência/fila/custo;
+- não foram encontrados scraper, dashboard, alertas, on-call ou SLOs operacionais configurados no repositório;
+- worker, web, jobs Stockfish/LLM e filas não possuem tracing/métricas equivalentes à API;
+- `outbox_events` não tem publisher/consumer/retenção e `published_at` não avança;
+- auto-deploy implanta qualquer novo `origin/main` sem provar CI verde;
+- healthcheck falho não faz rollback de código; isso exige runbook, mas rollback automático de schema seria regressivo;
+- backups ficam no mesmo host por 14 dias; perda/comprometimento da VPS pode eliminar produção e recuperação;
+- rate limit HTTP é por processo, reinicia e multiplica com réplicas;
+- access e refresh tokens web ficam em `localStorage`; headers do HTML Next/Traefik não foram provados;
+- upload confia no MIME declarado e extensão, sem validar assinatura real do arquivo;
+- carga básica testa 40 chamadas ao health, não partidas, realtime, análise, feed ou picos de autenticação;
+- OpenAPI ainda diverge de controllers ativos em Jornada/live narration;
+- mobile não possui build assinado/release pipeline na CI.
+
+Recomendação: bloquear deploy até o commit ter CI verde; copiar backups criptografados para destino externo e testar restore periódico; criar SLIs/alertas mínimos para disponibilidade, erro, latência, filas e custo. Implementar analytics com eventos minimizados e consentimento, usando outbox idempotente. Distribuir rate limit com fallback, validar conteúdo real de uploads e migrar sessão web para HttpOnly/CSRF em plano próprio. Não automatizar rollback destrutivo de schema.
 
 ## Classificações consolidadas
 
