@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { toIsoString } from '../common/dates/to-iso-string.js';
 import { DatabaseService } from '../database/database.service.js';
+import { SafetyRepository } from '../safety/safety.repository.js';
 
 type PostRow = {
   author_avatar_url: string | null;
@@ -20,7 +21,10 @@ const FEED_PAGE_SIZE = 30;
 
 @Injectable()
 export class FeedRepository {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly safety: SafetyRepository,
+  ) {}
 
   async createPost(authorId: string, body: string | null, photoUrl: string | null) {
     const sql = this.database.client;
@@ -54,6 +58,11 @@ export class FeedRepository {
           WHERE f.status = 'accepted' AND (f.requester_id = ${viewerId} OR f.addressee_id = ${viewerId})
         )
       )
+      AND NOT EXISTS (
+        SELECT 1 FROM user_blocks b
+        WHERE (b.blocker_user_id = ${viewerId} AND b.blocked_user_id = p.author_id)
+           OR (b.blocker_user_id = p.author_id AND b.blocked_user_id = ${viewerId})
+      )
       AND (${before}::timestamptz IS NULL OR p.created_at < ${before}::timestamptz)
       ORDER BY p.created_at DESC
       LIMIT ${FEED_PAGE_SIZE}
@@ -70,8 +79,13 @@ export class FeedRepository {
 
   async like(userId: string, postId: string) {
     const sql = this.database.client;
-    const [post] = await sql<{ id: string }[]>`SELECT id FROM posts WHERE id = ${postId}`;
+    const [post] = await sql<{ author_id: string; id: string }[]>`
+      SELECT id, author_id FROM posts WHERE id = ${postId}
+    `;
     if (!post) throw new NotFoundException('Post não encontrado');
+    if (await this.safety.isBlockedEitherWay(userId, post.author_id)) {
+      throw new NotFoundException('Post não encontrado');
+    }
     await sql`
       INSERT INTO post_likes (post_id, user_id) VALUES (${postId}, ${userId})
       ON CONFLICT (post_id, user_id) DO NOTHING
@@ -98,6 +112,11 @@ export class FeedRepository {
       JOIN users u ON u.id = p.author_id
       JOIN user_profiles up ON up.user_id = p.author_id
       WHERE p.id = ${postId}
+        AND NOT EXISTS (
+          SELECT 1 FROM user_blocks b
+          WHERE (b.blocker_user_id = ${viewerId} AND b.blocked_user_id = p.author_id)
+             OR (b.blocker_user_id = p.author_id AND b.blocked_user_id = ${viewerId})
+        )
     `;
     if (!row) throw new NotFoundException('Post não encontrado');
     return this.toPost(viewerId, row);

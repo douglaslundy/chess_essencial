@@ -8,6 +8,7 @@ const describeDatabase = process.env.RUN_DB_TESTS === 'true' ? describe : descri
 interface Identity {
   accessToken: string;
   userId: string;
+  username: string;
 }
 
 describeDatabase('safety and privacy database integration', () => {
@@ -56,7 +57,7 @@ describeDatabase('safety and privacy database integration', () => {
       url: '/v1/auth/login',
     });
     expect(login.statusCode, login.body).toBe(200);
-    return { accessToken: login.json().tokens.accessToken, userId: registered.user.id };
+    return { accessToken: login.json().tokens.accessToken, userId: registered.user.id, username };
   }
 
   it('updates privacy and sanitizes persisted profile text', async () => {
@@ -87,6 +88,41 @@ describeDatabase('safety and privacy database integration', () => {
   });
 
   it('persists directional blocks and prevents challenges', async () => {
+    const request = await app.inject({
+      headers: auth(actor),
+      method: 'POST',
+      payload: { username: target.username },
+      url: '/v1/friends/requests',
+    });
+    expect(request.statusCode, request.body).toBe(201);
+    const accepted = await app.inject({
+      headers: auth(target),
+      method: 'POST',
+      url: `/v1/friends/requests/${actor.username}/accept`,
+    });
+    expect(accepted.statusCode, accepted.body).toBe(201);
+
+    const post = await app.inject({
+      headers: auth(target),
+      method: 'POST',
+      payload: { body: 'Evidência preservada após bloqueio' },
+      url: '/v1/posts',
+    });
+    expect(post.statusCode, post.body).toBe(201);
+    const liked = await app.inject({
+      headers: auth(actor),
+      method: 'POST',
+      url: `/v1/posts/${post.json().id}/like`,
+    });
+    expect(liked.statusCode, liked.body).toBe(201);
+    const message = await app.inject({
+      headers: auth(actor),
+      method: 'POST',
+      payload: { body: 'Mensagem preservada para moderação' },
+      url: `/v1/messages/${target.userId}`,
+    });
+    expect(message.statusCode, message.body).toBe(201);
+
     const blocked = await app.inject({
       headers: auth(actor),
       method: 'PUT',
@@ -99,6 +135,52 @@ describeDatabase('safety and privacy database integration', () => {
     expect(list.json()).toEqual([
       expect.objectContaining({ id: target.userId, username: 'phase11_target' }),
     ]);
+
+    const friends = await app.inject({ headers: auth(actor), method: 'GET', url: '/v1/friends' });
+    expect(friends.json()).toEqual([]);
+    const conversations = await app.inject({
+      headers: auth(actor),
+      method: 'GET',
+      url: '/v1/messages/conversations',
+    });
+    expect(conversations.json()).toEqual([]);
+    const blockedMessage = await app.inject({
+      headers: auth(target),
+      method: 'POST',
+      payload: { body: 'Não deve chegar' },
+      url: `/v1/messages/${actor.userId}`,
+    });
+    expect(blockedMessage.statusCode).toBe(403);
+    const blockedProfile = await app.inject({
+      headers: auth(actor),
+      method: 'GET',
+      url: `/v1/users/${target.username}`,
+    });
+    expect(blockedProfile.statusCode).toBe(404);
+    const feed = await app.inject({ headers: auth(actor), method: 'GET', url: '/v1/feed' });
+    expect(feed.json().some((entry: { id: string }) => entry.id === post.json().id)).toBe(false);
+    const blockedLike = await app.inject({
+      headers: auth(actor),
+      method: 'POST',
+      url: `/v1/posts/${post.json().id}/like`,
+    });
+    expect(blockedLike.statusCode).toBe(404);
+
+    const [evidence] = await database.client<
+      { friendships: number; likes: number; messages: number; posts: number }[]
+    >`
+      SELECT
+        (SELECT count(*)::integer FROM friendships
+          WHERE (requester_id = ${actor.userId} AND addressee_id = ${target.userId})
+             OR (requester_id = ${target.userId} AND addressee_id = ${actor.userId})
+        ) AS friendships,
+        (SELECT count(*)::integer FROM direct_messages
+          WHERE sender_id = ${actor.userId} AND recipient_id = ${target.userId}
+        ) AS messages,
+        (SELECT count(*)::integer FROM posts WHERE id = ${post.json().id}) AS posts,
+        (SELECT count(*)::integer FROM post_likes WHERE post_id = ${post.json().id}) AS likes
+    `;
+    expect(evidence).toEqual({ friendships: 0, likes: 1, messages: 1, posts: 1 });
 
     const challenge = await app.inject({
       headers: auth(target),

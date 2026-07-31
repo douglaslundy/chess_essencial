@@ -2,6 +2,8 @@
 
 ## Última atualização
 
+2026-07-31 - **COR-T20-007 concluída: bloqueio transversal aplicado sem apagar evidências.** A policy bilateral centralizada em Safety agora encerra amizade/pedidos e desafios, oculta perfil/presença/feed/conversas e impede novas mensagens/likes. Mensagens, posts e likes existentes permanecem no banco para moderação. Typecheck, lint, build e 98 testes da API passaram; o e2e PostgreSQL novo ficou pronto para a CI, pois Docker não existe nesta máquina. Nenhum deploy foi realizado. Próxima tarefa: COR-T20-008.
+
 2026-07-31 - **COR-T20-006 concluída: controles de privacidade agora produzem efeito real.** Perfil privado retorna 404 para estranhos, permanece acessível ao próprio usuário e amigos, é excluído do leaderboard, e novos pedidos respeitam `allow_friend_requests` com erro genérico. Typecheck, lint, build e 98 testes da API passaram; 122 integrações de banco ficaram corretamente puladas porque Docker/PostgreSQL não estão disponíveis nesta máquina. Nenhum deploy foi realizado. Próxima tarefa: COR-T20-007.
 
 2026-07-31 - **T20-A16 concluída: auditoria validada e entregue nos cinco documentos obrigatórios.** Os 23 tópicos estão respondidos, a matriz tem 131 requisitos sem IDs duplicados ou colunas inválidas, plano/roadmap e gates estão coerentes e as 16 correções permanecem rastreáveis. A execução automática foi liberada a partir da COR-T20-006; nenhum deploy foi realizado. Próxima tarefa: COR-T20-006.
@@ -167,7 +169,7 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-COR-T20-007 — Aplicar bloqueio em toda interação social, sem deploy.
+COR-T20-008 — Criar fluxo administrativo mínimo de denúncias, sem deploy.
 ## Contexto necessário
 
 - `AGENTS.md`

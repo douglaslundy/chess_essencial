@@ -7,6 +7,7 @@ import {
 
 import { toIsoString, toIsoStringOrNull } from '../common/dates/to-iso-string.js';
 import { DatabaseService } from '../database/database.service.js';
+import { SafetyRepository } from '../safety/safety.repository.js';
 
 type FriendRow = {
   avatar_url: string | null;
@@ -20,7 +21,10 @@ type RequestRow = FriendRow & { created_at: Date | string };
 
 @Injectable()
 export class SocialRepository {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly safety: SafetyRepository,
+  ) {}
 
   private async targetUser(username: string) {
     const sql = this.database.client;
@@ -33,23 +37,13 @@ export class SocialRepository {
     return user ?? null;
   }
 
-  private async isBlockedEitherWay(userId: string, otherId: string) {
-    const sql = this.database.client;
-    const [blocked] = await sql<{ present: boolean }[]>`
-      SELECT true AS present FROM user_blocks
-       WHERE (blocker_user_id = ${userId} AND blocked_user_id = ${otherId})
-          OR (blocker_user_id = ${otherId} AND blocked_user_id = ${userId})
-    `;
-    return Boolean(blocked);
-  }
-
   async sendRequest(requesterId: string, username: string) {
     const sql = this.database.client;
     const target = await this.targetUser(username);
     if (!target || target.status !== 'active')
       throw new NotFoundException('Usuário não encontrado');
     if (target.id === requesterId) throw new BadRequestException('Você não pode se adicionar.');
-    if (await this.isBlockedEitherWay(requesterId, target.id)) {
+    if (await this.safety.isBlockedEitherWay(requesterId, target.id)) {
       throw new BadRequestException('Não é possível enviar pedido para este usuário.');
     }
     if (!target.allow_friend_requests) {
@@ -83,6 +77,9 @@ export class SocialRepository {
     const sql = this.database.client;
     const requester = await this.targetUser(requesterUsername);
     if (!requester) throw new NotFoundException('Pedido não encontrado');
+    if (await this.safety.isBlockedEitherWay(addresseeId, requester.id)) {
+      throw new NotFoundException('Pedido não encontrado');
+    }
     if (accept) {
       const result = await sql`
         UPDATE friendships SET status = 'accepted', updated_at = now()
@@ -176,6 +173,13 @@ export class SocialRepository {
        WHERE u.username = ${username} AND u.status = 'active'
     `;
     if (!row) throw new NotFoundException('Usuário não encontrado');
+    if (
+      viewerId &&
+      viewerId !== row.id &&
+      (await this.safety.isBlockedEitherWay(viewerId, row.id))
+    ) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
     let friendshipStatus: 'none' | 'pending_outgoing' | 'pending_incoming' | 'friends' | 'self' =
       'none';
     if (viewerId) {

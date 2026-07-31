@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 
 import { toIsoString, toIsoStringOrNull } from '../common/dates/to-iso-string.js';
 import { DatabaseService } from '../database/database.service.js';
+import { SafetyRepository } from '../safety/safety.repository.js';
 
 type ConversationRow = {
   avatar_url: string | null;
@@ -27,9 +28,13 @@ const MESSAGE_PAGE_SIZE = 50;
 
 @Injectable()
 export class MessagesRepository {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly safety: SafetyRepository,
+  ) {}
 
   private async isFriend(userId: string, otherId: string): Promise<boolean> {
+    if (await this.safety.isBlockedEitherWay(userId, otherId)) return false;
     const [row] = await this.database.client<{ present: boolean }[]>`
       SELECT true AS present FROM friendships
        WHERE status = 'accepted'
@@ -62,6 +67,11 @@ export class MessagesRepository {
         WHERE recipient_id = ${userId} AND sender_id = u.id AND read_at IS NULL
       ) unread ON true
       WHERE f.status = 'accepted' AND (f.requester_id = ${userId} OR f.addressee_id = ${userId})
+        AND NOT EXISTS (
+          SELECT 1 FROM user_blocks b
+          WHERE (b.blocker_user_id = ${userId} AND b.blocked_user_id = u.id)
+             OR (b.blocker_user_id = u.id AND b.blocked_user_id = ${userId})
+        )
       ORDER BY last_msg.created_at DESC NULLS LAST, up.display_name
     `;
     return rows.map((row) => ({

@@ -68,6 +68,16 @@ export class SafetyRepository {
     );
   }
 
+  async isBlockedEitherWay(userId: string, otherUserId: string): Promise<boolean> {
+    const [row] = await this.database.client<{ present: boolean }[]>`
+      SELECT true AS present
+      FROM user_blocks
+      WHERE (blocker_user_id = ${userId} AND blocked_user_id = ${otherUserId})
+         OR (blocker_user_id = ${otherUserId} AND blocked_user_id = ${userId})
+    `;
+    return Boolean(row);
+  }
+
   async block(userId: string, blockedUserId: string) {
     await this.database.client.begin(async (transaction) => {
       const [target] = await transaction<{ id: string }[]>`
@@ -84,6 +94,11 @@ export class SafetyRepository {
         WHERE status = 'pending'
           AND ((challenger_id = ${userId} AND challenged_id = ${blockedUserId})
             OR (challenger_id = ${blockedUserId} AND challenged_id = ${userId}))
+      `;
+      await transaction`
+        DELETE FROM friendships
+        WHERE (requester_id = ${userId} AND addressee_id = ${blockedUserId})
+           OR (requester_id = ${blockedUserId} AND addressee_id = ${userId})
       `;
       await transaction`
         INSERT INTO audit_logs (actor_user_id, action, entity_type, entity_id)
