@@ -2,6 +2,14 @@
 
 ## Última atualização
 
+2026-07-30 - **T20-A12 concluída: analytics, observabilidade, performance, segurança, CI, deploy e recuperação auditados sem alterar produto.** CI/migrations e proteção da API foram preservadas como superiores. COR-T20-012–016 registram gate de CI no deploy, backup externo, sessão web/rate limit distribuído, validação real de uploads e paridade OpenAPI. Rollback automático destrutivo de schema foi rejeitado como regressão. Próxima tarefa: T20-A13.
+
+2026-07-30 - **T20-A11 concluída: configurações, tabuleiros, mobile e acessibilidade auditados sem alterar produto.** O tabuleiro web multimodal e o SecureStore mobile foram preservados como superiores. Viraram COR-T20-009–011: acessibilidade inexistente nas casas do tabuleiro mobile; bordas de teclado e foco/Escape em diálogos web; e preferências otimistas que silenciam falha de persistência. Próxima tarefa: T20-A12.
+
+2026-07-30 - **T20-A10 concluída: social, ranking, bloqueios, denúncias e privacidade auditados sem alterar produto.** Foram preservados presença Redis + last seen, feed cronológico entre amigos, mensagens restritas a amizade, desafios e rating por pool. Três falhas P0 viraram COR-T20-006–008: flags de privacidade ignoradas, bloqueio incompleto entre módulos e denúncias sem triagem administrativa. Clubes permanecem bloqueados por autorização e massa crítica. Próxima tarefa: T20-A11.
+
+2026-07-30 - **Riscos confirmados da Tarefa 20 registrados como correções rastreáveis.** `TAREFAS.md` agora contém COR-T20-001 a COR-T20-005, cobrindo custo de narração antes do entitlement, recuperação de jobs, ligação erro → skill → prática, semântica de dica/perfeição e limites seguros do Stockfish. Permanecem bloqueadas para implementação até a entrega da auditoria T20-A16; nenhuma mudança de produto ou deploy foi realizada.
+
 2026-07-30 - **T20-A09 concluída: perfil, estatísticas, conquistas e gamificação auditados sem alterar produto.** Ratings por modalidade e gamificação enxuta foram preservados como superiores. Não existe dashboard temporal ou insights confiáveis. Prioridade P0: tornar conclusão da etapa e XP/streak/badges atômicos/idempotentes; hoje uma falha intermediária pode deixar a etapa concluída sem recompensa. Também foram registrados timezone do streak e dica preservando perfeição. Próxima tarefa: T20-A10.
 
 2026-07-30 - **T20-A08 concluída: Home, navegação e continuidade auditadas sem alterar produto.** Partidas e aulas possuem retomada autoritativa superior, mas a Home web só prioriza uma partida ativa e dois atalhos estáticos; mobile não possui hub. O pós-partida é o beco sem saída mais crítico: o resultado só fecha, sem revisão ou próximo jogo. Foi recomendado um endpoint agregador de continuidade antes de ampliar cards. A sidebar atual será preservada até existir telemetria; nenhuma reorganização especulativa será aplicada. Próxima tarefa: T20-A09.
@@ -149,7 +157,7 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-T20-A06 — Auditar Aprender, cursos, prática e instrutor, sem alterar código de produto.
+T20-A13 — Consolidar `FEATURE_MATRIX.md`, sem alterar código de produto.
 ## Contexto necessário
 
 - `AGENTS.md`
@@ -157,11 +165,11 @@ T20-A06 — Auditar Aprender, cursos, prática e instrutor, sem alterar código 
 - `MEMORIA_DESENVOLVIMENTO_TAREFA_20.md`
 - `TAREFAS.md`
 - `ARCHITECTURE_AUDIT.md`
-- `apps/api/src/courses/` e `apps/api/src/lesson-runtime/`
-- `apps/web/src/components/lessons/` e páginas de cursos
-- telas mobile de cursos e aulas
-- contratos, migrations, importer/seeds e testes de cursos, aulas e progresso
-- vínculos entre conteúdo, exercícios, Jornada e recomendações
+- `apps/web/src/components/game/chess-board.tsx`, temas, preferências e navegação
+- `apps/mobile/src/components/chess-board.tsx`, rotas, armazenamento seguro e telas principais
+- configurações de perfil, voz, som, tabuleiro e Treinador
+- testes de teclado, foco, ARIA, contraste, reduced motion e responsividade
+- contratos e persistência compartilhados entre web/mobile
 - Regra: um commit por tarefa; nenhum deploy sem pedido explícito
 
 ## Contexto histórico anterior

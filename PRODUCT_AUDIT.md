@@ -3,7 +3,7 @@
 ## Estado
 
 - Missão: Tarefa 20.
-- Fase atual: T20-A09 concluída; T20-A10 é a próxima frente.
+- Fase atual: T20-A12 concluída; T20-A13 é a próxima frente.
 - Base Git: `main` em `0203a67e3762e1756438b498d2f9e8e81864022c`.
 - Data do baseline: 2026-07-30.
 - Regra: nenhuma afirmação de presença ou ausência é definitiva sem evidência.

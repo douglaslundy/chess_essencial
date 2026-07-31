@@ -232,4 +232,4 @@ A Fase 0 estará concluída somente quando:
 
 ## Próxima ação automática recomendada
 
-Executar `T20-A10 — Social, rankings e privacidade`, verificando amizades, desafios, mensagens, feed, bloqueios, denúncias, exposição de perfil e controles de consentimento. Não iniciar implementação de produto até concluir e apresentar a auditoria.
+Executar `T20-A13 — Consolidar FEATURE_MATRIX.md`, removendo placeholders/duplicidades, cobrindo todos os requisitos e alinhando prioridades, dependências, estimativas e autorizações. Não iniciar implementação de produto até concluir e apresentar a auditoria.
