@@ -9,7 +9,7 @@
 
 ## Correções identificadas pela Tarefa 20 (pendentes)
 
-Estas correções foram confirmadas pela auditoria, mas só podem ser implementadas depois da entrega da T20-A16. A ordem abaixo considera impacto, custo e dependências; nenhuma autoriza deploy.
+Estas correções foram confirmadas e liberadas pelos gates documentais da T20-A16. A ordem abaixo considera impacto, custo e dependências; nenhuma autoriza deploy.
 
 - [ ] **COR-T20-001 — P0 — Aplicar entitlement antes de gerar narração paga.** Hoje o worker produz narração para toda análise concluída e a API verifica plano/cota somente na leitura, depois do custo. Enfileirar apenas demanda autorizada e preservar o fallback determinístico gratuito.
 - [ ] **COR-T20-002 — P0 — Recuperar jobs de análise e narração interrompidos.** Claims não têm lease; uma queda pode deixar registros eternamente em `processing`, e `failed` não possui retry controlado. Adicionar lease/timeout, tentativas limitadas, idempotência e estado terminal observável.
@@ -37,7 +37,7 @@ Estas correções foram confirmadas pela auditoria, mas só podem ser implementa
 - Deploy continua exclusivamente por `main` e `deploy/auto-deploy.sh` com `git pull --ff-only`.
 - Fazer um commit por tarefa concluída e não executar deploy sem pedido explícito.
 
-## Tarefa 20 — Auditoria e evolução integrada (em andamento)
+## Tarefa 20 — Auditoria concluída; correções em execução
 
 Fonte: `tarefa_20.txt.txt`. Memória: `MEMORIA_DESENVOLVIMENTO_TAREFA_20.md`.
 
@@ -57,7 +57,7 @@ Fonte: `tarefa_20.txt.txt`. Memória: `MEMORIA_DESENVOLVIMENTO_TAREFA_20.md`.
 - [x] T20-A13 — Consolidar `FEATURE_MATRIX.md`.
 - [x] T20-A14 — Soluções superiores e gates.
 - [x] T20-A15 — Consolidar plano e roadmap.
-- [ ] T20-A16 — Validar e entregar a auditoria.
+- [x] T20-A16 — Validar e entregar a auditoria.
 
 Entregáveis: `PRODUCT_AUDIT.md`, `FEATURE_MATRIX.md`, `ARCHITECTURE_AUDIT.md`, `IMPLEMENTATION_PLAN.md` e `ROADMAP.md`.
 

@@ -45,3 +45,39 @@ A auditoria baseada em evidências foi consolidada. Este roadmap substitui lista
 ## P3 — Exige autorização e estudo próprio
 
 Clubes, equipes, fóruns, eventos, feed público, puzzle rating, torneios e anti-cheat avançado. Nenhum desses subsistemas será iniciado automaticamente.
+
+## Histórico preservado — roadmap anterior
+
+As listas abaixo registram a intenção original MVP/V1/V2. Elas foram preservadas para rastreabilidade, mas não substituem a matriz auditada nem indicam ausência.
+
+### MVP
+
+- auth e perfil;
+- matchmaking casual/rated;
+- rapid/blitz;
+- partida online e relógio;
+- rating;
+- histórico e replay;
+- curso módulo 1;
+- exercícios básicos;
+- admin simples.
+
+### V1
+
+- dez módulos completos;
+- 1.298 exercícios;
+- amigos e desafios;
+- notificações;
+- leaderboard;
+- anotações de revisão;
+- mobile-ready API.
+
+### V2
+
+- torneios;
+- engine de análise assíncrona;
+- repetição espaçada;
+- recomendações personalizadas;
+- aplicativo mobile;
+- anti-cheat avançado;
+- clubes e professores.
