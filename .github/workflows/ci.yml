@@ -187,7 +187,14 @@ jobs:
           done
           pnpm load:basic
 
-      - name: Verify backup and restore
+      - name: Install encrypted backup tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes restic
+
+      - name: Verify encrypted offsite backup and disaster restore
+        env:
+          VERIFY_OFFSITE_BACKUP: true
         run: |
           PG_CONTAINER="$(docker ps --filter ancestor=postgres:17.10-alpine3.23 --format '{{.ID}}' | head -n 1)" bash scripts/verify-backup-restore.sh
 

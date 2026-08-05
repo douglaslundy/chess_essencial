@@ -29,8 +29,12 @@ docker compose --project-name "$PROJECT_NAME" --file "$COMPOSE_FILE" --env-file 
 
 test -s "$temporary_file"
 mv "$temporary_file" "$backup_file"
-sha256sum "$backup_file" >"$backup_file.sha256"
+(
+  cd "$BACKUP_DIR"
+  sha256sum "$(basename "$backup_file")" >"$(basename "$backup_file").sha256"
+)
 chmod 600 "$backup_file" "$backup_file.sha256"
+bash "$ROOT_DIR/deploy/offsite-backup.sh" "$backup_file"
 find "$BACKUP_DIR" -type f -mtime "+$RETENTION_DAYS" -name 'chess-*.dump*' -delete
 
 printf '%s\n' "backup.status=ok" "backup.file=$backup_file"

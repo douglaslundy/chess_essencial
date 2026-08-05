@@ -17,7 +17,10 @@ backup_file="$(realpath "$backup_file")"
 backup_root="$(realpath "$BACKUP_DIR")"
 [[ "$backup_file" == "$backup_root"/* ]]
 test -s "$backup_file"
-sha256sum --check "$backup_file.sha256"
+(
+  cd "$(dirname "$backup_file")"
+  sha256sum --check "$(basename "$backup_file").sha256"
+)
 test -f "$ENV_FILE"
 
 set -a

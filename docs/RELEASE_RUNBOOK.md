@@ -8,7 +8,7 @@ O GitHub `douglaslundy/chess_essencial` é a única origem de código. A mudanç
 
 O endereço e as credenciais do destino são configurados fora do repositório e não pertencem aos logs.
 
-Pré-requisitos: Git, Docker Engine com Compose v2, OpenSSL, curl, `flock`, systemd de usuário e uma deploy key do GitHub somente leitura. No bootstrap, SSH serve apenas para preparar o host:
+Pré-requisitos: Git, Docker Engine com Compose v2, OpenSSL, curl, `flock`, Restic, systemd de usuário e uma deploy key do GitHub somente leitura. No bootstrap, SSH serve apenas para preparar o host:
 
 ```bash
 git clone github-xadrez:douglaslundy/chess_essencial.git /home/lundy/xadrez-essencial
@@ -56,20 +56,69 @@ Validar externamente:
 - worker: `http://<host-deploy>:4101/health`;
 - web: `http://<host-deploy>:3100/api/health`.
 
-## Backup e restore
+## Backup externo criptografado e restore
 
-Backups ficam em `.deploy/backups`, possuem SHA-256, permissão restrita e retenção padrão de 14 dias. Backup manual permitido para operação de dados:
+Antes de cada migration em um banco inicializado, `deploy/backup-database.sh` cria um dump custom do PostgreSQL e um SHA-256 portável. Em seguida, `deploy/offsite-backup.sh` empacota os dois arquivos e exige que o Restic conclua a cópia criptografada fora da VPS. Falha de ferramenta, credencial, rede, integridade ou retenção interrompe o deploy antes da migration. O repositório remoto nunca deve usar credenciais embutidas na URL.
+
+Política padrão por host/tag: 14 pontos diários, 8 semanais e 12 mensais. Os dumps locais continuam em `.deploy/backups`, com permissão `0600` e retenção de 14 dias; eles não substituem a cópia externa.
+
+### Configuração inicial
+
+Use um bucket/conta dedicado fora da VPS. S3 compatível é o backend recomendado; B2, SFTP e demais backends do Restic também são aceitos. Instale o Restic pelo gerenciador de pacotes da distribuição e crie o arquivo de senha fora do checkout:
+
+```bash
+install -d -m 700 /home/lundy/.config/xadrez
+umask 077
+openssl rand -base64 48 > /home/lundy/.config/xadrez/restic-password
+chmod 600 /home/lundy/.config/xadrez/restic-password
+```
+
+Configure `.env.vps` sem versionar valores reais:
+
+```dotenv
+RESTIC_REPOSITORY=s3:https://s3.example.com/xadrez-backups
+RESTIC_PASSWORD_FILE=/home/lundy/.config/xadrez/restic-password
+AWS_ACCESS_KEY_ID=<fornecido-fora-do-git>
+AWS_SECRET_ACCESS_KEY=<fornecido-fora-do-git>
+XADREZ_RESTIC_HOST=xadrez-production
+XADREZ_RESTIC_KEEP_DAILY=14
+XADREZ_RESTIC_KEEP_WEEKLY=8
+XADREZ_RESTIC_KEEP_MONTHLY=12
+```
+
+Inicialize uma única vez e confirme o acesso antes de liberar o primeiro deploy com essa regra:
+
+```bash
+set -a
+source .env.vps
+set +a
+restic init
+restic check
+```
+
+Perder a senha do Restic torna os backups irrecuperáveis. Guarde uma cópia da senha e das credenciais do storage em cofre separado da VPS e teste esse acesso periodicamente.
+
+### Backup e recuperação
+
+Backup manual permitido para operação de dados:
 
 ```bash
 bash deploy/backup-database.sh
 ```
 
-Restore substitui o banco e exige confirmação explícita. Faça uma cópia adicional e registre o incidente antes de executar:
+Para um desastre da VPS, configure as mesmas variáveis Restic em um host limpo, recupere o snapshot e use o caminho impresso por `offsite_restore.file`:
 
 ```bash
+bash deploy/fetch-offsite-backup.sh latest
 RESTORE_CONFIRM=replace-xadrez-essencial-database \
-  bash deploy/restore-database.sh .deploy/backups/chess-AAAAMMDDTHHMMSSZ.dump
+  bash deploy/restore-database.sh .deploy/backups/offsite-restore-AAAAMMDDTHHMMSSZ/chess-AAAAMMDDTHHMMSSZ.dump
 ```
+
+O fetch só grava dentro de `.deploy/backups`, exige diretório vazio e valida o checksum antes de liberar o arquivo. O restore destrutivo continua exigindo confirmação explícita. Para recuperar uma versão específica, passe o ID do snapshot no lugar de `latest`.
+
+### Verificação e retenção
+
+A CI cria um repositório Restic isolado, prova que uma senha incorreta não abre o repositório, executa `check --read-data`, remove o dump local, baixa a cópia criptografada e restaura o PostgreSQL em outro banco, comparando contagens críticas. Em operação, execute mensalmente `restic check --read-data-subset=10%` e trimestralmente uma restauração em ambiente isolado; registre data, snapshot e resultado sem registrar credenciais.
 
 ## Falha e rollback
 
