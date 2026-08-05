@@ -4,6 +4,7 @@ import type {
   RegisterInput,
   ResendVerificationInput,
   TokenPair,
+  UpdateMeInput,
 } from '@xadrez/contracts';
 
 import { mobileEnv } from '@/lib/env';
@@ -125,4 +126,6 @@ export const api = {
       body: JSON.stringify({ refreshToken }),
     }),
   getMe: (token: string) => request<PublicUser>('/me', token),
+  updateMe: (input: UpdateMeInput, token: string) =>
+    request<PublicUser>('/me', token, { method: 'PATCH', body: JSON.stringify(input) }),
 };

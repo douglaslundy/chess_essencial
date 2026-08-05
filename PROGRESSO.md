@@ -1,3 +1,5 @@
+2026-08-05 - **COR-T20-011 concluída: preferências não escondem mais falhas de persistência.** Tema de peças, voz e narração web agora informam erros, revertem o estado otimista e adotam a resposta autoritativa da API. O Perfil mobile expõe a privacidade compartilhada realmente suportada, com salvamento otimista, rollback e erro acessível; controles sem efeito no cliente não foram exibidos. Gates: 114 testes web, 23 mobile, lint/typecheck de ambos e build web aprovados; lint web manteve apenas dois warnings preexistentes. Nenhum push ou deploy. Próxima tarefa: COR-T20-012.
+
 2026-08-05 - **COR-T20-010 concluída: teclado e foco dos diálogos web corrigidos.** Setas horizontais não atravessam mais h↔a. Promoção e resultado reutilizam `useDialogA11y`, com foco inicial, Escape e restauração; o resultado foi extraído para componente testável sem mudar CSS. Gates: 111 testes web, typecheck e build aprovados; lint sem erros e com dois warnings preexistentes. Nenhum push ou deploy. Próxima tarefa: COR-T20-011.
 
 2026-08-05 - **COR-T20-009 concluída: tabuleiro mobile utilizável por leitor de tela.** As 64 casas agora informam coordenada, peça/cor ou vazio, role de botão, estado selecionado/desabilitado e dica contextual. A promoção exibe e pronuncia Dama/Torre/Bispo/Cavalo, sem letras cruas ou dependência do glifo. Gates: 20 testes mobile, lint e typecheck aprovados. Nenhum push ou deploy. Próxima tarefa: COR-T20-010.
@@ -185,16 +187,16 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-COR-T20-011 — Não esconder falhas ao salvar preferências, sem deploy.
+COR-T20-012 — Bloquear deploy até a CI do commit estar verde, sem executar deploy.
 
 ## Contexto necessário
 
-- `TAREFAS.md` e os registros T20-A11/COR-T20-011 em `PROGRESSO.md`
-- preferências web de tema do tabuleiro e voz, respectivos hooks/componentes e testes
-- endpoints/contratos atuais de perfil usados para persistência
-- perfil mobile e cliente de API para preferências compartilhadas essenciais
-- Critério: falha de persistência deve ser informada e o estado otimista revertido; depois expor no mobile apenas preferências essenciais compartilhadas
-- Regra: um commit por tarefa; nenhum push ou deploy sem pedido explícito
+- `TAREFAS.md` e os registros T20-A12/COR-T20-012 em `PROGRESSO.md`
+- `deploy/auto-deploy.sh` e arquivos diretamente chamados pelo agendador
+- workflows de CI em `.github/workflows/` e convenções de status do commit
+- documentação operacional do deploy Git pull
+- Critério: o agendador só pode promover uma revisão com CI aprovada, mantendo `git pull --ff-only` e falhando fechado quando o status não puder ser comprovado
+- Regra: implementar e testar localmente, um commit por tarefa; nenhum push ou deploy sem pedido explícito
 
 ## Contexto histórico anterior
 
@@ -313,4 +315,4 @@ COR-T20-011 — Não esconder falhas ao salvar preferências, sem deploy.
 - Débito técnico REAL exposto por esse bug: a "produção" não tem HTTPS (só HTTP puro num IP LAN). Isso já quebrou uma feature crítica silenciosamente uma vez; qualquer outra API restrita a contexto seguro usada no futuro (ex: `crypto.subtle`, clipboard, geolocalização precisa, service workers) vai ter o mesmo tipo de falha silenciosa. Não resolvido nesta sessão (fora de escopo/exigiria certificado TLS), só registrado como risco conhecido.
 ## Próxima tarefa
 
-COR-T20-011 — tornar falhas de persistência de tema/voz visíveis e reversíveis, com regressões, e expor as preferências compartilhadas essenciais no Perfil mobile.
+COR-T20-012 — exigir CI verde antes de qualquer promoção feita pelo agendador de deploy.

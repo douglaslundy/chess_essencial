@@ -40,14 +40,25 @@ export default function MyDataPage() {
   const [referral, setReferral] = useState<MyReferralInfo | null>(null);
   const [referralLink, setReferralLink] = useState('');
   const [referralMessage, setReferralMessage] = useState('');
-  const { theme: pieceTheme, setTheme: setPieceTheme } = usePieceTheme();
+  const {
+    error: pieceThemeError,
+    isSaving: pieceThemeSaving,
+    theme: pieceTheme,
+    setTheme: setPieceTheme,
+  } = usePieceTheme();
   const themeOptions: { value: 'classic' | 'staunton_3d' | 'wood'; label: string }[] = [
     { label: 'Clássico', value: 'classic' },
     { label: 'Staunton 3D', value: 'staunton_3d' },
     { label: 'Madeira', value: 'wood' },
   ];
-  const { voiceName, setVoiceName, reviewNarrationEnabled, setReviewNarrationEnabled } =
-    useVoicePreference();
+  const {
+    error: voicePreferenceError,
+    isSaving: voicePreferenceSaving,
+    voiceName,
+    setVoiceName,
+    reviewNarrationEnabled,
+    setReviewNarrationEnabled,
+  } = useVoicePreference();
   const [voiceOptions, setVoiceOptions] = useState<VoiceOption[]>([]);
   const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
   const [learningProgress, setLearningProgress] = useState<LearningProgress | null>(null);
@@ -268,14 +279,20 @@ export default function MyDataPage() {
             {themeOptions.map((option) => (
               <button
                 aria-pressed={pieceTheme === option.value}
+                disabled={pieceThemeSaving}
                 key={option.value}
-                onClick={() => setPieceTheme(option.value)}
+                onClick={() => void setPieceTheme(option.value)}
                 type="button"
               >
                 {option.label}
               </button>
             ))}
           </div>
+          {pieceThemeError ? (
+            <p className={styles.status} role="alert">
+              {pieceThemeError}
+            </p>
+          ) : null}
         </section>
       ) : null}
       {user ? (
@@ -313,8 +330,9 @@ export default function MyDataPage() {
                 <label className={styles.checkbox} key={voice.name}>
                   <input
                     checked={(voiceName ?? voiceOptions[0]?.name) === voice.name}
+                    disabled={voicePreferenceSaving}
                     name="voiceName"
-                    onChange={() => setVoiceName(voice.name)}
+                    onChange={() => void setVoiceName(voice.name)}
                     type="radio"
                   />{' '}
                   {voice.name}
@@ -332,11 +350,17 @@ export default function MyDataPage() {
           <label className={styles.checkbox}>
             <input
               checked={reviewNarrationEnabled}
-              onChange={(event) => setReviewNarrationEnabled(event.target.checked)}
+              disabled={voicePreferenceSaving}
+              onChange={(event) => void setReviewNarrationEnabled(event.target.checked)}
               type="checkbox"
             />{' '}
             Narrar os lances por voz no resumo/revisão pós-partida
           </label>
+          {voicePreferenceError ? (
+            <p className={styles.status} role="alert">
+              {voicePreferenceError}
+            </p>
+          ) : null}
         </section>
       ) : null}
       {learningProgress ? (

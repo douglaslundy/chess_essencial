@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { Pressable, Text } from 'react-native';
 
@@ -16,7 +16,7 @@ jest.mock('@/lib/api/client', () => {
     }
   }
   return {
-    api: { getMe: jest.fn(), login: jest.fn(), logout: jest.fn() },
+    api: { getMe: jest.fn(), login: jest.fn(), logout: jest.fn(), updateMe: jest.fn() },
     ApiProblem,
   };
 });
@@ -61,16 +61,21 @@ function buildUser(overrides: Partial<PublicUser> = {}): PublicUser {
 }
 
 function TestConsumer() {
-  const { isLoading, login, logout, user } = useAuth();
+  const { isLoading, login, logout, updateProfile, user } = useAuth();
   return (
     <>
       <Text>{isLoading ? 'loading' : 'loaded'}</Text>
       <Text>{user ? user.username : 'anonymous'}</Text>
+      <Text>{user?.profile.isProfilePublic ? 'public-profile' : 'private-profile'}</Text>
       <Pressable
         onPress={() => login({ identifier: 'jogador@example.com', password: 'segredo123' })}
         testID="login"
       />
       <Pressable onPress={() => logout()} testID="logout" />
+      <Pressable
+        onPress={() => updateProfile({ isProfilePublic: false }).catch(() => undefined)}
+        testID="make-private"
+      />
     </>
   );
 }
@@ -170,5 +175,36 @@ describe('AuthProvider', () => {
     await screen.findByText('anonymous');
     expect(api.logout).toHaveBeenCalledWith('stored-refresh');
     expect(session.clearSession).toHaveBeenCalled();
+  });
+
+  it('reverts an optimistic profile preference when persistence fails', async () => {
+    session.getAccessToken.mockResolvedValue('stored-token');
+    api.getMe.mockResolvedValue(buildUser());
+    let rejectUpdate: ((error: Error) => void) | undefined;
+    api.updateMe.mockReturnValue(
+      new Promise((_, reject) => {
+        rejectUpdate = reject;
+      }),
+    );
+
+    await render(
+      <AuthProvider>
+        <TestConsumer />
+      </AuthProvider>,
+    );
+    await screen.findByText('public-profile');
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('make-private'));
+      await Promise.resolve();
+    });
+    await screen.findByText('private-profile');
+    await act(async () => {
+      rejectUpdate?.(new Error('Falha ao salvar privacidade.'));
+      await Promise.resolve();
+    });
+
+    await screen.findByText('public-profile');
+    expect(api.updateMe).toHaveBeenCalledWith({ isProfilePublic: false }, 'stored-token');
   });
 });
