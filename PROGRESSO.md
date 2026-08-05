@@ -1,3 +1,5 @@
+2026-08-05 - **COR-T20-012 concluída: deploy agora exige promoção por CI verde.** Os jobs `quality`, `container-validation` e `database-integration` precisam passar antes de `deploy/approved` avançar sem force-push. O agendador compara esse SHA com `origin/main` e falha fechado antes do checkout/pull quando a aprovação está ausente ou divergente. Teste isolado aprovou ausência, bloqueio e liberação; sintaxe Bash e formatação foram validadas. A transição inicial segura ficou documentada. Nenhum push ou deploy. Próxima tarefa: COR-T20-013.
+
 2026-08-05 - **COR-T20-011 concluída: preferências não escondem mais falhas de persistência.** Tema de peças, voz e narração web agora informam erros, revertem o estado otimista e adotam a resposta autoritativa da API. O Perfil mobile expõe a privacidade compartilhada realmente suportada, com salvamento otimista, rollback e erro acessível; controles sem efeito no cliente não foram exibidos. Gates: 114 testes web, 23 mobile, lint/typecheck de ambos e build web aprovados; lint web manteve apenas dois warnings preexistentes. Nenhum push ou deploy. Próxima tarefa: COR-T20-012.
 
 2026-08-05 - **COR-T20-010 concluída: teclado e foco dos diálogos web corrigidos.** Setas horizontais não atravessam mais h↔a. Promoção e resultado reutilizam `useDialogA11y`, com foco inicial, Escape e restauração; o resultado foi extraído para componente testável sem mudar CSS. Gates: 111 testes web, typecheck e build aprovados; lint sem erros e com dois warnings preexistentes. Nenhum push ou deploy. Próxima tarefa: COR-T20-011.
@@ -187,16 +189,16 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-COR-T20-012 — Bloquear deploy até a CI do commit estar verde, sem executar deploy.
+COR-T20-013 — Manter backup recuperável fora da VPS, sem executar deploy.
 
 ## Contexto necessário
 
-- `TAREFAS.md` e os registros T20-A12/COR-T20-012 em `PROGRESSO.md`
-- `deploy/auto-deploy.sh` e arquivos diretamente chamados pelo agendador
-- workflows de CI em `.github/workflows/` e convenções de status do commit
-- documentação operacional do deploy Git pull
-- Critério: o agendador só pode promover uma revisão com CI aprovada, mantendo `git pull --ff-only` e falhando fechado quando o status não puder ser comprovado
-- Regra: implementar e testar localmente, um commit por tarefa; nenhum push ou deploy sem pedido explícito
+- `TAREFAS.md` e os registros T20-A12/COR-T20-013 em `PROGRESSO.md`
+- `deploy/backup-database.sh`, `deploy/restore-database.sh` e testes de backup/restore
+- configuração externa em `.env.vps` e Compose apenas quando diretamente relevante
+- `docs/RELEASE_RUNBOOK.md` e documentação operacional de backup
+- Critério: backup criptografado copiado para destino fora da VPS, com retenção e restauração de desastre testáveis; falhar de modo observável sem expor segredos
+- Regra: um commit por tarefa; nenhum push ou deploy sem pedido explícito
 
 ## Contexto histórico anterior
 
@@ -315,4 +317,4 @@ COR-T20-012 — Bloquear deploy até a CI do commit estar verde, sem executar de
 - Débito técnico REAL exposto por esse bug: a "produção" não tem HTTPS (só HTTP puro num IP LAN). Isso já quebrou uma feature crítica silenciosamente uma vez; qualquer outra API restrita a contexto seguro usada no futuro (ex: `crypto.subtle`, clipboard, geolocalização precisa, service workers) vai ter o mesmo tipo de falha silenciosa. Não resolvido nesta sessão (fora de escopo/exigiria certificado TLS), só registrado como risco conhecido.
 ## Próxima tarefa
 
-COR-T20-012 — exigir CI verde antes de qualquer promoção feita pelo agendador de deploy.
+COR-T20-013 — externalizar backups criptografados, definir retenção e provar a restauração de desastre.

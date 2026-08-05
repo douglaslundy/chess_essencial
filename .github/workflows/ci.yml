@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality:
     runs-on: ubuntu-latest
@@ -34,6 +38,9 @@ jobs:
 
       - name: Validate development Docker Compose
         run: docker compose config --quiet
+
+      - name: Test deploy CI gate
+        run: bash scripts/test-auto-deploy-ci-gate.sh
 
       - name: Check formatting
         run: pnpm format:check
@@ -192,3 +199,23 @@ jobs:
           pnpm --filter @xadrez/api db:migrate
           after_challenges="$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT count(*) FROM exercises WHERE external_id LIKE 'challenge-%';")"
           test "$after_challenges" = "$before_challenges"
+
+  promote-approved-commit:
+    name: Promote approved commit
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs:
+      - quality
+      - container-validation
+      - database-integration
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout approved commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Advance deploy approval ref
+        run: git push origin "$GITHUB_SHA:refs/heads/deploy/approved"

@@ -2,7 +2,7 @@
 
 ## Regra de entrega
 
-O GitHub `douglaslundy/chess_essencial` é a única origem de código. Depois que os gates da fase estiverem verdes, a mudança entra em `main`; a VPS consulta `origin/main` e executa `git pull --ff-only` por `deploy/auto-deploy.sh`. Não se transfere código com SSH, SCP, tar ou `docker cp`, e uma sessão SSH não dispara deploy.
+O GitHub `douglaslundy/chess_essencial` é a única origem de código. A mudança entra em `main`, mas só fica promovida quando os três jobs obrigatórios da CI passam e o job final avança `deploy/approved` para o mesmo SHA. A VPS exige igualdade exata entre essa referência e `origin/main` antes de executar `git pull --ff-only` por `deploy/auto-deploy.sh`. Não se transfere código com SSH, SCP, tar ou `docker cp`, e uma sessão SSH não dispara deploy.
 
 ## Bootstrap único da VPS de teste
 
@@ -21,7 +21,7 @@ systemctl --user daemon-reload
 systemctl --user enable --now xadrez-auto-deploy.timer
 ```
 
-Um administrador do host executa uma única vez `loginctl enable-linger lundy`. O timer fará o primeiro build, criará os volumes/containers e gravará o commit aprovado; não execute `remote-deploy.sh` manualmente.
+Um administrador do host executa uma única vez `loginctl enable-linger lundy`. A referência remota `deploy/approved` deve existir e apontar para o mesmo commit de `main`; ela é criada exclusivamente pela CI verde. O timer fará o primeiro build, criará os volumes/containers e gravará o commit aprovado; não execute `remote-deploy.sh` manualmente.
 
 ## Conteúdo de uma release
 
@@ -73,7 +73,7 @@ RESTORE_CONFIRM=replace-xadrez-essencial-database \
 
 ## Falha e rollback
 
-Se build, migration, healthcheck ou carga falhar, o marcador de sucesso não avança e o timer tentará novamente. Investigue o log sem editar código na VPS. Para rollback de código, reverta o commit no GitHub, aprove os gates e publique o novo commit em `main`; o mesmo fluxo por Git pull aplica a reversão. Use restore de banco somente quando a migration não puder ser corrigida por nova migration ou rollback documentado.
+Se a CI estiver pendente/vermelha, `deploy/approved` estiver ausente ou divergir de `main`, o checkout não avança. Se build, migration, healthcheck ou carga falhar depois da promoção, o marcador de sucesso não avança e o timer tentará novamente. Investigue o log sem editar código na VPS. Para rollback de código, reverta o commit no GitHub, aprove os gates e publique o novo commit em `main`; o mesmo fluxo por Git pull aplica a reversão. Use restore de banco somente quando a migration não puder ser corrigida por nova migration ou rollback documentado.
 
 ## Incidente
 
@@ -82,3 +82,7 @@ Se build, migration, healthcheck ou carga falhar, o marcador de sucesso não ava
 3. Preservar backup e checksum anteriores à migration.
 4. Corrigir no repositório, executar a CI e seguir o fluxo normal.
 5. Confirmar healthchecks, carga básica e jornada crítica após recuperação.
+
+## Transição segura para o gate de CI
+
+A primeira publicação desta regra exige uma janela operacional única: pausar `xadrez-auto-deploy.timer`, enviar o commit para `main`, aguardar os três jobs e `Promote approved commit` ficarem verdes e então reativar o timer. Não execute o script de deploy por SSH. Após a transição, o agendador volta a operar sozinho e falha fechado para qualquer commit sem promoção.
