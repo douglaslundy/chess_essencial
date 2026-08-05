@@ -6,6 +6,7 @@ import { Chess } from 'chess.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { ChessBoard, type BoardOrientation } from './chess-board';
+import { GameResultDialog, type GameResult } from './game-result-dialog';
 import { MoveAnnouncement, describeImportantMove, type Announcement } from './move-announcement';
 import { moveQualityLabel } from '@/components/history/move-narration';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -167,10 +168,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
   const [viewIndex, setViewIndex] = useState<number | null>(null);
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
   const [muted, setMuted] = useState(false);
-  const [resultModal, setResultModal] = useState<{
-    outcome: 'win' | 'loss' | 'draw';
-    reason: string;
-  } | null>(null);
+  const [resultModal, setResultModal] = useState<GameResult | null>(null);
   const [suggestMoveEnabled, setSuggestMoveEnabled] = useState(false);
   const [assistedGameAvailable, setAssistedGameAvailable] = useState(false);
   const [assistedColor, setAssistedColor] = useState<BoardOrientation | null>(null);
@@ -830,34 +828,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
         open={pendingCoachMove !== null}
         title="Tem certeza desse lance?"
       />
-      {resultModal ? (
-        <div className="gameResultOverlay" role="presentation">
-          <div
-            aria-labelledby="game-result-title"
-            aria-modal="true"
-            className={`gameResultDialog gameResult-${resultModal.outcome}`}
-            role="dialog"
-          >
-            <h2 id="game-result-title">
-              {resultModal.outcome === 'win'
-                ? 'Você venceu!'
-                : resultModal.outcome === 'loss'
-                  ? 'Você perdeu'
-                  : 'Empate'}
-            </h2>
-            <p>
-              {resultModal.outcome === 'win'
-                ? `Vitória ${resultModal.reason}.`
-                : resultModal.outcome === 'loss'
-                  ? `Derrota ${resultModal.reason}.`
-                  : `Empate ${resultModal.reason}.`}
-            </p>
-            <button className="gameResultAction" onClick={() => setResultModal(null)} type="button">
-              Fechar
-            </button>
-          </div>
-        </div>
-      ) : null}
+      <GameResultDialog onClose={() => setResultModal(null)} result={resultModal} />
     </main>
   );
 }

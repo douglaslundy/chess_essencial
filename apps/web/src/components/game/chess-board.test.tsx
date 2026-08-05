@@ -84,6 +84,52 @@ describe('ChessBoard', () => {
     expect(onMove).not.toHaveBeenCalled();
   });
 
+  it('keeps horizontal arrow navigation inside the current rank', () => {
+    render(
+      createElement(ChessBoard, {
+        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+        onMove: vi.fn(),
+        orientation: 'white',
+      }),
+    );
+    const h8 = screen.getByRole('gridcell', { name: 'h8, preto torre' });
+    const a8 = screen.getByRole('gridcell', { name: 'a8, preto torre' });
+
+    h8.focus();
+    fireEvent.keyDown(h8, { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(h8);
+
+    a8.focus();
+    fireEvent.keyDown(a8, { key: 'ArrowLeft' });
+    expect(document.activeElement).toBe(a8);
+
+    fireEvent.keyDown(a8, { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(screen.getByRole('gridcell', { name: 'b8, preto cavalo' }));
+  });
+
+  it('focuses the promotion dialog, closes it with Escape and restores board focus', () => {
+    render(
+      createElement(ChessBoard, {
+        fen: 'k7/4P3/8/8/8/8/8/4K3 w - - 0 1',
+        onMove: vi.fn(),
+        orientation: 'white',
+      }),
+    );
+    const pawn = screen.getByRole('gridcell', { name: 'e7, branco peão' });
+    const destination = screen.getByRole('gridcell', { name: 'e8, vazia' });
+    pawn.focus();
+    fireEvent.click(pawn);
+    fireEvent.click(destination);
+
+    expect(screen.getByRole('dialog', { name: 'Escolha a promoção' })).toBeTruthy();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'dama' }));
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(screen.queryByRole('dialog', { name: 'Escolha a promoção' })).toBeNull();
+    expect(document.activeElement).toBe(pawn);
+  });
+
   it('formats clocks without displaying negative time', () => {
     expect(formatClock(61000)).toBe('1:01');
     expect(formatClock(-10)).toBe('0:00');

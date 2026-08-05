@@ -1,7 +1,9 @@
 'use client';
 
 import { Chess, type Color, type PieceSymbol, type Square } from 'chess.js';
-import { useMemo, useState, type DragEvent, type KeyboardEvent } from 'react';
+
+import { useDialogA11y } from '@/components/ui/dialog-a11y';
+import { useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from 'react';
 
 const pieceNames: Record<PieceSymbol, string> = {
   k: 'rei',
@@ -228,6 +230,13 @@ export function ChessBoard({
   const [selected, setSelected] = useState<Square | null>(null);
   const [focused, setFocused] = useState<Square>(orientation === 'white' ? 'e2' : 'e7');
   const [promotion, setPromotion] = useState<{ from: Square; to: Square } | null>(null);
+  const promotionFocusRef = useRef<HTMLButtonElement>(null);
+
+  useDialogA11y({
+    initialFocusRef: promotionFocusRef,
+    onCancel: () => setPromotion(null),
+    open: promotion !== null,
+  });
   const destinations = useMemo(
     () =>
       selected && chess
@@ -271,20 +280,20 @@ export function ChessBoard({
   }
 
   function navigate(event: KeyboardEvent<HTMLButtonElement>, index: number) {
-    const columns = 8;
-    const offsets: Record<string, number> = {
-      ArrowLeft: -1,
-      ArrowRight: 1,
-      ArrowUp: -columns,
-      ArrowDown: columns,
-    };
-    const offset = offsets[event.key];
-    if (offset !== undefined) {
-      event.preventDefault();
-      const next = Math.max(0, Math.min(63, index + offset));
-      setFocused(squares[next]!);
-      document.getElementById(`square-${squares[next]}`)?.focus();
-    }
+    const row = Math.floor(index / 8);
+    const column = index % 8;
+    let next = index;
+
+    if (event.key === 'ArrowLeft' && column > 0) next = index - 1;
+    else if (event.key === 'ArrowRight' && column < 7) next = index + 1;
+    else if (event.key === 'ArrowUp' && row > 0) next = index - 8;
+    else if (event.key === 'ArrowDown' && row < 7) next = index + 8;
+    else if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
+
+    event.preventDefault();
+    if (next === index) return;
+    setFocused(squares[next]!);
+    document.getElementById(`square-${squares[next]}`)?.focus();
   }
 
   return (
@@ -379,6 +388,7 @@ export function ChessBoard({
                     setPromotion(null);
                     setSelected(null);
                   }}
+                  ref={piece === 'q' ? promotionFocusRef : undefined}
                   type="button"
                 >
                   <ChessPiece color="w" type={piece} />
