@@ -1,6 +1,7 @@
 import type { CreatePostInput, Post, UploadPostPhotoInput } from '@xadrez/contracts';
 import { BadRequestException, Injectable } from '@nestjs/common';
 
+import { normalizeImageUpload } from '../storage/image-upload.js';
 import { MAX_POST_PHOTO_BYTES, StorageService } from '../storage/storage.service.js';
 import { FeedRepository } from './feed.repository.js';
 
@@ -35,12 +36,21 @@ export class FeedService {
     if (!this.storage.enabled) {
       throw new BadRequestException('Upload de foto indisponível no momento.');
     }
-    const data = Buffer.from(input.dataBase64, 'base64');
-    if (data.byteLength === 0 || data.byteLength > MAX_POST_PHOTO_BYTES) {
+    let normalized;
+    try {
+      normalized = await normalizeImageUpload(input.contentType, input.dataBase64, {
+        maxBytes: MAX_POST_PHOTO_BYTES,
+        maxDimension: 2_048,
+      });
+    } catch {
       throw new BadRequestException('Imagem inválida ou muito grande (máx. 2 MB).');
     }
     try {
-      const photoUrl = await this.storage.putPostPhoto(userId, input.contentType, data);
+      const photoUrl = await this.storage.putPostPhoto(
+        userId,
+        normalized.contentType,
+        normalized.data,
+      );
       return { photoUrl };
     } catch {
       throw new BadRequestException('Não foi possível salvar a foto.');

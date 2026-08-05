@@ -1,3 +1,7 @@
+2026-08-05 - **COR-T20-015 concluída: uploads validam e normalizam a imagem real.** Avatar e foto do feed rejeitam base64 malformado, MIME divergente dos bytes, conteúdo não-imagem, multipágina e excesso de bytes/pixels; dimensões são limitadas, metadados removidos e o resultado é regravado como WebP antes do MinIO. Os limites existentes de 512 KB e 2 MB permanecem. Gates: 118 testes API, lint, typecheck, format e build aprovados; 125 integrações PostgreSQL ficaram puladas sem banco local. Nenhum push ou deploy. Próxima tarefa: COR-T20-016.
+
+2026-08-05 - **COR-T20-015 implementada e em validação:** uploads agora exigem base64 canônico, formato JPEG/PNG/WebP confirmado pelos bytes, imagem decodificável de página única e limites de pixels/dimensão. O servidor remove metadados e regrava avatar/feed como WebP antes do MinIO, preservando os limites de 512 KB/2 MB. Dez testes direcionados e typecheck da API passaram. Nenhum push ou deploy.
+
 2026-08-05 - **COR-T20-014 concluída: sessão web e rate limit multi-réplica endurecidos.** O refresh rotativo passou para cookie HttpOnly/SameSite, protegido por origem confiável e header CSRF; o access token web existe apenas em memória e o storage guarda só um marcador não secreto, com migração compatível do refresh legado. Mobile e realtime mantêm Bearer. Rate limit usa contador Redis atômico por IP pseudonimizado, fallback local mais restritivo/observável em produção e cabeçalhos coerentes. CSP e headers defensivos foram adicionados ao frontend. OpenAPI e clientes gerados documentam o fluxo web. Gates: 108 testes API, 115 web e 3 SDK, lint, typecheck, format, geração OpenAPI e builds aprovados; 125 integrações PostgreSQL ficaram puladas sem banco local e serão executadas pela CI. Nenhum push ou deploy. Próxima tarefa: COR-T20-015.
 
 2026-08-05 - **COR-T20-014 implementada e em validação:** sessão web usa refresh rotativo em cookie HttpOnly com CSRF de origem/header, access token apenas em memória e marcador não secreto no storage; Bearer mobile/realtime foi preservado. Rate limit Redis atômico com fallback local conservador/observável e CSP do frontend foram cobertos por 15 testes direcionados; typechecks API/web passaram. Logout web também é idempotente sem cookie. Nenhum push ou deploy.
@@ -197,16 +201,16 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-COR-T20-015 — Validar e normalizar o conteúdo real dos uploads, sem deploy.
+COR-T20-016 — Restaurar paridade entre controllers e OpenAPI, sem deploy.
 
 ## Contexto necessário
 
-- `TAREFAS.md` e o registro COR-T20-015 em `PROGRESSO.md`
-- `apps/api/src/users/users.service.ts` e testes de avatar
-- `apps/api/src/feed/feed.service.ts` e testes de foto do feed
-- `apps/api/src/storage/storage.service.ts`
-- schemas de upload em `packages/contracts/src/auth.ts` e `packages/contracts/src/feed.ts`
-- Critério: rejeitar bytes incompatíveis com o MIME declarado, decodificação inválida e conteúdo não-imagem; normalizar a imagem antes do storage sem aumentar os limites atuais
+- `apps/api/src/learning-path/learning-path.controller.ts`
+- `apps/api/src/games/presentation/games.controller.ts`
+- `api/openapi.yaml`
+- clientes gerados em `apps/web/src/lib/api/openapi.d.ts` e `packages/sdk/src/generated/openapi.ts`
+- scripts `generate:api`/`generate:check` e workflow `.github/workflows/ci.yml`
+- Critério: documentar todas as rotas reais, regenerar clientes e criar gate automático que falhe em drift de rota/método
 - Regra: um commit por tarefa; nenhum push ou deploy sem pedido explícito
 
 ## Contexto histórico anterior
@@ -326,4 +330,4 @@ COR-T20-015 — Validar e normalizar o conteúdo real dos uploads, sem deploy.
 - Débito técnico REAL exposto por esse bug: a "produção" não tem HTTPS (só HTTP puro num IP LAN). Isso já quebrou uma feature crítica silenciosamente uma vez; qualquer outra API restrita a contexto seguro usada no futuro (ex: `crypto.subtle`, clipboard, geolocalização precisa, service workers) vai ter o mesmo tipo de falha silenciosa. Não resolvido nesta sessão (fora de escopo/exigiria certificado TLS), só registrado como risco conhecido.
 ## Próxima tarefa
 
-COR-T20-015 — validar o conteúdo real dos uploads, normalizar imagens e preservar os limites atuais.
+COR-T20-016 — restaurar a paridade entre controllers e OpenAPI e criar um gate contra drift.

@@ -2,6 +2,7 @@ import type { PublicUser, UpdateMeInput, UploadAvatarInput } from '@xadrez/contr
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { sanitizeUserText } from '../common/security/sanitize-user-text.js';
+import { normalizeImageUpload } from '../storage/image-upload.js';
 import { MAX_AVATAR_BYTES, StorageService } from '../storage/storage.service.js';
 import { UsersRepository, type IdentityUser } from './users.repository.js';
 
@@ -16,13 +17,18 @@ export class UsersService {
     if (!this.storage.enabled) {
       throw new BadRequestException('Upload de avatar indisponível no momento.');
     }
-    const data = Buffer.from(input.dataBase64, 'base64');
-    if (data.byteLength === 0 || data.byteLength > MAX_AVATAR_BYTES) {
+    let normalized;
+    try {
+      normalized = await normalizeImageUpload(input.contentType, input.dataBase64, {
+        maxBytes: MAX_AVATAR_BYTES,
+        maxDimension: 1_024,
+      });
+    } catch {
       throw new BadRequestException('Imagem inválida ou muito grande (máx. 512 KB).');
     }
-    let url: string;
+    let url;
     try {
-      url = await this.storage.putAvatar(userId, input.contentType, data);
+      url = await this.storage.putAvatar(userId, normalized.contentType, normalized.data);
     } catch {
       throw new BadRequestException('Não foi possível salvar o avatar.');
     }
