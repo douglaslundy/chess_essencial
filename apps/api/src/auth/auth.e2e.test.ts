@@ -112,6 +112,67 @@ describeDatabase('authentication database integration', () => {
     });
   });
 
+  it('rotates and revokes a web refresh session through an HttpOnly cookie', async () => {
+    const loginResponse = await app.inject({
+      headers: { 'x-xadrez-client': 'web' },
+      method: 'POST',
+      payload: {
+        identifier: 'integration@example.com',
+        password: 'integration password 2026',
+      },
+      url: '/v1/auth/login',
+    });
+    expect(loginResponse.statusCode).toBe(200);
+    const loginSetCookie = loginResponse.headers['set-cookie'];
+    const loginCookie = (Array.isArray(loginSetCookie) ? loginSetCookie[0] : loginSetCookie)?.split(
+      ';',
+    )[0];
+    expect(loginSetCookie).toContain('HttpOnly');
+    expect(loginSetCookie).toContain('SameSite=Lax');
+    expect(loginCookie).toContain('xadrez_refresh=');
+
+    const refreshResponse = await app.inject({
+      headers: {
+        cookie: loginCookie!,
+        origin: 'http://localhost:3000',
+        'x-xadrez-client': 'web',
+        'x-xadrez-csrf': '1',
+      },
+      method: 'POST',
+      payload: {},
+      url: '/v1/auth/refresh',
+    });
+    expect(refreshResponse.statusCode).toBe(200);
+    const refreshSetCookie = refreshResponse.headers['set-cookie'];
+    const rotatedCookie = (
+      Array.isArray(refreshSetCookie) ? refreshSetCookie[0] : refreshSetCookie
+    )?.split(';')[0];
+    expect(rotatedCookie).not.toBe(loginCookie);
+
+    const logoutResponse = await app.inject({
+      headers: {
+        cookie: rotatedCookie!,
+        origin: 'http://localhost:3000',
+        'x-xadrez-client': 'web',
+        'x-xadrez-csrf': '1',
+      },
+      method: 'POST',
+      payload: {},
+      url: '/v1/auth/logout',
+    });
+    expect(logoutResponse.statusCode).toBe(204);
+    expect(logoutResponse.headers['set-cookie']).toContain('Max-Age=0');
+
+    const repeatedLogoutResponse = await app.inject({
+      headers: { 'x-xadrez-client': 'web' },
+      method: 'POST',
+      payload: {},
+      url: '/v1/auth/logout',
+    });
+    expect(repeatedLogoutResponse.statusCode).toBe(204);
+    expect(repeatedLogoutResponse.headers['set-cookie']).toContain('Max-Age=0');
+  });
+
   it('does not enumerate password recovery and rejects an invalid reset token', async () => {
     for (const email of ['integration@example.com', 'missing@example.com']) {
       const response = await app.inject({

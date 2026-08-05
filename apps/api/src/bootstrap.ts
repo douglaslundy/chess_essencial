@@ -7,6 +7,7 @@ import { AppModule } from './app.module.js';
 import { ProblemDetailsFilter } from './common/http/problem-details.filter.js';
 import { registerHttpSecurity } from './common/security/http-security.js';
 import { MetricsService } from './observability/metrics.service.js';
+import { RedisService } from './redis/redis.service.js';
 
 export async function createApp() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -26,7 +27,7 @@ export async function createApp() {
   });
   app.enableShutdownHooks();
   app.useGlobalFilters(new ProblemDetailsFilter());
-  registerHttpSecurity(app, config, app.get(MetricsService));
+  registerHttpSecurity(app, config, app.get(MetricsService), app.get(RedisService));
 
   return app;
 }

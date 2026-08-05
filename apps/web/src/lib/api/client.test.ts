@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiProblem, api, getRealtimeAccessToken, getStoredUserId } from './client';
+import {
+  ApiProblem,
+  api,
+  establishWebSession,
+  getRealtimeAccessToken,
+  getStoredUserId,
+} from './client';
 
 function localStorageWith(values: Record<string, string>) {
   const storage = new Map(Object.entries(values));
@@ -54,8 +60,13 @@ describe('API session refresh', () => {
       id: 'game-id',
     });
     expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(localStorage.getItem('xadrez.access_token')).toBe('fresh-access');
-    expect(localStorage.getItem('xadrez.refresh_token')).toBe('fresh-refresh');
+    expect(localStorage.getItem('xadrez.access_token')).toBe('cookie-session-v1');
+    expect(localStorage.getItem('xadrez.refresh_token')).toBeNull();
+    expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({ credentials: 'include' });
+    expect(fetchMock.mock.calls[1]?.[1]?.headers).toMatchObject({
+      'X-Xadrez-Client': 'web',
+      'X-Xadrez-CSRF': '1',
+    });
     expect(fetchMock.mock.calls[2]?.[1]?.headers).toMatchObject({
       Authorization: 'Bearer fresh-access',
     });
@@ -109,7 +120,46 @@ describe('API session refresh', () => {
     );
 
     await expect(getRealtimeAccessToken(true)).resolves.toBe('fresh-realtime-access');
-    expect(localStorage.getItem('xadrez.access_token')).toBe('fresh-realtime-access');
+    expect(localStorage.getItem('xadrez.access_token')).toBe('cookie-session-v1');
+    expect(localStorage.getItem('xadrez.refresh_token')).toBeNull();
+  });
+
+  it('stores only a non-secret marker when a web login succeeds', () => {
+    const localStorage = localStorageWith({});
+    vi.stubGlobal('window', { dispatchEvent: vi.fn(), localStorage });
+
+    establishWebSession(
+      {
+        accessToken: 'access-secret',
+        accessTokenExpiresIn: 900,
+        refreshToken: 'refresh-secret',
+        refreshTokenExpiresIn: 86_400,
+      },
+      {
+        email: 'player@example.com',
+        emailVerifiedAt: null,
+        id: 'player-id',
+        profile: {
+          avatarUrl: null,
+          bio: null,
+          birthDate: null,
+          boardTheme: 'classic',
+          countryCode: null,
+          displayName: 'Player',
+          isProfilePublic: true,
+          locale: 'pt-BR',
+          reviewNarrationEnabled: false,
+          suggestMoveEnabled: false,
+          timezone: 'America/Sao_Paulo',
+          voiceName: null,
+        },
+        status: 'active',
+        username: 'player',
+      },
+    );
+
+    expect(localStorage.getItem('xadrez.access_token')).toBe('cookie-session-v1');
+    expect(localStorage.getItem('xadrez.refresh_token')).toBeNull();
   });
 
   it('recovers the player id from the access token when older storage lacks it', () => {

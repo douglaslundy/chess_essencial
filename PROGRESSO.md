@@ -1,3 +1,9 @@
+2026-08-05 - **COR-T20-014 concluída: sessão web e rate limit multi-réplica endurecidos.** O refresh rotativo passou para cookie HttpOnly/SameSite, protegido por origem confiável e header CSRF; o access token web existe apenas em memória e o storage guarda só um marcador não secreto, com migração compatível do refresh legado. Mobile e realtime mantêm Bearer. Rate limit usa contador Redis atômico por IP pseudonimizado, fallback local mais restritivo/observável em produção e cabeçalhos coerentes. CSP e headers defensivos foram adicionados ao frontend. OpenAPI e clientes gerados documentam o fluxo web. Gates: 108 testes API, 115 web e 3 SDK, lint, typecheck, format, geração OpenAPI e builds aprovados; 125 integrações PostgreSQL ficaram puladas sem banco local e serão executadas pela CI. Nenhum push ou deploy. Próxima tarefa: COR-T20-015.
+
+2026-08-05 - **COR-T20-014 implementada e em validação:** sessão web usa refresh rotativo em cookie HttpOnly com CSRF de origem/header, access token apenas em memória e marcador não secreto no storage; Bearer mobile/realtime foi preservado. Rate limit Redis atômico com fallback local conservador/observável e CSP do frontend foram cobertos por 15 testes direcionados; typechecks API/web passaram. Logout web também é idempotente sem cookie. Nenhum push ou deploy.
+
+2026-08-05 - **COR-T20-014 em andamento: migração compatível de sessão e rate limit definida.** Web manterá somente marcador não secreto no storage, access token em memória e refresh rotativo em cookie HttpOnly; refresh/logout por cookie exigirão origem confiável e header anti-CSRF, preservando Bearer para mobile e realtime. O rate limit usará contador atômico Redis com chave de IP pseudonimizada e fallback local conservador/observável. CSP será aplicada também ao frontend. Nenhum push ou deploy.
+
 2026-08-05 - **COR-T20-013 concluída em código: backups externos agora são criptografados, retidos e recuperáveis.** O dump+SHA-256 portável precisa chegar a um backend Restic remoto antes da migration; caminhos locais falham fechado, salvo flag exclusiva dos testes. Retenção padrão: 14 diários, 8 semanais e 12 mensais. O fetch restringe o destino, baixa por host/tag e valida o checksum. Restic 0.19.1 oficial verificado passou upload, prune, senha errada, dump corrompido, remoção local, download e `check --read-data`; Bash e format-check passaram. A CI executará ainda a restauração PostgreSQL real quando houver push. Antes do próximo deploy, o backend externo e o cofre precisam ser configurados conforme o runbook. Nenhum push ou deploy. Próxima tarefa de desenvolvimento: COR-T20-014.
 
 2026-08-05 - **COR-T20-012 concluída: deploy agora exige promoção por CI verde.** Os jobs `quality`, `container-validation` e `database-integration` precisam passar antes de `deploy/approved` avançar sem force-push. O agendador compara esse SHA com `origin/main` e falha fechado antes do checkout/pull quando a aprovação está ausente ou divergente. Teste isolado aprovou ausência, bloqueio e liberação; sintaxe Bash e formatação foram validadas. A transição inicial segura ficou documentada. Nenhum push ou deploy. Próxima tarefa: COR-T20-013.
@@ -191,16 +197,16 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-COR-T20-014 — Endurecer sessão web e rate limit multi-réplica, sem deploy.
+COR-T20-015 — Validar e normalizar o conteúdo real dos uploads, sem deploy.
 
 ## Contexto necessário
 
-- `TAREFAS.md` e os registros T20-A12/COR-T20-014 em `PROGRESSO.md`
-- fluxo atual de autenticação/refresh/logout na API e no cliente web
-- middleware, headers e configuração de segurança web/API diretamente relacionados a cookies, CSRF e CSP
-- implementação atual do rate limit e cliente Redis existente
-- testes de autenticação, realtime e limites distribuídos
-- Critério: cookies HttpOnly + proteção CSRF/CSP e rate limit Redis com fallback seguro, sem quebrar refresh ou realtime
+- `TAREFAS.md` e o registro COR-T20-015 em `PROGRESSO.md`
+- `apps/api/src/users/users.service.ts` e testes de avatar
+- `apps/api/src/feed/feed.service.ts` e testes de foto do feed
+- `apps/api/src/storage/storage.service.ts`
+- schemas de upload em `packages/contracts/src/auth.ts` e `packages/contracts/src/feed.ts`
+- Critério: rejeitar bytes incompatíveis com o MIME declarado, decodificação inválida e conteúdo não-imagem; normalizar a imagem antes do storage sem aumentar os limites atuais
 - Regra: um commit por tarefa; nenhum push ou deploy sem pedido explícito
 
 ## Contexto histórico anterior
@@ -320,4 +326,4 @@ COR-T20-014 — Endurecer sessão web e rate limit multi-réplica, sem deploy.
 - Débito técnico REAL exposto por esse bug: a "produção" não tem HTTPS (só HTTP puro num IP LAN). Isso já quebrou uma feature crítica silenciosamente uma vez; qualquer outra API restrita a contexto seguro usada no futuro (ex: `crypto.subtle`, clipboard, geolocalização precisa, service workers) vai ter o mesmo tipo de falha silenciosa. Não resolvido nesta sessão (fora de escopo/exigiria certificado TLS), só registrado como risco conhecido.
 ## Próxima tarefa
 
-COR-T20-014 — migrar a sessão web para cookies protegidos e tornar o rate limit coerente entre réplicas via Redis.
+COR-T20-015 — validar o conteúdo real dos uploads, normalizar imagens e preservar os limites atuais.

@@ -1,28 +1,38 @@
+import { createHmac } from 'node:crypto';
 import { isSpanContextValid, SpanStatusCode, trace, type Span } from '@opentelemetry/api';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import type { ConfigService } from '@nestjs/config';
 
 import type { MetricsService } from '../../observability/metrics.service.js';
+import type { RedisService } from '../../redis/redis.service.js';
 
 interface WindowEntry {
   count: number;
   resetsAt: number;
 }
 
+interface RateLimitResult {
+  allowed: boolean;
+  limit: number;
+  remaining: number;
+  retryAfterSeconds: number;
+}
+
 class FixedWindowLimiter {
   private readonly entries = new Map<string, WindowEntry>();
 
-  consume(key: string, limit: number, windowMs: number) {
+  consume(key: string, limit: number, windowMs: number): RateLimitResult {
     const now = Date.now();
     const current = this.entries.get(key);
     if (!current || current.resetsAt <= now) {
       if (this.entries.size >= 10_000) this.removeExpired(now);
       this.entries.set(key, { count: 1, resetsAt: now + windowMs });
-      return { allowed: true, remaining: limit - 1, retryAfterSeconds: 0 };
+      return { allowed: true, limit, remaining: limit - 1, retryAfterSeconds: 0 };
     }
     current.count += 1;
     return {
       allowed: current.count <= limit,
+      limit,
       remaining: Math.max(0, limit - current.count),
       retryAfterSeconds: Math.max(1, Math.ceil((current.resetsAt - now) / 1000)),
     };
@@ -36,14 +46,69 @@ class FixedWindowLimiter {
   }
 }
 
+const REDIS_FIXED_WINDOW_SCRIPT = `
+local count = redis.call('INCR', KEYS[1])
+if count == 1 then
+  redis.call('PEXPIRE', KEYS[1], ARGV[1])
+end
+local ttl = redis.call('PTTL', KEYS[1])
+return {count, ttl}
+`;
+
+export class DistributedFixedWindowLimiter {
+  private readonly fallback = new FixedWindowLimiter();
+
+  constructor(
+    private readonly redis: RedisService,
+    private readonly metrics: MetricsService,
+    private readonly production: boolean,
+  ) {}
+
+  async consume(
+    key: string,
+    limit: number,
+    windowMs: number,
+    sensitive: boolean,
+  ): Promise<RateLimitResult> {
+    if (this.redis.client.status === 'ready') {
+      try {
+        const response = (await this.redis.client.eval(
+          REDIS_FIXED_WINDOW_SCRIPT,
+          1,
+          `xadrez:rate-limit:${key}`,
+          String(windowMs),
+        )) as [number, number];
+        const count = Number(response[0]);
+        const ttl = Math.max(1, Number(response[1]));
+        return {
+          allowed: count <= limit,
+          limit,
+          remaining: Math.max(0, limit - count),
+          retryAfterSeconds: Math.max(1, Math.ceil(ttl / 1000)),
+        };
+      } catch {
+        this.metrics.increment('xadrez_http_rate_limit_fallback_total', { reason: 'redis_error' });
+      }
+    } else {
+      this.metrics.increment('xadrez_http_rate_limit_fallback_total', {
+        reason: 'redis_unavailable',
+      });
+    }
+
+    const fallbackLimit = this.production && sensitive ? Math.max(1, Math.floor(limit / 2)) : limit;
+    return this.fallback.consume(key, fallbackLimit, windowMs);
+  }
+}
+
 export function registerHttpSecurity(
   app: NestFastifyApplication,
   config: ConfigService,
   metrics: MetricsService,
+  redis: RedisService,
 ) {
-  const limiter = new FixedWindowLimiter();
-  const fastify = app.getHttpAdapter().getInstance();
   const production = config.get<string>('NODE_ENV') === 'production';
+  const limiter = new DistributedFixedWindowLimiter(redis, metrics, production);
+  const fastify = app.getHttpAdapter().getInstance();
 
   fastify.addHook('onRequest', async (request, reply) => {
     const startedAt = process.hrtime.bigint();
@@ -83,14 +148,40 @@ export function registerHttpSecurity(
     }
 
     const path = request.url.split('?')[0] ?? request.url;
+    const cookieAuthenticatedAction =
+      request.method === 'POST' &&
+      (path === '/v1/auth/refresh' || path === '/v1/auth/logout') &&
+      /(?:^|;\s*)(?:__Host-xadrez_refresh|xadrez_refresh)=/.test(request.headers.cookie ?? '');
+    if (
+      cookieAuthenticatedAction &&
+      (request.headers.origin !== config.getOrThrow<string>('WEB_ORIGIN') ||
+        request.headers['x-xadrez-csrf'] !== '1')
+    ) {
+      return reply.status(403).type('application/problem+json').send({
+        type: 'https://xadrez-essencial.local/problems/403',
+        title: 'Forbidden',
+        status: 403,
+        detail: 'Origem ou prova CSRF inv\u00e1lida',
+        instance: request.url,
+        requestId: request.id,
+      });
+    }
     const authAction = path.startsWith('/v1/auth/') ? path.slice('/v1/auth/'.length) : null;
     const policy = authAction
       ? { bucket: `auth-${authAction}`, limit: authAction === 'login' ? 10 : 20, windowMs: 60_000 }
       : path === '/v1/reports'
         ? { bucket: 'reports', limit: 5, windowMs: 60_000 }
         : { bucket: 'global', limit: 120, windowMs: 60_000 };
-    const result = limiter.consume(`${policy.bucket}:${request.ip}`, policy.limit, policy.windowMs);
-    reply.header('RateLimit-Limit', policy.limit).header('RateLimit-Remaining', result.remaining);
+    const ipKey = createHmac('sha256', config.getOrThrow<string>('AUTH_IP_HASH_SECRET'))
+      .update(request.ip)
+      .digest('hex');
+    const result = await limiter.consume(
+      `${policy.bucket}:${ipKey}`,
+      policy.limit,
+      policy.windowMs,
+      policy.bucket !== 'global',
+    );
+    reply.header('RateLimit-Limit', result.limit).header('RateLimit-Remaining', result.remaining);
     if (!result.allowed) {
       metrics.increment('xadrez_http_rate_limit_rejections_total', { policy: policy.bucket });
       return reply

@@ -2845,6 +2845,10 @@ export interface components {
   };
   parameters: {
     GameId: string;
+    /** @description Use web para ativar a sessão com refresh em cookie HttpOnly */
+    WebClientHeader: 'web';
+    /** @description Obrigatório com valor 1 em refresh/logout autenticados por cookie */
+    CsrfHeader: '1';
   };
   requestBodies: never;
   headers: never;
@@ -2997,7 +3001,10 @@ export interface operations {
   login: {
     parameters: {
       query?: never;
-      header?: never;
+      header?: {
+        /** @description Use web para ativar a sessão com refresh em cookie HttpOnly */
+        'X-Xadrez-Client'?: components['parameters']['WebClientHeader'];
+      };
       path?: never;
       cookie?: never;
     };
@@ -3010,6 +3017,8 @@ export interface operations {
       /** @description Sessão criada */
       200: {
         headers: {
+          /** @description Refresh token HttpOnly quando X-Xadrez-Client for web */
+          'Set-Cookie'?: string;
           [name: string]: unknown;
         };
         content: {
@@ -3023,19 +3032,27 @@ export interface operations {
   refresh: {
     parameters: {
       query?: never;
-      header?: never;
+      header?: {
+        /** @description Use web para ativar a sessão com refresh em cookie HttpOnly */
+        'X-Xadrez-Client'?: components['parameters']['WebClientHeader'];
+        /** @description Obrigatório com valor 1 em refresh/logout autenticados por cookie */
+        'X-Xadrez-CSRF'?: components['parameters']['CsrfHeader'];
+      };
       path?: never;
       cookie?: never;
     };
-    requestBody: {
+    /** @description Refresh token no corpo para clientes Bearer; web usa o cookie HttpOnly */
+    requestBody?: {
       content: {
-        'application/json': components['schemas']['RefreshInput'];
+        'application/json': components['schemas']['RefreshInput'] | Record<string, never>;
       };
     };
     responses: {
       /** @description Tokens rotacionados */
       200: {
         headers: {
+          /** @description Refresh token HttpOnly rotacionado para clientes web */
+          'Set-Cookie'?: string;
           [name: string]: unknown;
         };
         content: {
@@ -3043,24 +3060,33 @@ export interface operations {
         };
       };
       401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
     };
   };
   logout: {
     parameters: {
       query?: never;
-      header?: never;
+      header?: {
+        /** @description Use web para ativar a sessão com refresh em cookie HttpOnly */
+        'X-Xadrez-Client'?: components['parameters']['WebClientHeader'];
+        /** @description Obrigatório com valor 1 em refresh/logout autenticados por cookie */
+        'X-Xadrez-CSRF'?: components['parameters']['CsrfHeader'];
+      };
       path?: never;
       cookie?: never;
     };
-    requestBody: {
+    /** @description Refresh token no corpo para clientes Bearer; web usa o cookie HttpOnly */
+    requestBody?: {
       content: {
-        'application/json': components['schemas']['RefreshInput'];
+        'application/json': components['schemas']['RefreshInput'] | Record<string, never>;
       };
     };
     responses: {
       /** @description Sessão revogada ou já ausente */
       204: {
         headers: {
+          /** @description Expira o cookie de refresh do cliente web */
+          'Set-Cookie'?: string;
           [name: string]: unknown;
         };
         content?: never;

@@ -108,6 +108,8 @@ paths:
       security: []
       summary: Autenticar
       operationId: login
+      parameters:
+        - {$ref: '#/components/parameters/WebClientHeader'}
       requestBody:
         required: true
         content:
@@ -117,6 +119,10 @@ paths:
       responses:
         '200':
           description: Sessão criada
+          headers:
+            Set-Cookie:
+              description: Refresh token HttpOnly quando X-Xadrez-Client for web
+              schema: {type: string}
           content:
             application/json:
               schema:
@@ -128,34 +134,55 @@ paths:
       security: []
       summary: Rotacionar refresh token
       operationId: refresh
+      parameters:
+        - {$ref: '#/components/parameters/WebClientHeader'}
+        - {$ref: '#/components/parameters/CsrfHeader'}
       requestBody:
-        required: true
+        required: false
+        description: Refresh token no corpo para clientes Bearer; web usa o cookie HttpOnly
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RefreshInput'
+              oneOf:
+                - {$ref: '#/components/schemas/RefreshInput'}
+                - {type: object, maxProperties: 0}
       responses:
         '200':
           description: Tokens rotacionados
+          headers:
+            Set-Cookie:
+              description: Refresh token HttpOnly rotacionado para clientes web
+              schema: {type: string}
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TokenPair'
         '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
   /auth/logout:
     post:
       security: []
       summary: Revogar sessão
       operationId: logout
+      parameters:
+        - {$ref: '#/components/parameters/WebClientHeader'}
+        - {$ref: '#/components/parameters/CsrfHeader'}
       requestBody:
-        required: true
+        required: false
+        description: Refresh token no corpo para clientes Bearer; web usa o cookie HttpOnly
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RefreshInput'
+              oneOf:
+                - {$ref: '#/components/schemas/RefreshInput'}
+                - {type: object, maxProperties: 0}
       responses:
         '204':
           description: Sessão revogada ou já ausente
+          headers:
+            Set-Cookie:
+              description: Expira o cookie de refresh do cliente web
+              schema: {type: string}
   /me:
     get:
       summary: Perfil autenticado
@@ -1688,6 +1715,18 @@ components:
       in: path
       required: true
       schema: {type: string, format: uuid}
+    WebClientHeader:
+      name: X-Xadrez-Client
+      in: header
+      required: false
+      description: Use web para ativar a sessão com refresh em cookie HttpOnly
+      schema: {type: string, enum: [web]}
+    CsrfHeader:
+      name: X-Xadrez-CSRF
+      in: header
+      required: false
+      description: Obrigatório com valor 1 em refresh/logout autenticados por cookie
+      schema: {type: string, enum: ['1']}
   responses:
     Problem:
       description: Problem Details

@@ -4,7 +4,7 @@ import type { FormEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { api } from '@/lib/api/client';
+import { api, establishWebSession } from '@/lib/api/client';
 
 type Mode = 'login' | 'register';
 
@@ -65,11 +65,7 @@ export default function AuthPage() {
           identifier: String(data.get('identifier') ?? ''),
           password: String(data.get('password') ?? ''),
         });
-        window.localStorage.setItem('xadrez.access_token', result.tokens.accessToken);
-        window.localStorage.setItem('xadrez.refresh_token', result.tokens.refreshToken);
-        window.localStorage.setItem('xadrez.user_id', result.user.id);
-        window.localStorage.setItem('xadrez.username', result.user.username);
-        window.dispatchEvent(new Event('xadrez-auth'));
+        establishWebSession(result.tokens, result.user);
         router.push('/app');
       }
     } catch (error) {

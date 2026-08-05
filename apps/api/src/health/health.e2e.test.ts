@@ -54,6 +54,22 @@ describe('GET /v1/health', () => {
     expect(response.json()).toMatchObject({ status: 415 });
   });
 
+  it('rejects cookie-authenticated refresh without trusted CSRF proof', async () => {
+    const response = await app.inject({
+      headers: {
+        cookie: 'xadrez_refresh=opaque-refresh-token',
+        origin: 'https://attacker.example',
+        'x-xadrez-csrf': '1',
+      },
+      method: 'POST',
+      payload: {},
+      url: '/v1/auth/refresh',
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toMatchObject({ status: 403, title: 'Forbidden' });
+  });
+
   it('rate limits repeated authentication requests', async () => {
     const responses = [];
     for (let index = 0; index < 11; index += 1) {

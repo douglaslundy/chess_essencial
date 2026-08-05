@@ -116,60 +116,8 @@ export class ApiProblem extends Error {
   }
 }
 
-function authHeaders(token?: string): HeadersInit {
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-const sessionKeys = [
-  'xadrez.access_token',
-  'xadrez.refresh_token',
-  'xadrez.user_id',
-  'xadrez.username',
-] as const;
-
-export function clearStoredSession() {
-  if (typeof window === 'undefined') return;
-  for (const key of sessionKeys) window.localStorage.removeItem(key);
-  window.dispatchEvent(new Event('xadrez-auth'));
-}
-
-let refreshInFlight: Promise<string | null> | null = null;
-
-async function refreshStoredSession(): Promise<string | null> {
-  if (typeof window === 'undefined') return null;
-  if (refreshInFlight) return refreshInFlight;
-
-  refreshInFlight = (async () => {
-    const refreshToken = window.localStorage.getItem('xadrez.refresh_token');
-    if (!refreshToken) return null;
-    try {
-      const response = await fetch(webEnv.NEXT_PUBLIC_API_URL + '/auth/refresh', {
-        method: 'POST',
-        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
-      });
-      if (!response.ok) {
-        clearStoredSession();
-        return null;
-      }
-      const tokens = (await response.json()) as TokenPair;
-      window.localStorage.setItem('xadrez.access_token', tokens.accessToken);
-      window.localStorage.setItem('xadrez.refresh_token', tokens.refreshToken);
-      const userId = accessTokenPayload(tokens.accessToken)?.sub;
-      if (typeof userId === 'string') window.localStorage.setItem('xadrez.user_id', userId);
-      return tokens.accessToken;
-    } catch {
-      clearStoredSession();
-      return null;
-    }
-  })();
-
-  try {
-    return await refreshInFlight;
-  } finally {
-    refreshInFlight = null;
-  }
-}
+const WEB_SESSION_MARKER = 'cookie-session-v1';
+let memoryAccessToken: string | null = null;
 
 function accessTokenPayload(token: string) {
   const encodedPayload = token.split('.')[1];
@@ -188,12 +136,87 @@ function accessTokenExpiresSoon(token: string) {
   return typeof payload?.exp === 'number' && payload.exp * 1000 <= Date.now() + 30_000;
 }
 
+function authHeaders(token?: string): HeadersInit {
+  const accessToken = token === WEB_SESSION_MARKER ? memoryAccessToken : token;
+  return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+}
+
+const sessionKeys = [
+  'xadrez.access_token',
+  'xadrez.refresh_token',
+  'xadrez.user_id',
+  'xadrez.username',
+] as const;
+
+export function clearStoredSession() {
+  memoryAccessToken = null;
+  if (typeof window === 'undefined') return;
+  for (const key of sessionKeys) window.localStorage.removeItem(key);
+  window.dispatchEvent(new Event('xadrez-auth'));
+}
+
+export function establishWebSession(tokens: TokenPair, user: PublicUser) {
+  if (typeof window === 'undefined') return;
+  memoryAccessToken = tokens.accessToken;
+  window.localStorage.setItem('xadrez.access_token', WEB_SESSION_MARKER);
+  window.localStorage.removeItem('xadrez.refresh_token');
+  window.localStorage.setItem('xadrez.user_id', user.id);
+  window.localStorage.setItem('xadrez.username', user.username);
+  window.dispatchEvent(new Event('xadrez-auth'));
+}
+
+let refreshInFlight: Promise<string | null> | null = null;
+
+async function refreshStoredSession(): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
+  if (refreshInFlight) return refreshInFlight;
+
+  refreshInFlight = (async () => {
+    const marker = window.localStorage.getItem('xadrez.access_token');
+    const legacyRefreshToken = window.localStorage.getItem('xadrez.refresh_token');
+    if (!marker && !legacyRefreshToken) return null;
+    try {
+      const response = await fetch(webEnv.NEXT_PUBLIC_API_URL + '/auth/refresh', {
+        body: JSON.stringify(legacyRefreshToken ? { refreshToken: legacyRefreshToken } : {}),
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          'X-Xadrez-Client': 'web',
+          'X-Xadrez-CSRF': '1',
+        },
+        method: 'POST',
+      });
+      if (!response.ok) {
+        clearStoredSession();
+        return null;
+      }
+      const tokens = (await response.json()) as TokenPair;
+      memoryAccessToken = tokens.accessToken;
+      window.localStorage.setItem('xadrez.access_token', WEB_SESSION_MARKER);
+      window.localStorage.removeItem('xadrez.refresh_token');
+      const userId = accessTokenPayload(tokens.accessToken)?.sub;
+      if (typeof userId === 'string') window.localStorage.setItem('xadrez.user_id', userId);
+      return tokens.accessToken;
+    } catch {
+      clearStoredSession();
+      return null;
+    }
+  })();
+
+  try {
+    return await refreshInFlight;
+  } finally {
+    refreshInFlight = null;
+  }
+}
+
 export function getStoredUserId() {
   if (typeof window === 'undefined') return null;
   const stored = window.localStorage.getItem('xadrez.user_id');
   if (stored) return stored;
   const token = window.localStorage.getItem('xadrez.access_token');
-  const userId = token ? accessTokenPayload(token)?.sub : null;
+  const userId = token && token !== WEB_SESSION_MARKER ? accessTokenPayload(token)?.sub : null;
   if (typeof userId !== 'string') return null;
   window.localStorage.setItem('xadrez.user_id', userId);
   return userId;
@@ -201,15 +224,17 @@ export function getStoredUserId() {
 
 export async function getRealtimeAccessToken(forceRefresh = false): Promise<string | null> {
   if (typeof window === 'undefined') return null;
-  const token = window.localStorage.getItem('xadrez.access_token');
-  if (!token) return null;
-  if (!forceRefresh && !accessTokenExpiresSoon(token)) return token;
+  const stored = window.localStorage.getItem('xadrez.access_token');
+  if (!stored) return null;
+  const token = stored === WEB_SESSION_MARKER ? memoryAccessToken : stored;
+  if (!forceRefresh && token && !accessTokenExpiresSoon(token)) return token;
   return refreshStoredSession();
 }
 
 function fetchApi(path: string, token?: string, init?: RequestInit) {
   return fetch(webEnv.NEXT_PUBLIC_API_URL + path, {
     ...init,
+    credentials: 'include',
     headers: {
       Accept: 'application/json',
       ...(init?.body === undefined || init.body === null
@@ -279,16 +304,19 @@ export const api = {
     request<{ tokens: TokenPair; user: PublicUser }>('/auth/login', undefined, {
       method: 'POST',
       body: JSON.stringify(input),
+      headers: { 'X-Xadrez-Client': 'web' },
     }),
-  refresh: (refreshToken: string) =>
+  refresh: (refreshToken?: string) =>
     request<TokenPair>('/auth/refresh', undefined, {
+      body: JSON.stringify(refreshToken ? { refreshToken } : {}),
+      headers: { 'X-Xadrez-Client': 'web', 'X-Xadrez-CSRF': '1' },
       method: 'POST',
-      body: JSON.stringify({ refreshToken }),
     }),
-  logout: (refreshToken: string) =>
+  logout: (refreshToken?: string) =>
     request<void>('/auth/logout', undefined, {
+      body: JSON.stringify(refreshToken ? { refreshToken } : {}),
+      headers: { 'X-Xadrez-Client': 'web', 'X-Xadrez-CSRF': '1' },
       method: 'POST',
-      body: JSON.stringify({ refreshToken }),
     }),
   getMe: (token: string) => request<PublicUser>('/me', token),
   updateMe: (input: UpdateMeInput, token: string) =>

@@ -83,8 +83,7 @@ export function AuthStatus() {
   }, [open]);
 
   async function logout() {
-    const refreshToken = window.localStorage.getItem('xadrez.refresh_token');
-    if (refreshToken) await api.logout(refreshToken).catch(() => undefined);
+    await api.logout().catch(() => undefined);
     clearStoredSession();
     setOpen(false);
   }
