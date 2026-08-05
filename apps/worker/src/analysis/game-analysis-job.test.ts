@@ -101,6 +101,10 @@ describe('runGameAnalysisJob', () => {
     );
     expect(recommendations?.text).toContain('skill_tag_aliases');
     expect(recommendations?.text).toContain("exercise.status = 'published'");
+    expect(recommendations?.text).toContain('FROM learning_recommendations previous');
+    expect(recommendations?.text).toContain("interval '30 days'");
+    expect(recommendations?.text).toContain('recommendation_history.recommendation_count');
+    expect(recommendations?.text).toContain('md5(signal.id::text || exercise.id::text)');
     expect(recommendations?.text).toContain('ON CONFLICT (error_signal_id) DO NOTHING');
 
     expect(calls.some((call) => call.text.includes("SET status = 'completed'"))).toBe(true);

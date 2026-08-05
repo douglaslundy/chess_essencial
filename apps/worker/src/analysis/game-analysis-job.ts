@@ -309,6 +309,14 @@ async function recordLearningSignals(sql: Sql, gameId: string): Promise<void> {
       SELECT exercise.id
       FROM skill_tag_aliases alias
       JOIN exercises exercise ON alias.tag = ANY(exercise.tags)
+      LEFT JOIN LATERAL (
+        SELECT
+          count(*)::integer AS recommendation_count,
+          max(previous.created_at) AS last_recommended_at
+        FROM learning_recommendations previous
+        WHERE previous.user_id = signal.user_id
+          AND previous.exercise_id = exercise.id
+      ) recommendation_history ON true
       WHERE alias.skill_key = signal.skill_key
         AND exercise.status = 'published'
         AND exercise.position_type = 'legal_position'
@@ -322,8 +330,11 @@ async function recordLearningSignals(sql: Sql, gameId: string): Promise<void> {
             AND attempt.exercise_id = exercise.id
             AND attempt.correct = true
         ),
+        recommendation_history.last_recommended_at >= now() - interval '30 days',
+        recommendation_history.recommendation_count,
+        recommendation_history.last_recommended_at ASC NULLS FIRST,
         (jsonb_array_length(exercise.hints) = 0),
-        exercise.id
+        md5(signal.id::text || exercise.id::text)
       LIMIT 1
     ) practice ON true
     WHERE signal.game_id = ${gameId}
