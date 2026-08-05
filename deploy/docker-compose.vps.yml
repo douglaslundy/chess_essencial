@@ -128,6 +128,8 @@ services:
   worker:
     <<: *app-defaults
     image: xadrez-worker:${IMAGE_TAG:-local}
+    cpus: '1.0'
+    mem_limit: 512m
     depends_on:
       postgres:
         condition: service_healthy

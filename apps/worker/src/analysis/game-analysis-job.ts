@@ -1,7 +1,14 @@
 import { classifyMove } from '@xadrez/chess-domain';
+import { performance } from 'node:perf_hooks';
 import type { Sql } from 'postgres';
 
 import { evaluatePosition, type EngineEvaluation } from '../engine/stockfish-engine.js';
+import {
+  finishRuntimeResourceMeasurement,
+  recordEngineEvaluation,
+  recordGameAnalysis,
+  startRuntimeResourceMeasurement,
+} from './analysis-metrics.js';
 
 const ANALYSIS_DEPTH = 14;
 const MAX_NEWLY_QUEUED_PER_TICK = 20;
@@ -142,12 +149,43 @@ function negate(evaluation: EngineEvaluation): { mate: number | null; scoreCp: n
 }
 
 async function analyzeGame(sql: Sql, gameId: string, depth: number): Promise<void> {
+  const startedAt = performance.now();
+  const resourceStart = await startRuntimeResourceMeasurement();
+  let outcome: 'completed' | 'failed' = 'completed';
+  let positionsEvaluated = 0;
+  try {
+    positionsEvaluated = await analyzeGameCore(sql, gameId, depth);
+  } catch (error) {
+    outcome = 'failed';
+    throw error;
+  } finally {
+    const resources = await finishRuntimeResourceMeasurement(resourceStart);
+    const snapshot = recordGameAnalysis({
+      cpuMs: resources.cpuMs,
+      depth,
+      durationMs: performance.now() - startedAt,
+      memoryCurrentBytes: resources.memoryCurrentBytes,
+      memoryPeakBytes: resources.memoryPeakBytes,
+      outcome,
+      positionsEvaluated,
+      resourceScope: resources.scope,
+    });
+    console.info('worker.analysis.stockfish_metrics', {
+      engineEvaluationP99Ms: snapshot.engineEvaluationDurationMs.p99,
+      gameAnalysisP99Ms: snapshot.gameAnalysisDurationMs.p99,
+      heartbeatDecision: snapshot.analysisHeartbeatDecision,
+      latest: snapshot.latest,
+    });
+  }
+}
+
+async function analyzeGameCore(sql: Sql, gameId: string, depth: number): Promise<number> {
   const moves = await sql<MoveRow[]>`
     SELECT ply, color, fen_before AS "fenBefore", fen_after AS "fenAfter"
     FROM game_moves WHERE game_id = ${gameId} ORDER BY ply
   `;
   const [firstMove] = moves;
-  if (!firstMove) return;
+  if (!firstMove) return 0;
 
   // evaluations[i] is the position reached after i plies (evaluations[0] is
   // the position before the first move). Each fen_after equals the next
@@ -155,7 +193,12 @@ async function analyzeGame(sql: Sql, gameId: string, depth: number): Promise<voi
   const fens = [firstMove.fenBefore, ...moves.map((move) => move.fenAfter)];
   const evaluations: EngineEvaluation[] = [];
   for (const fen of fens) {
-    evaluations.push(await evaluatePosition(fen, { depth }));
+    const evaluationStartedAt = performance.now();
+    try {
+      evaluations.push(await evaluatePosition(fen, { depth }));
+    } finally {
+      recordEngineEvaluation(performance.now() - evaluationStartedAt);
+    }
   }
 
   for (const move of moves) {
@@ -181,6 +224,7 @@ async function analyzeGame(sql: Sql, gameId: string, depth: number): Promise<voi
   }
 
   await recordLearningSignals(sql, gameId);
+  return fens.length;
 }
 
 /**

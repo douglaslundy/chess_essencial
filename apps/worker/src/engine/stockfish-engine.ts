@@ -2,6 +2,8 @@ import { ChessJsRules } from '@xadrez/chess-domain';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
+import { STOCKFISH_HASH_MB, STOCKFISH_THREADS } from '../analysis/analysis-metrics.js';
+
 const ENGINE_PATH = fileURLToPath(
   new URL('../../vendor/stockfish/stockfish-18-lite-single.cjs', import.meta.url),
 );
@@ -121,6 +123,8 @@ export async function evaluatePosition(
           if (line.length === 0) continue;
 
           if (line === 'uciok') {
+            writeLine(`setoption name Threads value ${STOCKFISH_THREADS}`);
+            writeLine(`setoption name Hash value ${STOCKFISH_HASH_MB}`);
             writeLine('isready');
           } else if (line === 'readyok') {
             writeLine(`position fen ${fen}`);

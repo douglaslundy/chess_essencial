@@ -22,6 +22,14 @@ describe('worker health server', () => {
     const body = (await response.json()) as Record<string, unknown>;
 
     expect(response.status).toBe(200);
-    expect(body).toMatchObject({ service: 'worker', status: 'ok' });
+    expect(body).toMatchObject({
+      analysis: {
+        budget: { analysisLeaseMs: 1_800_000, stockfishHashMb: 16, stockfishThreads: 1 },
+        analysisHeartbeatDecision: 'insufficient_samples',
+        narrationHeartbeatDecision: 'insufficient_samples',
+      },
+      service: 'worker',
+      status: 'ok',
+    });
   });
 });

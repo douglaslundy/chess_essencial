@@ -1,3 +1,5 @@
+2026-08-05 - **COR-T20-005 concluída: Stockfish limitado e medido sem aumentar paralelismo.** Motor fixado em 1 thread/16 MB de hash e worker limitado a 1 CPU/512 MB. Health/logs agora expõem duração, CPU, memória e p50/p95/p99 de análise e narração. Benchmark depth 14 teve p99 conservador de 2,39 s/posição, 48,34 s de CPU e 382,75 MB de pico para toda a árvore; 39 análises reais tiveram p99 de 94,07 s, apenas 5,23% do lease de 30 min. Heartbeat não é necessário; a regra de reavaliação fica observável após 20 amostras. Gates: 47 testes worker, lint, typecheck e build aprovados; YAML validado sem Docker CLI. Nenhum push ou deploy. Próxima tarefa: COR-T20-009.
+
 2026-08-05 - **COR-T20-004 concluída: dica não conta mais como perfeição.** Primeira tentativa perfeita agora exige acerto sem falha e sem dica registrada pelo servidor; somente esse caso recebe o bônus de 5 XP e pode formar um “Nível perfeito”. O retorno idempotente respeita o valor persistido, preservando conclusões e badges históricos sem backfill. Gates locais: 103 testes da API passaram, 124 integrações PostgreSQL ficaram puladas sem banco local, e lint/typecheck/build passaram. Nenhum push ou deploy foi realizado. Próxima tarefa: COR-T20-005.
 
 2026-07-31 - **COR-T20-003 concluída: erro objetivo agora gera prática rastreável.** A migration 0043 introduz taxonomia versionada com aliases legados, `game_error_signals`, `learning_evidence` e `learning_recommendations`, incluindo backfill e rollback que preserva evidência alheia. O worker exclui bots e deriva apenas duas classes defensáveis dos fatos do Stockfish, atualiza mastery idempotentemente e recomenda exercício publicado ainda não resolvido quando possível. API, OpenAPI/SDK e revisão exibem skill, confiança, regra, evidência e CTA. Gates locais: typecheck/lint/build aprovados; 44 testes worker, 100 API e 107 web passaram. O e2e PostgreSQL ficou preparado, mas não executou localmente porque Docker/PostgreSQL não estão disponíveis. Risco residual virou COR-T20-017. Nenhum deploy foi realizado. Próxima tarefa: COR-T20-004.
@@ -179,16 +181,15 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-COR-T20-005 — Medir e limitar o throughput do Stockfish antes de otimizar, sem elevar paralelismo e sem deploy.
+COR-T20-009 — Tornar o tabuleiro mobile utilizável por leitor de tela, sem deploy.
 
 ## Contexto necessário
 
-- `TAREFAS.md` e os registros COR-T20-002/COR-T20-005 em `PROGRESSO.md`
-- `apps/worker/src/analysis/game-analysis-job.ts`
-- engine/runner do Stockfish usado pelo worker e respectivos testes
-- migration `database/migrations/0042_analysis_job_recovery.*.sql`
-- métricas/observabilidade existentes no worker e limites de recursos do deploy
-- Decisão: medir p99 contra leases de 30 min/15 min; heartbeat só se os dados exigirem; nenhum aumento de paralelismo sem benchmark
+- `TAREFAS.md` e os registros T20-A11/COR-T20-009 em `PROGRESSO.md`
+- `apps/mobile/src/components/chess-board.tsx`
+- telas mobile que renderizam o tabuleiro e o fluxo de promoção
+- convenções e testes React Native/Expo existentes
+- Critério: nome de casa/peça, role, estado selecionado, dica de ação e promoção pronunciável, sem letras cruas
 - Regra: um commit por tarefa; nenhum push ou deploy sem pedido explícito
 
 ## Contexto histórico anterior
@@ -308,4 +309,4 @@ COR-T20-005 — Medir e limitar o throughput do Stockfish antes de otimizar, sem
 - Débito técnico REAL exposto por esse bug: a "produção" não tem HTTPS (só HTTP puro num IP LAN). Isso já quebrou uma feature crítica silenciosamente uma vez; qualquer outra API restrita a contexto seguro usada no futuro (ex: `crypto.subtle`, clipboard, geolocalização precisa, service workers) vai ter o mesmo tipo de falha silenciosa. Não resolvido nesta sessão (fora de escopo/exigiria certificado TLS), só registrado como risco conhecido.
 ## Próxima tarefa
 
-COR-T20-005 — instrumentar e medir CPU, memória, duração e p99 do pipeline Stockfish; comparar com os leases atuais e adicionar heartbeat somente se os dados demonstrarem necessidade. Preservar o processamento sequencial até existir benchmark seguro para a VPS compartilhada.
+COR-T20-009 — adicionar semântica nativa completa ao tabuleiro mobile para leitor de tela e cobrir seleção, movimento e promoção com testes de acessibilidade.

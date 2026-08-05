@@ -1,7 +1,9 @@
 import type { AiProvider, MoveQuality } from '@xadrez/contracts';
 import { createHash } from 'node:crypto';
+import { performance } from 'node:perf_hooks';
 import type { Sql } from 'postgres';
 
+import { recordGameNarration } from '../analysis/analysis-metrics.js';
 import { decryptSecret } from '../config/secret-cipher.js';
 import { callLlm, type LlmConfig } from './llm-client.js';
 import {
@@ -75,6 +77,8 @@ export async function runGameNarrationJob(
     const claimed = await claimNextNarration(sql);
     if (!claimed) return { narratedGameId: null };
 
+    const startedAt = performance.now();
+    let outcome: 'completed' | 'failed' = 'completed';
     try {
       await narrateGame(sql, claimed.gameId, config);
       await sql`
@@ -83,7 +87,17 @@ export async function runGameNarrationJob(
         WHERE game_id = ${claimed.gameId}
       `;
     } catch (error) {
+      outcome = 'failed';
       await scheduleNarrationRetry(sql, claimed.gameId, claimed.attemptCount, error);
+    } finally {
+      const durationMs = performance.now() - startedAt;
+      const snapshot = recordGameNarration(durationMs);
+      console.info('worker.narration.metrics', {
+        durationMs,
+        heartbeatDecision: snapshot.narrationHeartbeatDecision,
+        outcome,
+        p99Ms: snapshot.narrationDurationMs.p99,
+      });
     }
     return { narratedGameId: claimed.gameId };
   } finally {
