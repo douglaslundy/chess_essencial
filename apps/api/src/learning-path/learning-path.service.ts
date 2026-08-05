@@ -254,7 +254,7 @@ export class LearningPathService {
         this.repository.getOrInitProgress(userId),
       ]);
       return {
-        correctFirstTry: completion.attempts <= 1,
+        correctFirstTry: completion.correctFirstTry ?? false,
         hintsUsed: completion.hintsUsed,
         levelCompleted,
         newBadges: [],
@@ -302,7 +302,6 @@ export class LearningPathService {
       );
     }
 
-    const correctFirstTry = failures === 0;
     const tags = await this.repository.getExerciseTags(exerciseId);
     await this.repository.upsertSkillMastery(userId, tags, successes, failures);
     // Real server-tracked count (exercise_training_items.hints_used), never
@@ -312,6 +311,9 @@ export class LearningPathService {
     const hintsUsed = completion.trainingSessionId
       ? await this.exercises.getSessionHintsUsed(completion.trainingSessionId)
       : 0;
+    // "First try" is the single product-wide perfection criterion: the
+    // exercise was solved without a prior failure and without assistance.
+    const correctFirstTry = failures === 0 && hintsUsed === 0;
     return this.finishStageCompletion(userId, stageId, context, correctFirstTry, hintsUsed);
   }
 

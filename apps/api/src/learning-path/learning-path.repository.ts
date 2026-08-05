@@ -216,7 +216,7 @@ export class LearningPathRepository {
         started_at = COALESCE(user_stage_completions.started_at, EXCLUDED.started_at)
       RETURNING status, started_at AS "startedAt", resolved_exercise_id AS "resolvedExerciseId",
                 training_session_id AS "trainingSessionId", lesson_attempt_id AS "lessonAttemptId",
-                attempts, hints_used AS "hintsUsed"
+                correct_first_try AS "correctFirstTry", hints_used AS "hintsUsed"
     `;
     return row!;
   }
@@ -560,7 +560,7 @@ export interface StageContextRow {
 }
 
 export interface CompletionRow {
-  attempts: number;
+  correctFirstTry: boolean | null;
   hintsUsed: number;
   lessonAttemptId: string | null;
   resolvedExerciseId: string | null;

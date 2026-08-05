@@ -540,18 +540,17 @@ describeDatabase('learning path database integration', () => {
       url: `/v1/learning-path/stages/${stageOneId}/complete`,
     });
     expect(completeFirst.statusCode, completeFirst.body).toBe(201);
-    // This is this fresh test user's very first stage completion ever, so
-    // it also exercises the gamification side effects (FASE 15 of the
-    // spec): base XP + first-try bonus, streak starting at 1, and the
-    // "primeiros passos" badge granted exactly once.
+    // A server-tracked hint makes this assisted even though the first
+    // submitted move was correct: base XP only and no perfection credit.
+    // The first-ever completion badge remains independent from assistance.
     expect(completeFirst.json()).toMatchObject({
-      correctFirstTry: true,
+      correctFirstTry: false,
       hintsUsed: 1,
       levelCompleted: false,
       newBadges: [{ badgeKey: 'first_stage', label: 'Primeiros passos' }],
       streakDays: 1,
       worldCompleted: false,
-      xpAwarded: 15,
+      xpAwarded: 10,
     });
 
     await app.inject({
@@ -572,9 +571,8 @@ describeDatabase('learning path database integration', () => {
     });
     expect(completeSecond.statusCode, completeSecond.body).toBe(201);
     const completeSecondBody = completeSecond.json();
-    // Both stages of this capstone level were solved on the first try, so
-    // completing it earns both the "nível perfeito" badge and the
-    // world-completion badge in the same call.
+    // The second stage was unaided, but the hinted first stage prevents
+    // the level-perfect badge. World completion remains independent.
     expect(completeSecondBody).toMatchObject({
       levelCompleted: true,
       streakDays: 1,
@@ -583,7 +581,7 @@ describeDatabase('learning path database integration', () => {
     });
     expect(
       completeSecondBody.newBadges.map((badge: { badgeKey: string }) => badge.badgeKey).sort(),
-    ).toEqual(['perfect_level', `world_completed:${worldId}`].sort());
+    ).toEqual([`world_completed:${worldId}`]);
 
     const badges = await app.inject({
       headers: auth(member),
@@ -596,7 +594,7 @@ describeDatabase('learning path database integration', () => {
         .json()
         .map((badge: { badgeKey: string }) => badge.badgeKey)
         .sort(),
-    ).toEqual(['first_stage', 'perfect_level', `world_completed:${worldId}`].sort());
+    ).toEqual(['first_stage', `world_completed:${worldId}`].sort());
 
     const progress = await app.inject({
       headers: auth(member),

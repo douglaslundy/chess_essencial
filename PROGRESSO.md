@@ -1,3 +1,5 @@
+2026-08-05 - **COR-T20-004 concluída: dica não conta mais como perfeição.** Primeira tentativa perfeita agora exige acerto sem falha e sem dica registrada pelo servidor; somente esse caso recebe o bônus de 5 XP e pode formar um “Nível perfeito”. O retorno idempotente respeita o valor persistido, preservando conclusões e badges históricos sem backfill. Gates locais: 103 testes da API passaram, 124 integrações PostgreSQL ficaram puladas sem banco local, e lint/typecheck/build passaram. Nenhum push ou deploy foi realizado. Próxima tarefa: COR-T20-005.
+
 2026-07-31 - **COR-T20-003 concluída: erro objetivo agora gera prática rastreável.** A migration 0043 introduz taxonomia versionada com aliases legados, `game_error_signals`, `learning_evidence` e `learning_recommendations`, incluindo backfill e rollback que preserva evidência alheia. O worker exclui bots e deriva apenas duas classes defensáveis dos fatos do Stockfish, atualiza mastery idempotentemente e recomenda exercício publicado ainda não resolvido quando possível. API, OpenAPI/SDK e revisão exibem skill, confiança, regra, evidência e CTA. Gates locais: typecheck/lint/build aprovados; 44 testes worker, 100 API e 107 web passaram. O e2e PostgreSQL ficou preparado, mas não executou localmente porque Docker/PostgreSQL não estão disponíveis. Risco residual virou COR-T20-017. Nenhum deploy foi realizado. Próxima tarefa: COR-T20-004.
 
 # Progresso do Projeto
@@ -177,20 +179,17 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-COR-T20-004 — Corrigir a semântica de dica versus perfeição, sem deploy.
+COR-T20-005 — Medir e limitar o throughput do Stockfish antes de otimizar, sem elevar paralelismo e sem deploy.
+
 ## Contexto necessário
 
-- `AGENTS.md`
-- `tarefa_20.txt.txt`
-- `MEMORIA_DESENVOLVIMENTO_TAREFA_20.md`
-- `TAREFAS.md`
-- `ARCHITECTURE_AUDIT.md`
-- `apps/web/src/components/game/chess-board.tsx`, temas, preferências e navegação
-- `apps/mobile/src/components/chess-board.tsx`, rotas, armazenamento seguro e telas principais
-- configurações de perfil, voz, som, tabuleiro e Treinador
-- testes de teclado, foco, ARIA, contraste, reduced motion e responsividade
-- contratos e persistência compartilhados entre web/mobile
-- Regra: um commit por tarefa; nenhum deploy sem pedido explícito
+- `TAREFAS.md` e os registros COR-T20-002/COR-T20-005 em `PROGRESSO.md`
+- `apps/worker/src/analysis/game-analysis-job.ts`
+- engine/runner do Stockfish usado pelo worker e respectivos testes
+- migration `database/migrations/0042_analysis_job_recovery.*.sql`
+- métricas/observabilidade existentes no worker e limites de recursos do deploy
+- Decisão: medir p99 contra leases de 30 min/15 min; heartbeat só se os dados exigirem; nenhum aumento de paralelismo sem benchmark
+- Regra: um commit por tarefa; nenhum push ou deploy sem pedido explícito
 
 ## Contexto histórico anterior
 
@@ -309,12 +308,4 @@ COR-T20-004 — Corrigir a semântica de dica versus perfeição, sem deploy.
 - Débito técnico REAL exposto por esse bug: a "produção" não tem HTTPS (só HTTP puro num IP LAN). Isso já quebrou uma feature crítica silenciosamente uma vez; qualquer outra API restrita a contexto seguro usada no futuro (ex: `crypto.subtle`, clipboard, geolocalização precisa, service workers) vai ter o mesmo tipo de falha silenciosa. Não resolvido nesta sessão (fora de escopo/exigiria certificado TLS), só registrado como risco conhecido.
 ## Próxima tarefa
 
-Incidente de produção do dia 21/07 resolvido (ver acima): disco da VPS limpo manualmente, deploy pipeline destravado, E o bug histórico de "peças não se movem em partidas" finalmente com causa raiz encontrada e corrigida (`crypto.randomUUID` indisponível em contexto HTTP inseguro — ver acima). Três deploys completados com sucesso nesta sessão (`b1c8203` → `ad95ee5` → `c00a330`). Aguardando o usuário confirmar em produção que o movimento de peças em partidas ao vivo agora funciona de verdade. Quando ele testar:
-
-1. Prioridade máxima: mover peças numa partida ao vivo real (branca e preta), incluindo o tabuleiro demonstrativo (`/app/partida/demo`, também tinha o mesmo bug em `playDemoMove`).
-2. Conferir também: (a) página de Desafios (deve mostrar 14 temas em ordem de dificuldade, sem filtros, sem botão de confirmar), (b) Exercícios com o filtro Todos/Clássicos/Livro e os botões (fix de consistência do `ad95ee5` já no ar; se ainda estiver "feio", pedir print ou conectar a extensão Chrome — não adivinhar de novo), (c) um quiz de aula (tabuleiro deve continuar visível), (d) a página inicial `/` (barra com Entrar/Criar conta).
-3. Se o botão de confirmar em Desafios realmente ainda aparecer (o código já deveria auto-avaliar via `hasGuidedLine`), é bug real a investigar mais fundo — não só cache/deploy-lag, já que os IDs conferem entre migrations e `guided-challenge-lines.ts`.
-4. Opcional, só se o usuário pedir: expandir mais o catálogo de Desafios/Clássicos (temas sugeridos: deflexão, isca/atração, raio-x, zwischenzug — exigem mais cuidado de verificação que os padrões de mate já usados).
-5. Débito técnico registrado (não urgente, achados do `/simplify`): `hasGuidedLine` depende de um mapa client-side que já causou um bug real nesta sessão (fácil de esquecer de atualizar numa migration futura); o filtro `source` usa tags de texto em vez de coluna própria. Considerar resolver se houver uma próxima rodada de migrações de conteúdo.
-6. Débito técnico maior (ver acima): produção sem HTTPS é um risco real que já causou um bug em produção; vale considerar TLS (mesmo autoassinado/Let's Encrypt local) numa sessão futura se a VPS ganhar um domínio público.
-7. Contas de teste criadas durante a investigação (não excluídas, sem risco): usuário `claude_debug_test` / `claude-debug-test@xadrez.local` e uma partida contra bot associada a ele. Podem ser ignoradas ou removidas manualmente do banco se o usuário preferir.
+COR-T20-005 — instrumentar e medir CPU, memória, duração e p99 do pipeline Stockfish; comparar com os leases atuais e adicionar heartbeat somente se os dados demonstrarem necessidade. Preservar o processamento sequencial até existir benchmark seguro para a VPS compartilhada.
