@@ -6,6 +6,7 @@
     "build": "next build",
     "dev": "next dev",
     "generate:api": "openapi-typescript ../../api/openapi.yaml -o src/lib/api/openapi.d.ts && prettier --write src/lib/api/openapi.d.ts",
+    "generate:check": "openapi-typescript ../../api/openapi.yaml -o .generated-openapi.tmp.ts && prettier --write .generated-openapi.tmp.ts && node scripts/check-generated.mjs",
     "lint": "eslint .",
     "start": "next start",
     "test": "vitest run",

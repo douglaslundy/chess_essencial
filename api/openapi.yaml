@@ -235,6 +235,17 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/UserSubscription'}
         '401': {$ref: '#/components/responses/Problem'}
+  /me/subscription/payments:
+    get:
+      summary: Listar pagamentos da assinatura do usuário
+      operationId: getMySubscriptionPayments
+      responses:
+        '200':
+          description: Pagamentos da assinatura
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SubscriptionPaymentList'}
+        '401': {$ref: '#/components/responses/Problem'}
   /me/subscription/checkout:
     post:
       summary: Start a Mercado Pago checkout for a subscription plan
@@ -1259,6 +1270,27 @@ paths:
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
+  /games/{gameId}/live-narration:
+    parameters:
+      - $ref: '#/components/parameters/GameId'
+    post:
+      summary: Gerar narração opcional para um evento da partida ao vivo
+      operationId: getLiveNarration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LiveNarrationRequest'}
+      responses:
+        '200':
+          description: Narração gerada ou nula quando indisponível
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LiveNarrationResult'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
   /games/{gameId}/moves:
     parameters:
       - $ref: '#/components/parameters/GameId'
@@ -1498,6 +1530,84 @@ paths:
               schema: {$ref: '#/components/schemas/CourseSummary'}
         '400': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
+  /learning-path/map:
+    get:
+      summary: Obter o mapa da Jornada do usuário
+      operationId: getLearningMap
+      responses:
+        '200':
+          description: Mundos e níveis com progresso
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LearningMap'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /learning-path/levels/{levelId}:
+    get:
+      summary: Obter detalhes de um nível da Jornada
+      operationId: getLearningLevel
+      parameters:
+        - {name: levelId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Nível e suas etapas
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LearningLevelDetail'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /learning-path/progress:
+    get:
+      summary: Obter progresso agregado da Jornada
+      operationId: getLearningProgress
+      responses:
+        '200':
+          description: Progresso, XP e sequência
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LearningProgress'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /learning-path/badges:
+    get:
+      summary: Listar badges conquistados na Jornada
+      operationId: getLearningBadges
+      responses:
+        '200':
+          description: Badges conquistados
+          content:
+            application/json:
+              schema: {type: array, items: {$ref: '#/components/schemas/LearningBadge'}}
+        '401': {$ref: '#/components/responses/Problem'}
+  /learning-path/stages/{stageId}/start:
+    post:
+      summary: Iniciar ou retomar uma etapa da Jornada
+      operationId: startLearningStage
+      parameters:
+        - {name: stageId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '201':
+          description: Runtime autoritativo da etapa
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/StartLearningStageResult'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /learning-path/stages/{stageId}/complete:
+    post:
+      summary: Concluir uma etapa da Jornada de forma idempotente
+      operationId: completeLearningStage
+      parameters:
+        - {name: stageId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '201':
+          description: Progresso e recompensas concedidas
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CompleteLearningStageResult'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
   /lessons/{lessonId}:
     get:
       summary: Obter metadados e primeira etapa sanitizada
@@ -1592,6 +1702,21 @@ paths:
           content:
             application/json:
               schema: {type: array, items: {$ref: '#/components/schemas/ExerciseTheme'}}
+  /exercises/{exerciseId}:
+    get:
+      summary: Obter um exercício publicado por ID
+      operationId: getExerciseById
+      parameters:
+        - {name: exerciseId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Exercício publicado
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseSummary'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
   /exercises/{exerciseId}/attempts:
     post:
       summary: Submit a server-evaluated exercise attempt
@@ -1739,6 +1864,152 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    SubscriptionPayment:
+      type: object
+      required: [amountCents, billingPeriod, currency, id, paidAt, provider, status]
+      properties:
+        amountCents: {type: integer}
+        billingPeriod: {type: string, enum: [monthly, annual]}
+        currency: {type: string}
+        id: {type: string, format: uuid}
+        paidAt: {type: [string, 'null'], format: date-time}
+        provider: {type: string}
+        status: {type: string, enum: [pending, approved, rejected, cancelled, refunded, expired]}
+    SubscriptionPaymentList:
+      type: object
+      required: [items]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/SubscriptionPayment'}}
+    LiveNarrationRequest:
+      oneOf:
+        - type: object
+          required: [kind, fen, bestMoveUci, mate, scoreCp]
+          properties:
+            kind: {type: string, const: suggestion}
+            fen: {type: string}
+            bestMoveUci: {type: string}
+            mate: {type: [integer, 'null']}
+            scoreCp: {type: [integer, 'null']}
+        - type: object
+          required: [kind, fen, uci, bestMoveUci, quality, centipawnLoss, missedWin]
+          properties:
+            kind: {type: string, const: quality}
+            fen: {type: string}
+            uci: {type: string}
+            bestMoveUci: {type: [string, 'null']}
+            quality: {$ref: '#/components/schemas/MoveQuality'}
+            centipawnLoss: {type: integer}
+            missedWin: {type: boolean}
+      discriminator: {propertyName: kind}
+    LiveNarrationResult:
+      type: object
+      required: [narrative]
+      properties:
+        narrative: {type: [string, 'null']}
+    LearningStageStatus:
+      type: string
+      enum: [locked, available, completed]
+    LearningStageType:
+      type: string
+      enum: [challenge, lesson, review, checkpoint, boss]
+    LearningLevelStatus:
+      type: string
+      enum: [locked, current, completed]
+    LearningStageSummary:
+      type: object
+      required: [id, position, status, type]
+      properties:
+        id: {type: string, format: uuid}
+        position: {type: integer}
+        status: {$ref: '#/components/schemas/LearningStageStatus'}
+        type: {$ref: '#/components/schemas/LearningStageType'}
+    LearningLevelSummary:
+      type: object
+      required: [completedStageCount, id, isCapstone, position, stageCount, status, title]
+      properties:
+        completedStageCount: {type: integer}
+        id: {type: string, format: uuid}
+        isCapstone: {type: boolean}
+        position: {type: integer}
+        stageCount: {type: integer}
+        status: {$ref: '#/components/schemas/LearningLevelStatus'}
+        title: {type: string}
+    LearningWorldSummary:
+      type: object
+      required: [description, id, levels, position, title]
+      properties:
+        description: {type: string}
+        id: {type: string, format: uuid}
+        levels: {type: array, items: {$ref: '#/components/schemas/LearningLevelSummary'}}
+        position: {type: integer}
+        title: {type: string}
+    LearningMap:
+      type: object
+      required: [worlds]
+      properties:
+        worlds: {type: array, items: {$ref: '#/components/schemas/LearningWorldSummary'}}
+    LearningLevelDetail:
+      allOf:
+        - $ref: '#/components/schemas/LearningLevelSummary'
+        - type: object
+          required: [stages, worldId]
+          properties:
+            stages: {type: array, items: {$ref: '#/components/schemas/LearningStageSummary'}}
+            worldId: {type: string, format: uuid}
+    LearningProgress:
+      type: object
+      required: [currentLevelId, currentWorldId, highestUnlockedLevelId, streakDays, xp]
+      properties:
+        currentLevelId: {type: [string, 'null'], format: uuid}
+        currentWorldId: {type: [string, 'null'], format: uuid}
+        highestUnlockedLevelId: {type: [string, 'null'], format: uuid}
+        streakDays: {type: integer}
+        xp: {type: integer}
+    StartLearningStageResult:
+      oneOf:
+        - type: object
+          required: [exerciseId, levelId, stageId, trainingSessionId, type]
+          properties:
+            exerciseId: {type: string, format: uuid}
+            levelId: {type: string, format: uuid}
+            stageId: {type: string, format: uuid}
+            trainingSessionId: {type: string, format: uuid}
+            type: {type: string, enum: [challenge, review, checkpoint, boss]}
+        - type: object
+          required: [lessonAttemptId, lessonId, levelId, stageId, type]
+          properties:
+            lessonAttemptId: {type: string, format: uuid}
+            lessonId: {type: string, format: uuid}
+            levelId: {type: string, format: uuid}
+            stageId: {type: string, format: uuid}
+            type: {type: string, const: lesson}
+      discriminator: {propertyName: type}
+    LearningBadge:
+      type: object
+      required: [badgeKey, earnedAt, label]
+      properties:
+        badgeKey: {type: string}
+        earnedAt: {type: string, format: date-time}
+        label: {type: string}
+    LearningBadgeAward:
+      type: object
+      required: [badgeKey, label]
+      properties:
+        badgeKey: {type: string}
+        label: {type: string}
+    CompleteLearningStageResult:
+      type: object
+      required: [correctFirstTry, hintsUsed, levelCompleted, newBadges, stageId, status, streakDays, worldCompleted, xpAwarded]
+      properties:
+        correctFirstTry: {type: boolean}
+        hintsUsed: {type: integer}
+        levelCompleted: {type: boolean}
+        newBadges: {type: array, items: {$ref: '#/components/schemas/LearningBadgeAward'}}
+        stageId: {type: string, format: uuid}
+        status: {$ref: '#/components/schemas/LearningStageStatus'}
+        streakDays: {type: integer}
+        worldCompleted: {type: boolean}
+        xpAwarded: {type: integer}
     ExercisePositionType:
       type: string
       enum: [legal_position, illustrative_diagram, text_only]

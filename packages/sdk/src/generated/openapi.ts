@@ -209,6 +209,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/me/subscription/payments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Listar pagamentos da assinatura do usuário */
+    get: operations['getMySubscriptionPayments'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/me/subscription/checkout': {
     parameters: {
       query?: never;
@@ -1185,6 +1202,25 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/games/{gameId}/live-narration': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        gameId: components['parameters']['GameId'];
+      };
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Gerar narração opcional para um evento da partida ao vivo */
+    post: operations['getLiveNarration'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/games/{gameId}/moves': {
     parameters: {
       query?: never;
@@ -1434,6 +1470,108 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/learning-path/map': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Obter o mapa da Jornada do usuário */
+    get: operations['getLearningMap'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/learning-path/levels/{levelId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Obter detalhes de um nível da Jornada */
+    get: operations['getLearningLevel'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/learning-path/progress': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Obter progresso agregado da Jornada */
+    get: operations['getLearningProgress'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/learning-path/badges': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Listar badges conquistados na Jornada */
+    get: operations['getLearningBadges'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/learning-path/stages/{stageId}/start': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Iniciar ou retomar uma etapa da Jornada */
+    post: operations['startLearningStage'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/learning-path/stages/{stageId}/complete': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Concluir uma etapa da Jornada de forma idempotente */
+    post: operations['completeLearningStage'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/lessons/{lessonId}': {
     parameters: {
       query?: never;
@@ -1528,6 +1666,23 @@ export interface paths {
     };
     /** List catalogued challenge themes with remaining counts for the current user */
     get: operations['listChallengeThemes'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/exercises/{exerciseId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Obter um exercício publicado por ID */
+    get: operations['getExerciseById'];
     put?: never;
     post?: never;
     delete?: never;
@@ -1676,6 +1831,140 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    SubscriptionPayment: {
+      amountCents: number;
+      /** @enum {string} */
+      billingPeriod: 'monthly' | 'annual';
+      currency: string;
+      /** Format: uuid */
+      id: string;
+      /** Format: date-time */
+      paidAt: string | null;
+      provider: string;
+      /** @enum {string} */
+      status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'refunded' | 'expired';
+    };
+    SubscriptionPaymentList: {
+      items: components['schemas']['SubscriptionPayment'][];
+    };
+    LiveNarrationRequest:
+      | {
+          /** @constant */
+          kind: 'suggestion';
+          fen: string;
+          bestMoveUci: string;
+          mate: number | null;
+          scoreCp: number | null;
+        }
+      | {
+          /** @constant */
+          kind: 'quality';
+          fen: string;
+          uci: string;
+          bestMoveUci: string | null;
+          quality: components['schemas']['MoveQuality'];
+          centipawnLoss: number;
+          missedWin: boolean;
+        };
+    LiveNarrationResult: {
+      narrative: string | null;
+    };
+    /** @enum {string} */
+    LearningStageStatus: 'locked' | 'available' | 'completed';
+    /** @enum {string} */
+    LearningStageType: 'challenge' | 'lesson' | 'review' | 'checkpoint' | 'boss';
+    /** @enum {string} */
+    LearningLevelStatus: 'locked' | 'current' | 'completed';
+    LearningStageSummary: {
+      /** Format: uuid */
+      id: string;
+      position: number;
+      status: components['schemas']['LearningStageStatus'];
+      type: components['schemas']['LearningStageType'];
+    };
+    LearningLevelSummary: {
+      completedStageCount: number;
+      /** Format: uuid */
+      id: string;
+      isCapstone: boolean;
+      position: number;
+      stageCount: number;
+      status: components['schemas']['LearningLevelStatus'];
+      title: string;
+    };
+    LearningWorldSummary: {
+      description: string;
+      /** Format: uuid */
+      id: string;
+      levels: components['schemas']['LearningLevelSummary'][];
+      position: number;
+      title: string;
+    };
+    LearningMap: {
+      worlds: components['schemas']['LearningWorldSummary'][];
+    };
+    LearningLevelDetail: components['schemas']['LearningLevelSummary'] & {
+      stages: components['schemas']['LearningStageSummary'][];
+      /** Format: uuid */
+      worldId: string;
+    };
+    LearningProgress: {
+      /** Format: uuid */
+      currentLevelId: string | null;
+      /** Format: uuid */
+      currentWorldId: string | null;
+      /** Format: uuid */
+      highestUnlockedLevelId: string | null;
+      streakDays: number;
+      xp: number;
+    };
+    StartLearningStageResult:
+      | {
+          /** Format: uuid */
+          exerciseId: string;
+          /** Format: uuid */
+          levelId: string;
+          /** Format: uuid */
+          stageId: string;
+          /** Format: uuid */
+          trainingSessionId: string;
+          /** @enum {string} */
+          type: 'challenge' | 'review' | 'checkpoint' | 'boss';
+        }
+      | {
+          /** Format: uuid */
+          lessonAttemptId: string;
+          /** Format: uuid */
+          lessonId: string;
+          /** Format: uuid */
+          levelId: string;
+          /** Format: uuid */
+          stageId: string;
+          /** @constant */
+          type: 'lesson';
+        };
+    LearningBadge: {
+      badgeKey: string;
+      /** Format: date-time */
+      earnedAt: string;
+      label: string;
+    };
+    LearningBadgeAward: {
+      badgeKey: string;
+      label: string;
+    };
+    CompleteLearningStageResult: {
+      correctFirstTry: boolean;
+      hintsUsed: number;
+      levelCompleted: boolean;
+      newBadges: components['schemas']['LearningBadgeAward'][];
+      /** Format: uuid */
+      stageId: string;
+      status: components['schemas']['LearningStageStatus'];
+      streakDays: number;
+      worldCompleted: boolean;
+      xpAwarded: number;
+    };
     /** @enum {string} */
     ExercisePositionType: 'legal_position' | 'illustrative_diagram' | 'text_only';
     ExerciseSummary: {
@@ -3177,6 +3466,27 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['UserSubscription'];
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  getMySubscriptionPayments: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Pagamentos da assinatura */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SubscriptionPaymentList'];
         };
       };
       401: components['responses']['Problem'];
@@ -4909,6 +5219,36 @@ export interface operations {
       404: components['responses']['Problem'];
     };
   };
+  getLiveNarration: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        gameId: components['parameters']['GameId'];
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LiveNarrationRequest'];
+      };
+    };
+    responses: {
+      /** @description Narração gerada ou nula quando indisponível */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LiveNarrationResult'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
   listGameMoves: {
     parameters: {
       query?: never;
@@ -5291,6 +5631,144 @@ export interface operations {
       403: components['responses']['Problem'];
     };
   };
+  getLearningMap: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Mundos e níveis com progresso */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LearningMap'];
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  getLearningLevel: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        levelId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Nível e suas etapas */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LearningLevelDetail'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  getLearningProgress: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Progresso, XP e sequência */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LearningProgress'];
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  getLearningBadges: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Badges conquistados */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LearningBadge'][];
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  startLearningStage: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        stageId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Runtime autoritativo da etapa */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['StartLearningStageResult'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  completeLearningStage: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        stageId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Progresso e recompensas concedidas */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CompleteLearningStageResult'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
   getLessonOverview: {
     parameters: {
       query?: never;
@@ -5441,6 +5919,31 @@ export interface operations {
           'application/json': components['schemas']['ExerciseTheme'][];
         };
       };
+    };
+  };
+  getExerciseById: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        exerciseId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Exercício publicado */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExerciseSummary'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
     };
   };
   submitExerciseAttempt: {

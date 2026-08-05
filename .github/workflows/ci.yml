@@ -45,6 +45,9 @@ jobs:
       - name: Check formatting
         run: pnpm format:check
 
+      - name: Check OpenAPI route and client parity
+        run: pnpm openapi:check
+
       - name: Lint
         run: pnpm lint
 

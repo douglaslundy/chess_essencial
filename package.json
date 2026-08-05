@@ -19,6 +19,7 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "load:basic": "node scripts/basic-load.mjs",
+    "openapi:check": "node scripts/check-openapi-route-parity.test.mjs && node scripts/check-openapi-route-parity.mjs && pnpm --filter @xadrez/sdk generate:check && pnpm --filter @xadrez/web generate:check",
     "sdk:generate": "pnpm --filter @xadrez/sdk generate:api",
     "db:verify-backup-restore": "bash scripts/verify-backup-restore.sh",
     "content:validate:exercises": "node scripts/validate-exercise-content.mjs",

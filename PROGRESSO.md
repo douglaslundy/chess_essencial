@@ -1,3 +1,7 @@
+2026-08-05 - **COR-T20-016 concluída: controllers, OpenAPI e clientes estão em paridade verificável.** O inventário automático encontrou e documentou nove operações ausentes: seis da Jornada, narração ao vivo, pagamentos e detalhe de exercício. Schemas e tipos web/SDK foram regenerados. A CI agora compara método+caminho de todos os controllers, falha em decorator dinâmico e valida que ambos os clientes gerados não estão obsoletos. Gates: paridade zero-drift, 3 testes do comparador, 3 SDK, 115 web, typechecks, lint do monorepo, format e builds web/SDK aprovados; lint manteve apenas dois warnings web preexistentes. Nenhum push ou deploy. Próxima tarefa: COR-T20-017.
+
+2026-08-05 - **COR-T20-016 implementada e em validação:** o comparador encontrou e documentou nove operações ausentes (Jornada, narração ao vivo, pagamentos e detalhe de exercício). OpenAPI e tipos web/SDK foram regenerados. O novo gate compara método+caminho de todos os controllers, rejeita decorators dinâmicos e verifica os dois clientes gerados; três regressões do comparador passaram. Nenhum push ou deploy.
+
 2026-08-05 - **COR-T20-015 concluída: uploads validam e normalizam a imagem real.** Avatar e foto do feed rejeitam base64 malformado, MIME divergente dos bytes, conteúdo não-imagem, multipágina e excesso de bytes/pixels; dimensões são limitadas, metadados removidos e o resultado é regravado como WebP antes do MinIO. Os limites existentes de 512 KB e 2 MB permanecem. Gates: 118 testes API, lint, typecheck, format e build aprovados; 125 integrações PostgreSQL ficaram puladas sem banco local. Nenhum push ou deploy. Próxima tarefa: COR-T20-016.
 
 2026-08-05 - **COR-T20-015 implementada e em validação:** uploads agora exigem base64 canônico, formato JPEG/PNG/WebP confirmado pelos bytes, imagem decodificável de página única e limites de pixels/dimensão. O servidor remove metadados e regrava avatar/feed como WebP antes do MinIO, preservando os limites de 512 KB/2 MB. Dez testes direcionados e typecheck da API passaram. Nenhum push ou deploy.
@@ -201,16 +205,15 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-COR-T20-016 — Restaurar paridade entre controllers e OpenAPI, sem deploy.
+COR-T20-017 — Calibrar sinais pedagógicos e diversidade da prática com dados reais, sem deploy.
 
 ## Contexto necessário
 
-- `apps/api/src/learning-path/learning-path.controller.ts`
-- `apps/api/src/games/presentation/games.controller.ts`
-- `api/openapi.yaml`
-- clientes gerados em `apps/web/src/lib/api/openapi.d.ts` e `packages/sdk/src/generated/openapi.ts`
-- scripts `generate:api`/`generate:check` e workflow `.github/workflows/ci.yml`
-- Critério: documentar todas as rotas reais, regenerar clientes e criar gate automático que falhe em drift de rota/método
+- `apps/worker/src/analysis/game-analysis-job.ts` e respectivos testes
+- tabelas `game_error_signals`, `learning_evidence`, `learning_recommendations` e `skill_mastery` da migration 0043
+- `apps/api/src/games/infrastructure/games.repository.ts` e regressões de recomendação
+- Critério: medir precisão/utilidade antes de ampliar a taxonomia, detectar temas somente por evidência objetiva e diversificar por dificuldade/recência
+- Restrição: não usar LLM como classificador e não inventar calibração sem amostra real
 - Regra: um commit por tarefa; nenhum push ou deploy sem pedido explícito
 
 ## Contexto histórico anterior
@@ -330,4 +333,4 @@ COR-T20-016 — Restaurar paridade entre controllers e OpenAPI, sem deploy.
 - Débito técnico REAL exposto por esse bug: a "produção" não tem HTTPS (só HTTP puro num IP LAN). Isso já quebrou uma feature crítica silenciosamente uma vez; qualquer outra API restrita a contexto seguro usada no futuro (ex: `crypto.subtle`, clipboard, geolocalização precisa, service workers) vai ter o mesmo tipo de falha silenciosa. Não resolvido nesta sessão (fora de escopo/exigiria certificado TLS), só registrado como risco conhecido.
 ## Próxima tarefa
 
-COR-T20-016 — restaurar a paridade entre controllers e OpenAPI e criar um gate contra drift.
+COR-T20-017 — medir e calibrar sinais pedagógicos e diversidade da prática com dados reais.
