@@ -1,3 +1,5 @@
+2026-08-05 - **COR-T20-009 concluída: tabuleiro mobile utilizável por leitor de tela.** As 64 casas agora informam coordenada, peça/cor ou vazio, role de botão, estado selecionado/desabilitado e dica contextual. A promoção exibe e pronuncia Dama/Torre/Bispo/Cavalo, sem letras cruas ou dependência do glifo. Gates: 20 testes mobile, lint e typecheck aprovados. Nenhum push ou deploy. Próxima tarefa: COR-T20-010.
+
 2026-08-05 - **COR-T20-005 concluída: Stockfish limitado e medido sem aumentar paralelismo.** Motor fixado em 1 thread/16 MB de hash e worker limitado a 1 CPU/512 MB. Health/logs agora expõem duração, CPU, memória e p50/p95/p99 de análise e narração. Benchmark depth 14 teve p99 conservador de 2,39 s/posição, 48,34 s de CPU e 382,75 MB de pico para toda a árvore; 39 análises reais tiveram p99 de 94,07 s, apenas 5,23% do lease de 30 min. Heartbeat não é necessário; a regra de reavaliação fica observável após 20 amostras. Gates: 47 testes worker, lint, typecheck e build aprovados; YAML validado sem Docker CLI. Nenhum push ou deploy. Próxima tarefa: COR-T20-009.
 
 2026-08-05 - **COR-T20-004 concluída: dica não conta mais como perfeição.** Primeira tentativa perfeita agora exige acerto sem falha e sem dica registrada pelo servidor; somente esse caso recebe o bônus de 5 XP e pode formar um “Nível perfeito”. O retorno idempotente respeita o valor persistido, preservando conclusões e badges históricos sem backfill. Gates locais: 103 testes da API passaram, 124 integrações PostgreSQL ficaram puladas sem banco local, e lint/typecheck/build passaram. Nenhum push ou deploy foi realizado. Próxima tarefa: COR-T20-005.
@@ -181,15 +183,15 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-COR-T20-009 — Tornar o tabuleiro mobile utilizável por leitor de tela, sem deploy.
+COR-T20-010 — Corrigir teclado e foco nos diálogos de jogo web, sem deploy.
 
 ## Contexto necessário
 
-- `TAREFAS.md` e os registros T20-A11/COR-T20-009 em `PROGRESSO.md`
-- `apps/mobile/src/components/chess-board.tsx`
-- telas mobile que renderizam o tabuleiro e o fluxo de promoção
-- convenções e testes React Native/Expo existentes
-- Critério: nome de casa/peça, role, estado selecionado, dica de ação e promoção pronunciável, sem letras cruas
+- `TAREFAS.md` e os registros T20-A11/COR-T20-010 em `PROGRESSO.md`
+- `apps/web/src/components/game/chess-board.tsx` e testes
+- diálogos de promoção e resultado usados nas telas de jogo web
+- hook de diálogo/foco já existente no web
+- Critério: setas não atravessam h↔a; foco inicial, Escape e restauração em promoção/resultado
 - Regra: um commit por tarefa; nenhum push ou deploy sem pedido explícito
 
 ## Contexto histórico anterior
@@ -309,4 +311,4 @@ COR-T20-009 — Tornar o tabuleiro mobile utilizável por leitor de tela, sem de
 - Débito técnico REAL exposto por esse bug: a "produção" não tem HTTPS (só HTTP puro num IP LAN). Isso já quebrou uma feature crítica silenciosamente uma vez; qualquer outra API restrita a contexto seguro usada no futuro (ex: `crypto.subtle`, clipboard, geolocalização precisa, service workers) vai ter o mesmo tipo de falha silenciosa. Não resolvido nesta sessão (fora de escopo/exigiria certificado TLS), só registrado como risco conhecido.
 ## Próxima tarefa
 
-COR-T20-009 — adicionar semântica nativa completa ao tabuleiro mobile para leitor de tela e cobrir seleção, movimento e promoção com testes de acessibilidade.
+COR-T20-010 — impedir a travessia horizontal entre fileiras pelo teclado e aplicar o hook existente de foco/Escape/restauração aos diálogos de promoção e resultado.

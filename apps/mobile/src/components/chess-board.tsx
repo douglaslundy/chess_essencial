@@ -1,33 +1,80 @@
-import { Chess, type Square } from 'chess.js';
+import { Chess, type PieceSymbol, type Square } from 'chess.js';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
 
 const pieceGlyphs: Record<string, string> = {
-  bb: '♝',
-  bk: '♚',
-  bn: '♞',
-  bp: '♟',
-  bq: '♛',
-  br: '♜',
-  wb: '♗',
-  wk: '♔',
-  wn: '♘',
-  wp: '♙',
-  wq: '♕',
-  wr: '♖',
+  bb: '\u265d',
+  bk: '\u265a',
+  bn: '\u265e',
+  bp: '\u265f',
+  bq: '\u265b',
+  br: '\u265c',
+  wb: '\u2657',
+  wk: '\u2654',
+  wn: '\u2658',
+  wp: '\u2659',
+  wq: '\u2655',
+  wr: '\u2656',
+};
+
+const pieceNames: Record<PieceSymbol, string> = {
+  b: 'bispo',
+  k: 'rei',
+  n: 'cavalo',
+  p: 'peão',
+  q: 'dama',
+  r: 'torre',
+};
+
+const colorNames = { b: 'preto', w: 'branco' } as const;
+const rankNames: Record<string, string> = {
+  '1': 'um',
+  '2': 'dois',
+  '3': 'três',
+  '4': 'quatro',
+  '5': 'cinco',
+  '6': 'seis',
+  '7': 'sete',
+  '8': 'oito',
 };
 
 const files = 'abcdefgh';
 const ranks = '87654321';
 
-const promotionPieces: { label: string; value: string }[] = [
-  { label: 'q', value: 'q' },
-  { label: 'r', value: 'r' },
-  { label: 'b', value: 'b' },
-  { label: 'n', value: 'n' },
+const promotionPieces: { name: string; value: Exclude<PieceSymbol, 'k' | 'p'> }[] = [
+  { name: 'Dama', value: 'q' },
+  { name: 'Torre', value: 'r' },
+  { name: 'Bispo', value: 'b' },
+  { name: 'Cavalo', value: 'n' },
 ];
+
+function spokenSquare(square: Square): string {
+  return `${square[0]} ${rankNames[square[1]]}`;
+}
+
+function squareLabel(square: Square, piece: ReturnType<Chess['get']>): string {
+  const contents = piece ? `${pieceNames[piece.type]} ${colorNames[piece.color]}` : 'vazia';
+  return `Casa ${spokenSquare(square)}, ${contents}`;
+}
+
+function squareHint(
+  square: Square,
+  piece: ReturnType<Chess['get']>,
+  turn: 'w' | 'b',
+  selected: Square | null,
+  disabled: boolean,
+  promotionPending: boolean,
+): string {
+  if (disabled) return 'Tabuleiro indisponível.';
+  if (promotionPending) return 'Escolha uma peça para concluir a promoção.';
+  if (selected === square) return 'Peça selecionada. Escolha uma casa de destino.';
+  if (selected) return `Move a peça selecionada para ${spokenSquare(square)}.`;
+  if (piece?.color === turn) return 'Seleciona esta peça para mover.';
+  if (piece) return 'Peça adversária. Selecione primeiro uma peça da vez.';
+  return 'Casa vazia. Selecione primeiro uma peça da vez.';
+}
 
 export interface ChessBoardProps {
   disabled?: boolean;
@@ -87,6 +134,8 @@ export function ChessBoard({
     onMove(from, to, promotion);
   }
 
+  const squaresDisabled = disabled || Boolean(pendingPromotion);
+
   return (
     <View>
       <View style={styles.board}>
@@ -99,6 +148,18 @@ export function ChessBoard({
               const glyph = piece ? pieceGlyphs[`${piece.color}${piece.type}`] : null;
               return (
                 <Pressable
+                  accessibilityHint={squareHint(
+                    square,
+                    piece,
+                    chess?.turn() ?? 'w',
+                    selected,
+                    disabled,
+                    Boolean(pendingPromotion),
+                  )}
+                  accessibilityLabel={squareLabel(square, piece)}
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: squaresDisabled, selected: selected === square }}
+                  disabled={squaresDisabled}
                   key={square}
                   onPress={() => handlePress(square)}
                   testID={`square-${square}`}
@@ -114,7 +175,15 @@ export function ChessBoard({
                     },
                   ]}
                 >
-                  {glyph ? <Text style={styles.piece}>{glyph}</Text> : null}
+                  {glyph ? (
+                    <Text
+                      accessibilityElementsHidden
+                      importantForAccessibility="no"
+                      style={styles.piece}
+                    >
+                      {glyph}
+                    </Text>
+                  ) : null}
                 </Pressable>
               );
             })}
@@ -122,19 +191,32 @@ export function ChessBoard({
         ))}
       </View>
       {pendingPromotion ? (
-        <View style={styles.promotionRow}>
-          {promotionPieces.map((option) => (
-            <Pressable
-              key={option.value}
-              onPress={() => choosePromotion(option.value)}
-              style={[styles.promotionButton, { backgroundColor: theme.backgroundElement }]}
-              testID={`promotion-${option.value}`}
-            >
-              <Text style={styles.piece}>
-                {pieceGlyphs[`${pendingPromotion.color}${option.label}`]}
-              </Text>
-            </Pressable>
-          ))}
+        <View accessibilityLabel="Escolha a peça para promoção" style={styles.promotionPanel}>
+          <Text accessibilityRole="header" style={styles.promotionTitle}>
+            Escolha a promoção
+          </Text>
+          <View style={styles.promotionRow}>
+            {promotionPieces.map((option) => (
+              <Pressable
+                accessibilityHint={`Conclui o movimento de ${spokenSquare(pendingPromotion.from)} para ${spokenSquare(pendingPromotion.to)} com ${option.name.toLowerCase()}.`}
+                accessibilityLabel={`Promover peão ${colorNames[pendingPromotion.color]} para ${option.name.toLowerCase()}`}
+                accessibilityRole="button"
+                key={option.value}
+                onPress={() => choosePromotion(option.value)}
+                style={[styles.promotionButton, { backgroundColor: theme.backgroundElement }]}
+                testID={`promotion-${option.value}`}
+              >
+                <Text
+                  accessibilityElementsHidden
+                  importantForAccessibility="no"
+                  style={styles.piece}
+                >
+                  {pieceGlyphs[`${pendingPromotion.color}${option.value}`]}
+                </Text>
+                <Text style={styles.promotionName}>{option.name}</Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
       ) : null}
     </View>
@@ -161,17 +243,31 @@ const styles = StyleSheet.create({
   piece: {
     fontSize: 28,
   },
+  promotionName: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  promotionPanel: {
+    gap: 8,
+    marginTop: 8,
+  },
   promotionRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
     justifyContent: 'center',
-    marginTop: 8,
+  },
+  promotionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   promotionButton: {
     alignItems: 'center',
     borderRadius: 8,
     justifyContent: 'center',
-    paddingHorizontal: 12,
+    minWidth: 64,
+    paddingHorizontal: 8,
     paddingVertical: 8,
   },
 });

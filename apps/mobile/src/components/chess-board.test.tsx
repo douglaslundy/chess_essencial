@@ -8,6 +8,41 @@ const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 const PROMOTION_FEN = '4k3/4P3/8/8/8/8/8/4K3 w - - 0 1';
 
 describe('ChessBoard', () => {
+  it('exposes natural square, piece and action names to screen readers', async () => {
+    const onMove = jest.fn();
+    await render(<ChessBoard fen={START_FEN} onMove={onMove} />);
+
+    const whitePawn = screen.getByTestId('square-e2');
+    const emptySquare = screen.getByTestId('square-e4');
+    const blackPawn = screen.getByTestId('square-e7');
+
+    expect(whitePawn.props).toMatchObject({
+      accessibilityHint: 'Seleciona esta peça para mover.',
+      accessibilityLabel: 'Casa e dois, peão branco',
+      accessibilityRole: 'button',
+      accessibilityState: { disabled: false, selected: false },
+    });
+    expect(emptySquare.props.accessibilityLabel).toBe('Casa e quatro, vazia');
+    expect(blackPawn.props).toMatchObject({
+      accessibilityHint: 'Peça adversária. Selecione primeiro uma peça da vez.',
+      accessibilityLabel: 'Casa e sete, peão preto',
+    });
+  });
+
+  it('announces selection state and the destination action', async () => {
+    const onMove = jest.fn();
+    await render(<ChessBoard fen={START_FEN} onMove={onMove} />);
+
+    await fireEvent.press(screen.getByTestId('square-e2'));
+
+    expect(screen.getByTestId('square-e2').props).toMatchObject({
+      accessibilityHint: 'Peça selecionada. Escolha uma casa de destino.',
+      accessibilityState: { disabled: false, selected: true },
+    });
+    expect(screen.getByTestId('square-e4').props.accessibilityHint).toBe(
+      'Move a peça selecionada para e quatro.',
+    );
+  });
   it('selects a piece, then moves it to the tapped destination square', async () => {
     const onMove = jest.fn();
     await render(<ChessBoard fen={START_FEN} onMove={onMove} />);
@@ -48,6 +83,10 @@ describe('ChessBoard', () => {
     await fireEvent.press(screen.getByTestId('square-e4'));
 
     expect(onMove).not.toHaveBeenCalled();
+    expect(screen.getByTestId('square-e2').props.accessibilityState).toEqual({
+      disabled: true,
+      selected: false,
+    });
   });
 
   it('shows a promotion picker instead of moving immediately, and reports the chosen piece', async () => {
@@ -59,7 +98,18 @@ describe('ChessBoard', () => {
 
     // The move hasn't been reported yet — it's held back for the promotion choice.
     expect(onMove).not.toHaveBeenCalled();
-    expect(screen.getByTestId('promotion-q')).toBeTruthy();
+    expect(screen.getByText('Escolha a promoção').props.accessibilityRole).toBe('header');
+    expect(screen.getByText('Dama')).toBeTruthy();
+    expect(screen.getByText('Torre')).toBeTruthy();
+    expect(screen.getByTestId('promotion-q').props.accessibilityLabel).toBe(
+      'Promover peão branco para dama',
+    );
+    expect(screen.getByTestId('promotion-r').props).toMatchObject({
+      accessibilityHint: 'Conclui o movimento de e sete para e oito com torre.',
+      accessibilityLabel: 'Promover peão branco para torre',
+      accessibilityRole: 'button',
+    });
+    expect(screen.getByTestId('square-e8').props.accessibilityState.disabled).toBe(true);
 
     await fireEvent.press(screen.getByTestId('promotion-r'));
 
