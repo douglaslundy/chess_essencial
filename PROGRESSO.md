@@ -217,16 +217,14 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-COR-T20-017 — Calibrar sinais pedagógicos e diversidade da prática com dados reais, sem deploy.
+DEPLOY-2026-08-05 — Publicar o lote acumulado na VPS compartilhada sem backup externo, com dump local validado e isolamento dos demais projetos.
 
 ## Contexto necessário
 
-- `apps/worker/src/analysis/game-analysis-job.ts` e respectivos testes
-- tabelas `game_error_signals`, `learning_evidence`, `learning_recommendations` e `skill_mastery` da migration 0043
-- `apps/api/src/games/infrastructure/games.repository.ts` e regressões de recomendação
-- Critério: medir precisão/utilidade antes de ampliar a taxonomia, detectar temas somente por evidência objetiva e diversificar por dificuldade/recência
-- Restrição: não usar LLM como classificador e não inventar calibração sem amostra real
-- Regra: um commit por tarefa; nenhum push ou deploy sem pedido explícito
+- `deploy/remote-deploy.sh`, `deploy/backup-database.sh` e testes de segurança de deploy
+- Exceção autoexpirável permite backup local apenas até a migration 0043; migrations futuras exigem Restic
+- Deploy somente por push em `main` + promoção CI + timer `xadrez-auto-deploy.timer`
+- VPS compartilhada: preservar containers, volumes e imagens dos demais projetos
 
 ## Contexto histórico anterior
 
@@ -309,6 +307,8 @@ COR-T20-017 — Calibrar sinais pedagógicos e diversidade da prática com dados
 - Gates locais completos passaram de novo após o refactor: format:check, typecheck, lint, 24 testes web, build de produção.
 ## Concluído
 
+- [x] Limpeza Docker isolada ao projeto Xadrez, sem prune global, com gate de capacidade e testes de host compartilhado.
+- [x] Exceção temporária de backup local implementada para a transição até a migration 0043.
 - [x] Phases 1-13 implemented, tested and deployed.
 - [x] Phase 14 source PDF and canonical dataset validated: 476 pages, 119 lessons, 714 steps and 1,282 links.
 - [x] Transactional/idempotent lesson import, audit, migration 0009, rollback/restore and publication gates passed.

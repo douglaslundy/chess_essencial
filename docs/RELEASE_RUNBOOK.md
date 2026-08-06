@@ -63,6 +63,8 @@ Antes de cada migration em um banco inicializado, `deploy/backup-database.sh` cr
 
 Política padrão por host/tag: 14 pontos diários, 8 semanais e 12 mensais. Os dumps locais continuam em `.deploy/backups`, com permissão `0600` e retenção de 14 dias; eles não substituem a cópia externa.
 
+Exceção de transição autorizada em 2026-08-05: enquanto a migration mais nova do código for exatamente `0043_game_learning_signals.up.sql` e o banco ainda estiver abaixo dela, o deploy cria e valida somente o dump local antes de migrar. A exceção se desativa automaticamente ao chegar na 0043. Qualquer migration posterior volta a exigir o backup externo e falha de forma segura se ele não estiver configurado.
+
 ### Configuração inicial
 
 Use um bucket/conta dedicado fora da VPS. S3 compatível é o backend recomendado; B2, SFTP e demais backends do Restic também são aceitos. Instale o Restic pelo gerenciador de pacotes da distribuição e crie o arquivo de senha fora do checkout:

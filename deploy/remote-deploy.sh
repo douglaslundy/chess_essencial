@@ -11,6 +11,7 @@ COMPOSE_FILE="$ROOT_DIR/deploy/docker-compose.vps.yml"
 # for every command so auto-deploys never drop the HTTPS routing.
 OVERLAY_FILE="$ROOT_DIR/deploy/docker-compose.traefik.yml"
 PROJECT_NAME="xadrez-essencial"
+ONE_TIME_LOCAL_BACKUP_CEILING="0043_game_learning_signals.up.sql"
 IMAGE_TAG="$(git rev-parse --short=12 HEAD)"
 export IMAGE_TAG
 
@@ -116,7 +117,20 @@ schema_exists="$("${compose[@]}" exec --no-TTY postgres psql --username "$POSTGR
   --dbname "$POSTGRES_DB" --tuples-only --no-align \
   --command "SELECT to_regclass('public._xadrez_migrations') IS NOT NULL;")"
 if [[ "$schema_exists" == "t" ]]; then
-  bash deploy/backup-database.sh
+  database_migration="$("${compose[@]}" exec --no-TTY postgres psql --username "$POSTGRES_USER" \
+    --dbname "$POSTGRES_DB" --tuples-only --no-align \
+    --command "SELECT COALESCE(MAX(name), '') FROM _xadrez_migrations;")"
+  required_migration="$(find database/migrations -name '*.up.sql' -printf '%f\n' | sort | tail -n 1)"
+  printf '%s\n' "migration.database_latest=$database_migration" "migration.required_latest=$required_migration"
+
+  if [[ "$database_migration" == "$required_migration" ]]; then
+    printf '%s\n' 'backup.status=skipped reason=no_pending_migrations'
+  elif [[ "$required_migration" == "$ONE_TIME_LOCAL_BACKUP_CEILING" && \
+    "$database_migration" < "$ONE_TIME_LOCAL_BACKUP_CEILING" ]]; then
+    XADREZ_BACKUP_MODE=local-only bash deploy/backup-database.sh
+  else
+    bash deploy/backup-database.sh
+  fi
 fi
 
 "${compose[@]}" run --rm api pnpm content:validate
