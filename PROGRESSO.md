@@ -223,6 +223,7 @@ DEPLOY-2026-08-05 — Publicar o lote acumulado na VPS compartilhada sem backup 
 
 - `deploy/remote-deploy.sh`, `deploy/backup-database.sh` e testes de segurança de deploy
 - Exceção autoexpirável permite backup local apenas até a migration 0043; migrations futuras exigem Restic
+- CI do primeiro push bloqueou a promoção: aceite de amizade retornava 500 quando Redis estava indisponível; correção degradável para offline em andamento
 - Deploy somente por push em `main` + promoção CI + timer `xadrez-auto-deploy.timer`
 - VPS compartilhada: preservar containers, volumes e imagens dos demais projetos
 

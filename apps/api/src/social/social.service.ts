@@ -16,14 +16,18 @@ export class SocialService {
   ) {}
 
   async heartbeat(userId: string): Promise<void> {
-    await Promise.all([
-      this.redis.client.set(presenceKey(userId), '1', 'EX', PRESENCE_TTL_SECONDS),
-      this.social.touchLastSeen(userId),
-    ]);
+    await this.social.touchLastSeen(userId);
+    await this.redis.client
+      .set(presenceKey(userId), '1', 'EX', PRESENCE_TTL_SECONDS)
+      .catch(() => undefined);
   }
 
   private async isOnline(userId: string): Promise<boolean> {
-    return (await this.redis.client.exists(presenceKey(userId))) === 1;
+    try {
+      return (await this.redis.client.exists(presenceKey(userId))) === 1;
+    } catch {
+      return false;
+    }
   }
 
   private async withPresence<T extends { userId: string }>(
