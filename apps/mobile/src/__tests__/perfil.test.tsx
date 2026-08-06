@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
-import PerfilScreen from './perfil';
+import PerfilScreen from '@/app/(tabs)/perfil';
 import { useAuth } from '@/lib/auth/auth-context';
 
 jest.mock('@/lib/auth/auth-context', () => ({ useAuth: jest.fn() }));
