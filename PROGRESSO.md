@@ -1,3 +1,5 @@
+2026-08-06 - **Deploy de produção concluído com isolamento do host compartilhado:** `main`/`deploy/approved`/VPS chegaram a `530ccad77238093f0c551b98ec69a140eb220a1f` após CI verde. O dump local `chess-20260806T032623Z.dump` (1.837.936 bytes, modo 0600) passou no SHA-256; a cópia externa foi ignorada por autorização explícita e a exceção se autoencerrou na migration 0043. API/web/worker e dependências estão healthy, endpoints públicos retornam 200, timer ativo. Hashes dos containers e volumes externos permaneceram idênticos antes/depois. A primeira CI também revelou e bloqueou um 500 no aceite de amizade sem Redis; corrigido no commit `530ccad` com degradação para offline e dois testes.
+
 2026-08-05 - **Deploy isolado para VPS compartilhada concluído em código:** `remote-deploy.sh` não executa mais prune global nem toca volumes/cache de outros projetos; remove somente imagens `xadrez-*` sem uso, rotula as novas imagens e exige 12 GiB livres antes de construir. A CI bloqueia regressões globais/destrutivas. Gates: sintaxe Bash, testes de isolamento/gate, format e diff-check aprovados. O push/deploy continua aguardando um backend offsite real para o backup obrigatório das migrations.
 
 2026-08-05 - **Isolamento de deploy em host compartilhado em implementação:** removidas do desenho as limpezas Docker globais; o deploy limpará apenas imagens `xadrez-*` sem uso e falhará antes do build com menos de 12 GiB livres. CI ganhará regressão contra prune global/volumes. Backup externo do banco do Xadrez continua obrigatório antes das migrations. Nenhum push ou deploy ainda.
@@ -217,15 +219,15 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-DEPLOY-2026-08-05 — Publicar o lote acumulado na VPS compartilhada sem backup externo, com dump local validado e isolamento dos demais projetos.
+COR-T20-017 — Medir e calibrar sinais pedagógicos e diversidade da prática com dados reais.
 
 ## Contexto necessário
 
-- `deploy/remote-deploy.sh`, `deploy/backup-database.sh` e testes de segurança de deploy
-- Exceção autoexpirável permite backup local apenas até a migration 0043; migrations futuras exigem Restic
-- CI do primeiro push bloqueou a promoção: aceite de amizade retornava 500 quando Redis estava indisponível; correção degradável para offline em andamento
-- Deploy somente por push em `main` + promoção CI + timer `xadrez-auto-deploy.timer`
-- VPS compartilhada: preservar containers, volumes e imagens dos demais projetos
+- `apps/worker/src/analysis/game-analysis-job.ts` e respectivos testes
+- tabelas `game_error_signals`, `learning_evidence`, `learning_recommendations` e `skill_mastery` da migration 0043
+- `apps/api/src/games/infrastructure/games.repository.ts` e regressões de recomendação
+- migration 0043 está em produção desde 2026-08-06; usar somente agregados sem PII e aguardar amostra real suficiente
+- medir precisão/utilidade antes de ampliar taxonomia; diversificar por dificuldade/recência; não usar LLM como classificador
 
 ## Contexto histórico anterior
 
@@ -308,6 +310,9 @@ DEPLOY-2026-08-05 — Publicar o lote acumulado na VPS compartilhada sem backup 
 - Gates locais completos passaram de novo após o refactor: format:check, typecheck, lint, 24 testes web, build de produção.
 ## Concluído
 
+- [x] Deploy `530ccad` por Git pull automático, com CI promovida, dump local validado, migrations 0041–0043 e healthchecks verdes.
+- [x] Projetos externos preservados: hashes de containers e volumes idênticos antes e depois do deploy.
+- [x] Aceite de amizade degrada presença para offline quando Redis está indisponível, sem desfazer a operação persistida.
 - [x] Limpeza Docker isolada ao projeto Xadrez, sem prune global, com gate de capacidade e testes de host compartilhado.
 - [x] Exceção temporária de backup local implementada para a transição até a migration 0043.
 - [x] Phases 1-13 implemented, tested and deployed.
