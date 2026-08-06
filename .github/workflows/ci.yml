@@ -42,6 +42,9 @@ jobs:
       - name: Test deploy CI gate
         run: bash scripts/test-auto-deploy-ci-gate.sh
 
+      - name: Test shared-host deploy isolation
+        run: bash scripts/test-shared-host-deploy-safety.sh
+
       - name: Check formatting
         run: pnpm format:check
 

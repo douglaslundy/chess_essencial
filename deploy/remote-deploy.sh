@@ -68,27 +68,47 @@ fi
 compose+=(--env-file "$ENV_FILE")
 "${compose[@]}" config >/dev/null
 
-remove_old_release_tags() {
+remove_unused_xadrez_images() {
   for repo in xadrez-api xadrez-worker xadrez-web; do
-    docker images "$repo" --format '{{.Repository}}:{{.Tag}}' \
-      | grep -v ":$IMAGE_TAG$" \
-      | xargs --no-run-if-empty docker rmi --force >/dev/null 2>&1 || true
+    docker images "$repo" --format '{{.ID}}' \
+      | sort --unique \
+      | xargs --no-run-if-empty docker image rm >/dev/null 2>&1 || true
   done
 }
 
-# Failed releases never reach the post-deploy cleanup, so remove their old
-# xadrez-only tags before building as well. Images referenced by running
-# containers remain available even after their stale tag is removed.
-remove_old_release_tags
-docker image prune --force >/dev/null 2>&1 || true
-docker builder prune --force --filter "until=24h" >/dev/null 2>&1 || true
+require_deploy_capacity() {
+  local minimum_kb="${XADREZ_MIN_FREE_DISK_KB:-12582912}"
+  local available_kb
+
+  [[ "$minimum_kb" =~ ^[0-9]+$ ]] || {
+    printf '%s\n' "deploy.disk.invalid_minimum=$minimum_kb"
+    return 1
+  }
+  available_kb="$(df --output=avail --block-size=1K "$ROOT_DIR" | tail -n 1 | tr -d ' ')"
+  [[ "$available_kb" =~ ^[0-9]+$ ]] || {
+    printf '%s\n' "deploy.disk.unreadable=true"
+    return 1
+  }
+  printf '%s\n' "deploy.disk.available_kb=$available_kb"
+  printf '%s\n' "deploy.disk.minimum_kb=$minimum_kb"
+  ((available_kb >= minimum_kb))
+}
+
+# This VPS is shared. Cleanup is limited to unused Xadrez release images;
+# Docker volumes, other repositories and the global builder cache are never
+# touched. A capacity gate fails before building instead of pruning globally.
+remove_unused_xadrez_images
+require_deploy_capacity
 
 docker build --file "$ROOT_DIR/deploy/Dockerfile" --target api \
-  --build-arg "NEXT_PUBLIC_API_URL=$PUBLIC_API_URL" --tag "xadrez-api:$IMAGE_TAG" "$ROOT_DIR"
+  --build-arg "NEXT_PUBLIC_API_URL=$PUBLIC_API_URL" \
+  --label "br.com.dlsistemas.project=$PROJECT_NAME" --tag "xadrez-api:$IMAGE_TAG" "$ROOT_DIR"
 docker build --file "$ROOT_DIR/deploy/Dockerfile" --target worker \
-  --build-arg "NEXT_PUBLIC_API_URL=$PUBLIC_API_URL" --tag "xadrez-worker:$IMAGE_TAG" "$ROOT_DIR"
+  --build-arg "NEXT_PUBLIC_API_URL=$PUBLIC_API_URL" \
+  --label "br.com.dlsistemas.project=$PROJECT_NAME" --tag "xadrez-worker:$IMAGE_TAG" "$ROOT_DIR"
 docker build --file "$ROOT_DIR/deploy/Dockerfile" --target web \
-  --build-arg "NEXT_PUBLIC_API_URL=$PUBLIC_API_URL" --tag "xadrez-web:$IMAGE_TAG" "$ROOT_DIR"
+  --build-arg "NEXT_PUBLIC_API_URL=$PUBLIC_API_URL" \
+  --label "br.com.dlsistemas.project=$PROJECT_NAME" --tag "xadrez-web:$IMAGE_TAG" "$ROOT_DIR"
 
 "${compose[@]}" up --detach --wait --wait-timeout 120 postgres redis mailpit
 
@@ -148,5 +168,5 @@ wait_for_url course "http://127.0.0.1:$API_PORT/v1/courses/xadrez-essencial"
 "${compose[@]}" ps
 printf '%s\n' "release.image_tag=$IMAGE_TAG"
 
-# Drop any superseded release tags after the new containers are healthy.
-remove_old_release_tags
+# Remove only superseded Xadrez images after the new containers are healthy.
+remove_unused_xadrez_images

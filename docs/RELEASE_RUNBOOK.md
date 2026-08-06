@@ -26,6 +26,7 @@ Um administrador do host executa uma única vez `loginctl enable-linger lundy`. 
 ## Conteúdo de uma release
 
 - imagens separadas e não root: `xadrez-api`, `xadrez-worker` e `xadrez-web`, marcadas com o SHA curto;
+- host compartilhado protegido: a limpeza remove somente imagens `xadrez-*` sem uso, nunca executa prune global ou de volumes e falha antes do build quando houver menos de 12 GiB livres;
 - PostgreSQL e Redis com volumes persistentes;
 - backup automático antes de migrations em bancos já inicializados;
 - migrations e seed base idempotentes;
