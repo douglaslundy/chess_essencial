@@ -10,6 +10,8 @@ grep --quiet 'ONE_TIME_LOCAL_BACKUP_CEILING="0043_game_learning_signals.up.sql"'
 grep --quiet 'XADREZ_BACKUP_MODE=local-only bash deploy/backup-database.sh' "$deploy_script"
 grep --quiet 'bash deploy/backup-database.sh' "$deploy_script"
 grep --quiet 'BACKUP_MODE="${XADREZ_BACKUP_MODE:-offsite}"' deploy/backup-database.sh
+grep --quiet 'db:seed-learning-path' "$deploy_script"
+grep --quiet 'db:audit-learning-path' "$deploy_script"
 
 for repository in xadrez-api xadrez-worker xadrez-web; do
   grep --quiet "$repository" "$deploy_script"

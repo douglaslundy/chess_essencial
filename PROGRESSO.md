@@ -1,3 +1,5 @@
+2026-08-07 - **BUG-JORNADA-REVIEW concluído:** revisões deixaram de exigir `hints`, que são opcionais, e continuam exigindo posição legal, sequência de lances e solução jogável. A produção tinha 18/21 pools de revisão vazios com o filtro incorreto; a consulta corrigida deixou 0/21 vazios, com mínimo de 33 candidatos. Um auditor estrutural agora valida 7 mundos, 84 níveis, 525 etapas, assets, posições, contagens, cadência, bosses, faixas e resoluções, e virou gate após importação/semeadura na CI e no deploy. Testes, lint, typecheck, build, shell gates, formatação, charset e consulta somente leitura em produção aprovados. Commit local; nenhum push ou deploy.
+
 2026-08-06 - **Deploy de produção concluído com isolamento do host compartilhado:** `main`/`deploy/approved`/VPS chegaram a `530ccad77238093f0c551b98ec69a140eb220a1f` após CI verde. O dump local `chess-20260806T032623Z.dump` (1.837.936 bytes, modo 0600) passou no SHA-256; a cópia externa foi ignorada por autorização explícita e a exceção se autoencerrou na migration 0043. API/web/worker e dependências estão healthy, endpoints públicos retornam 200, timer ativo. Hashes dos containers e volumes externos permaneceram idênticos antes/depois. A primeira CI também revelou e bloqueou um 500 no aceite de amizade sem Redis; corrigido no commit `530ccad` com degradação para offline e dois testes.
 
 2026-08-05 - **Deploy isolado para VPS compartilhada concluído em código:** `remote-deploy.sh` não executa mais prune global nem toca volumes/cache de outros projetos; remove somente imagens `xadrez-*` sem uso, rotula as novas imagens e exige 12 GiB livres antes de construir. A CI bloqueia regressões globais/destrutivas. Gates: sintaxe Bash, testes de isolamento/gate, format e diff-check aprovados. O push/deploy continua aguardando um backend offsite real para o backup obrigatório das migrations.
@@ -228,6 +230,7 @@ COR-T20-017 — Medir e calibrar sinais pedagógicos e diversidade da prática c
 - `apps/api/src/games/infrastructure/games.repository.ts` e regressões de recomendação
 - migration 0043 está em produção desde 2026-08-06; usar somente agregados sem PII e aguardar amostra real suficiente
 - medir precisão/utilidade antes de ampliar taxonomia; diversificar por dificuldade/recência; não usar LLM como classificador
+- Um commit por tarefa; não fazer deploy sem pedido explícito
 
 ## Contexto histórico anterior
 
@@ -310,6 +313,7 @@ COR-T20-017 — Medir e calibrar sinais pedagógicos e diversidade da prática c
 - Gates locais completos passaram de novo após o refactor: format:check, typecheck, lint, 24 testes web, build de produção.
 ## Concluído
 
+- [x] Revisões da Jornada aceitam táticas jogáveis sem dica; auditoria integral confirma 21/21 pools disponíveis e virou gate de CI/deploy.
 - [x] Deploy `530ccad` por Git pull automático, com CI promovida, dump local validado, migrations 0041–0043 e healthchecks verdes.
 - [x] Projetos externos preservados: hashes de containers e volumes idênticos antes e depois do deploy.
 - [x] Aceite de amizade degrada presença para offline quando Redis está indisponível, sem desfazer a operação persistida.

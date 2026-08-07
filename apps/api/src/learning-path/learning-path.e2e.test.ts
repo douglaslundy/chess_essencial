@@ -604,12 +604,10 @@ describeDatabase('learning path database integration', () => {
     expect(progress.json().highestUnlockedLevelId).toBe(levelTwoId);
   });
 
-  it('review stages never pick an exercise that would be unplayable in the guided board flow', async () => {
-    // Same difficulty band, three exercises: one free_text (no move
-    // validation possible at all), one with no hints/solution recorded,
-    // and one genuinely playable. Root cause of a real "no hint, no move
-    // accepted" report — the seed script and pickReviewExercise() both
-    // used to select from this pool with no such filter at all.
+  it('review stages accept playable no-hint tactics and reject exercises without move validation', async () => {
+    // Same difficulty band: free_text cannot validate moves, while both
+    // move-sequence tactics are playable. A hint is optional assistance; the
+    // solution line is what makes a review evaluable.
     const [unplayableFreeText] = await database.client<{ id: string }[]>`
       INSERT INTO exercises (
         external_id, title, prompt_md, solution_md, difficulty, fen, side_to_move,
@@ -623,7 +621,7 @@ describeDatabase('learning path database integration', () => {
       )
       RETURNING id
     `;
-    const [unplayableNoHints] = await database.client<{ id: string }[]>`
+    const [playableNoHints] = await database.client<{ id: string }[]>`
       INSERT INTO exercises (
         external_id, title, prompt_md, solution_md, difficulty, fen, side_to_move,
         solution_lines, position_type, status, difficulty_score, hints
@@ -650,15 +648,15 @@ describeDatabase('learning path database integration', () => {
 
     const repository = app.get(LearningPathRepository);
     // Repeated (ORDER BY random() inside pickReviewExercise means a single
-    // call could get lucky) - every single pick must land on the one
-    // playable exercise in this band, never the other two.
+    // call could get lucky) - every single pick must land on either playable
+    // exercise in this band, never the free-text one.
     for (let attempt = 0; attempt < 10; attempt += 1) {
       const picked = await repository.pickReviewExercise(randomUUID(), null, 4900, 5100);
-      expect(picked).toBe(playable!.id);
+      expect([playableNoHints!.id, playable!.id]).toContain(picked);
     }
 
     await database.client`
-      DELETE FROM exercises WHERE id IN (${unplayableFreeText!.id}, ${unplayableNoHints!.id}, ${playable!.id})
+      DELETE FROM exercises WHERE id IN (${unplayableFreeText!.id}, ${playableNoHints!.id}, ${playable!.id})
     `;
   });
 });
