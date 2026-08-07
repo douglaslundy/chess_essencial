@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizeExerciseDataset } from './exercise-importer.js';
+import { isPlayableExercise, normalizeExerciseDataset } from './exercise-importer.js';
 
 describe('normalizeExerciseDataset', () => {
   it('normalizes Portuguese aliases and accepts a legal FEN', () => {
@@ -23,6 +23,28 @@ describe('normalizeExerciseDataset', () => {
       sourceNumber: 1,
       sourcePages: [3, 4],
     });
+  });
+
+  it('publishes only legal move-sequence exercises with a solution line', () => {
+    const text = normalizeExerciseDataset(
+      [{ number: 10, prompt: 'Explain.', solution: 'Because.' }],
+      'fixture.json',
+    ).exercises[0]!;
+    const playable = normalizeExerciseDataset(
+      [
+        {
+          answerFormat: 'move_sequence',
+          fen: '8/8/8/8/8/8/4P3/4K2k w - - 0 1',
+          number: 11,
+          prompt: 'Play.',
+          solutionLines: [['e2e4']],
+        },
+      ],
+      'fixture.json',
+    ).exercises[0]!;
+
+    expect(isPlayableExercise(text)).toBe(false);
+    expect(isPlayableExercise(playable)).toBe(true);
   });
 
   it('rejects an invalid legal FEN with an explicit reason', () => {

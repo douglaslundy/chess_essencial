@@ -1,3 +1,7 @@
+2026-08-07 - **AUDITORIA-UX-VOZ / atividades concluída:** removidas 111 etapas de resposta sem tabuleiro do curso (863→752 passos). O importador agora arquiva os 1.298 exercícios textuais canônicos e publica somente posições legais com sequência de lances e solução. Validadores/importadores rejeitam futuras respostas sem tabuleiro; auditor estrutural cobre exercícios publicados e etapas de aula. Conteúdo canônico, 10 testes, lint e typecheck aprovados. Próxima frente: voz IA e continuidade do áudio. Nenhum push ou deploy.
+
+2026-08-07 - **AUDITORIA-UX-VOZ em andamento:** produção possui 1.298 exercícios de texto livre publicados, 1.069 sem tabuleiro legal, 1.298 sem solução por lances e 111 etapas de aula que exigem resposta sem tabuleiro. A IA atual gera somente texto; o navegador sintetiza a voz. Causas adicionais confirmadas: identificação de peça pode cair em “peão” ao receber notação brasileira, o prompt da IA não fixa a peça autoritativa e `speechSynthesis.cancel()` interrompe falas quando a posição muda. Plano: retirar atividades não jogáveis, adicionar voz IA OpenAI opcional, tornar nomes determinísticos, enfileirar áudio apenas no turno do aluno e consolidar o design responsivo. Nenhum deploy.
+
 2026-08-07 - **PDF local excluído do Git:** livrocompleto/ foi adicionado ao .gitignore; o PDF fonte permanece intacto somente no workspace e não será enviado ao GitHub. Nenhum push ou deploy.
 
 2026-08-07 - **BUG-JORNADA-REVIEW concluído:** revisões deixaram de exigir `hints`, que são opcionais, e continuam exigindo posição legal, sequência de lances e solução jogável. A produção tinha 18/21 pools de revisão vazios com o filtro incorreto; a consulta corrigida deixou 0/21 vazios, com mínimo de 33 candidatos. Um auditor estrutural agora valida 7 mundos, 84 níveis, 525 etapas, assets, posições, contagens, cadência, bosses, faixas e resoluções, e virou gate após importação/semeadura na CI e no deploy. Testes, lint, typecheck, build, shell gates, formatação, charset e consulta somente leitura em produção aprovados. Commit local; nenhum push ou deploy.
@@ -223,15 +227,16 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-COR-T20-017 — Medir e calibrar sinais pedagógicos e diversidade da prática com dados reais.
+AUDITORIA-UX-VOZ — Corrigir atividades sem tabuleiro, IA/voz, nomenclatura, turnos de dicas, continuidade do áudio e design responsivo.
 
 ## Contexto necessário
 
-- `apps/worker/src/analysis/game-analysis-job.ts` e respectivos testes
-- tabelas `game_error_signals`, `learning_evidence`, `learning_recommendations` e `skill_mastery` da migration 0043
-- `apps/api/src/games/infrastructure/games.repository.ts` e regressões de recomendação
-- migration 0043 está em produção desde 2026-08-06; usar somente agregados sem PII e aguardar amostra real suficiente
-- medir precisão/utilidade antes de ampliar taxonomia; diversificar por dificuldade/recência; não usar LLM como classificador
+- Conteúdo: `database/content/Xadrez_Essencial_Aulas_1_a_119.json`, importadores e validadores
+- Treino: `apps/api/src/exercises`, `learning-path` e respectivos testes/auditorias
+- Voz/IA: `apps/api/src/games/narration`, novo endpoint TTS, `apps/web/src/lib/speech.ts` e preferências
+- Partida: `apps/web/src/components/game/game-room.tsx`, notação e treinador
+- Design: `apps/web/src/app/globals.css`, CSS modules, shells e páginas principais
+- Produção auditada somente para leitura: 1.298 textos livres, 1.069 sem tabuleiro, 111 respostas de aula sem tabuleiro
 - Um commit por tarefa; não fazer deploy sem pedido explícito
 
 ## Contexto histórico anterior

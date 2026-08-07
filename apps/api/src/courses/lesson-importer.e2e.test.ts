@@ -24,12 +24,12 @@ function content(module: number, slug: string, title: string, prerequisites: str
         stepType: 'text',
       },
       {
-        bodyMd: 'Complete the written practice and type done.',
-        expectedActions: [{ type: 'answer', value: 'done' }],
-        feedback: { correct: 'Correct.', incorrect: 'Try again.' },
+        bodyMd: 'Study the worked example before continuing.',
+        expectedActions: [],
+        feedback: {},
         nextStepRules: [],
-        stepKey: 'practice',
-        stepType: 'quiz',
+        stepKey: 'example',
+        stepType: 'explanation',
       },
       {
         bodyMd: `Summary for ${title}.`,

@@ -69,7 +69,6 @@ for (const [index, item] of (dataset.lessons ?? []).entries()) {
     fail(`${label}: steps must contain 3-10 items`);
   const stepKeys = new Set();
   let hasSummary = false;
-  let hasPractice = false;
   for (const [stepIndex, step] of (lesson.steps ?? []).entries()) {
     const stepLabel = `${label}.steps[${stepIndex}]`;
     if (typeof step.stepKey !== 'string' || !/^[a-z0-9-]+$/.test(step.stepKey))
@@ -88,7 +87,8 @@ for (const [index, item] of (dataset.lessons ?? []).entries()) {
     )
       fail(`${stepLabel}: explicit action, feedback and rule fields are required`);
     hasSummary ||= step.stepType === 'summary';
-    hasPractice ||= step.stepType === 'quiz' || step.stepType === 'board_instruction';
+    if (step.expectedActions.length > 0 && typeof step.initialFen !== 'string')
+      fail(`${stepLabel}: every response activity requires a board with initialFen`);
     if (step.stepType === 'board_instruction') {
       if (typeof step.initialFen !== 'string') fail(`${stepLabel}: board step requires initialFen`);
       else {
@@ -120,7 +120,6 @@ for (const [index, item] of (dataset.lessons ?? []).entries()) {
     }
   }
   if (!hasSummary) fail(`${label}: summary step is required`);
-  if (!hasPractice) fail(`${label}: practice step is required`);
   if (
     !Array.isArray(item.exerciseNumbers) ||
     item.exerciseNumbers.length < 2 ||

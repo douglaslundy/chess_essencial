@@ -14,7 +14,9 @@ interface AuditSummary {
   levelPositionGaps: number;
   levels: number;
   minReviewPool: number | null;
+  publishedUnplayableExercises: number;
   rangeViolations: number;
+  responseStepsWithoutBoard: number;
   reviewCadenceViolations: number;
   reviews: number;
   stagePositionGaps: number;
@@ -132,6 +134,19 @@ try {
       (SELECT count(*)::integer FROM review_pools) AS "reviews",
       (SELECT count(*)::integer FROM review_pools WHERE candidates = 0) AS "emptyReviews",
       (SELECT min(candidates)::integer FROM review_pools) AS "minReviewPool",
+      (
+        SELECT count(*)::integer FROM exercises
+        WHERE status = 'published'
+          AND (
+            position_type <> 'legal_position'
+            OR COALESCE(import_metadata->>'answerFormat', 'move_sequence') <> 'move_sequence'
+            OR jsonb_array_length(solution_lines) = 0
+          )
+      ) AS "publishedUnplayableExercises",
+      (
+        SELECT count(*)::integer FROM lesson_steps
+        WHERE jsonb_array_length(expected_actions) > 0 AND initial_fen IS NULL
+      ) AS "responseStepsWithoutBoard",
       (SELECT count(*)::integer FROM bad_assets) AS "badAssets",
       (SELECT count(*)::integer FROM level_position_gaps) AS "levelPositionGaps",
       (SELECT count(*)::integer FROM stage_position_gaps) AS "stagePositionGaps",
@@ -154,8 +169,10 @@ try {
     countMismatches: summary.countMismatches,
     emptyReviews: summary.emptyReviews,
     invalidResolvedReviews: summary.invalidResolvedReviews,
+    publishedUnplayableExercises: summary.publishedUnplayableExercises,
     levelPositionGaps: summary.levelPositionGaps,
     rangeViolations: summary.rangeViolations,
+    responseStepsWithoutBoard: summary.responseStepsWithoutBoard,
     reviewCadenceViolations: summary.reviewCadenceViolations,
     stagePositionGaps: summary.stagePositionGaps,
     worldPositionGaps: summary.worldPositionGaps,

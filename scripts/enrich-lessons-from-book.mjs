@@ -1,6 +1,6 @@
 // Enriches lesson teaching text with the real book content, chapter by chapter,
 // keeping the existing lesson structure (ids, slug, sourcePages, exercise links)
-// and preserving interactive steps (board_instruction / quiz / checkpoint).
+// and preserving only board-backed interactive steps.
 //
 // Usage: node scripts/enrich-lessons-from-book.mjs <book.txt> <lessons.json> <out.json>
 // The book text must be a raw (non-layout) UTF-8 pdftotext extraction.
@@ -184,8 +184,9 @@ function enrichLesson(entry, chapter) {
   if (!chapter || chapter.blocks.length === 0) return; // e.g. cumulative tests: leave as-is
 
   const objetivo = steps.find((s) => s.stepType === 'text') ?? steps[0];
-  const practice = steps.filter((s) =>
-    ['board_instruction', 'quiz', 'checkpoint'].includes(s.stepType),
+  const practice = steps.filter(
+    (step) =>
+      step.initialFen && ['board_instruction', 'quiz', 'checkpoint'].includes(step.stepType),
   );
   const summary = steps.find((s) => s.stepType === 'summary') ?? steps[steps.length - 1];
 

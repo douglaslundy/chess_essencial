@@ -68,6 +68,26 @@ describe('normalizeLessonDataset', () => {
     });
   });
 
+  it('rejects a response activity without a board', () => {
+    const invalid = lesson({
+      steps: [
+        lesson().steps[0],
+        {
+          bodyMd: 'Type done.',
+          expectedActions: [{ type: 'answer', value: 'done' }],
+          feedback: {},
+          nextStepRules: [],
+          stepKey: 'answer',
+          stepType: 'quiz',
+        },
+        lesson().steps[2],
+      ],
+    });
+    expect(() => normalizeLessonDataset(dataset(invalid), 'fixture.json')).toThrow(
+      'every response activity requires a board',
+    );
+  });
+
   it('rejects an illegal expected board move', () => {
     const invalid = lesson({
       steps: [

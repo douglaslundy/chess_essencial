@@ -50,8 +50,10 @@ function string(value: unknown, label: string) {
   return value;
 }
 
-function validateBoardActions(lesson: InteractiveLesson) {
+function validateInteractiveSteps(lesson: InteractiveLesson) {
   for (const step of lesson.steps) {
+    if (step.expectedActions.length > 0 && !step.initialFen)
+      throw new Error(`${lesson.slug}/${step.stepKey}: every response activity requires a board`);
     if (step.stepType !== 'board_instruction') continue;
     if (!step.initialFen) throw new Error(`${lesson.slug}/${step.stepKey} requires initialFen`);
     for (const action of step.expectedActions) {
@@ -95,12 +97,6 @@ export function normalizeLessonDataset(raw: unknown, sourceName: string): Normal
       throw new Error(`${lesson.slug} must contain 3-10 steps`);
     if (!lesson.steps.some((step) => step.stepType === 'summary'))
       throw new Error(`${lesson.slug} requires a summary`);
-    if (
-      !lesson.steps.some(
-        (step) => step.stepType === 'quiz' || step.stepType === 'board_instruction',
-      )
-    )
-      throw new Error(`${lesson.slug} requires practice`);
     if (slugs.has(lesson.slug)) throw new Error(`Duplicate lesson slug ${lesson.slug}`);
     slugs.add(lesson.slug);
     const moduleChapter = `${lesson.module}:${chapter}`;
@@ -112,7 +108,7 @@ export function normalizeLessonDataset(raw: unknown, sourceName: string): Normal
         throw new Error(`Duplicate or invalid exercise number ${number}`);
       exerciseNumbers.add(number);
     }
-    validateBoardActions(lesson);
+    validateInteractiveSteps(lesson);
     items.push({ chapter, exerciseNumbers: numbers, lesson });
   }
   for (const item of items) {

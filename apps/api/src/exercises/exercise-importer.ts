@@ -27,6 +27,14 @@ export type NormalizedExercise = {
 };
 
 export type ExerciseRejection = { index: number; reason: string; sourceNumber: number | null };
+
+export function isPlayableExercise(exercise: NormalizedExercise): boolean {
+  return (
+    exercise.positionType === 'legal_position' &&
+    exercise.answerFormat === 'move_sequence' &&
+    exercise.solutionLines.length > 0
+  );
+}
 export type NormalizedExerciseDataset = {
   exercises: NormalizedExercise[];
   modules: { number: number; title: string }[];
@@ -358,6 +366,7 @@ export async function persistExerciseDataset(
 
     const persistedExercises: { exercise: NormalizedExercise; id: string }[] = [];
     for (const exercise of dataset.exercises) {
+      const status = isPlayableExercise(exercise) ? 'published' : 'archived';
       const firstPage = exercise.sourcePages.at(0) ?? null;
       const lastPage = exercise.sourcePages.at(-1) ?? null;
       const sourceRange =
@@ -373,7 +382,7 @@ export async function persistExerciseDataset(
           ${exercise.difficulty}, ${exercise.category}, ${exercise.fen}, ${exercise.sideToMove},
           ${JSON.stringify(exercise.solutionLines)}::text::jsonb,
           ${JSON.stringify(exercise.hints)}::text::jsonb, ${transaction.array(exercise.tags)},
-          ${sourceRange}::int4range, 'published', ${exercise.positionType}, ${run.id},
+          ${sourceRange}::int4range, ${status}::exercise_status, ${exercise.positionType}, ${run.id},
           ${JSON.stringify(exercise.metadata)}::text::jsonb, now()
         )
         ON CONFLICT (source_number) DO UPDATE SET
