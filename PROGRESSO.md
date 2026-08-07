@@ -1,3 +1,5 @@
+2026-08-07 - **AUDITORIA-UX-VOZ concluída:** atividades sem tabuleiro eliminadas/arquivadas, voz IA adicionada, nomes de peças e turno tornados autoritativos, narração enfileirada sem cortes e design responsivo consolidado. Gates: conteúdo válido; contratos 37/37, API 128/128, web 119/119, mobile 23/23 e SDK 3/3; 125 integrações PostgreSQL puladas sem banco local. Worker 45/47; os dois casos Stockfish foram impedidos exclusivamente pelo sandbox ao criar subprocesso (`spawn EPERM`). Typecheck e lint integrais passaram (dois warnings web preexistentes); builds web/API/worker/contratos/SDK/domínios passaram. O primeiro `turbo test/build` paralelo também encontrou apenas o limite de processos e foi substituído pelas execuções seriais. Nenhum push ou deploy.
+
 2026-08-07 - **AUDITORIA-UX-VOZ / design validado:** 119 testes web, lint, typecheck, format-check e build Next.js com 31 rotas passaram. Inspeção renderizada confirmou dashboard, login, exercícios e tabuleiro demo responsivos em desktop/mobile. Próxima etapa: regressão integral do monorepo e encerramento da auditoria; depois, retomar COR-T20-017 quando houver dados reais. Nenhum push ou deploy.
 
 2026-08-07 - **AUDITORIA-UX-VOZ / design implementado:** sistema visual consolidado com tokens de superfície/contraste/sombra/raio, controles acessíveis de 44 px, cabeçalho translúcido fixo, cartões e ações coerentes e breakpoints mobile. Dashboard, login, exercícios e tabuleiro demo foram inspecionados em 1440x900 e 390x844, sem overflow horizontal; corrigido também o seletor de origem que esticava a 243 px no celular. Validação final em andamento. Nenhum push ou deploy.
@@ -237,17 +239,15 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-AUDITORIA-UX-VOZ — Corrigir atividades sem tabuleiro, IA/voz, nomenclatura, turnos de dicas, continuidade do áudio e design responsivo.
+Nenhuma. AUDITORIA-UX-VOZ concluída nos commits 368b048, 589f6e4, 3752c82, af1d0cd e 7d51430.
 
 ## Contexto necessário
 
-- Conteúdo: `database/content/Xadrez_Essencial_Aulas_1_a_119.json`, importadores e validadores
-- Treino: `apps/api/src/exercises`, `learning-path` e respectivos testes/auditorias
-- Voz/IA: `apps/api/src/games/narration`, novo endpoint TTS, `apps/web/src/lib/speech.ts` e preferências
-- Partida: `apps/web/src/components/game/game-room.tsx`, notação e treinador
-- Design: `apps/web/src/app/globals.css`, CSS modules, shells e páginas principais
-- Produção auditada somente para leitura: 1.298 textos livres, 1.069 sem tabuleiro, 111 respostas de aula sem tabuleiro
-- Um commit por tarefa; não fazer deploy sem pedido explícito
+- Próxima tarefa: COR-T20-017 em `TAREFAS.md`.
+- Medir dados reais com `scripts/learning-signal-calibration.sql`.
+- Calibrar somente com evidência em `apps/worker/src/analysis/game-analysis-job.ts` e testes associados.
+- Não usar LLM como classificador e não inventar calibração sem amostra real.
+- `livrocompleto/` permanece local e ignorado; não fazer deploy sem pedido explícito.
 
 ## Contexto histórico anterior
 
