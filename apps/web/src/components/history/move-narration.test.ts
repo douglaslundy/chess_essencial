@@ -1,7 +1,18 @@
-import type { GameAnalysis, GameAnalysisQualityCounts, GameMoveAnalysis } from '@xadrez/contracts';
+import type {
+  GameAnalysis,
+  GameAnalysisQualityCounts,
+  GameMoveAnalysis,
+  GameNarration,
+} from '@xadrez/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { buildFallbackNarration, describeMoveQuality, narrateMove } from './move-narration';
+import {
+  buildFallbackNarration,
+  describeMoveQuality,
+  narrateMove,
+  narrationTextForPlayer,
+  shouldNarrateReviewMove,
+} from './move-narration';
 
 function move(overrides: Partial<GameMoveAnalysis> = {}): GameMoveAnalysis {
   return {
@@ -127,5 +138,28 @@ describe('buildFallbackNarration', () => {
     expect(result?.summary).toContain('1 lance que vale a pena revisar');
     expect(result?.keyMoments).toHaveLength(1);
     expect(result?.keyMoments[0]).toMatchObject({ ply: 8, quality: 'gafe' });
+  });
+});
+
+describe('player-only review narration', () => {
+  it('narrates only the signed-in player moves', () => {
+    expect(shouldNarrateReviewMove(move({ color: 'white' }), 'white')).toBe(true);
+    expect(shouldNarrateReviewMove(move({ color: 'black' }), 'white')).toBe(false);
+    expect(shouldNarrateReviewMove(move({ color: 'white' }), null)).toBe(false);
+  });
+
+  it('filters opponent key moments from the narrated summary', () => {
+    const narration: GameNarration = {
+      keyMoments: [
+        { color: 'white', narrative: 'White tip.', ply: 1, quality: 'bom', san: 'e4' },
+        { color: 'black', narrative: 'Black tip.', ply: 2, quality: 'erro', san: 'e5' },
+      ],
+      patterns: [],
+      status: 'completed',
+      studyPlan: [],
+      summary: 'Summary.',
+    };
+    expect(narrationTextForPlayer(narration, 'white')).toBe('Summary. White tip.');
+    expect(narrationTextForPlayer(narration, 'black')).toBe('Summary. Black tip.');
   });
 });

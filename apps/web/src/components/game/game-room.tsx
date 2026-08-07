@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChessBoard, type BoardOrientation } from './chess-board';
 import { GameResultDialog, type GameResult } from './game-result-dialog';
 import { MoveAnnouncement, describeImportantMove, type Announcement } from './move-announcement';
+import { CoachCallout } from '@/components/coach/coach-callout';
 import { moveQualityLabel } from '@/components/history/move-narration';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { api, getRealtimeAccessToken, getStoredUserId } from '@/lib/api/client';
@@ -107,6 +108,14 @@ export function shouldCoachTurn(input: {
     input.myColor !== null &&
     input.sideToMove === input.myColor
   );
+}
+
+export function shouldSuggestCoachMove(input: {
+  coachMode: boolean;
+  isDemo: boolean;
+  preferenceEnabled: boolean;
+}): boolean {
+  return input.isDemo || input.coachMode || input.preferenceEnabled;
 }
 
 export function gameOutcomeFor(
@@ -213,6 +222,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
     quality: MoveQualityResult;
     uci: string;
   } | null>(null);
+  const [coachLine, setCoachLine] = useState<{ fen: string; text: string } | null>(null);
   const previousStatusRef = useRef(state.status);
 
   useEffect(() => {
@@ -389,7 +399,11 @@ export function GameRoom({ gameId }: { gameId: string }) {
   const { checkCandidateMove, suggestion: coachSuggestion } = useCoachEngine({
     enabled: coachEnabled,
     fen: state.currentFen,
-    suggestEnabled: isDemo ? true : suggestMoveEnabled,
+    suggestEnabled: shouldSuggestCoachMove({
+      coachMode: state.coachMode,
+      isDemo,
+      preferenceEnabled: suggestMoveEnabled,
+    }),
   });
 
   const { voiceName } = useVoicePreference();
@@ -407,7 +421,9 @@ export function GameRoom({ gameId }: { gameId: string }) {
     if (muted || !coachSuggestion || !coachSuggestion.bestMoveUci) return;
     const text = formatCoachSuggestion(coachSuggestion);
     if (!text) return;
-    speak(speakableSquares(`Eu sugiro ${text}.`), { voiceName });
+    const spokenText = `Eu sugiro ${text}.`;
+    queueMicrotask(() => setCoachLine({ fen: state.currentFen, text: spokenText }));
+    speak(speakableSquares(spokenText), { voiceName });
 
     // AI narration enriches the instant template above once it arrives -
     // never blocks or delays it. Skipped in demo mode (no real game row on
@@ -421,18 +437,18 @@ export function GameRoom({ gameId }: { gameId: string }) {
       .getLiveNarration(gameId, { bestMoveUci, kind: 'suggestion', mate, scoreCp }, token)
       .then((result) => {
         if (!result.narrative || narrationGenerationRef.current !== generation) return;
+        setCoachLine({ fen: state.currentFen, text: result.narrative });
         speak(speakableSquares(result.narrative), { voiceName });
       })
       .catch(() => undefined);
-  }, [coachSuggestion, gameId, isDemo, muted, voiceName]);
+  }, [coachSuggestion, gameId, isDemo, muted, state.currentFen, voiceName]);
 
   useEffect(() => {
     if (muted || !pendingCoachMove) return;
     const { quality, uci } = pendingCoachMove;
-    speak(
-      `Atenção: eu acho que esse lance é ${moveQualityLabel[quality.quality].toLowerCase()}, com perda de ${quality.centipawnLoss} centipawns.${quality.missedWin ? ' Havia uma posição melhor.' : ''}`,
-      { voiceName },
-    );
+    const spokenText = `Atenção: eu acho que esse lance é ${moveQualityLabel[quality.quality].toLowerCase()}, com perda de ${quality.centipawnLoss} centipawns.${quality.missedWin ? ' Havia uma posição melhor.' : ''}`;
+    queueMicrotask(() => setCoachLine({ fen: state.currentFen, text: spokenText }));
+    speak(spokenText, { voiceName });
 
     if (isDemo) return;
     const generation = ++narrationGenerationRef.current;
@@ -453,10 +469,11 @@ export function GameRoom({ gameId }: { gameId: string }) {
       )
       .then((result) => {
         if (!result.narrative || narrationGenerationRef.current !== generation) return;
+        setCoachLine({ fen: state.currentFen, text: result.narrative });
         speak(speakableSquares(result.narrative), { voiceName });
       })
       .catch(() => undefined);
-  }, [coachSuggestion, gameId, isDemo, muted, pendingCoachMove, voiceName]);
+  }, [coachSuggestion, gameId, isDemo, muted, pendingCoachMove, state.currentFen, voiceName]);
 
   const groupedMoves = useMemo(() => {
     const rows: Array<{ number: number; white?: GameMove; black?: GameMove }> = [];
@@ -761,10 +778,16 @@ export function GameRoom({ gameId }: { gameId: string }) {
           />
         </div>
         <MoveAnnouncement announcement={announcement} />
-        {coachEnabled && coachSuggestion ? (
-          <p className="coachSuggestion" role="status">
-            💡 Eu sugiro: {formatCoachSuggestion(coachSuggestion) ?? 'analisando…'}
-          </p>
+        {coachEnabled ? (
+          <CoachCallout
+            message={
+              coachLine?.fen === state.currentFen
+                ? coachLine.text
+                : coachSuggestion
+                  ? `Eu sugiro ${formatCoachSuggestion(coachSuggestion) ?? 'analisando…'}.`
+                  : 'Estou analisando esta posição…'
+            }
+          />
         ) : null}
         <p className="gameMessage" role="status">
           {message}

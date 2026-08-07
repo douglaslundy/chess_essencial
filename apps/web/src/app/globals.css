@@ -1675,6 +1675,66 @@ input:focus-visible {
   cursor: pointer;
 }
 
+.coachCallout {
+  align-items: flex-end;
+  display: flex;
+  gap: 0.75rem;
+  margin: 0.8rem auto 0;
+  max-width: 48rem;
+  width: 100%;
+}
+
+.coachAvatar {
+  align-items: center;
+  background: linear-gradient(145deg, #f2d58b, var(--gold));
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  box-shadow: var(--shadow-card);
+  color: #241a08;
+  display: flex;
+  flex: 0 0 3rem;
+  font-size: 1.45rem;
+  height: 3rem;
+  justify-content: center;
+}
+
+.coachSpeechBubble {
+  background: var(--surface);
+  border: 1px solid var(--gold);
+  border-radius: 1rem 1rem 1rem 0.25rem;
+  box-shadow: var(--shadow-card);
+  min-width: 0;
+  padding: 0.75rem 1rem;
+  position: relative;
+}
+
+.coachSpeechBubble::before {
+  background: var(--surface);
+  border-bottom: 1px solid var(--gold);
+  border-left: 1px solid var(--gold);
+  bottom: 0.45rem;
+  content: '';
+  height: 0.7rem;
+  left: -0.42rem;
+  position: absolute;
+  transform: rotate(45deg);
+  width: 0.7rem;
+}
+
+.coachSpeechBubble strong {
+  color: var(--gold);
+  display: block;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.2rem;
+  text-transform: uppercase;
+}
+
+.coachSpeechBubble p {
+  line-height: 1.45;
+  margin: 0;
+}
+
 .coachSuggestion {
   margin: 0.7rem 0 0;
   padding: 0.5rem 0.9rem;

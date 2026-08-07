@@ -13,15 +13,17 @@ import { useEffect, useMemo, useState } from 'react';
 
 import {
   buildFallbackNarration,
-  describeMoveQuality,
   moveQualityLabel,
   narrateMove,
+  narrationTextForPlayer,
+  shouldNarrateReviewMove,
 } from './move-narration';
 import { reviewEligibility, type ReviewEligibility } from './review-eligibility';
+import { CoachCallout } from '@/components/coach/coach-callout';
 import { ChessBoard, type BoardOrientation } from '@/components/game/chess-board';
 import { Avatar } from '@/components/ui/avatar';
 import { api, getStoredUserId } from '@/lib/api/client';
-import { formatUciSquares, speakableSquares, toBrazilianSan } from '@/lib/notation';
+import { speakableSquares, toBrazilianSan } from '@/lib/notation';
 import { usePieceTheme } from '@/lib/piece-theme';
 import { speak, stopSpeaking } from '@/lib/speech';
 import { useEntitlements } from '@/lib/subscriptions/use-entitlements';
@@ -46,9 +48,12 @@ const QUALITY_ROWS: Array<{ key: keyof GameAnalysisQualityCounts; label: string 
   { key: 'missedWin', label: 'Oportunidades perdidas' },
 ];
 
-function speakNarration(narration: GameNarration, voiceName: string | null) {
-  const parts = [narration.summary, ...narration.keyMoments.map((moment) => moment.narrative)];
-  speak(speakableSquares(parts.filter(Boolean).join(' ')), { voiceName });
+function speakNarration(
+  narration: GameNarration,
+  voiceName: string | null,
+  myColor: 'white' | 'black' | null,
+) {
+  speak(speakableSquares(narrationTextForPlayer(narration, myColor)), { voiceName });
 }
 
 export interface FutureEvaluation {
@@ -69,6 +74,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
   const [arrowFrom, setArrowFrom] = useState('');
   const [arrowTo, setArrowTo] = useState('');
   const [message, setMessage] = useState('Carregando revisão…');
+  const [coachMessage, setCoachMessage] = useState('');
   const [eligibility, setEligibility] = useState<ReviewEligibility | null>(null);
   const [view, setView] = useState<'summary' | 'moves'>('summary');
   const [orientation, setOrientation] = useState<BoardOrientation>('white');
@@ -148,19 +154,21 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
   const { voiceName, reviewNarrationEnabled, setReviewNarrationEnabled } = useVoicePreference();
 
   useEffect(() => {
-    if (!reviewNarrationEnabled || !currentMoveAnalysis) return;
-    speak(narrateMove(currentMoveAnalysis), { voiceName });
-  }, [currentMoveAnalysis, reviewNarrationEnabled, voiceName]);
+    if (!reviewNarrationEnabled || !shouldNarrateReviewMove(currentMoveAnalysis, myColor)) return;
+    const narrationText = narrateMove(currentMoveAnalysis!);
+    queueMicrotask(() => setCoachMessage(narrationText));
+    speak(narrationText, { voiceName });
+  }, [currentMoveAnalysis, myColor, reviewNarrationEnabled, voiceName]);
 
   useEffect(() => {
     if (!reviewNarrationEnabled) stopSpeaking();
   }, [reviewNarrationEnabled]);
 
   function startMoveByMoveReview() {
+    const welcome = 'Olá, seja bem-vindo! Vamos revisar essa partida.';
     setView('moves');
-    if (reviewNarrationEnabled) {
-      speak('Olá, seja bem-vindo! Vamos revisar essa partida.', { voiceName });
-    }
+    setCoachMessage(welcome);
+    if (reviewNarrationEnabled) speak(welcome, { voiceName });
   }
 
   const current = annotations.find((item) => item.ply === ply);
@@ -298,10 +306,17 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
           <section className="reviewNarration" aria-label="Resumo narrado">
             <div className="reviewNarrationHeader">
               <h2>Resumo narrado</h2>
-              <button onClick={() => speakNarration(effectiveNarration, voiceName)} type="button">
+              <button
+                onClick={() => {
+                  setCoachMessage(narrationTextForPlayer(effectiveNarration, myColor));
+                  speakNarration(effectiveNarration, voiceName, myColor);
+                }}
+                type="button"
+              >
                 🔊 Ouvir
               </button>
             </div>
+            <CoachCallout message={coachMessage || effectiveNarration.summary} />
             <p>{effectiveNarration.summary}</p>
             {effectiveNarration.keyMoments.length > 0 ? (
               <div className="reviewNarrationSection">
@@ -465,18 +480,10 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
             />
             Narrar lances por voz
           </label>
-          {currentMoveAnalysis ? (
-            <div className="moveBubble" data-quality={currentMoveAnalysis.quality}>
-              <strong>{describeMoveQuality(currentMoveAnalysis)}</strong>
-              {currentMoveAnalysis.quality !== 'otimo' &&
-              currentMoveAnalysis.quality !== 'excelente' &&
-              currentMoveAnalysis.bestMoveUci ? (
-                <span>Eu sugiro: {formatUciSquares(currentMoveAnalysis.bestMoveUci)}</span>
-              ) : null}
-              {currentMoveAnalysis.missedWin ? (
-                <span>Havia uma oportunidade melhor nessa posição.</span>
-              ) : null}
-            </div>
+          {shouldNarrateReviewMove(currentMoveAnalysis, myColor) ? (
+            <CoachCallout message={coachMessage || narrateMove(currentMoveAnalysis!)} />
+          ) : currentMoveAnalysis ? (
+            <span>Lance do adversário: sem narração do Treinador.</span>
           ) : (
             <span>{ANALYSIS_STATUS_LABEL[analysis?.status ?? 'pending']}</span>
           )}

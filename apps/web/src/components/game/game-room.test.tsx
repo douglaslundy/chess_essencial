@@ -2,7 +2,13 @@
 import type { GameMove } from '@xadrez/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { demoBranchPoint, gameOutcomeFor, historyBaseIndex, stepHistoryIndex } from './game-room';
+import {
+  demoBranchPoint,
+  gameOutcomeFor,
+  historyBaseIndex,
+  shouldSuggestCoachMove,
+  stepHistoryIndex,
+} from './game-room';
 
 const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
@@ -86,5 +92,16 @@ describe('demoBranchPoint', () => {
     expect(point.branchAt).toBe(0);
     expect(point.baseMoves).toHaveLength(0);
     expect(point.baseFen).toBe(START);
+  });
+});
+
+describe('coach suggestion policy', () => {
+  it('always enables suggestions in a trainer match regardless of the profile toggle', () => {
+    expect(
+      shouldSuggestCoachMove({ coachMode: true, isDemo: false, preferenceEnabled: false }),
+    ).toBe(true);
+    expect(
+      shouldSuggestCoachMove({ coachMode: false, isDemo: false, preferenceEnabled: false }),
+    ).toBe(false);
   });
 });

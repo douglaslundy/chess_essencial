@@ -30,6 +30,25 @@ export function describeMoveQuality(move: GameMoveAnalysis): string {
   return `${label} · -${move.centipawnLoss}cp`;
 }
 
+export function shouldNarrateReviewMove(
+  move: GameMoveAnalysis | null,
+  myColor: 'white' | 'black' | null,
+): boolean {
+  return move !== null && myColor !== null && move.color === myColor;
+}
+
+export function narrationTextForPlayer(
+  narration: GameNarration,
+  myColor: 'white' | 'black' | null,
+): string {
+  const playerMoments = myColor
+    ? narration.keyMoments.filter((moment) => moment.color === myColor)
+    : [];
+  return [narration.summary, ...playerMoments.map((moment) => moment.narrative)]
+    .filter(Boolean)
+    .join(' ');
+}
+
 /** Full sentence read aloud by the voice narration toggle. */
 export function narrateMove(move: GameMoveAnalysis): string {
   const label = moveQualityLabel[move.quality];
