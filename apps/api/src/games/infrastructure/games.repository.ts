@@ -34,6 +34,7 @@ import type { TransactionSql } from 'postgres';
 import { DatabaseService } from '../../database/database.service.js';
 import { SubscriptionsService } from '../../subscriptions/subscriptions.service.js';
 import { calculateClockTransition, effectiveClockMs } from '../domain/game-clock.js';
+import { canNarrateLiveTurn } from '../narration/live-narration-policy.js';
 import { LiveNarrationService } from '../narration/live-narration.service.js';
 
 interface GameRow {
@@ -597,13 +598,29 @@ export class GamesRepository {
     input: LiveNarrationRequest,
   ): Promise<LiveNarrationResult> {
     await this.assertPlayer(gameId, userId);
-    const [game] = await this.database.client<{ coachMode: boolean }[]>`
-      SELECT coach_mode AS "coachMode" FROM games WHERE id = ${gameId}
+    const [game] = await this.database.client<
+      {
+        coachMode: boolean;
+        currentFen: string;
+        playerColor: 'white' | 'black';
+        sideToMove: 'white' | 'black';
+        status: string;
+      }[]
+    >`
+      SELECT
+        g.coach_mode AS "coachMode",
+        g.current_fen AS "currentFen",
+        gp.color AS "playerColor",
+        g.side_to_move AS "sideToMove",
+        g.status
+      FROM games g
+      JOIN game_players gp ON gp.game_id = g.id AND gp.user_id = ${userId}
+      WHERE g.id = ${gameId}
     `;
-    if (!game?.coachMode) return { narrative: null };
+    if (!game || !canNarrateLiveTurn(game)) return { narrative: null };
     const entitlement = await this.subscriptions.checkEntitlement(userId, 'coach_mode_access');
     if (!entitlement.allowed) return { narrative: null };
-    return this.liveNarration.narrate(input);
+    return this.liveNarration.narrate({ ...input, fen: game.currentFen });
   }
 
   async realtimeSnapshot(gameId: string, userId: string, lastKnownVersion: number) {

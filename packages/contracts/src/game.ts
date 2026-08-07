@@ -251,14 +251,12 @@ export const gameNarrationSchema = z.object({
 export const liveNarrationRequestSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('suggestion'),
-    fen: z.string(),
     bestMoveUci: z.string(),
     mate: z.number().int().nullable(),
     scoreCp: z.number().int().nullable(),
   }),
   z.object({
     kind: z.literal('quality'),
-    fen: z.string(),
     uci: z.string(),
     bestMoveUci: z.string().nullable(),
     quality: moveQualitySchema,

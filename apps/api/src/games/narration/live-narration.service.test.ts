@@ -1,7 +1,7 @@
-import type { LiveNarrationRequest } from '@xadrez/contracts';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { LiveNarrationService } from './live-narration.service.js';
+import type { AuthoritativeLiveNarrationRequest } from './prompts.js';
 
 const originalFetch = global.fetch;
 
@@ -19,7 +19,7 @@ function fakeDatabase(rows: { narrative: string }[] = []) {
   return { client: sql };
 }
 
-const suggestionInput: LiveNarrationRequest = {
+const suggestionInput: AuthoritativeLiveNarrationRequest = {
   bestMoveUci: 'e2e4',
   fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
   kind: 'suggestion',
@@ -27,7 +27,7 @@ const suggestionInput: LiveNarrationRequest = {
   scoreCp: 30,
 };
 
-const qualityInput: LiveNarrationRequest = {
+const qualityInput: AuthoritativeLiveNarrationRequest = {
   bestMoveUci: 'e2e4',
   centipawnLoss: 250,
   fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
@@ -59,7 +59,7 @@ describe('LiveNarrationService', () => {
     global.fetch = vi.fn().mockResolvedValue({
       json: () =>
         Promise.resolve({
-          content: [{ text: 'Eu sugiro abrir com o peão do rei.', type: 'text' }],
+          content: [{ text: 'Isso desenvolve a iniciativa.', type: 'text' }],
         }),
       ok: true,
     }) as never;
@@ -67,7 +67,9 @@ describe('LiveNarrationService', () => {
 
     const result = await service.narrate(suggestionInput);
 
-    expect(result).toEqual({ narrative: 'Eu sugiro abrir com o peão do rei.' });
+    expect(result).toEqual({
+      narrative: 'Eu sugiro mover peão de e2 para e4. Isso desenvolve a iniciativa.',
+    });
   });
 
   it('quality narration: cache miss calls the LLM and writes the cache', async () => {
@@ -92,7 +94,10 @@ describe('LiveNarrationService', () => {
 
     const result = await service.narrate(qualityInput);
 
-    expect(result).toEqual({ narrative: 'Esse lance perde material à toa.' });
+    expect(result).toEqual({
+      narrative:
+        'Você está prestes a mover peão de a2 para a3. Eu classifico esse lance como erro, com perda de 250 centipawns. Esse lance perde material à toa.',
+    });
     expect(sql).toHaveBeenCalledTimes(2);
   });
 
@@ -117,8 +122,36 @@ describe('LiveNarrationService', () => {
 
     const result = await service.narrate(qualityInput);
 
-    expect(result).toEqual({ narrative: 'Já vi essa exatamente antes.' });
+    expect(result).toEqual({
+      narrative:
+        'Você está prestes a mover peão de a2 para a3. Eu classifico esse lance como erro, com perda de 250 centipawns. Já vi essa exatamente antes.',
+    });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('replaces conflicting piece claims with a deterministic queen description', async () => {
+    const aiProviders = fakeAiProviders({
+      apiKey: 'sk-test',
+      model: 'claude-test',
+      provider: 'anthropic',
+    });
+    global.fetch = vi.fn().mockResolvedValue({
+      json: () =>
+        Promise.resolve({ content: [{ text: 'Mova o peão com firmeza.', type: 'text' }] }),
+      ok: true,
+    }) as never;
+    const service = new LiveNarrationService(aiProviders as never, fakeDatabase() as never);
+
+    const result = await service.narrate({
+      bestMoveUci: 'd1h5',
+      fen: '4k3/8/8/8/8/8/8/3QK3 w - - 0 1',
+      kind: 'suggestion',
+      mate: null,
+      scoreCp: 200,
+    });
+
+    expect(result.narrative).toContain('dama de d1 para h5');
+    expect(result.narrative).not.toContain('peão');
   });
 
   it('never lets an LLM failure escape - a live game must never be interrupted by narration', async () => {

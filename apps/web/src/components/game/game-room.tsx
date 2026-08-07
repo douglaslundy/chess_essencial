@@ -2,7 +2,7 @@
 
 import type { MoveQualityResult } from '@xadrez/chess-domain';
 import type { GameMove, GameState } from '@xadrez/contracts';
-import { Chess } from 'chess.js';
+import { Chess, type PieceSymbol, type Square } from 'chess.js';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { ChessBoard, type BoardOrientation } from './chess-board';
@@ -63,13 +63,50 @@ function formatCoachSuggestion(suggestion: { bestMoveUci: string | null; mate: n
   return `${formatUciSquares(suggestion.bestMoveUci)}${detail ? ` (${detail})` : ''}`;
 }
 
+const pieceNames: Record<PieceSymbol, string> = {
+  b: 'bispo',
+  k: 'rei',
+  n: 'cavalo',
+  p: 'peão',
+  q: 'dama',
+  r: 'torre',
+};
+
 export function formatMove(move: GameMove) {
-  const piece = move.san.match(/^[KQRBN]/)?.[0];
-  const name =
-    ({ K: 'rei', Q: 'dama', R: 'torre', B: 'bispo', N: 'cavalo' } as Record<string, string>)[
-      piece ?? ''
-    ] ?? 'peão';
-  return `${toBrazilianSan(move.san)} · ${name} ${move.from}→${move.to}`;
+  let pieceType: PieceSymbol | undefined;
+  if (move.fenBefore) {
+    try {
+      pieceType = new Chess(move.fenBefore).get(move.from as Square)?.type;
+    } catch {
+      // Legacy records may lack a valid FEN; SAN remains a display-only fallback.
+    }
+  }
+  pieceType ??=
+    ({ B: 'b', C: 'n', D: 'q', K: 'k', N: 'n', Q: 'q', R: 'r', T: 'r' } as const)[
+      move.san.charAt(0) as 'B' | 'C' | 'D' | 'K' | 'N' | 'Q' | 'R' | 'T'
+    ] ?? 'p';
+  return `${toBrazilianSan(move.san)} · ${pieceNames[pieceType]} ${move.from}→${move.to}`;
+}
+
+export function shouldCoachTurn(input: {
+  assistedColor: BoardOrientation | null;
+  coachMode: boolean;
+  connection: 'demo' | 'connecting' | 'online' | 'reconnecting' | 'offline';
+  isDemo: boolean;
+  myColor: BoardOrientation | null;
+  sideToMove: BoardOrientation;
+  status: GameState['status'];
+}): boolean {
+  if (input.status !== 'active') return false;
+  if (input.isDemo) {
+    return input.assistedColor !== null && input.sideToMove === input.assistedColor;
+  }
+  return (
+    input.coachMode &&
+    input.connection === 'online' &&
+    input.myColor !== null &&
+    input.sideToMove === input.myColor
+  );
 }
 
 export function gameOutcomeFor(
@@ -340,8 +377,15 @@ export function GameRoom({ gameId }: { gameId: string }) {
   // Treinador only speaks up for the color they picked, and only on that
   // color's turn — everything else about the demo (free movement of either
   // side, no server persistence) stays exactly as it already worked.
-  const assistedTurn = isDemo && assistedColor !== null && state.sideToMove === assistedColor;
-  const coachEnabled = isDemo ? assistedTurn : state.coachMode && canMove;
+  const coachEnabled = shouldCoachTurn({
+    assistedColor,
+    coachMode: state.coachMode,
+    connection,
+    isDemo,
+    myColor,
+    sideToMove: state.sideToMove,
+    status: state.status,
+  });
   const { checkCandidateMove, suggestion: coachSuggestion } = useCoachEngine({
     enabled: coachEnabled,
     fen: state.currentFen,
@@ -370,17 +414,13 @@ export function GameRoom({ gameId }: { gameId: string }) {
     if (!token) return;
     const { bestMoveUci, mate, scoreCp } = coachSuggestion;
     api
-      .getLiveNarration(
-        gameId,
-        { bestMoveUci, fen: state.currentFen, kind: 'suggestion', mate, scoreCp },
-        token,
-      )
+      .getLiveNarration(gameId, { bestMoveUci, kind: 'suggestion', mate, scoreCp }, token)
       .then((result) => {
         if (!result.narrative || narrationGenerationRef.current !== generation) return;
         speak(speakableSquares(result.narrative), { voiceName });
       })
       .catch(() => undefined);
-  }, [coachSuggestion, gameId, isDemo, muted, state.currentFen, voiceName]);
+  }, [coachSuggestion, gameId, isDemo, muted, voiceName]);
 
   useEffect(() => {
     if (muted || !pendingCoachMove) return;
@@ -400,7 +440,6 @@ export function GameRoom({ gameId }: { gameId: string }) {
         {
           bestMoveUci: coachSuggestion?.bestMoveUci ?? null,
           centipawnLoss: quality.centipawnLoss,
-          fen: state.currentFen,
           kind: 'quality',
           missedWin: quality.missedWin,
           quality: quality.quality,
@@ -413,7 +452,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
         speak(speakableSquares(result.narrative), { voiceName });
       })
       .catch(() => undefined);
-  }, [coachSuggestion, gameId, isDemo, muted, pendingCoachMove, state.currentFen, voiceName]);
+  }, [coachSuggestion, gameId, isDemo, muted, pendingCoachMove, voiceName]);
 
   const groupedMoves = useMemo(() => {
     const rows: Array<{ number: number; white?: GameMove; black?: GameMove }> = [];

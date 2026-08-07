@@ -1900,7 +1900,6 @@ export interface components {
       | {
           /** @constant */
           kind: 'suggestion';
-          fen: string;
           bestMoveUci: string;
           mate: number | null;
           scoreCp: number | null;
@@ -1908,7 +1907,6 @@ export interface components {
       | {
           /** @constant */
           kind: 'quality';
-          fen: string;
           uci: string;
           bestMoveUci: string | null;
           quality: components['schemas']['MoveQuality'];

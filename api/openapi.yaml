@@ -1937,18 +1937,16 @@ components:
     LiveNarrationRequest:
       oneOf:
         - type: object
-          required: [kind, fen, bestMoveUci, mate, scoreCp]
+          required: [kind, bestMoveUci, mate, scoreCp]
           properties:
             kind: {type: string, const: suggestion}
-            fen: {type: string}
             bestMoveUci: {type: string}
             mate: {type: [integer, 'null']}
             scoreCp: {type: [integer, 'null']}
         - type: object
-          required: [kind, fen, uci, bestMoveUci, quality, centipawnLoss, missedWin]
+          required: [kind, uci, bestMoveUci, quality, centipawnLoss, missedWin]
           properties:
             kind: {type: string, const: quality}
-            fen: {type: string}
             uci: {type: string}
             bestMoveUci: {type: [string, 'null']}
             quality: {$ref: '#/components/schemas/MoveQuality'}

@@ -5,7 +5,7 @@ import { createElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { boardSquares, ChessBoard } from './chess-board';
-import { formatClock, formatMove } from './game-room';
+import { formatClock, formatMove, shouldCoachTurn } from './game-room';
 
 afterEach(() => cleanup());
 
@@ -141,6 +141,41 @@ describe('ChessBoard', () => {
 
   it('makes SAN notation explicit for beginners, in Brazilian notation', () => {
     expect(formatMove({ san: 'Nh3', from: 'f2', to: 'h3' } as GameMove)).toBe('Ch3 · cavalo f2→h3');
+  });
+
+  it('derives the moved piece from the authoritative FEN instead of guessing from SAN', () => {
+    const queenMove = {
+      fenBefore: '4k3/8/8/8/8/8/8/3QK3 w - - 0 1',
+      from: 'd1',
+      san: 'Dh5',
+      to: 'h5',
+    } as GameMove;
+
+    expect(formatMove(queenMove)).toBe('Dh5 · dama d1→h5');
+  });
+
+  it('enables coaching only on the selected player turn', () => {
+    const base = {
+      assistedColor: null,
+      coachMode: true,
+      connection: 'online' as const,
+      isDemo: false,
+      myColor: 'white' as const,
+      sideToMove: 'white' as const,
+      status: 'active' as const,
+    };
+
+    expect(shouldCoachTurn(base)).toBe(true);
+    expect(shouldCoachTurn({ ...base, sideToMove: 'black' })).toBe(false);
+    expect(
+      shouldCoachTurn({
+        ...base,
+        assistedColor: 'black',
+        connection: 'demo',
+        isDemo: true,
+        sideToMove: 'white',
+      }),
+    ).toBe(false);
   });
 
   it('renders classic SVG pieces by default', () => {

@@ -325,7 +325,6 @@ describeDatabase('games database integration', () => {
       method: 'POST',
       payload: {
         bestMoveUci: 'e2e4',
-        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
         kind: 'suggestion',
         mate: null,
         scoreCp: 30,
@@ -341,7 +340,6 @@ describeDatabase('games database integration', () => {
       method: 'POST',
       payload: {
         bestMoveUci: 'e2e4',
-        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
         kind: 'suggestion',
         mate: null,
         scoreCp: 30,
@@ -357,7 +355,6 @@ describeDatabase('games database integration', () => {
       method: 'POST',
       payload: {
         bestMoveUci: 'e2e4',
-        fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
         kind: 'suggestion',
         mate: null,
         scoreCp: 30,
