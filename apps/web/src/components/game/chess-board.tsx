@@ -81,7 +81,7 @@ function ChessPiece({ color, type }: BoardPiece) {
         ) : null}
         {type === 'k' ? (
           <>
-            <path d="M32 7v14M25 14h14" fill="none" />
+            <path className="kingCross" d="M32 7v14M25 14h14" fill="none" />
             <path d="M23 27c0-6 4-9 9-9s9 3 9 9c0 4-2 7-5 10l8 12H20l8-12c-3-3-5-6-5-10Z" />
             <path d="M14 49h36l3 7H11l3-7Z" />
           </>
@@ -142,8 +142,8 @@ function WoodChessPiece({ color, type }: BoardPiece) {
       {type === 'k' ? (
         <>
           <ellipse className="woodBody" cx="32" cy="32" rx="12" ry="15" />
-          <rect className="woodDetail" height="14" width="6" x="29" y="4" />
-          <rect className="woodDetail" height="6" width="16" x="24" y="8" />
+          <rect className="woodDetail kingCross" height="14" width="6" x="29" y="4" />
+          <rect className="woodDetail kingCross" height="6" width="16" x="24" y="8" />
         </>
       ) : null}
     </svg>

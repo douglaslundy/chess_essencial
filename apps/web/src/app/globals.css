@@ -1053,6 +1053,18 @@ input:focus-visible {
   fill: var(--piece-outline);
 }
 
+.chessPiece .kingCross {
+  stroke: currentColor;
+}
+
+.whitePiece.woodPiece .woodDetail.kingCross {
+  fill: #e8c39e;
+}
+
+.blackPiece.woodPiece .woodDetail.kingCross {
+  fill: #3e2415;
+}
+
 /*
  * Each piece carries a halo in the opposite tone of its own fill so it never
  * blends into a same-tone square: white pieces get a dark halo (readable on

@@ -51,6 +51,20 @@ describe('ChessBoard', () => {
     );
   });
 
+  it('renders each king cross with the same-color class', () => {
+    const view = render(
+      createElement(ChessBoard, {
+        fen: '4k3/8/8/8/8/8/8/4K3 w - - 0 1',
+        onMove: vi.fn(),
+        orientation: 'white',
+      }),
+    );
+    const kings = view.container.querySelectorAll('[data-piece="k"]');
+    expect(kings).toHaveLength(2);
+    expect(kings[0]?.querySelector('.kingCross')).toBeTruthy();
+    expect(kings[1]?.querySelector('.kingCross')).toBeTruthy();
+  });
+
   it('does not select a piece outside the allowed player color', () => {
     const view = render(
       createElement(ChessBoard, {
