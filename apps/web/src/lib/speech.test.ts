@@ -1,6 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const generateAiSpeech = vi.hoisted(() => vi.fn());
+vi.mock('./api/client', () => ({ api: { generateAiSpeech } }));
+
 interface FakeSynth {
   addEventListener: ReturnType<typeof vi.fn>;
   cancel: ReturnType<typeof vi.fn>;
@@ -38,11 +41,14 @@ function installFakeSynth(
 
 describe('speak', () => {
   beforeEach(() => {
+    generateAiSpeech.mockReset();
+    localStorage.clear();
     vi.resetModules();
     vi.useFakeTimers();
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     vi.useRealTimers();
     Reflect.deleteProperty(window, 'speechSynthesis');
   });
@@ -141,6 +147,42 @@ describe('speak', () => {
     await speak('texto', { voiceName: 'Voz Inexistente' });
 
     expect(synth.speak.mock.calls[0]?.[0]).not.toHaveProperty('voice');
+  });
+
+  it('plays audio returned by OpenAI without using the system voice', async () => {
+    const synth = installFakeSynth(true);
+    localStorage.setItem('xadrez.access_token', 'token');
+    generateAiSpeech.mockResolvedValue(new Blob(['mp3'], { type: 'audio/mpeg' }));
+    const play = vi.fn().mockResolvedValue(undefined);
+    class FakeAudio {
+      addEventListener(event: string, listener: () => void) {
+        if (event === 'ended') queueMicrotask(listener);
+      }
+      pause = vi.fn();
+      play = play;
+    }
+    vi.stubGlobal('Audio', FakeAudio);
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:openai');
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const { speak } = await import('./speech');
+
+    await speak('Olá', { voiceName: 'openai:marin' });
+
+    expect(generateAiSpeech).toHaveBeenCalledWith({ text: 'Olá', voice: 'openai:marin' }, 'token');
+    expect(play).toHaveBeenCalledTimes(1);
+    expect(synth.speak).not.toHaveBeenCalled();
+  });
+
+  it('reports an OpenAI failure and never falls back to the system voice', async () => {
+    const synth = installFakeSynth(true);
+    localStorage.setItem('xadrez.access_token', 'token');
+    generateAiSpeech.mockRejectedValue(new Error('serviço indisponível'));
+    const { speak } = await import('./speech');
+
+    await expect(speak('Olá', { voiceName: 'openai:cedar' })).rejects.toThrow(
+      'Não foi possível gerar a voz por IA da OpenAI: serviço indisponível',
+    );
+    expect(synth.speak).not.toHaveBeenCalled();
   });
 });
 

@@ -162,6 +162,13 @@ export default function MyDataPage() {
         interrupt: true,
         voiceName: voice.name,
       });
+      setMessage(
+        voice.source === 'openai'
+          ? 'Prévia reproduzida com voz gerada por IA da OpenAI.'
+          : 'Prévia reproduzida com a voz do sistema.',
+      );
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Não foi possível reproduzir esta voz.');
     } finally {
       setPreviewingVoice(null);
     }
@@ -340,6 +347,7 @@ export default function MyDataPage() {
                     type="radio"
                   />{' '}
                   {voice.label}
+                  {voice.source === 'openai' ? ' (voz gerada por IA)' : ''}
                   <button
                     disabled={previewingVoice === voice.name}
                     onClick={() => void previewVoice(voice)}

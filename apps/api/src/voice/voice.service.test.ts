@@ -40,9 +40,20 @@ describe('VoiceService', () => {
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.openai.com/v1/audio/speech',
       expect.objectContaining({
-        body: expect.stringContaining('"voice":"marin"'),
+        body: expect.stringMatching(/"model":"gpt-4o-mini-tts".*"voice":"marin"/),
         method: 'POST',
       }),
+    );
+  });
+
+  it('returns a safe explicit error when OpenAI cannot generate speech', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 403 }));
+    const service = new VoiceService(
+      providers({ apiKey: 'sk-test', model: 'gpt-test', provider: 'openai' }) as never,
+    );
+
+    await expect(service.synthesize({ text: 'Sua vez.', voice: 'openai:cedar' })).rejects.toThrow(
+      'A OpenAI não conseguiu gerar a voz por IA (403). Verifique a chave, o acesso ao modelo e tente novamente.',
     );
   });
 });

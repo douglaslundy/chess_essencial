@@ -86,6 +86,7 @@ export function StageRunner({ stageId }: { stageId: string }) {
   const [hints, setHints] = useState<string[]>([]);
   const [hintsRemaining, setHintsRemaining] = useState(0);
   const [spokenMessage, setSpokenMessage] = useState('');
+  const [speechError, setSpeechError] = useState('');
   const [startedAt, setStartedAt] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [attemptCount, setAttemptCount] = useState(0);
@@ -170,7 +171,15 @@ export function StageRunner({ stageId }: { stageId: string }) {
     if (phase === 'loading' || phase === 'error' || phase === 'evaluating') return;
     if (instructorMessage === spokenMessage) return;
     queueMicrotask(() => setSpokenMessage(instructorMessage));
-    void speak(instructorMessage, { voiceName });
+    void speak(instructorMessage, { voiceName })
+      .then(() => setSpeechError(''))
+      .catch((error: unknown) =>
+        setSpeechError(
+          error instanceof Error
+            ? error.message
+            : 'Não foi possível reproduzir a voz do Treinador.',
+        ),
+      );
   }, [phase, instructorMessage, spokenMessage, voiceName]);
 
   async function playMove(uci: string) {
@@ -270,7 +279,13 @@ export function StageRunner({ stageId }: { stageId: string }) {
       const revealed = await api.revealExerciseHint(trainingSessionId, token);
       setHints((current) => [...current, revealed.hint]);
       setHintsRemaining(revealed.remaining);
-      void speak(revealed.hint, { voiceName });
+      void speak(revealed.hint, { voiceName }).catch((error: unknown) =>
+        setSpeechError(
+          error instanceof Error
+            ? error.message
+            : 'Não foi possível reproduzir a voz do Treinador.',
+        ),
+      );
     } catch {
       // A failed hint request isn't worth interrupting the exercise for -
       // the button simply stays available to try again.
@@ -342,6 +357,11 @@ export function StageRunner({ stageId }: { stageId: string }) {
         </span>
         <p>{instructorMessage}</p>
       </div>
+      {speechError ? (
+        <p className="status" role="alert">
+          {speechError}
+        </p>
+      ) : null}
       {stageKind === 'lesson' && lessonInfo && phase !== 'solved' ? (
         <div className="stageLessonArea">
           <Link className="primaryButton" href={`/app/aula/${lessonInfo.lessonId}`}>

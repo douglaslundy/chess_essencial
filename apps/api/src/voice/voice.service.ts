@@ -3,7 +3,7 @@ import { BadGatewayException, Injectable, ServiceUnavailableException } from '@n
 
 import { AiProvidersService } from '../ai-providers/ai-providers.service.js';
 
-const OPENAI_SPEECH_MODEL = 'tts-1';
+const OPENAI_SPEECH_MODEL = 'gpt-4o-mini-tts';
 const MAX_AUDIO_BYTES = 5 * 1024 * 1024;
 const AI_VOICES: readonly AiVoiceOption[] = [
   { id: 'openai:marin', label: 'Treinador IA · Marin', provider: 'openai' },
@@ -34,6 +34,8 @@ export class VoiceService {
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       body: JSON.stringify({
         input: input.text,
+        instructions:
+          'Fale em português do Brasil como um treinador de xadrez didático, claro e acolhedor.',
         model: OPENAI_SPEECH_MODEL,
         response_format: 'mp3',
         speed: 1,
@@ -48,9 +50,8 @@ export class VoiceService {
     });
 
     if (!response.ok) {
-      const detail = await response.text().catch(() => '');
       throw new BadGatewayException(
-        `A síntese de voz por IA falhou (${response.status}): ${detail.slice(0, 300)}`,
+        `A OpenAI não conseguiu gerar a voz por IA (${response.status}). Verifique a chave, o acesso ao modelo e tente novamente.`,
       );
     }
     const audio = Buffer.from(await response.arrayBuffer());

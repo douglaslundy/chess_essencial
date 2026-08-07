@@ -53,7 +53,7 @@ function speakNarration(
   voiceName: string | null,
   myColor: 'white' | 'black' | null,
 ) {
-  speak(speakableSquares(narrationTextForPlayer(narration, myColor)), { voiceName });
+  return speak(speakableSquares(narrationTextForPlayer(narration, myColor)), { voiceName });
 }
 
 export interface FutureEvaluation {
@@ -157,7 +157,11 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
     if (!reviewNarrationEnabled || !shouldNarrateReviewMove(currentMoveAnalysis, myColor)) return;
     const narrationText = narrateMove(currentMoveAnalysis!);
     queueMicrotask(() => setCoachMessage(narrationText));
-    speak(narrationText, { voiceName });
+    void speak(narrationText, { voiceName }).catch((error: unknown) =>
+      setMessage(
+        error instanceof Error ? error.message : 'Não foi possível reproduzir a voz do Treinador.',
+      ),
+    );
   }, [currentMoveAnalysis, myColor, reviewNarrationEnabled, voiceName]);
 
   useEffect(() => {
@@ -168,7 +172,15 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
     const welcome = 'Olá, seja bem-vindo! Vamos revisar essa partida.';
     setView('moves');
     setCoachMessage(welcome);
-    if (reviewNarrationEnabled) speak(welcome, { voiceName });
+    if (reviewNarrationEnabled) {
+      void speak(welcome, { voiceName }).catch((error: unknown) =>
+        setMessage(
+          error instanceof Error
+            ? error.message
+            : 'Não foi possível reproduzir a voz do Treinador.',
+        ),
+      );
+    }
   }
 
   const current = annotations.find((item) => item.ply === ply);
@@ -309,7 +321,14 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
               <button
                 onClick={() => {
                   setCoachMessage(narrationTextForPlayer(effectiveNarration, myColor));
-                  speakNarration(effectiveNarration, voiceName, myColor);
+                  void speakNarration(effectiveNarration, voiceName, myColor).catch(
+                    (error: unknown) =>
+                      setMessage(
+                        error instanceof Error
+                          ? error.message
+                          : 'Não foi possível reproduzir a voz do Treinador.',
+                      ),
+                  );
                 }}
                 type="button"
               >

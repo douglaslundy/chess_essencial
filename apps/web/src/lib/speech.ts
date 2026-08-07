@@ -44,31 +44,39 @@ function cleanupAudio(audio: HTMLAudioElement, url: string): void {
   URL.revokeObjectURL(url);
 }
 
-async function speakWithAi(text: string, voiceName: string, generation: number): Promise<boolean> {
+async function speakWithAi(text: string, voiceName: string, generation: number): Promise<void> {
   const token = window.localStorage.getItem('xadrez.access_token');
-  if (!token) return false;
+  if (!token) {
+    throw new Error('Entre na sua conta para usar a voz por IA da OpenAI.');
+  }
+
+  const { api } = await import('./api/client');
+  let audio: HTMLAudioElement | null = null;
+  let url: string | null = null;
   try {
-    const { api } = await import('./api/client');
     const blob = await api.generateAiSpeech(
       { text, voice: voiceName as 'openai:marin' | 'openai:cedar' },
       token,
     );
-    if (generation !== queueGeneration) return true;
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
+    if (generation !== queueGeneration) return;
+    url = URL.createObjectURL(blob);
+    audio = new Audio(url);
     currentAudio = audio;
     currentAudioUrl = url;
     await new Promise<void>((resolve, reject) => {
-      audio.addEventListener('ended', () => resolve(), { once: true });
-      audio.addEventListener('error', () => reject(new Error('AI audio playback failed')), {
-        once: true,
-      });
-      audio.play().catch(reject);
+      audio!.addEventListener('ended', () => resolve(), { once: true });
+      audio!.addEventListener(
+        'error',
+        () => reject(new Error('O navegador não conseguiu reproduzir o áudio da OpenAI.')),
+        { once: true },
+      );
+      audio!.play().catch(reject);
     });
-    cleanupAudio(audio, url);
-    return true;
-  } catch {
-    return false;
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : 'falha desconhecida';
+    throw new Error(`Não foi possível gerar a voz por IA da OpenAI: ${detail}`);
+  } finally {
+    if (audio && url) cleanupAudio(audio, url);
   }
 }
 
@@ -96,9 +104,7 @@ export async function speak(text: string, options: SpeakOptions = {}): Promise<v
     const generation = queueGeneration;
     const queued = audioQueue.then(async () => {
       if (generation !== queueGeneration) return;
-      if (!(await speakWithAi(text, options.voiceName!, generation))) {
-        await speakWithBrowser(text, options);
-      }
+      await speakWithAi(text, options.voiceName!, generation);
     });
     audioQueue = queued.catch(() => undefined);
     return queued;
