@@ -4,7 +4,7 @@
   padding: var(--page-padding);
   display: grid;
   gap: 1.5rem;
-  color: #f8fafc;
+  color: var(--text);
 }
 .heading span,
 .card > span,
@@ -24,12 +24,12 @@
 .heading p,
 .card p,
 .status {
-  color: #cbd5e1;
+  color: var(--muted);
 }
 .helpText {
   display: block;
   margin-top: -1rem;
-  color: #a1a1aa;
+  color: var(--muted);
   font-size: 0.78rem;
 }
 .status {
@@ -48,21 +48,21 @@
   height: 4rem;
   border-radius: 999px;
   object-fit: cover;
-  border: 2px solid #3f3f46;
+  border: 2px solid var(--border-strong);
 }
 .avatarFallback {
   display: grid;
   place-items: center;
   background: #d10e17;
-  color: #fff;
+  color: #ffffff;
   font-weight: 800;
 }
 .avatarUpload {
   display: inline-flex;
   align-items: center;
-  border: 1px solid #3f3f46;
+  border: 1px solid var(--border-strong);
   border-radius: 0.55rem;
-  background: #19191f;
+  background: var(--surface-2);
   color: #f4f1eb;
   padding: 0.5rem 0.9rem;
   font-size: 0.9rem;
@@ -81,9 +81,9 @@
 .tableCard,
 .moduleCard,
 .formCard {
-  border: 1px solid #3f3f46;
+  border: 1px solid var(--border-strong);
   border-radius: 1rem;
-  background: #18181b;
+  background: var(--surface);
   padding: clamp(1rem, 3vw, 1.5rem);
   box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.18);
 }
@@ -98,20 +98,20 @@
   width: fit-content;
   border: 0;
   border-radius: 0.7rem;
-  background: #b91c1c;
-  color: #fff;
+  background: var(--red);
+  color: #ffffff;
   padding: 0.75rem 1rem;
   font-weight: 800;
   cursor: pointer;
 }
 .backLink {
-  color: #e5c56f;
+  color: var(--gold);
   width: fit-content;
 }
 .field {
   display: grid;
   gap: 0.4rem;
-  color: #e2e8f0;
+  color: var(--text);
   font-size: 0.85rem;
   font-weight: 700;
 }
@@ -119,16 +119,16 @@
 .field select,
 .field textarea {
   width: 100%;
-  border: 1px solid #52525b;
+  border: 1px solid var(--border-strong);
   border-radius: 0.65rem;
-  background: #09090b;
-  color: #fff;
+  background: var(--control-bg);
+  color: #ffffff;
   padding: 0.75rem;
   font: inherit;
 }
 .field input:disabled {
-  color: #a1a1aa;
-  background: #27272a;
+  color: var(--muted);
+  background: var(--surface-2);
 }
 .tableCard {
   padding: 0;
@@ -144,18 +144,18 @@
   padding: 0.85rem 1rem;
 }
 .tableHeader {
-  background: #27272a;
-  color: #a1a1aa;
+  background: var(--surface-2);
+  color: var(--muted);
   font-size: 0.78rem;
   font-weight: 800;
   text-transform: uppercase;
 }
 .tableRow {
-  border-top: 1px solid #3f3f46;
+  border-top: 1px solid var(--border-strong);
 }
 .tableRow small {
   display: block;
-  color: #a1a1aa;
+  color: var(--muted);
 }
 .playerCell {
   align-items: center;
@@ -178,12 +178,12 @@
   gap: 0.75rem;
   align-items: center;
   border-radius: 0.65rem;
-  background: #27272a;
-  color: #f8fafc;
+  background: var(--surface-2);
+  color: var(--text);
   padding: 0.75rem;
 }
 .lessonList a:hover {
-  background: #3f3f46;
+  background: var(--border-strong);
 }
 .lessonList a > span {
   display: grid;
@@ -196,7 +196,7 @@
   font-weight: 800;
 }
 .lessonList small {
-  color: #a1a1aa;
+  color: var(--muted);
 }
 .formCard {
   display: grid;
@@ -220,7 +220,7 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  color: #e2e8f0;
+  color: var(--text);
 }
 @media (max-width: 650px) {
   .tableHeader {
@@ -259,14 +259,14 @@
   min-width: 46rem;
 }
 .planTableHeader {
-  background: #27272a;
-  color: #a1a1aa;
+  background: var(--surface-2);
+  color: var(--muted);
   font-size: 0.78rem;
   font-weight: 800;
   text-transform: uppercase;
 }
 .planTableRow {
-  border-top: 1px solid #3f3f46;
+  border-top: 1px solid var(--border-strong);
 }
 .planTableRow > div {
   display: flex;

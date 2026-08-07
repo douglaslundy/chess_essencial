@@ -5,6 +5,7 @@
   gap: 1.5rem;
 }
 .guidedPage {
+  align-content: start;
   min-height: calc(100dvh - 4.5rem);
   gap: 0.55rem;
   padding: clamp(0.65rem, 1.5vw, 1.1rem);
@@ -20,7 +21,7 @@
 }
 .heading span,
 .badge {
-  color: #b7791f;
+  color: var(--gold);
   font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -33,7 +34,7 @@
   text-wrap: balance;
 }
 .heading p {
-  color: #64748b;
+  color: var(--muted);
 }
 .metrics {
   display: grid;
@@ -43,9 +44,9 @@
 .metrics div,
 .training,
 .results {
-  background: #18181b;
-  border: 1px solid #3f3f46;
-  color: #f8fafc;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
   border-radius: 1rem;
   padding: 1rem;
 }
@@ -57,32 +58,34 @@
   font-size: 1.4rem;
 }
 .metrics span {
-  color: #64748b;
+  color: var(--muted);
   font-size: 0.8rem;
 }
 .sourceFilter {
+  align-items: center;
+  align-self: start;
   display: inline-flex;
   flex-wrap: wrap;
   justify-content: center;
   justify-self: center;
   gap: 0.15rem;
-  border: 1px solid #3f3f46;
+  border: 1px solid var(--border-strong);
   border-radius: 0.6rem;
-  background: #18181b;
+  background: var(--surface);
   padding: 0.2rem;
 }
 .sourceFilter button {
   border: 0;
   border-radius: 0.4rem;
   background: transparent;
-  color: #a1a1aa;
+  color: var(--muted);
   padding: 0.4rem 0.9rem;
   font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
 }
 .sourceFilter button[aria-pressed='true'] {
-  background: #e5c56f;
+  background: var(--gold);
   color: #1c1917;
 }
 .themeFilter {
@@ -93,8 +96,8 @@
   font-weight: 700;
 }
 .themeFilter select {
-  border: 1px solid #52525b;
-  background: #09090b;
+  border: 1px solid var(--border-strong);
+  background: var(--control-bg);
   color: #fff;
   border-radius: 0.6rem;
   min-height: 2.6rem;
@@ -116,8 +119,8 @@
 .filters input,
 .filters select,
 .answer input {
-  border: 1px solid #52525b;
-  background: #09090b;
+  border: 1px solid var(--border-strong);
+  background: var(--control-bg);
   color: #fff;
   border-radius: 0.6rem;
   min-height: 2.6rem;
@@ -136,16 +139,17 @@
 }
 .filters button,
 .primaryAction {
-  background: #172554;
+  background: var(--red-dark);
   color: #fff;
 }
 .secondaryAction {
-  background: #e2e8f0;
-  color: #172554;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text);
 }
 .status {
   min-height: 1.4rem;
-  color: #cbd5e1;
+  color: var(--muted);
   margin: 0;
 }
 .training {
@@ -184,7 +188,7 @@
   font-size: var(--font-section-title);
 }
 .progress {
-  color: #64748b;
+  color: var(--muted);
   font-size: 0.85rem;
 }
 .exerciseNav {
@@ -214,13 +218,13 @@
 }
 .fen {
   overflow-wrap: anywhere;
-  background: #09090b;
-  color: #e2e8f0;
+  background: var(--control-bg);
+  color: var(--text);
   border-radius: 0.5rem;
   padding: 0.7rem;
 }
 .feedback {
-  border-left: 3px solid #d69e2e;
+  border-left: 3px solid var(--gold);
   background: #292315;
   color: #fef3c7;
   padding: 0.75rem;
@@ -347,14 +351,14 @@
   gap: 0.8rem;
 }
 .grid article {
-  border: 1px solid #3f3f46;
-  background: #27272a;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
   border-radius: 0.75rem;
   padding: 0.9rem;
 }
 .grid article > span,
 .grid small {
-  color: #64748b;
+  color: var(--muted);
   font-size: 0.75rem;
 }
 .grid h3 {
@@ -371,7 +375,7 @@
   justify-items: center;
 }
 .boardArea details {
-  color: #a1a1aa;
+  color: var(--muted);
 }
 .boardControls {
   display: flex;
@@ -387,7 +391,7 @@
   gap: 0.5rem;
 }
 .textOnlyNotice {
-  border-left: 3px solid #d69e2e;
+  border-left: 3px solid var(--gold);
   background: #292315;
   color: #fef3c7;
   padding: 0.75rem;
