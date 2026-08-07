@@ -26,6 +26,7 @@ function installFakeSynth(
   };
   Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: synth });
   (window as unknown as { SpeechSynthesisUtterance: unknown }).SpeechSynthesisUtterance = class {
+    addEventListener = vi.fn();
     lang = '';
     text: string;
     constructor(text: string) {
@@ -85,18 +86,24 @@ describe('speak', () => {
     expect(synth.speak).toHaveBeenCalledTimes(1);
   });
 
-  it('cancels and defers the new utterance when one is already speaking', async () => {
+  it('queues the new utterance without cancelling speech already in progress', async () => {
     const synth = installFakeSynth(true);
     synth.speaking = true;
     const { speak } = await import('./speech');
 
-    const done = speak('Gafe, cuidado');
-    await Promise.resolve();
-    expect(synth.cancel).toHaveBeenCalledTimes(1);
-    expect(synth.speak).not.toHaveBeenCalled();
+    await speak('Gafe, cuidado');
 
-    await vi.advanceTimersByTimeAsync(50);
-    await done;
+    expect(synth.cancel).not.toHaveBeenCalled();
+    expect(synth.speak).toHaveBeenCalledTimes(1);
+  });
+
+  it('only cancels ongoing narration when interruption is explicitly requested', async () => {
+    const synth = installFakeSynth(true);
+    const { speak } = await import('./speech');
+
+    await speak('Nova prévia', { interrupt: true });
+
+    expect(synth.cancel).toHaveBeenCalledTimes(1);
     expect(synth.speak).toHaveBeenCalledTimes(1);
   });
 

@@ -159,6 +159,7 @@ export default function MyDataPage() {
     setPreviewingVoice(voice.name);
     try {
       await speak('Olá! Esta é a voz que acompanhará o seu treinamento.', {
+        interrupt: true,
         voiceName: voice.name,
       });
     } finally {

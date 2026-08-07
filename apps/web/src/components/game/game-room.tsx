@@ -400,6 +400,10 @@ export function GameRoom({ gameId }: { gameId: string }) {
   const narrationGenerationRef = useRef(0);
 
   useEffect(() => {
+    if (!coachEnabled) narrationGenerationRef.current += 1;
+  }, [coachEnabled]);
+
+  useEffect(() => {
     if (muted || !coachSuggestion || !coachSuggestion.bestMoveUci) return;
     const text = formatCoachSuggestion(coachSuggestion);
     if (!text) return;

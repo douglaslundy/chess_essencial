@@ -1,18 +1,14 @@
-// Web Speech API wrapper with fixes for three long-standing browser quirks:
-// (1) the voice list loads asynchronously (getVoices() returns [] until the
-//     browser fires 'voiceschanged'), and calling speak() before that is
-//     silently dropped on some Chromium versions — no error, just no
-//     audio, which is exactly what looks like "nothing happens"; (2) some
-//     engines silently drop an utterance queued right after cancel() in the
-//     same tick, so a pending cancel gets a short delay before the next
-//     speak(); (3) a SpeechSynthesisUtterance with no surviving reference
-//     can get garbage-collected mid-speech, cutting audio off — keeping one
-//     module-level reference prevents that.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept alive on purpose, see above
-let currentUtterance: SpeechSynthesisUtterance | null = null;
+// Speech queue shared by browser and AI-generated voices. New coaching messages
+// are queued by default, so a position update or opponent reply never cuts the
+// sentence currently being played. stopSpeaking() is the explicit cancellation
+// boundary used when narration is muted, the screen is left, or a preview asks
+// to interrupt.
+const activeUtterances = new Set<SpeechSynthesisUtterance>();
 let currentAudio: HTMLAudioElement | null = null;
 let currentAudioUrl: string | null = null;
 let voicesReady: Promise<void> | null = null;
+let audioQueue: Promise<void> = Promise.resolve();
+let queueGeneration = 0;
 
 function ensureVoicesLoaded(synth: SpeechSynthesis): Promise<void> {
   if (synth.getVoices().length > 0) return Promise.resolve();
@@ -22,13 +18,11 @@ function ensureVoicesLoaded(synth: SpeechSynthesis): Promise<void> {
       resolve();
     };
     synth.addEventListener('voiceschanged', onVoicesChanged);
-    // Some platforms never fire voiceschanged at all — don't block forever.
     setTimeout(resolve, 1000);
   });
   return voicesReady;
 }
 
-/** Every voice the browser/OS currently offers, waiting first for the async voice list to finish loading. */
 export async function getAvailableVoices(): Promise<SpeechSynthesisVoice[]> {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return [];
   const synth = window.speechSynthesis;
@@ -37,12 +31,20 @@ export async function getAvailableVoices(): Promise<SpeechSynthesisVoice[]> {
 }
 
 export interface SpeakOptions {
+  /** Cancels queued and ongoing narration before playing this message. */
+  interrupt?: boolean;
   lang?: string;
-  /** SpeechSynthesisVoice.name of a preferred voice; falls back to the browser default if not found. */
+  /** SpeechSynthesisVoice.name or an AI voice id. */
   voiceName?: string | null;
 }
 
-async function speakWithAi(text: string, voiceName: string): Promise<boolean> {
+function cleanupAudio(audio: HTMLAudioElement, url: string): void {
+  if (currentAudio === audio) currentAudio = null;
+  if (currentAudioUrl === url) currentAudioUrl = null;
+  URL.revokeObjectURL(url);
+}
+
+async function speakWithAi(text: string, voiceName: string, generation: number): Promise<boolean> {
   const token = window.localStorage.getItem('xadrez.access_token');
   if (!token) return false;
   try {
@@ -51,55 +53,65 @@ async function speakWithAi(text: string, voiceName: string): Promise<boolean> {
       { text, voice: voiceName as 'openai:marin' | 'openai:cedar' },
       token,
     );
-    if (currentAudio) currentAudio.pause();
-    if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
-    currentAudioUrl = URL.createObjectURL(blob);
-    const audio = new Audio(currentAudioUrl);
+    if (generation !== queueGeneration) return true;
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
     currentAudio = audio;
-    audio.addEventListener(
-      'ended',
-      () => {
-        if (currentAudio === audio) currentAudio = null;
-        if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
-        currentAudioUrl = null;
-      },
-      { once: true },
-    );
-    await audio.play();
+    currentAudioUrl = url;
+    await new Promise<void>((resolve, reject) => {
+      audio.addEventListener('ended', () => resolve(), { once: true });
+      audio.addEventListener('error', () => reject(new Error('AI audio playback failed')), {
+        once: true,
+      });
+      audio.play().catch(reject);
+    });
+    cleanupAudio(audio, url);
     return true;
   } catch {
     return false;
   }
 }
 
-export async function speak(text: string, options: SpeakOptions = {}): Promise<void> {
-  if (typeof window === 'undefined') return;
-  if (options.voiceName?.startsWith('openai:')) {
-    if (await speakWithAi(text, options.voiceName)) return;
-  }
+async function speakWithBrowser(text: string, options: SpeakOptions): Promise<void> {
   if (!('speechSynthesis' in window)) return;
   const synth = window.speechSynthesis;
   await ensureVoicesLoaded(synth);
-
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = options.lang ?? 'pt-BR';
   if (options.voiceName) {
     const voice = synth.getVoices().find((candidate) => candidate.name === options.voiceName);
     if (voice) utterance.voice = voice;
   }
-  currentUtterance = utterance;
-  if (synth.speaking || synth.pending) {
-    synth.cancel();
-    setTimeout(() => synth.speak(utterance), 50);
-  } else {
-    synth.speak(utterance);
+  const release = () => activeUtterances.delete(utterance);
+  utterance.addEventListener('end', release, { once: true });
+  utterance.addEventListener('error', release, { once: true });
+  activeUtterances.add(utterance);
+  synth.speak(utterance);
+}
+
+export async function speak(text: string, options: SpeakOptions = {}): Promise<void> {
+  if (typeof window === 'undefined') return;
+  if (options.interrupt) stopSpeaking();
+  if (options.voiceName?.startsWith('openai:')) {
+    const generation = queueGeneration;
+    const queued = audioQueue.then(async () => {
+      if (generation !== queueGeneration) return;
+      if (!(await speakWithAi(text, options.voiceName!, generation))) {
+        await speakWithBrowser(text, options);
+      }
+    });
+    audioQueue = queued.catch(() => undefined);
+    return queued;
   }
+  await speakWithBrowser(text, options);
 }
 
 export function stopSpeaking(): void {
   if (typeof window === 'undefined') return;
+  queueGeneration += 1;
+  audioQueue = Promise.resolve();
   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-  currentUtterance = null;
+  activeUtterances.clear();
   if (currentAudio) currentAudio.pause();
   currentAudio = null;
   if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
