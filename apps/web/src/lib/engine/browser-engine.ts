@@ -1,6 +1,7 @@
 export interface EngineEvaluation {
   bestMove: string | null;
   mate: number | null;
+  principalVariation: string[];
   scoreCp: number | null;
 }
 
@@ -58,6 +59,7 @@ async function runEvaluation(fen: string, depth: number): Promise<EngineEvaluati
   return new Promise<EngineEvaluation>((resolve, reject) => {
     let scoreCp: number | null = null;
     let mate: number | null = null;
+    let principalVariation: string[] = [];
     let settled = false;
 
     const timeout = setTimeout(() => {
@@ -87,6 +89,8 @@ async function runEvaluation(fen: string, depth: number): Promise<EngineEvaluati
             scoreCp = null;
           }
         }
+        const pvMatch = /\bpv\s+(.+)$/.exec(line);
+        if (pvMatch?.[1]) principalVariation = pvMatch[1].trim().split(/\s+/);
       } else if (line.startsWith('bestmove')) {
         settled = true;
         cleanup();
@@ -94,6 +98,7 @@ async function runEvaluation(fen: string, depth: number): Promise<EngineEvaluati
         resolve({
           bestMove: !bestMoveToken || bestMoveToken === '(none)' ? null : bestMoveToken,
           mate,
+          principalVariation,
           scoreCp,
         });
       }

@@ -24,6 +24,7 @@ const suggestionInput: AuthoritativeLiveNarrationRequest = {
   fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
   kind: 'suggestion',
   mate: null,
+  principalVariation: ['e2e4', 'e7e5', 'g1f3'],
   scoreCp: 30,
 };
 
@@ -59,7 +60,12 @@ describe('LiveNarrationService', () => {
     global.fetch = vi.fn().mockResolvedValue({
       json: () =>
         Promise.resolve({
-          content: [{ text: 'Isso desenvolve a iniciativa.', type: 'text' }],
+          content: [
+            {
+              text: 'Objetivo: disputar a iniciativa. Tema: controle do centro. Estratégia: desenvolver com tempo. Armadilha: nenhuma foi confirmada.',
+              type: 'text',
+            },
+          ],
         }),
       ok: true,
     }) as never;
@@ -68,7 +74,8 @@ describe('LiveNarrationService', () => {
     const result = await service.narrate(suggestionInput);
 
     expect(result).toEqual({
-      narrative: 'Eu sugiro mover peão de e2 para e4. Isso desenvolve a iniciativa.',
+      narrative:
+        'Eu sugiro mover peão de e2 para e4. Objetivo: disputar a iniciativa. Tema: controle do centro. Estratégia: desenvolver com tempo. Armadilha: nenhuma foi confirmada. Linha possível calculada: e4, e5, Cf3.',
     });
   });
 
@@ -147,6 +154,7 @@ describe('LiveNarrationService', () => {
       fen: '4k3/8/8/8/8/8/8/3QK3 w - - 0 1',
       kind: 'suggestion',
       mate: null,
+      principalVariation: ['d1h5'],
       scoreCp: 200,
     });
 

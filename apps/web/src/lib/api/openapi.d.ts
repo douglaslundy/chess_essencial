@@ -1902,6 +1902,8 @@ export interface components {
           kind: 'suggestion';
           bestMoveUci: string;
           mate: number | null;
+          /** @default [] */
+          principalVariation: string[];
           scoreCp: number | null;
         }
       | {

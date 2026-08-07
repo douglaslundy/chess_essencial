@@ -1942,6 +1942,11 @@ components:
             kind: {type: string, const: suggestion}
             bestMoveUci: {type: string}
             mate: {type: [integer, 'null']}
+            principalVariation:
+              type: array
+              maxItems: 7
+              default: []
+              items: {type: string, pattern: '^[a-h][1-8][a-h][1-8][qrbn]?$'}
             scoreCp: {type: [integer, 'null']}
         - type: object
           required: [kind, uci, bestMoveUci, quality, centipawnLoss, missedWin]

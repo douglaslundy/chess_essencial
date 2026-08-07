@@ -253,6 +253,10 @@ export const liveNarrationRequestSchema = z.discriminatedUnion('kind', [
     kind: z.literal('suggestion'),
     bestMoveUci: z.string(),
     mate: z.number().int().nullable(),
+    principalVariation: z
+      .array(z.string().regex(/^[a-h][1-8][a-h][1-8][qrbn]?$/))
+      .max(7)
+      .default([]),
     scoreCp: z.number().int().nullable(),
   }),
   z.object({

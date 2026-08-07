@@ -11,6 +11,7 @@ const SUGGESTION_DEPTH = 10;
 export interface CoachSuggestion {
   bestMoveUci: string | null;
   mate: number | null;
+  principalVariation: string[];
   scoreCp: number | null;
 }
 
@@ -54,6 +55,7 @@ export function useCoachEngine(options: {
             ? {
                 bestMoveUci: evaluation.bestMove,
                 mate: evaluation.mate,
+                principalVariation: evaluation.principalVariation.slice(0, 7),
                 scoreCp: evaluation.scoreCp,
               }
             : null,

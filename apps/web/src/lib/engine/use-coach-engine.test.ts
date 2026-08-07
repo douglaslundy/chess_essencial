@@ -12,7 +12,13 @@ const { useCoachEngine } = await import('./use-coach-engine');
 const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
 function evaluation(overrides: Partial<EngineEvaluation> = {}): EngineEvaluation {
-  return { bestMove: 'e2e4', mate: null, scoreCp: 20, ...overrides };
+  return {
+    bestMove: 'e2e4',
+    mate: null,
+    principalVariation: ['e2e4', 'e7e5'],
+    scoreCp: 20,
+    ...overrides,
+  };
 }
 
 describe('useCoachEngine', () => {
@@ -34,7 +40,12 @@ describe('useCoachEngine', () => {
     );
 
     await waitFor(() => expect(result.current.suggestion).not.toBeNull());
-    expect(result.current.suggestion).toEqual({ bestMoveUci: 'e2e4', mate: null, scoreCp: 25 });
+    expect(result.current.suggestion).toEqual({
+      bestMoveUci: 'e2e4',
+      mate: null,
+      principalVariation: ['e2e4', 'e7e5'],
+      scoreCp: 25,
+    });
   });
 
   it('evaluates but hides the suggestion when suggestEnabled is off', async () => {

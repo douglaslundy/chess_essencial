@@ -9,11 +9,12 @@ import { ChessBoard, type BoardOrientation } from './chess-board';
 import { GameResultDialog, type GameResult } from './game-result-dialog';
 import { MoveAnnouncement, describeImportantMove, type Announcement } from './move-announcement';
 import { CoachCallout } from '@/components/coach/coach-callout';
+import { formatCoachExplanation } from '@/components/coach/coach-explanation';
 import { moveQualityLabel } from '@/components/history/move-narration';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { api, getRealtimeAccessToken, getStoredUserId } from '@/lib/api/client';
 import { useCoachEngine } from '@/lib/engine/use-coach-engine';
-import { formatUciSquares, speakableSquares, toBrazilianSan } from '@/lib/notation';
+import { speakableSquares, toBrazilianSan } from '@/lib/notation';
 import { usePieceTheme } from '@/lib/piece-theme';
 import { GameSocket } from '@/lib/realtime/game-socket';
 import { speak } from '@/lib/speech';
@@ -57,12 +58,6 @@ const terminationLabels: Record<GameState['termination'], string> = {
   stalemate: 'por afogamento',
   timeout: 'por tempo esgotado',
 };
-
-function formatCoachSuggestion(suggestion: { bestMoveUci: string | null; mate: number | null }) {
-  if (!suggestion.bestMoveUci) return null;
-  const detail = suggestion.mate !== null ? `mate em ${Math.abs(suggestion.mate)}` : null;
-  return `${formatUciSquares(suggestion.bestMoveUci)}${detail ? ` (${detail})` : ''}`;
-}
 
 const pieceNames: Record<PieceSymbol, string> = {
   b: 'bispo',
@@ -419,11 +414,14 @@ export function GameRoom({ gameId }: { gameId: string }) {
 
   useEffect(() => {
     if (muted || !coachSuggestion || !coachSuggestion.bestMoveUci) return;
-    const text = formatCoachSuggestion(coachSuggestion);
-    if (!text) return;
-    const spokenText = `Eu sugiro ${text}.`;
+    const spokenText = formatCoachExplanation(state.currentFen, coachSuggestion);
+    if (!spokenText) return;
     queueMicrotask(() => setCoachLine({ fen: state.currentFen, text: spokenText }));
-    speak(speakableSquares(spokenText), { voiceName });
+    void speak(speakableSquares(spokenText), { voiceName }).catch((error: unknown) =>
+      setMessage(
+        error instanceof Error ? error.message : 'Não foi possível reproduzir a voz do Treinador.',
+      ),
+    );
 
     // AI narration enriches the instant template above once it arrives -
     // never blocks or delays it. Skipped in demo mode (no real game row on
@@ -432,13 +430,23 @@ export function GameRoom({ gameId }: { gameId: string }) {
     const generation = ++narrationGenerationRef.current;
     const token = window.localStorage.getItem('xadrez.access_token');
     if (!token) return;
-    const { bestMoveUci, mate, scoreCp } = coachSuggestion;
+    const { bestMoveUci, mate, principalVariation, scoreCp } = coachSuggestion;
     api
-      .getLiveNarration(gameId, { bestMoveUci, kind: 'suggestion', mate, scoreCp }, token)
+      .getLiveNarration(
+        gameId,
+        { bestMoveUci, kind: 'suggestion', mate, principalVariation, scoreCp },
+        token,
+      )
       .then((result) => {
         if (!result.narrative || narrationGenerationRef.current !== generation) return;
         setCoachLine({ fen: state.currentFen, text: result.narrative });
-        speak(speakableSquares(result.narrative), { voiceName });
+        void speak(speakableSquares(result.narrative), { voiceName }).catch((error: unknown) =>
+          setMessage(
+            error instanceof Error
+              ? error.message
+              : 'Não foi possível reproduzir a voz do Treinador.',
+          ),
+        );
       })
       .catch(() => undefined);
   }, [coachSuggestion, gameId, isDemo, muted, state.currentFen, voiceName]);
@@ -448,7 +456,11 @@ export function GameRoom({ gameId }: { gameId: string }) {
     const { quality, uci } = pendingCoachMove;
     const spokenText = `Atenção: eu acho que esse lance é ${moveQualityLabel[quality.quality].toLowerCase()}, com perda de ${quality.centipawnLoss} centipawns.${quality.missedWin ? ' Havia uma posição melhor.' : ''}`;
     queueMicrotask(() => setCoachLine({ fen: state.currentFen, text: spokenText }));
-    speak(spokenText, { voiceName });
+    void speak(spokenText, { voiceName }).catch((error: unknown) =>
+      setMessage(
+        error instanceof Error ? error.message : 'Não foi possível reproduzir a voz do Treinador.',
+      ),
+    );
 
     if (isDemo) return;
     const generation = ++narrationGenerationRef.current;
@@ -470,7 +482,13 @@ export function GameRoom({ gameId }: { gameId: string }) {
       .then((result) => {
         if (!result.narrative || narrationGenerationRef.current !== generation) return;
         setCoachLine({ fen: state.currentFen, text: result.narrative });
-        speak(speakableSquares(result.narrative), { voiceName });
+        void speak(speakableSquares(result.narrative), { voiceName }).catch((error: unknown) =>
+          setMessage(
+            error instanceof Error
+              ? error.message
+              : 'Não foi possível reproduzir a voz do Treinador.',
+          ),
+        );
       })
       .catch(() => undefined);
   }, [coachSuggestion, gameId, isDemo, muted, pendingCoachMove, state.currentFen, voiceName]);
@@ -784,7 +802,8 @@ export function GameRoom({ gameId }: { gameId: string }) {
               coachLine?.fen === state.currentFen
                 ? coachLine.text
                 : coachSuggestion
-                  ? `Eu sugiro ${formatCoachSuggestion(coachSuggestion) ?? 'analisando…'}.`
+                  ? (formatCoachExplanation(state.currentFen, coachSuggestion) ??
+                    'Estou analisando esta posição…')
                   : 'Estou analisando esta posição…'
             }
           />
