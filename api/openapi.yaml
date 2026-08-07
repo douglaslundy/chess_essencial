@@ -1225,6 +1225,36 @@ paths:
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
+  /voice/options:
+    get:
+      summary: Listar vozes de IA configuradas
+      operationId: listAiVoices
+      responses:
+        '200':
+          description: Vozes disponíveis
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AiVoiceOptions'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /voice/speech:
+    post:
+      summary: Sintetizar fala do Treinador com IA
+      operationId: synthesizeAiSpeech
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SynthesizeSpeechInput'}
+      responses:
+        '200':
+          description: Áudio MP3 sintetizado
+          content:
+            audio/mpeg:
+              schema: {type: string, format: binary}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '502': {$ref: '#/components/responses/Problem'}
+        '503': {$ref: '#/components/responses/Problem'}
   /games/{gameId}:
     parameters:
       - $ref: '#/components/parameters/GameId'
@@ -1880,6 +1910,30 @@ components:
       required: [items]
       properties:
         items: {type: array, items: {$ref: '#/components/schemas/SubscriptionPayment'}}
+    AiVoiceId:
+      type: string
+      enum: ['openai:marin', 'openai:cedar']
+    AiVoiceOption:
+      type: object
+      required: [id, label, provider]
+      properties:
+        id: {$ref: '#/components/schemas/AiVoiceId'}
+        label: {type: string}
+        provider: {type: string, const: openai}
+    AiVoiceOptions:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/AiVoiceOption'}
+    SynthesizeSpeechInput:
+      type: object
+      required: [text, voice]
+      properties:
+        text: {type: string, minLength: 1, maxLength: 1000}
+        voice: {$ref: '#/components/schemas/AiVoiceId'}
+      additionalProperties: false
     LiveNarrationRequest:
       oneOf:
         - type: object

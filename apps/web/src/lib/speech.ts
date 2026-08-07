@@ -10,6 +10,8 @@
 //     module-level reference prevents that.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept alive on purpose, see above
 let currentUtterance: SpeechSynthesisUtterance | null = null;
+let currentAudio: HTMLAudioElement | null = null;
+let currentAudioUrl: string | null = null;
 let voicesReady: Promise<void> | null = null;
 
 function ensureVoicesLoaded(synth: SpeechSynthesis): Promise<void> {
@@ -40,8 +42,42 @@ export interface SpeakOptions {
   voiceName?: string | null;
 }
 
+async function speakWithAi(text: string, voiceName: string): Promise<boolean> {
+  const token = window.localStorage.getItem('xadrez.access_token');
+  if (!token) return false;
+  try {
+    const { api } = await import('./api/client');
+    const blob = await api.generateAiSpeech(
+      { text, voice: voiceName as 'openai:marin' | 'openai:cedar' },
+      token,
+    );
+    if (currentAudio) currentAudio.pause();
+    if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
+    currentAudioUrl = URL.createObjectURL(blob);
+    const audio = new Audio(currentAudioUrl);
+    currentAudio = audio;
+    audio.addEventListener(
+      'ended',
+      () => {
+        if (currentAudio === audio) currentAudio = null;
+        if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
+        currentAudioUrl = null;
+      },
+      { once: true },
+    );
+    await audio.play();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function speak(text: string, options: SpeakOptions = {}): Promise<void> {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  if (typeof window === 'undefined') return;
+  if (options.voiceName?.startsWith('openai:')) {
+    if (await speakWithAi(text, options.voiceName)) return;
+  }
+  if (!('speechSynthesis' in window)) return;
   const synth = window.speechSynthesis;
   await ensureVoicesLoaded(synth);
 
@@ -61,7 +97,11 @@ export async function speak(text: string, options: SpeakOptions = {}): Promise<v
 }
 
 export function stopSpeaking(): void {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
+  if (typeof window === 'undefined') return;
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   currentUtterance = null;
+  if (currentAudio) currentAudio.pause();
+  currentAudio = null;
+  if (currentAudioUrl) URL.revokeObjectURL(currentAudioUrl);
+  currentAudioUrl = null;
 }

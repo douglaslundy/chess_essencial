@@ -343,6 +343,16 @@ export {
   type UpdatePrivacyInput,
 } from './safety.js';
 export {
+  aiVoiceIdSchema,
+  aiVoiceOptionSchema,
+  aiVoiceOptionsSchema,
+  synthesizeSpeechInputSchema,
+  type AiVoiceId,
+  type AiVoiceOption,
+  type AiVoiceOptions,
+  type SynthesizeSpeechInput,
+} from './voice.js';
+export {
   completeLearningStageResultSchema,
   learningBadgeSchema,
   learningLevelDetailSchema,

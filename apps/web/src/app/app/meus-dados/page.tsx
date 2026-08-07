@@ -65,7 +65,8 @@ export default function MyDataPage() {
   const [badges, setBadges] = useState<LearningBadge[]>([]);
 
   useEffect(() => {
-    listVoiceOptions()
+    const token = window.localStorage.getItem('xadrez.access_token') ?? undefined;
+    listVoiceOptions(token)
       .then(setVoiceOptions)
       .catch(() => undefined);
   }, []);
@@ -157,7 +158,9 @@ export default function MyDataPage() {
   async function previewVoice(voice: VoiceOption) {
     setPreviewingVoice(voice.name);
     try {
-      await speak(`Olá, tudo bem? Eu sou ${voice.name}.`, { voiceName: voice.name });
+      await speak('Olá! Esta é a voz que acompanhará o seu treinamento.', {
+        voiceName: voice.name,
+      });
     } finally {
       setPreviewingVoice(null);
     }
@@ -335,7 +338,7 @@ export default function MyDataPage() {
                     onChange={() => void setVoiceName(voice.name)}
                     type="radio"
                   />{' '}
-                  {voice.name}
+                  {voice.label}
                   <button
                     disabled={previewingVoice === voice.name}
                     onClick={() => void previewVoice(voice)}

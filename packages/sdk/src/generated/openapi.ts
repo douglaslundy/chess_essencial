@@ -1145,6 +1145,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/voice/options': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Listar vozes de IA configuradas */
+    get: operations['listAiVoices'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/voice/speech': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Sintetizar fala do Treinador com IA */
+    post: operations['synthesizeAiSpeech'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/games/{gameId}': {
     parameters: {
       query?: never;
@@ -1846,6 +1880,21 @@ export interface components {
     };
     SubscriptionPaymentList: {
       items: components['schemas']['SubscriptionPayment'][];
+    };
+    /** @enum {string} */
+    AiVoiceId: 'openai:marin' | 'openai:cedar';
+    AiVoiceOption: {
+      id: components['schemas']['AiVoiceId'];
+      label: string;
+      /** @constant */
+      provider: 'openai';
+    };
+    AiVoiceOptions: {
+      items: components['schemas']['AiVoiceOption'][];
+    };
+    SynthesizeSpeechInput: {
+      text: string;
+      voice: components['schemas']['AiVoiceId'];
     };
     LiveNarrationRequest:
       | {
@@ -5143,6 +5192,55 @@ export interface operations {
       400: components['responses']['Problem'];
       401: components['responses']['Problem'];
       404: components['responses']['Problem'];
+    };
+  };
+  listAiVoices: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Vozes disponíveis */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AiVoiceOptions'];
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  synthesizeAiSpeech: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SynthesizeSpeechInput'];
+      };
+    };
+    responses: {
+      /** @description Áudio MP3 sintetizado */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'audio/mpeg': string;
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      502: components['responses']['Problem'];
+      503: components['responses']['Problem'];
     };
   };
   getGame: {

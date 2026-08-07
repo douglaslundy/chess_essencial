@@ -1,4 +1,6 @@
 import type {
+  AiVoiceOptions,
+  SynthesizeSpeechInput,
   AdminBotStats,
   AdminMetrics,
   AdminOnlineBot,
@@ -273,6 +275,26 @@ async function request<T>(path: string, token?: string, init?: RequestInit): Pro
   return (await response.json()) as T;
 }
 
+async function requestBlob(
+  path: string,
+  input: SynthesizeSpeechInput,
+  token: string,
+): Promise<Blob> {
+  const response = await responseWithRefresh(path, token, {
+    body: JSON.stringify(input),
+    headers: { Accept: 'audio/mpeg' },
+    method: 'POST',
+  });
+  if (!response.ok) {
+    const problem = (await response.json().catch(() => null)) as { detail?: string } | null;
+    throw new ApiProblem(
+      response.status,
+      problem?.detail ?? 'Não foi possível gerar a voz por IA.',
+    );
+  }
+  return response.blob();
+}
+
 async function requestText(path: string, token: string): Promise<string> {
   const response = await responseWithRefresh(path, token, {
     headers: { Accept: 'application/x-chess-pgn' },
@@ -319,6 +341,9 @@ export const api = {
       method: 'POST',
     }),
   getMe: (token: string) => request<PublicUser>('/me', token),
+  listAiVoices: (token: string) => request<AiVoiceOptions>('/voice/options', token),
+  generateAiSpeech: (input: SynthesizeSpeechInput, token: string) =>
+    requestBlob('/voice/speech', input, token),
   updateMe: (input: UpdateMeInput, token: string) =>
     request<PublicUser>('/me', token, { method: 'PATCH', body: JSON.stringify(input) }),
   uploadAvatar: (input: UploadAvatarInput, token: string) =>

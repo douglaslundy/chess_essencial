@@ -2,7 +2,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const getAvailableVoices = vi.hoisted(() => vi.fn());
+const listAiVoices = vi.hoisted(() => vi.fn());
 vi.mock('./speech', () => ({ getAvailableVoices }));
+vi.mock('./api/client', () => ({ api: { listAiVoices } }));
 
 const { listVoiceOptions } = await import('./voices');
 
@@ -36,7 +38,7 @@ describe('listVoiceOptions', () => {
 
     const options = await listVoiceOptions();
 
-    expect(options).toEqual([{ lang: 'pt-PT', name: 'Joana' }]);
+    expect(options).toEqual([{ label: 'Joana', lang: 'pt-PT', name: 'Joana', source: 'browser' }]);
   });
 
   it('caps the list at 8 voices', async () => {
@@ -65,6 +67,25 @@ describe('listVoiceOptions', () => {
 
     const options = await listVoiceOptions();
 
-    expect(options).toEqual([{ lang: 'pt-BR', name: 'Camila' }]);
+    expect(options).toEqual([
+      { label: 'Camila', lang: 'pt-BR', name: 'Camila', source: 'browser' },
+    ]);
+  });
+
+  it('places configured AI-generated voices in the authenticated picker', async () => {
+    getAvailableVoices.mockResolvedValueOnce([{ lang: 'pt-BR', name: 'Camila' }]);
+    listAiVoices.mockResolvedValueOnce({
+      items: [{ id: 'openai:marin', label: 'Treinador IA \u00b7 Marin', provider: 'openai' }],
+    });
+
+    const options = await listVoiceOptions('cookie-session-v1');
+
+    expect(options[0]).toEqual({
+      label: 'Treinador IA \u00b7 Marin',
+      lang: 'pt-BR',
+      name: 'openai:marin',
+      source: 'openai',
+    });
+    expect(listAiVoices).toHaveBeenCalledWith('cookie-session-v1');
   });
 });

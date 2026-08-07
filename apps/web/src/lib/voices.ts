@@ -1,10 +1,13 @@
+import { api } from './api/client';
 import { getAvailableVoices } from './speech';
 
 const MAX_VOICE_OPTIONS = 8;
 
 export interface VoiceOption {
+  label: string;
   lang: string;
   name: string;
+  source: 'browser' | 'openai';
 }
 
 /**
@@ -22,7 +25,7 @@ export interface VoiceOption {
  * in the browser API — whichever voices (male or female) the device has
  * installed are all offered, up to the cap.
  */
-export async function listVoiceOptions(): Promise<VoiceOption[]> {
+export async function listVoiceOptions(token?: string): Promise<VoiceOption[]> {
   const voices = await getAvailableVoices();
   const isPortuguese = (voice: SpeechSynthesisVoice) => voice.lang.toLowerCase().startsWith('pt');
   const isBrazilian = (voice: SpeechSynthesisVoice) => voice.lang.toLowerCase() === 'pt-br';
@@ -34,8 +37,22 @@ export async function listVoiceOptions(): Promise<VoiceOption[]> {
   for (const voice of [...brazilian, ...otherPortuguese]) {
     if (seen.has(voice.name)) continue;
     seen.add(voice.name);
-    options.push({ lang: voice.lang, name: voice.name });
+    options.push({ label: voice.name, lang: voice.lang, name: voice.name, source: 'browser' });
     if (options.length >= MAX_VOICE_OPTIONS) break;
+  }
+  if (token) {
+    const aiVoices = await api
+      .listAiVoices(token)
+      .then((result) => result.items)
+      .catch(() => []);
+    options.unshift(
+      ...aiVoices.map((voice) => ({
+        label: voice.label,
+        lang: 'pt-BR',
+        name: voice.id,
+        source: 'openai' as const,
+      })),
+    );
   }
   return options;
 }

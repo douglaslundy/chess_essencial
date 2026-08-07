@@ -291,6 +291,20 @@ export class AiProvidersService implements OnModuleInit {
     }
   }
 
+  async resolveProviderConfig(provider: AiProvider): Promise<{
+    apiKey: string;
+    model: string;
+    provider: AiProvider;
+  } | null> {
+    const row = await this.repository.get(provider);
+    if (!row?.encryptedApiKey || !row.model) return null;
+    return {
+      apiKey: this.resolvePlainApiKey(provider, row),
+      model: row.model,
+      provider,
+    };
+  }
+
   /** Used by narration-consuming code (game-narration-job's config comes from the DB directly instead — see there for why). */
   async resolveActiveConfig(): Promise<{
     apiKey: string;
