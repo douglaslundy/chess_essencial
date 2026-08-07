@@ -91,8 +91,8 @@ describeDatabase('learning path database integration', () => {
       VALUES (${levelTwoId}, 1, 'challenge', ${exercise!.id})
     `;
 
-    // Separate, non-overlapping difficulty band (well above levelOne/levelTwo's
-    // 0-1000 range) used only by the placement-heuristic test below — proves a
+    // Separate, non-overlapping difficulty band (above the seeded curriculum's
+    // 0-2200 range) used only by the placement-heuristic test below — proves a
     // placed user actually lands somewhere other than the curriculum's first
     // level, which a single shared-range world/exercise couldn't distinguish.
     const [advancedExercise] = await database.client<{ id: string }[]>`
@@ -103,20 +103,20 @@ describeDatabase('learning path database integration', () => {
       VALUES (
         'learning-path-test-002', 'Teste avançado', 'Encontre o melhor lance.', 'e2e4', 'expert',
         'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1', 'white',
-        '[["e2e4"]]'::jsonb, 'legal_position', 'published', 2000
+        '[["e2e4"]]'::jsonb, 'legal_position', 'published', 2500
       )
       RETURNING id
     `;
     advancedExerciseId = advancedExercise!.id;
     const [advancedWorld] = await database.client<{ id: string }[]>`
       INSERT INTO learning_worlds (position, title, description, difficulty_min, difficulty_max)
-      VALUES (1000, 'Mundo Avançado de Teste', 'Só para o e2e.', 1500, 2500)
+      VALUES (1000, 'Mundo Avançado de Teste', 'Só para o e2e.', 2300, 2700)
       RETURNING id
     `;
     advancedWorldId = advancedWorld!.id;
     const [advancedLevel] = await database.client<{ id: string }[]>`
       INSERT INTO learning_levels (world_id, position, title, difficulty_min, difficulty_max, challenge_count)
-      VALUES (${advancedWorldId}, 1, 'Nível Avançado', 1500, 2500, 1)
+      VALUES (${advancedWorldId}, 1, 'Nível Avançado', 2300, 2700, 1)
       RETURNING id
     `;
     advancedLevelId = advancedLevel!.id;
