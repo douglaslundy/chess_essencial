@@ -382,7 +382,7 @@ export async function persistExerciseDataset(
           ${exercise.difficulty}, ${exercise.category}, ${exercise.fen}, ${exercise.sideToMove},
           ${JSON.stringify(exercise.solutionLines)}::text::jsonb,
           ${JSON.stringify(exercise.hints)}::text::jsonb, ${transaction.array(exercise.tags)},
-          ${sourceRange}::int4range, ${status}::exercise_status, ${exercise.positionType}, ${run.id},
+          ${sourceRange}::int4range, ${status}::publication_status, ${exercise.positionType}, ${run.id},
           ${JSON.stringify(exercise.metadata)}::text::jsonb, now()
         )
         ON CONFLICT (source_number) DO UPDATE SET
