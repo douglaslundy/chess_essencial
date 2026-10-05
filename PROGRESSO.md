@@ -82,6 +82,8 @@
 
 # Progresso do Projeto
 
+2026-10-05 - **COR-T20-017 / desenvolvimento concluído, aferição aguardando produção:** commit `e197167` passou integralmente pela CI e foi promovido para `deploy/approved`. A consulta agregada e somente leitura na VPS encontrou 0 sinais e 0 usuários em `game_error_signals`; portanto, não há amostra real para calibrar numericamente sem inventar evidência. O código, migration reversível e relatório estão prontos; a medição final ocorrerá após o deploy autorizado e a geração de uso real. O backlog também foi corrigido: `db:seed-learning-path` já integra `remote-deploy.sh`, seguido do auditor da Jornada. Nenhum deploy executado.
+
 ## Última atualização
 
 2026-07-31 - **COR-T20-002 concluída: jobs interrompidos voltam à fila e falhas deixam estado terminal observável.** A migration 0042 adiciona tentativas, próximo horário e lease aos pipelines de análise e narração. Claims recuperam `processing` expirado, erros transitórios recebem backoff de 1/2 minutos e a terceira falha — inclusive lease esgotado — termina em `failed`; sucesso limpa o lease. O worker continua estritamente sequencial. Gates locais: typecheck/lint/build aprovados e 44 testes do worker passaram, incluindo Stockfish real fora do sandbox. Risco residual registrado na COR-T20-005: medir p99 antes de ajustar leases ou adicionar heartbeat. Nenhum deploy foi realizado. Próxima tarefa: COR-T20-003.
@@ -257,17 +259,18 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-COR-T20-017 — calibração de sinais pedagógicos e diversidade da prática. Incremento local implementado e validado; migration/rollback aguardam PostgreSQL limpo na CI e a calibração numérica permanece dependente de amostra real.
+COR-T20-017 — implementação concluída e validada localmente/na CI. Aferição numérica pós-deploy permanece dependente de amostra real; o banco atualmente possui 0 sinais e 0 usuários.
 
 ## Contexto necessário
 
-- Próxima tarefa: COR-T20-017 em `TAREFAS.md`.
-- Medir dados reais com `scripts/learning-signal-calibration.sql`.
-- Calibrar somente com evidência em `apps/worker/src/analysis/game-analysis-job.ts` e testes associados.
-- Migration 0044 adiciona e remove de forma reversível o tema objetivo `missed_forced_mate`; validar apply/rollback/reapply em PostgreSQL limpo.
+- Commit `e197167`: migration 0044, classificador objetivo v2, relatório agregado e testes.
+- CI `37259180150`: quality, container-validation e database-integration aprovados, incluindo apply/rollback/reapply em PostgreSQL limpo.
+- Após o deploy final autorizado, medir dados reais com `scripts/learning-signal-calibration.sql` quando existir amostra suficiente.
+- Calibrar novamente somente com evidência em `apps/worker/src/analysis/game-analysis-job.ts` e testes associados.
 - Não personalizar dificuldade nem publicar o novo tema ao aluno antes de amostra real suficiente.
 - Não usar LLM como classificador e não inventar calibração sem amostra real.
-- `livrocompleto/` permanece local e ignorado; não fazer deploy sem pedido explícito.
+- `livrocompleto/` permanece local e ignorado.
+- Não ativar nem executar o deploy antes de concluir e enviar esta atualização final do backlog.
 
 ## Contexto histórico anterior
 
@@ -392,7 +395,7 @@ COR-T20-017 — calibração de sinais pedagógicos e diversidade da prática. I
 - Débito técnico REAL exposto por esse bug: a "produção" não tem HTTPS (só HTTP puro num IP LAN). Isso já quebrou uma feature crítica silenciosamente uma vez; qualquer outra API restrita a contexto seguro usada no futuro (ex: `crypto.subtle`, clipboard, geolocalização precisa, service workers) vai ter o mesmo tipo de falha silenciosa. Não resolvido nesta sessão (fora de escopo/exigiria certificado TLS), só registrado como risco conhecido.
 ## Próxima tarefa
 
-COR-T20-017 — medir e calibrar sinais pedagógicos e diversidade da prática com dados reais.
+Finalizar os gates documentais, commitar e enviar o estado final do desenvolvimento. Depois, executar o deploy único autorizado e validar serviços/migration; a aferição da COR-T20-017 continua condicionada a uso real posterior.
 2026-10-04 - **COR-T20-017 / incremento implementado:** sinais v2 registram `missed_forced_mate` somente quando o Stockfish prova mate forçado antes do lance; migration 0044 faz backfill e rollback sem apagar sinais. O relatório somente leitura agora mede cobertura, utilidade em 30 dias por dificuldade, latência e concentração/repetição. Documentação UTF-8 corrigida; validação local em andamento. Sem VPS, push ou deploy.
 
 2026-10-04 - **COR-T20-017 retomada localmente:** a seleção já evita resolvidos, recomendações dos últimos 30 dias e repetição excessiva, mas o relatório agregado ainda mistura faixas de dificuldade e não mede cobertura, latência nem distribuição além do item líder. Próximo incremento: ampliar a medição anônima e sua documentação antes de qualquer mudança no classificador. Trabalho exclusivamente local; sem VPS, push ou deploy.
