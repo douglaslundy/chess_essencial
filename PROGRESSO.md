@@ -82,6 +82,8 @@
 
 # Progresso do Projeto
 
+2026-10-05 - **DEPLOY FINAL BLOQUEADO ANTES DA PRODUÇÃO:** o commit final `ab07f27` passou nos três jobs da CI `37260137949` e foi promovido para `deploy/approved`. A VPS ainda não possui Restic, arquivo de senha, `RESTIC_REPOSITORY` nem credenciais de backend externo; como a migration 0044 reativa obrigatoriamente o backup offsite, o timer permaneceu desativado e nenhum deploy foi iniciado. O checkout remoto também conserva, sem sobrescrita, um workaround local de MinIO que o mantém intencionalmente sujo e bloqueia o auto-deploy até o bootstrap ser concluído com segurança.
+
 2026-10-05 - **COR-T20-017 / desenvolvimento concluído, aferição aguardando produção:** commit `e197167` passou integralmente pela CI e foi promovido para `deploy/approved`. A consulta agregada e somente leitura na VPS encontrou 0 sinais e 0 usuários em `game_error_signals`; portanto, não há amostra real para calibrar numericamente sem inventar evidência. O código, migration reversível e relatório estão prontos; a medição final ocorrerá após o deploy autorizado e a geração de uso real. O backlog também foi corrigido: `db:seed-learning-path` já integra `remote-deploy.sh`, seguido do auditor da Jornada. Nenhum deploy executado.
 
 ## Última atualização
@@ -270,7 +272,8 @@ COR-T20-017 — implementação concluída e validada localmente/na CI. Aferiç�
 - Não personalizar dificuldade nem publicar o novo tema ao aluno antes de amostra real suficiente.
 - Não usar LLM como classificador e não inventar calibração sem amostra real.
 - `livrocompleto/` permanece local e ignorado.
-- Não ativar nem executar o deploy antes de concluir e enviar esta atualização final do backlog.
+- Para liberar o deploy: fornecer um backend Restic realmente externo à VPS e suas credenciais; instalar/configurar Restic; validar `restic check`; então preservar o workaround MinIO em stash, instalar o timer e deixar o agendador executar o Git pull.
+- Não ativar o timer enquanto o backup externo obrigatório estiver ausente.
 
 ## Contexto histórico anterior
 
@@ -395,7 +398,7 @@ COR-T20-017 — implementação concluída e validada localmente/na CI. Aferiç�
 - Débito técnico REAL exposto por esse bug: a "produção" não tem HTTPS (só HTTP puro num IP LAN). Isso já quebrou uma feature crítica silenciosamente uma vez; qualquer outra API restrita a contexto seguro usada no futuro (ex: `crypto.subtle`, clipboard, geolocalização precisa, service workers) vai ter o mesmo tipo de falha silenciosa. Não resolvido nesta sessão (fora de escopo/exigiria certificado TLS), só registrado como risco conhecido.
 ## Próxima tarefa
 
-Finalizar os gates documentais, commitar e enviar o estado final do desenvolvimento. Depois, executar o deploy único autorizado e validar serviços/migration; a aferição da COR-T20-017 continua condicionada a uso real posterior.
+Configurar e validar um backend Restic externo à VPS. Depois, executar o deploy único autorizado pelo agendador e validar serviços/migration; a aferição da COR-T20-017 continua condicionada a uso real posterior.
 2026-10-04 - **COR-T20-017 / incremento implementado:** sinais v2 registram `missed_forced_mate` somente quando o Stockfish prova mate forçado antes do lance; migration 0044 faz backfill e rollback sem apagar sinais. O relatório somente leitura agora mede cobertura, utilidade em 30 dias por dificuldade, latência e concentração/repetição. Documentação UTF-8 corrigida; validação local em andamento. Sem VPS, push ou deploy.
 
 2026-10-04 - **COR-T20-017 retomada localmente:** a seleção já evita resolvidos, recomendações dos últimos 30 dias e repetição excessiva, mas o relatório agregado ainda mistura faixas de dificuldade e não mede cobertura, latência nem distribuição além do item líder. Próximo incremento: ampliar a medição anônima e sua documentação antes de qualquer mudança no classificador. Trabalho exclusivamente local; sem VPS, push ou deploy.
