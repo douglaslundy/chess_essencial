@@ -82,6 +82,12 @@
 
 # Progresso do Projeto
 
+2026-10-05 - **COR-T20-017 / correção de diversidade concluída localmente:** seleção em lote deduplicada e rotacionada deterministicamente; 49 testes do worker, typecheck, lint, build, format-check, `git diff --check`, charset e secrets passaram. O PostgreSQL de produção aceitou o plano e a simulação somente leitura elevou a diversidade proposta de 1/9 para 9/9 em `move_safety` e de 6/8 para 8/8 em `tactical_awareness`. Próximo passo: commit/push, CI e deploy automático; não reescrever recomendações históricas nem inventar utilidade sem tentativas reais.
+
+2026-10-05 - **COR-T20-017 / diversidade implementada e validada no planejador real:** a recomendação em lote agora ordena candidatos uma vez por jogo/usuário/skill e usa o índice do sinal para rotacionar a escolha, com módulo para lotes maiores que o catálogo e deduplicação de exercícios alcançados por múltiplos aliases. Teste direcionado passou; `EXPLAIN` no PostgreSQL de produção aceitou a consulta e uma simulação somente leitura sobre os 17 sinais reais resultou em 9/9 e 8/8 recomendações distintas por skill. Validação integral em andamento.
+
+2026-10-05 - **COR-T20-017 / causa da concentração confirmada:** produção possui 420 exercícios elegíveis para `move_safety`, mas somente 1 com dica; como esse critério precedia o desempate por hash, os 9 sinais do lote receberam o mesmo exercício. A seleção será rotacionada de forma determinística por usuário/skill dentro do lote, preservando prioridades históricas e evitando repetição enquanto houver candidatos distintos. Arquivos em alteração: `apps/worker/src/analysis/game-analysis-job.ts`, teste associado e este progresso.
+
 2026-10-05 - **COR-T20-017 / correção pós-deploy em andamento:** migration 0044 aplicada com dump local validado por SHA-256; API/web/worker e dependências healthy no SHA `e78f078`. O relatório somente leitura confirmou 17 sinais v2 de 1 usuário, incluindo 2 `missed_forced_mate`, mas falhou na segunda consulta por referenciar `exercise_attempts.created_at`; a coluna correta é `attempted_at`. Relatório e regressão estrutural corrigidos; validação em andamento.
 
 2026-10-05 - **DEPLOY FINAL / compatibilidade MinIO em implementação:** o usuário autorizou considerar o backup externo já realizado; será usado o modo `local-only`, que ainda cria dump e SHA-256 antes da migration 0044. A inspeção revelou que as tags MinIO fixadas não estão acessíveis pelo registry da VPS e o checkout tinha um workaround local comprovadamente funcional. O Compose passa a aceitar imagem/política de pull por `.env.vps`, preservando as tags fixadas como padrão e eliminando a necessidade de editar código no host. Validação e novo push em andamento; nenhum deploy iniciado.
@@ -265,19 +271,18 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-COR-T20-017 — implementação concluída e validada localmente/na CI. Aferição numérica pós-deploy permanece dependente de amostra real; o banco atualmente possui 0 sinais e 0 usuários.
+COR-T20-017 — correção de diversidade concluída localmente. A amostra atual possui 17 sinais de 1 usuário e nenhuma tentativa posterior; precisão/utilidade ainda não podem ser calibradas honestamente.
 
 ## Contexto necessário
 
-- Commit `e197167`: migration 0044, classificador objetivo v2, relatório agregado e testes.
-- CI `37259180150`: quality, container-validation e database-integration aprovados, incluindo apply/rollback/reapply em PostgreSQL limpo.
-- Após o deploy final autorizado, medir dados reais com `scripts/learning-signal-calibration.sql` quando existir amostra suficiente.
+- `apps/worker/src/analysis/game-analysis-job.ts`: rotação determinística por lote evita que a preferência por dicas concentre todos os sinais no mesmo exercício.
+- `apps/worker/src/analysis/game-analysis-job.test.ts`: regressão estrutural da rotação, deduplicação e módulo do catálogo.
+- Após o push e a CI, aguardar o deploy automático e validar o SHA/health; medir novamente com `scripts/learning-signal-calibration.sql` quando houver tentativas reais.
 - Calibrar novamente somente com evidência em `apps/worker/src/analysis/game-analysis-job.ts` e testes associados.
 - Não personalizar dificuldade nem publicar o novo tema ao aluno antes de amostra real suficiente.
 - Não usar LLM como classificador e não inventar calibração sem amostra real.
 - `livrocompleto/` permanece local e ignorado.
-- Para liberar o deploy: fornecer um backend Restic realmente externo à VPS e suas credenciais; instalar/configurar Restic; validar `restic check`; então preservar o workaround MinIO em stash, instalar o timer e deixar o agendador executar o Git pull.
-- Não ativar o timer enquanto o backup externo obrigatório estiver ausente.
+- A VPS usa o timer instalado e deploy exclusivamente por `git pull --ff-only` após promoção de `deploy/approved`; não disparar deploy por SSH.
 
 ## Contexto histórico anterior
 

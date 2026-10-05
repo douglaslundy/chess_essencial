@@ -107,7 +107,15 @@ describe('runGameAnalysisJob', () => {
     expect(recommendations?.text).toContain('FROM learning_recommendations previous');
     expect(recommendations?.text).toContain("interval '30 days'");
     expect(recommendations?.text).toContain('recommendation_history.recommendation_count');
-    expect(recommendations?.text).toContain('md5(signal.id::text || exercise.id::text)');
+    expect(recommendations?.text).toContain(
+      'PARTITION BY ranked_signal.user_id, ranked_signal.skill_key',
+    );
+    expect(recommendations?.text).toContain('SELECT DISTINCT eligible_exercise.id');
+    expect(recommendations?.text).toContain('count(*) OVER () AS candidate_count');
+    expect(recommendations?.text).toContain(
+      'mod(signal.batch_offset, ranked_practice.candidate_count) + 1',
+    );
+    expect(recommendations?.text).toContain('signal.game_id::text');
     expect(recommendations?.text).toContain('ON CONFLICT (error_signal_id) DO NOTHING');
 
     expect(calls.some((call) => call.text.includes("SET status = 'completed'"))).toBe(true);

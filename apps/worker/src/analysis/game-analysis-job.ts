@@ -309,40 +309,68 @@ async function recordLearningSignals(sql: Sql, gameId: string): Promise<void> {
         WHEN 'tactical_awareness' THEN 'Pratique a identificação de oportunidades concretas.'
         ELSE 'Pratique a verificação de ameaças antes de confirmar o lance.'
       END
-    FROM game_error_signals signal
+    FROM (
+      SELECT
+        ranked_signal.*,
+        row_number() OVER (
+          PARTITION BY ranked_signal.user_id, ranked_signal.skill_key
+          ORDER BY ranked_signal.ply, ranked_signal.id
+        ) - 1 AS batch_offset
+      FROM game_error_signals ranked_signal
+      WHERE ranked_signal.game_id = ${gameId}
+    ) signal
     JOIN LATERAL (
-      SELECT exercise.id
-      FROM skill_tag_aliases alias
-      JOIN exercises exercise ON alias.tag = ANY(exercise.tags)
-      LEFT JOIN LATERAL (
+      SELECT ranked_practice.id
+      FROM (
         SELECT
-          count(*)::integer AS recommendation_count,
-          max(previous.created_at) AS last_recommended_at
-        FROM learning_recommendations previous
-        WHERE previous.user_id = signal.user_id
-          AND previous.exercise_id = exercise.id
-      ) recommendation_history ON true
-      WHERE alias.skill_key = signal.skill_key
-        AND exercise.status = 'published'
-        AND exercise.position_type = 'legal_position'
-        AND exercise.title IS NOT NULL
-        AND COALESCE(exercise.import_metadata->>'answerFormat', 'move_sequence') = 'move_sequence'
-        AND jsonb_array_length(exercise.solution_lines) > 0
-      ORDER BY
-        EXISTS (
-          SELECT 1 FROM exercise_attempts attempt
-          WHERE attempt.user_id = signal.user_id
-            AND attempt.exercise_id = exercise.id
-            AND attempt.correct = true
-        ),
-        recommendation_history.last_recommended_at >= now() - interval '30 days',
-        recommendation_history.recommendation_count,
-        recommendation_history.last_recommended_at ASC NULLS FIRST,
-        (jsonb_array_length(exercise.hints) = 0),
-        md5(signal.id::text || exercise.id::text)
-      LIMIT 1
+          exercise.id,
+          row_number() OVER (
+            ORDER BY
+              EXISTS (
+                SELECT 1 FROM exercise_attempts attempt
+                WHERE attempt.user_id = signal.user_id
+                  AND attempt.exercise_id = exercise.id
+                  AND attempt.correct = true
+              ),
+              recommendation_history.last_recommended_at >= now() - interval '30 days',
+              recommendation_history.recommendation_count,
+              recommendation_history.last_recommended_at ASC NULLS FIRST,
+              (jsonb_array_length(exercise.hints) = 0),
+              md5(
+                signal.game_id::text
+                  || signal.user_id::text
+                  || signal.skill_key
+                  || exercise.id::text
+              )
+          ) AS candidate_rank,
+          count(*) OVER () AS candidate_count
+        FROM (
+          SELECT DISTINCT eligible_exercise.id
+          FROM skill_tag_aliases alias
+          JOIN exercises eligible_exercise ON alias.tag = ANY(eligible_exercise.tags)
+          WHERE alias.skill_key = signal.skill_key
+            AND eligible_exercise.status = 'published'
+            AND eligible_exercise.position_type = 'legal_position'
+            AND eligible_exercise.title IS NOT NULL
+            AND COALESCE(
+              eligible_exercise.import_metadata->>'answerFormat',
+              'move_sequence'
+            ) = 'move_sequence'
+            AND jsonb_array_length(eligible_exercise.solution_lines) > 0
+        ) eligible
+        JOIN exercises exercise ON exercise.id = eligible.id
+        LEFT JOIN LATERAL (
+          SELECT
+            count(*)::integer AS recommendation_count,
+            max(previous.created_at) AS last_recommended_at
+          FROM learning_recommendations previous
+          WHERE previous.user_id = signal.user_id
+            AND previous.exercise_id = exercise.id
+        ) recommendation_history ON true
+      ) ranked_practice
+      WHERE ranked_practice.candidate_rank =
+        mod(signal.batch_offset, ranked_practice.candidate_count) + 1
     ) practice ON true
-    WHERE signal.game_id = ${gameId}
     ON CONFLICT (error_signal_id) DO NOTHING
   `;
 }
