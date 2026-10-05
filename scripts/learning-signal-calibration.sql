@@ -42,15 +42,15 @@ WITH recommendation_outcomes AS (
       ELSE '2000+'
     END AS difficulty_band,
     recommendation.created_at AS recommended_at,
-    min(attempt.created_at) AS first_attempt_at,
+    min(attempt.attempted_at) AS first_attempt_at,
     bool_or(attempt.correct) AS eventually_correct
   FROM learning_recommendations recommendation
   JOIN exercises exercise ON exercise.id = recommendation.exercise_id
   LEFT JOIN exercise_attempts attempt
     ON attempt.user_id = recommendation.user_id
    AND attempt.exercise_id = recommendation.exercise_id
-   AND attempt.created_at >= recommendation.created_at
-   AND attempt.created_at < recommendation.created_at + interval '30 days'
+   AND attempt.attempted_at >= recommendation.created_at
+   AND attempt.attempted_at < recommendation.created_at + interval '30 days'
   GROUP BY
     recommendation.id,
     recommendation.user_id,

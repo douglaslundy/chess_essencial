@@ -17,6 +17,8 @@ describe('learning signal calibration report', () => {
     expect(report).toContain(`evidence->>'detectedTheme'`);
     expect(report).toContain('difficulty_band');
     expect(report).toContain(`interval '30 days'`);
+    expect(report).toContain('attempt.attempted_at');
+    expect(report).not.toContain('attempt.created_at');
     expect(report).toContain('median_hours_to_attempt');
     expect(report).toContain('top_five_exercise_share');
     expect(report).toContain('effective_exercise_count');

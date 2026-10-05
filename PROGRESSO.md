@@ -82,6 +82,8 @@
 
 # Progresso do Projeto
 
+2026-10-05 - **COR-T20-017 / correção pós-deploy em andamento:** migration 0044 aplicada com dump local validado por SHA-256; API/web/worker e dependências healthy no SHA `e78f078`. O relatório somente leitura confirmou 17 sinais v2 de 1 usuário, incluindo 2 `missed_forced_mate`, mas falhou na segunda consulta por referenciar `exercise_attempts.created_at`; a coluna correta é `attempted_at`. Relatório e regressão estrutural corrigidos; validação em andamento.
+
 2026-10-05 - **DEPLOY FINAL / compatibilidade MinIO em implementação:** o usuário autorizou considerar o backup externo já realizado; será usado o modo `local-only`, que ainda cria dump e SHA-256 antes da migration 0044. A inspeção revelou que as tags MinIO fixadas não estão acessíveis pelo registry da VPS e o checkout tinha um workaround local comprovadamente funcional. O Compose passa a aceitar imagem/política de pull por `.env.vps`, preservando as tags fixadas como padrão e eliminando a necessidade de editar código no host. Validação e novo push em andamento; nenhum deploy iniciado.
 
 2026-10-05 - **DEPLOY FINAL BLOQUEADO ANTES DA PRODUÇÃO:** o commit final `ab07f27` passou nos três jobs da CI `37260137949` e foi promovido para `deploy/approved`. A VPS ainda não possui Restic, arquivo de senha, `RESTIC_REPOSITORY` nem credenciais de backend externo; como a migration 0044 reativa obrigatoriamente o backup offsite, o timer permaneceu desativado e nenhum deploy foi iniciado. O checkout remoto também conserva, sem sobrescrita, um workaround local de MinIO que o mantém intencionalmente sujo e bloqueia o auto-deploy até o bootstrap ser concluído com segurança.
