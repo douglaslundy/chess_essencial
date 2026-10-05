@@ -42,6 +42,17 @@ DEMO_USER_PASSWORD=<segredo-fornecido-fora-do-git>
 
 As identidades são `demo_brancas` e `demo_pretas`. A senha nunca é impressa ou versionada.
 
+Se o registry não disponibilizar as tags históricas do MinIO, imagens equivalentes já carregadas no host podem ser selecionadas sem editar o checkout. Configure em `.env.vps`:
+
+```dotenv
+MINIO_SERVER_IMAGE=minio/minio:latest
+MINIO_CLIENT_IMAGE=minio/minio:latest
+MINIO_SERVER_PULL_POLICY=never
+MINIO_CLIENT_PULL_POLICY=never
+```
+
+Use `never` somente depois de confirmar que ambas as imagens existem localmente e que o job `minio-init` termina com sucesso. Os padrões continuam sendo as tags fixadas no Compose.
+
 ## Verificação operacional
 
 ```bash
