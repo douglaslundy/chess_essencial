@@ -67,5 +67,7 @@ pnpm --filter @xadrez/api db:rollback
 
 `0042_job_recovery.down.sql` remove leases, contadores e agenda de retentativa, mas preserva análises, narrações, resultados e erros. Antes do rollback, jobs ainda em `processing` devem ser concluídos ou devolvidos manualmente a `pending`, pois a versão anterior não consegue recuperar esse estado sozinha.
 
+`0044_objective_learning_theme.down.sql` remove apenas o tema objetivo `missed_forced_mate` da evidência derivada e restaura a versão anterior da regra. Sinais, recomendações e evidências pedagógicas permanecem preservados.
+
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.

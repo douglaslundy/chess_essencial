@@ -90,6 +90,9 @@ describe('runGameAnalysisJob', () => {
     const signals = calls.find((call) => call.text.includes('INSERT INTO game_error_signals'));
     expect(signals?.text).toContain("gma.quality IN ('erro', 'gafe')");
     expect(signals?.text).toContain('LEFT JOIN game_bots');
+    expect(signals?.text).toContain(`'stockfish_error_signal_v2'`);
+    expect(signals?.text).toContain(`gma.mate_before > 0 THEN 'missed_forced_mate'`);
+    expect(signals?.text).toContain('jsonb_strip_nulls');
     expect(signals?.text).toContain('ON CONFLICT (game_id, ply, user_id, skill_key) DO NOTHING');
 
     const evidence = calls.find((call) => call.text.includes('INSERT INTO learning_evidence'));

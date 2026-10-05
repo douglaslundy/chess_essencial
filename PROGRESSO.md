@@ -257,13 +257,15 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-Nenhuma. AUDITORIA-UX-VOZ concluída nos commits 368b048, 589f6e4, 3752c82, af1d0cd e 7d51430.
+COR-T20-017 — calibração de sinais pedagógicos e diversidade da prática. Incremento local implementado e validado; migration/rollback aguardam PostgreSQL limpo na CI e a calibração numérica permanece dependente de amostra real.
 
 ## Contexto necessário
 
 - Próxima tarefa: COR-T20-017 em `TAREFAS.md`.
 - Medir dados reais com `scripts/learning-signal-calibration.sql`.
 - Calibrar somente com evidência em `apps/worker/src/analysis/game-analysis-job.ts` e testes associados.
+- Migration 0044 adiciona e remove de forma reversível o tema objetivo `missed_forced_mate`; validar apply/rollback/reapply em PostgreSQL limpo.
+- Não personalizar dificuldade nem publicar o novo tema ao aluno antes de amostra real suficiente.
 - Não usar LLM como classificador e não inventar calibração sem amostra real.
 - `livrocompleto/` permanece local e ignorado; não fazer deploy sem pedido explícito.
 
@@ -391,3 +393,7 @@ Nenhuma. AUDITORIA-UX-VOZ concluída nos commits 368b048, 589f6e4, 3752c82, af1d
 ## Próxima tarefa
 
 COR-T20-017 — medir e calibrar sinais pedagógicos e diversidade da prática com dados reais.
+2026-10-04 - **COR-T20-017 / incremento implementado:** sinais v2 registram `missed_forced_mate` somente quando o Stockfish prova mate forçado antes do lance; migration 0044 faz backfill e rollback sem apagar sinais. O relatório somente leitura agora mede cobertura, utilidade em 30 dias por dificuldade, latência e concentração/repetição. Documentação UTF-8 corrigida; validação local em andamento. Sem VPS, push ou deploy.
+
+2026-10-04 - **COR-T20-017 retomada localmente:** a seleção já evita resolvidos, recomendações dos últimos 30 dias e repetição excessiva, mas o relatório agregado ainda mistura faixas de dificuldade e não mede cobertura, latência nem distribuição além do item líder. Próximo incremento: ampliar a medição anônima e sua documentação antes de qualquer mudança no classificador. Trabalho exclusivamente local; sem VPS, push ou deploy.
+2026-10-04 - **COR-T20-017 / validação local concluída:** 49 testes do worker, typecheck, lint, build, format-check, `git diff --check` e varredura UTF-8 de 9 arquivos passaram. Os oito U+00C3 encontrados em `PROGRESSO.md` são usos legítimos de “NÃO”/“PRODUÇÃO”, não mojibake. Migration 0044 e relatório SQL ainda precisam do gate PostgreSQL limpo/rollback da CI, pois o ambiente local não possui Docker nem `psql`. Sem VPS, push ou deploy.

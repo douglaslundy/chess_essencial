@@ -245,12 +245,17 @@ async function recordLearningSignals(sql: Sql, gameId: string): Promise<void> {
       CASE WHEN gma.missed_win THEN 'tactical_awareness' ELSE 'move_safety' END,
       CASE WHEN gma.missed_win THEN 'missed_opportunity' ELSE 'unsafe_move' END,
       CASE WHEN gma.missed_win THEN 0.950 WHEN gma.quality = 'gafe' THEN 0.900 ELSE 0.800 END,
-      'stockfish_error_signal_v1',
-      jsonb_build_object(
+      'stockfish_error_signal_v2',
+      jsonb_strip_nulls(jsonb_build_object(
         'centipawnLoss', gma.centipawn_loss,
+        'detectedTheme',
+          CASE
+            WHEN gma.missed_win AND gma.mate_before > 0 THEN 'missed_forced_mate'
+            ELSE NULL
+          END,
         'missedWin', gma.missed_win,
         'quality', gma.quality
-      )
+      ))
     FROM game_move_analyses gma
     JOIN game_players gp ON gp.game_id = gma.game_id AND gp.color = gma.color
     LEFT JOIN game_bots gb ON gb.game_id = gp.game_id AND gb.bot_user_id = gp.user_id

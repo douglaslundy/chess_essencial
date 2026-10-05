@@ -1,20 +1,27 @@
-# Calibra??o dos sinais pedag?gicos
+# Calibração dos sinais pedagógicos
 
-A taxonomia permanece deliberadamente limitada a `tactical_awareness` e `move_safety`. Centipawn loss, qualidade e `missed_win` n?o provam garfo, cravada, fase da partida ou causa cognitiva; nenhuma classe espec?fica ser? adicionada sem detector objetivo e valida??o real.
+A taxonomia pública permanece limitada a `tactical_awareness` e `move_safety`. Perda em centipawns e `missed_win` não provam garfo, cravada, fase da partida ou causa cognitiva.
 
-## Relat?rio agregado
+A regra `stockfish_error_signal_v2` acrescenta somente o tema objetivo `missed_forced_mate`: ele existe quando o motor registrou mate forçado antes do lance e o jogador deixou a vitória escapar. O tema fica na evidência derivada para calibração; ainda não é apresentado como diagnóstico específico ao aluno.
 
-Ap?s a migration 0043 estar implantada e existir volume real, execute `scripts/learning-signal-calibration.sql` com `psql` em modo somente leitura. O relat?rio n?o seleciona usu?rio, partida ou evid?ncia bruta. Ele mede:
+## Relatório agregado
 
-- distribui??o por vers?o da regra, skill, tipo e qualidade;
-- cobertura indireta de utilidade: tentativa posterior e acerto posterior no exerc?cio recomendado;
-- diversidade: exerc?cios distintos e concentra??o no exerc?cio mais recomendado.
+Execute `scripts/learning-signal-calibration.sql` com `psql` após existir volume real. O script abre uma transação somente leitura e não retorna usuário, partida, recomendação individual nem evidência bruta.
 
-Fixtures, seeds e contas de teste n?o s?o evid?ncia de calibra??o. N?o existe limiar autom?tico de amostra ou aprova??o: o relat?rio deve publicar as contagens junto das taxas, evitando conclus?es baseadas em denominadores pequenos.
+O relatório mede:
 
-## Regra de decis?o
+- distribuição e cobertura por versão da regra, skill, tipo, qualidade e tema objetivo;
+- tentativa e acerto em até 30 dias, por faixa de dificuldade;
+- mediana de horas até a primeira tentativa;
+- concentração no primeiro e nos cinco exercícios mais recomendados;
+- quantidade efetiva de exercícios e repetição por aluno, sempre agregada.
 
-- N?o alterar confid?ncias nem ampliar a taxonomia sem amostra real e revis?o dos falsos positivos por detector objetivo.
-- N?o usar LLM como classificador.
-- Recomenda??es evitam exerc?cio resolvido, exerc?cio usado nos ?ltimos 30 dias e repeti??o excessiva; o desempate determin?stico por sinal distribui candidatos equivalentes.
-- A dificuldade n?o ser? personalizada at? o relat?rio real permitir avaliar sucesso posterior por faixa sem prejudicar iniciantes.
+Fixtures, seeds e contas de teste não são evidência de calibração. As contagens devem acompanhar as taxas para evitar conclusões com denominadores pequenos.
+
+## Regra de decisão
+
+- Não ajustar confiança nem publicar novos diagnósticos sem amostra real e revisão dos falsos positivos.
+- Não usar LLM como classificador.
+- `missed_forced_mate` é aceito porque deriva diretamente de mate forçado calculado pelo motor; outros temas exigem detectores objetivos próprios.
+- Não personalizar dificuldade antes de comparar tentativa e acerto por faixa sem prejudicar iniciantes.
+- Manter preferência por exercícios não resolvidos, fora da janela recente e pouco repetidos.
