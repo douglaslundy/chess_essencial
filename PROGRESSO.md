@@ -82,6 +82,12 @@
 
 # Progresso do Projeto
 
+2026-10-05 - **COR-T20-017 / critérios finais validados localmente:** o intercalamento por dificuldade também corrige a ordenação tri-state de recência, tratando exercício nunca recomendado como `false` em vez de `NULL`. 49 testes do worker, typecheck, lint, build, format-check e `git diff --check` passaram; charset/secrets serão o último gate antes do commit. A simulação real cobre 9/9 itens em 4 dificuldades e 8/8 em 3 dificuldades.
+
+2026-10-05 - **COR-T20-017 / diversidade por dificuldade implementada:** revisão do critério final detectou que `10fdbe6` já diversificava itens/recência/repetição, mas ainda não intercalava explicitamente dificuldades. A ordenação agora faz round-robin entre faixas dentro da mesma prioridade. Teste direcionado e `EXPLAIN` real passaram; a simulação somente leitura manteve 9/9 e 8/8 itens distintos, cobrindo respectivamente 4 e 3 dificuldades. Gates integrais em andamento.
+
+2026-10-05 - **COR-T20-017 / base de diversidade implantada:** commit `10fdbe6` passou integralmente pela CI `37360215701` (quality, containers, PostgreSQL, backup/restore e rollback/reapply), foi promovido e implantado exclusivamente pelo timer/Git pull. Marcador e imagens chegaram ao SHA correto; API, worker, web, PostgreSQL, Redis, MinIO e Mailpit ficaram healthy, treinamento retornou 200 e a carga interna passou 40/40 com p95 de 18,3 ms. A revisão seguinte manteve a tarefa aberta para acrescentar o intercalamento explícito de dificuldade antes do encerramento definitivo.
+
 2026-10-05 - **COR-T20-017 / correção de diversidade concluída localmente:** seleção em lote deduplicada e rotacionada deterministicamente; 49 testes do worker, typecheck, lint, build, format-check, `git diff --check`, charset e secrets passaram. O PostgreSQL de produção aceitou o plano e a simulação somente leitura elevou a diversidade proposta de 1/9 para 9/9 em `move_safety` e de 6/8 para 8/8 em `tactical_awareness`. Próximo passo: commit/push, CI e deploy automático; não reescrever recomendações históricas nem inventar utilidade sem tentativas reais.
 
 2026-10-05 - **COR-T20-017 / diversidade implementada e validada no planejador real:** a recomendação em lote agora ordena candidatos uma vez por jogo/usuário/skill e usa o índice do sinal para rotacionar a escolha, com módulo para lotes maiores que o catálogo e deduplicação de exercícios alcançados por múltiplos aliases. Teste direcionado passou; `EXPLAIN` no PostgreSQL de produção aceitou a consulta e uma simulação somente leitura sobre os 17 sinais reais resultou em 9/9 e 8/8 recomendações distintas por skill. Validação integral em andamento.
@@ -271,18 +277,21 @@ Nesta mesma janela, o usuário reportou (e investiguei sem achar bug real no có
 2026-07-20 - Segunda leva de correções (movimento de peças, layout, exercícios/desafios, quiz) implementada e validada localmente; nada commitado ainda desta leva.
 ## Tarefa em andamento
 
-COR-T20-017 — correção de diversidade concluída localmente. A amostra atual possui 17 sinais de 1 usuário e nenhuma tentativa posterior; precisão/utilidade ainda não podem ser calibradas honestamente.
+Nenhuma tarefa de desenvolvimento ativa. COR-T20-017 foi concluída no limite sustentado pelos dados reais disponíveis.
 
 ## Contexto necessário
 
-- `apps/worker/src/analysis/game-analysis-job.ts`: rotação determinística por lote evita que a preferência por dicas concentre todos os sinais no mesmo exercício.
-- `apps/worker/src/analysis/game-analysis-job.test.ts`: regressão estrutural da rotação, deduplicação e módulo do catálogo.
-- Após o push e a CI, aguardar o deploy automático e validar o SHA/health; medir novamente com `scripts/learning-signal-calibration.sql` quando houver tentativas reais.
-- Calibrar novamente somente com evidência em `apps/worker/src/analysis/game-analysis-job.ts` e testes associados.
+- Commit `10fdbe6`, CI `37360215701` e marcador remoto `10fdbe627b3b83f2f01de90c8c25487e5506f598` são a referência implantada.
+- `scripts/learning-signal-calibration.sql` permite acompanhamento somente agregado quando surgirem tentativas reais; isso é monitoramento operacional, não backlog de desenvolvimento ativo.
+- Se uma amostra futura justificar nova calibração, alterar `apps/worker/src/analysis/game-analysis-job.ts` apenas com evidência e regressões associadas.
 - Não personalizar dificuldade nem publicar o novo tema ao aluno antes de amostra real suficiente.
 - Não usar LLM como classificador e não inventar calibração sem amostra real.
 - `livrocompleto/` permanece local e ignorado.
 - A VPS usa o timer instalado e deploy exclusivamente por `git pull --ff-only` após promoção de `deploy/approved`; não disparar deploy por SSH.
+
+## Próxima tarefa
+
+Nenhuma tarefa de desenvolvimento acionável no backlog. O item de dicas da Jornada continua deliberadamente sem ação por decisão explícita do usuário; reabrir somente mediante nova solicitação.
 
 ## Contexto histórico anterior
 

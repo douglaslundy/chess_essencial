@@ -106,12 +106,17 @@ describe('runGameAnalysisJob', () => {
     expect(recommendations?.text).toContain("exercise.status = 'published'");
     expect(recommendations?.text).toContain('FROM learning_recommendations previous');
     expect(recommendations?.text).toContain("interval '30 days'");
+    expect(recommendations?.text).toContain('false\n              ) AS was_recently_recommended');
     expect(recommendations?.text).toContain('recommendation_history.recommendation_count');
     expect(recommendations?.text).toContain(
       'PARTITION BY ranked_signal.user_id, ranked_signal.skill_key',
     );
     expect(recommendations?.text).toContain('SELECT DISTINCT eligible_exercise.id');
     expect(recommendations?.text).toContain('count(*) OVER () AS candidate_count');
+    expect(recommendations?.text).toContain('candidate.difficulty_rank');
+    expect(recommendations?.text).toContain('AS difficulty_position');
+    expect(recommendations?.text).toContain("WHEN 'beginner' THEN 1");
+    expect(recommendations?.text).toContain("WHEN 'advanced' THEN 3");
     expect(recommendations?.text).toContain(
       'mod(signal.batch_offset, ranked_practice.candidate_count) + 1',
     );

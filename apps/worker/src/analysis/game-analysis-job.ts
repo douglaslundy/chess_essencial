@@ -323,50 +323,92 @@ async function recordLearningSignals(sql: Sql, gameId: string): Promise<void> {
       SELECT ranked_practice.id
       FROM (
         SELECT
-          exercise.id,
+          interleaved_practice.id,
           row_number() OVER (
             ORDER BY
+              interleaved_practice.was_solved,
+              interleaved_practice.was_recently_recommended,
+              interleaved_practice.recommendation_count,
+              interleaved_practice.last_recommended_at ASC NULLS FIRST,
+              interleaved_practice.hints_empty,
+              interleaved_practice.difficulty_position,
+              interleaved_practice.difficulty_rank,
+              interleaved_practice.tie_breaker
+          ) AS candidate_rank,
+          count(*) OVER () AS candidate_count
+        FROM (
+          SELECT
+            candidate.*,
+            row_number() OVER (
+              PARTITION BY
+                candidate.was_solved,
+                candidate.was_recently_recommended,
+                candidate.recommendation_count,
+                candidate.last_recommended_at,
+                candidate.hints_empty,
+                candidate.difficulty_rank
+              ORDER BY candidate.tie_breaker
+            ) AS difficulty_position
+          FROM (
+            SELECT
+              exercise.id,
               EXISTS (
                 SELECT 1 FROM exercise_attempts attempt
                 WHERE attempt.user_id = signal.user_id
                   AND attempt.exercise_id = exercise.id
                   AND attempt.correct = true
-              ),
-              recommendation_history.last_recommended_at >= now() - interval '30 days',
+              ) AS was_solved,
+              COALESCE(
+                recommendation_history.last_recommended_at >= now() - interval '30 days',
+                false
+              ) AS was_recently_recommended,
               recommendation_history.recommendation_count,
-              recommendation_history.last_recommended_at ASC NULLS FIRST,
-              (jsonb_array_length(exercise.hints) = 0),
+              recommendation_history.last_recommended_at,
+              jsonb_array_length(exercise.hints) = 0 AS hints_empty,
+              CASE lower(COALESCE(exercise.difficulty, ''))
+                WHEN 'beginner' THEN 1
+                WHEN 'iniciante' THEN 1
+                WHEN 'intermediate' THEN 2
+                WHEN 'intermediario' THEN 2
+                WHEN 'intermediário' THEN 2
+                WHEN 'advanced' THEN 3
+                WHEN 'avancado' THEN 3
+                WHEN 'avançado' THEN 3
+                WHEN 'expert' THEN 4
+                WHEN 'especialista' THEN 4
+                ELSE 5
+              END AS difficulty_rank,
               md5(
                 signal.game_id::text
                   || signal.user_id::text
                   || signal.skill_key
                   || exercise.id::text
-              )
-          ) AS candidate_rank,
-          count(*) OVER () AS candidate_count
-        FROM (
-          SELECT DISTINCT eligible_exercise.id
-          FROM skill_tag_aliases alias
-          JOIN exercises eligible_exercise ON alias.tag = ANY(eligible_exercise.tags)
-          WHERE alias.skill_key = signal.skill_key
-            AND eligible_exercise.status = 'published'
-            AND eligible_exercise.position_type = 'legal_position'
-            AND eligible_exercise.title IS NOT NULL
-            AND COALESCE(
-              eligible_exercise.import_metadata->>'answerFormat',
-              'move_sequence'
-            ) = 'move_sequence'
-            AND jsonb_array_length(eligible_exercise.solution_lines) > 0
-        ) eligible
-        JOIN exercises exercise ON exercise.id = eligible.id
-        LEFT JOIN LATERAL (
-          SELECT
-            count(*)::integer AS recommendation_count,
-            max(previous.created_at) AS last_recommended_at
-          FROM learning_recommendations previous
-          WHERE previous.user_id = signal.user_id
-            AND previous.exercise_id = exercise.id
-        ) recommendation_history ON true
+              ) AS tie_breaker
+            FROM (
+              SELECT DISTINCT eligible_exercise.id
+              FROM skill_tag_aliases alias
+              JOIN exercises eligible_exercise ON alias.tag = ANY(eligible_exercise.tags)
+              WHERE alias.skill_key = signal.skill_key
+                AND eligible_exercise.status = 'published'
+                AND eligible_exercise.position_type = 'legal_position'
+                AND eligible_exercise.title IS NOT NULL
+                AND COALESCE(
+                  eligible_exercise.import_metadata->>'answerFormat',
+                  'move_sequence'
+                ) = 'move_sequence'
+                AND jsonb_array_length(eligible_exercise.solution_lines) > 0
+            ) eligible
+            JOIN exercises exercise ON exercise.id = eligible.id
+            LEFT JOIN LATERAL (
+              SELECT
+                count(*)::integer AS recommendation_count,
+                max(previous.created_at) AS last_recommended_at
+              FROM learning_recommendations previous
+              WHERE previous.user_id = signal.user_id
+                AND previous.exercise_id = exercise.id
+            ) recommendation_history ON true
+          ) candidate
+        ) interleaved_practice
       ) ranked_practice
       WHERE ranked_practice.candidate_rank =
         mod(signal.batch_offset, ranked_practice.candidate_count) + 1
