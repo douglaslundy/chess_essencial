@@ -82,6 +82,8 @@
 
 # Progresso do Projeto
 
+2026-10-06 - **COR-T20-017 concluída e implantada:** commit funcional `414158e` passou pela CI `37365125737` (a primeira tentativa teve apenas o job de containers cancelado ainda sem runner; a reexecução passou), foi promovido e implantado exclusivamente pelo timer/Git pull. Marcador e imagens estão no SHA correto; todos os sete serviços estão healthy, API e treinamento retornam 200 e a carga interna passou 40/40 com p95 de 21,55 ms. O backlog de desenvolvimento está encerrado; aferições futuras de utilidade dependem de novas tentativas reais e são monitoramento, não calibração inventada.
+
 2026-10-05 - **COR-T20-017 / critérios finais validados localmente:** o intercalamento por dificuldade também corrige a ordenação tri-state de recência, tratando exercício nunca recomendado como `false` em vez de `NULL`. 49 testes do worker, typecheck, lint, build, format-check e `git diff --check` passaram; charset/secrets serão o último gate antes do commit. A simulação real cobre 9/9 itens em 4 dificuldades e 8/8 em 3 dificuldades.
 
 2026-10-05 - **COR-T20-017 / diversidade por dificuldade implementada:** revisão do critério final detectou que `10fdbe6` já diversificava itens/recência/repetição, mas ainda não intercalava explicitamente dificuldades. A ordenação agora faz round-robin entre faixas dentro da mesma prioridade. Teste direcionado e `EXPLAIN` real passaram; a simulação somente leitura manteve 9/9 e 8/8 itens distintos, cobrindo respectivamente 4 e 3 dificuldades. Gates integrais em andamento.
@@ -281,7 +283,7 @@ Nenhuma tarefa de desenvolvimento ativa. COR-T20-017 foi concluída no limite su
 
 ## Contexto necessário
 
-- Commit `10fdbe6`, CI `37360215701` e marcador remoto `10fdbe627b3b83f2f01de90c8c25487e5506f598` são a referência implantada.
+- Commit funcional `414158e`, CI `37365125737` e marcador remoto `414158ec2c305afda34dfa88f38a07d8ba9de64a` são a referência implantada.
 - `scripts/learning-signal-calibration.sql` permite acompanhamento somente agregado quando surgirem tentativas reais; isso é monitoramento operacional, não backlog de desenvolvimento ativo.
 - Se uma amostra futura justificar nova calibração, alterar `apps/worker/src/analysis/game-analysis-job.ts` apenas com evidência e regressões associadas.
 - Não personalizar dificuldade nem publicar o novo tema ao aluno antes de amostra real suficiente.
