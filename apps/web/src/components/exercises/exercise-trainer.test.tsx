@@ -229,7 +229,7 @@ describe('ExerciseTrainer guided auto-grading modal', () => {
     expect(screen.queryByRole('button', { name: 'Pedir dica' })).toBeNull();
   });
 
-  it('opens a victory modal when the played line is solved, then shows the batch-completed screen once dismissed', async () => {
+  it('opens a victory modal when the played line is solved, then starts the next batch once dismissed', async () => {
     evaluateExerciseLine.mockResolvedValue({
       status: 'solved',
       opponentReply: null,
@@ -247,13 +247,14 @@ describe('ExerciseTrainer guided auto-grading modal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'play-board-move' }));
 
     expect(await screen.findByText('Você venceu!')).toBeTruthy();
+    expect(startExerciseTraining).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByRole('button', { name: /Próximo exercício/ }));
 
-    expect(await screen.findByText('Treino concluído')).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Próximo desafio/ })).toBeTruthy();
+    await vi.waitFor(() => expect(startExerciseTraining).toHaveBeenCalledTimes(2));
+    await screen.findByText('Jogue o melhor lance para as brancas.');
   });
 
-  it('offers a way to fetch a fresh batch once every challenge in the current one is solved', async () => {
+  it('fetches a fresh batch automatically once every challenge in the current one is solved', async () => {
     startExerciseTraining.mockResolvedValueOnce({
       ...trainingView(),
       completed: 1,
@@ -261,13 +262,60 @@ describe('ExerciseTrainer guided auto-grading modal', () => {
       status: 'completed',
     });
     render(<ExerciseTrainer guided />);
-    await screen.findByText('Treino concluído');
 
-    startExerciseTraining.mockResolvedValueOnce(trainingView());
-    fireEvent.click(screen.getByRole('button', { name: /Próximo desafio/ }));
-
+    await vi.waitFor(() => expect(startExerciseTraining).toHaveBeenCalledTimes(2));
     await screen.findByText('Jogue o melhor lance para as brancas.');
-    expect(startExerciseTraining).toHaveBeenCalledTimes(2);
+  });
+
+  it('moves on to the next theme when the selected one has nothing left', async () => {
+    listChallengeThemes.mockResolvedValue([
+      { count: 3, theme: 'garfo' },
+      { count: 5, theme: 'cravada' },
+    ]);
+    render(<ExerciseTrainer guided showThemeFilter />);
+    await screen.findByText('Jogue o melhor lance para as brancas.');
+    await screen.findByRole('option', { name: 'Garfo (3)' });
+
+    const empty = {
+      ...trainingView(),
+      sessionId: '99000000-0000-4000-8000-000000000040',
+      completed: 0,
+      currentExercise: null,
+      status: 'completed' as const,
+      total: 0,
+    };
+    startExerciseTraining.mockResolvedValueOnce(empty);
+    fireEvent.change(screen.getByLabelText('Tema tático'), { target: { value: 'garfo' } });
+
+    expect(await screen.findByText('Tema concluído! Seguindo para: Cravada')).toBeTruthy();
+    expect(startExerciseTraining).toHaveBeenLastCalledWith(
+      expect.objectContaining({ filters: expect.objectContaining({ theme: 'cravada' }) }),
+      'test-token',
+    );
+    expect((screen.getByLabelText('Tema tático') as HTMLSelectElement).value).toBe('cravada');
+  });
+
+  it('stops with a final message when every theme is exhausted', async () => {
+    listChallengeThemes.mockResolvedValue([{ count: 3, theme: 'garfo' }]);
+    startExerciseTraining.mockResolvedValue({
+      ...trainingView(),
+      completed: 0,
+      currentExercise: null,
+      status: 'completed',
+      total: 0,
+    });
+    render(<ExerciseTrainer guided showThemeFilter />);
+    await screen.findByText('Você já resolveu tudo por aqui!', { selector: 'h2' });
+    await screen.findByRole('option', { name: 'Garfo (3)' });
+
+    expect(startExerciseTraining).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps only a visually hidden page heading in guided mode', async () => {
+    render(<ExerciseTrainer guided title="Desafios" />);
+    await screen.findByText('Jogue o melhor lance para as brancas.');
+    expect(screen.getByRole('heading', { level: 1, name: 'Desafios' })).toBeTruthy();
+    expect(screen.queryByText('Treino autoritativo')).toBeNull();
   });
 
   it('opens a defeat modal with retry when the move is incorrect', async () => {

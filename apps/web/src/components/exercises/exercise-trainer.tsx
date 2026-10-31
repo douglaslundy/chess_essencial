@@ -31,6 +31,7 @@ import {
 } from '@/lib/sound';
 
 import styles from './exercise-trainer.module.css';
+import { nextTheme } from './next-theme';
 
 const emptySearch: ExerciseSearchResult = { items: [], limit: 20, offset: 0, total: 0 };
 const emptyMetrics: ExerciseMetrics = {
@@ -239,6 +240,7 @@ export function ExerciseTrainer({
         setViewingExerciseAt(null);
         previousExerciseRef.current = null;
         setMessage(value.total ? 'Treino iniciado.' : 'Você já resolveu tudo por aqui!');
+        return value;
       } catch (error) {
         setMessage(error instanceof Error ? error.message : 'Falha ao iniciar treino.');
       }
@@ -305,6 +307,36 @@ export function ExerciseTrainer({
     setTheme(next);
     void resumeOrStart({ source, theme: next });
   }
+
+  // Desafios: bloco concluído abre o próximo bloco do mesmo tema; tema esgotado (sessão vazia)
+  // segue para o próximo tema da lista. Cada sessão é tratada uma vez e cada tema esgotado entra
+  // em `exhaustedThemes`, então uma API que só devolve sessões vazias não gera laço.
+  const handledSessionRef = useRef<string | null>(null);
+  const exhaustedThemes = useRef(new Set<string>());
+  useEffect(() => {
+    if (!guided || resultModal || training?.status !== 'completed') return;
+    if (handledSessionRef.current === training.sessionId) return;
+    if (training.total > 0) {
+      handledSessionRef.current = training.sessionId;
+      queueMicrotask(() => void startTraining());
+      return;
+    }
+    exhaustedThemes.current.add(theme);
+    const next = nextTheme(
+      themes.map((option) => option.theme),
+      theme,
+      exhaustedThemes.current,
+    );
+    // Sem próximo tema (ou lista ainda carregando): fica a mensagem final; reavalia se `themes` chegar.
+    if (next === null) return;
+    handledSessionRef.current = training.sessionId;
+    queueMicrotask(() => {
+      setTheme(next);
+      void startTraining({ theme: next }).then((value) => {
+        if (value?.total) setMessage(`Tema concluído! Seguindo para: ${formatThemeLabel(next)}`);
+      });
+    });
+  }, [guided, resultModal, startTraining, theme, themes, training]);
 
   useEffect(
     () => () => {
@@ -685,11 +717,15 @@ export function ExerciseTrainer({
   }
   return (
     <main className={`${styles.page} ${guided ? styles.guidedPage : ''}`}>
-      <header className={styles.heading}>
-        <span>Treino autoritativo</span>
-        <h1>{title}</h1>
-        <p>{description}</p>
-      </header>
+      {guided ? (
+        <h1 className={styles.visuallyHidden}>{title}</h1>
+      ) : (
+        <header className={styles.heading}>
+          <span>Treino autoritativo</span>
+          <h1>{title}</h1>
+          <p>{description}</p>
+        </header>
+      )}
 
       {!guided ? (
         <section className={styles.metrics} aria-label="Métricas de exercícios">
