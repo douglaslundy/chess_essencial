@@ -67,7 +67,25 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+/* Cadeado só com ícone: cinza e apagado destravado, colorido com borda dourada travado. */
+.camera .lock {
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0;
+  font-size: 1rem;
+}
+.camera .lock span {
+  filter: grayscale(1);
+  opacity: 0.45;
+  transition:
+    filter 0.2s,
+    opacity 0.2s;
+}
 .camera .lockActive {
   border-color: var(--gold);
-  background: var(--red);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+.camera .lockActive span {
+  filter: none;
+  opacity: 1;
 }

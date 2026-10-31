@@ -694,12 +694,13 @@ export default function Chess3DBoard({
       <div aria-label="Controles da câmera 3D" className={styles.camera} role="group">
         <button
           aria-pressed={locked}
-          className={locked ? styles.lockActive : undefined}
+          aria-label={locked ? 'Destravar a câmera' : 'Travar a câmera neste ângulo'}
+          className={`${styles.lock} ${locked ? styles.lockActive : ''}`}
           onClick={toggleLock}
           title={locked ? 'Destravar a câmera' : 'Travar a câmera neste ângulo'}
           type="button"
         >
-          {locked ? '🔒 Travado' : '🔓 Travar'}
+          <span aria-hidden="true">🔒</span>
         </button>
         <button
           aria-label="Girar para a esquerda"
