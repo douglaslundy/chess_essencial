@@ -228,7 +228,7 @@ interface BoardEffectProps {
   walk: PlayedMove | null;
 }
 
-const WALK_STEP_MS = 170;
+const WALK_STEP_MS = 320;
 
 function prefersReducedMotion() {
   return (
@@ -285,12 +285,12 @@ function ChessBoard2D({
       const next = points[index + 1];
       if (next)
         frames.push({
-          transform: `translate(${((x + next[0]) / 2) * 100}%, ${((y + next[1]) / 2) * 100 - 18}%) scale(1.08)`,
+          transform: `translate(${((x + next[0]) / 2) * 100}%, ${((y + next[1]) / 2) * 100 - 5}%)`,
         });
     });
     const animation = node.animate(frames, {
       duration: (points.length - 1) * WALK_STEP_MS,
-      easing: 'linear',
+      easing: 'ease-in-out',
       fill: 'forwards',
     });
     const id = walking.id;

@@ -39,7 +39,7 @@ const PROMOTION_CHOICES = [
   ['n', 'Cavalo'],
 ] as const;
 const MOVE_SECONDS = 0.55;
-const WALK_STEP_SECONDS = 0.24;
+const WALK_STEP_SECONDS = 0.38;
 /** Pointer travel (px) that turns a tap into a camera drag; finger jitter must still count as a tap. */
 const DRAG_THRESHOLD_PX = 10;
 const VIEW_KEY = 'xadrez.board3d_view';
@@ -116,6 +116,9 @@ function PieceMesh({
     start: -1,
     walking: false,
   });
+  // Fixed mount position: a position prop that follows piece.square would teleport the piece
+  // to its destination on re-render, before useFrame could walk it there.
+  const [home] = useState<[number, number, number]>(() => [tx, 0, tz]);
   const reduced = prefersReducedMotion();
   const geometry = useMemo(() => pieceGeometry(piece.type), [piece.type]);
   const white = piece.color === 'w';
@@ -167,14 +170,16 @@ function PieceMesh({
       const duration = a.walking ? segments * WALK_STEP_SECONDS : MOVE_SECONDS;
       const raw = reduced ? 1 : (now - a.start) / duration;
       const k = Math.min(Math.max(raw, 0), 1);
-      // Walking: one small hop per square; otherwise a single eased arc.
-      const s = Math.min(Math.floor(k * segments), segments - 1);
-      const local = a.walking ? k * segments - s : ease(k);
+      // Walking: glides along the path (eased start/stop) with a light step on each square;
+      // otherwise a single eased arc.
+      const along = a.walking ? ease(k) * segments : ease(k);
+      const s = a.walking ? Math.min(Math.floor(along), segments - 1) : 0;
+      const local = along - s;
       const p = a.points[s]!;
       const q = a.points[s + 1]!;
       x = p[0] + (q[0] - p[0]) * local;
       z = p[1] + (q[1] - p[1]) * local;
-      const hop = a.walking ? 0.35 : piece.type === 'n' ? 1.5 : 0.7;
+      const hop = a.walking ? 0.1 : piece.type === 'n' ? 1.5 : 0.7;
       y = Math.sin(Math.PI * (a.walking ? local : k)) * hop;
       // Landing squash gives the capture a visible "thud".
       const squash = k > 0.85 && k < 1 ? 1 - Math.sin(((k - 0.85) / 0.15) * Math.PI) * 0.08 : 1;
@@ -188,7 +193,7 @@ function PieceMesh({
   });
 
   return (
-    <group position={[tx, 0, tz]} ref={group} rotation={[0, white ? Math.PI / 2 : -Math.PI / 2, 0]}>
+    <group position={home} ref={group} rotation={[0, white ? Math.PI / 2 : -Math.PI / 2, 0]}>
       <mesh castShadow geometry={geometry} receiveShadow>
         <meshStandardMaterial
           color={white ? '#f1e7d0' : '#5a5e72'}
