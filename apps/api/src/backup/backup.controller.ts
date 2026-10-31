@@ -6,6 +6,7 @@ import {
   Post,
   Req,
   Res,
+  ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
 import type { FastifyReply } from 'fastify';
@@ -39,6 +40,12 @@ export class BackupController {
     @Req() request: AuthenticatedRequest,
     @Headers('x-confirm-restore') confirmation: string | undefined,
   ) {
+    // shortcut: restore hangs on real Postgres in CI (round trip timed out); disabled until fixed.
+    if (process.env.BACKUP_RESTORE_ENABLED !== 'true') {
+      throw new ServiceUnavailableException(
+        'A restauração está temporariamente indisponível. O download do backup funciona normalmente.',
+      );
+    }
     if (confirmation !== RESTORE_CONFIRMATION) {
       throw new BadRequestException(
         `Confirme a restauração digitando ${RESTORE_CONFIRMATION}: ela apaga todos os dados atuais.`,

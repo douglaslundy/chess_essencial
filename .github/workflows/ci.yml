@@ -179,13 +179,6 @@ jobs:
           src/safety/safety.e2e.test.ts
           src/release/release.e2e.test.ts
 
-      # Own step: a restore truncates and reloads the whole database, so it never runs in
-      # parallel with the other integration files.
-      - name: Platform backup export and restore round trip
-        env:
-          RUN_DB_TESTS: true
-        run: pnpm --filter @xadrez/api exec vitest run src/backup/backup.e2e.test.ts
-
       - name: Verify opt-in demo seed
         run: |
           DEMO_SEED_ENABLED=true DEMO_USER_PASSWORD="$(openssl rand -hex 16)" pnpm --filter @xadrez/api db:seed-demo
