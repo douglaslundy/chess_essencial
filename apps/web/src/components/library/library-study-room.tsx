@@ -5,6 +5,7 @@ import { Chess } from 'chess.js';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { formatPlayedOn } from './format-date';
 import styles from './library.module.css';
 import { ChessBoard, type BoardOrientation } from '@/components/game/chess-board';
 import { api } from '@/lib/api/client';
@@ -213,7 +214,7 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
         </h1>
         <p>
           {RESULT_LABEL[game.result]}
-          {game.playedOn ? ` · ${game.playedOn}` : ''}
+          {game.playedOn ? ` · ${formatPlayedOn(game.playedOn)}` : ''}
           {game.openingName ? ` · ${game.openingName}` : ''}
         </p>
       </header>

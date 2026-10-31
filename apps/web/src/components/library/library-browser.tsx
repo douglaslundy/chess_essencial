@@ -4,6 +4,7 @@ import type { LibraryFacets, LibraryGameSummary } from '@xadrez/contracts';
 import Link from 'next/link';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
+import { formatPlayedOn } from './format-date';
 import styles from './library.module.css';
 import { api } from '@/lib/api/client';
 
@@ -172,7 +173,7 @@ export function LibraryBrowser() {
               <span className={styles.meta}>
                 <span>{RESULT_LABEL[game.result]}</span>
                 {game.event ? <span>{game.event}</span> : null}
-                {game.playedOn ? <span>{game.playedOn}</span> : null}
+                {game.playedOn ? <span>{formatPlayedOn(game.playedOn)}</span> : null}
                 {game.openingName ? <span>{game.openingName}</span> : null}
                 {game.eco ? <span>ECO {game.eco}</span> : null}
                 <span>{Math.ceil(game.plyCount / 2)} lances</span>

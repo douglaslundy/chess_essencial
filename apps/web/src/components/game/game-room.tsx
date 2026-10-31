@@ -3,7 +3,7 @@
 import type { MoveQualityResult } from '@xadrez/chess-domain';
 import type { GameMove, GameState } from '@xadrez/contracts';
 import { Chess, type PieceSymbol, type Square } from 'chess.js';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ChessBoard, type BoardOrientation } from './chess-board';
 import { GameResultDialog, type GameResult } from './game-result-dialog';
@@ -427,6 +427,17 @@ export function GameRoom({ gameId }: { gameId: string }) {
   // that's current when it arrives - otherwise the game has already moved
   // on and the reply is stale, so it's silently dropped.
   const narrationGenerationRef = useRef(0);
+  // The AI voice can fail (no OpenAI key, quota, autoplay block); the browser voice keeps
+  // the Treinador audible instead of silently showing only text.
+  const speakCoach = useCallback(
+    (text: string) => {
+      speak(text, { voiceName }).catch(() => {
+        setMessage('A voz por IA falhou; o Treinador está usando a voz do navegador.');
+        void speak(text).catch(() => undefined);
+      });
+    },
+    [voiceName],
+  );
 
   useEffect(() => {
     if (!coachEnabled) narrationGenerationRef.current += 1;
@@ -437,11 +448,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
     const spokenText = formatCoachExplanation(state.currentFen, coachSuggestion);
     if (!spokenText) return;
     queueMicrotask(() => setCoachLine({ fen: state.currentFen, text: spokenText }));
-    void speak(speakableSquares(spokenText), { voiceName }).catch((error: unknown) =>
-      setMessage(
-        error instanceof Error ? error.message : 'Não foi possível reproduzir a voz do Treinador.',
-      ),
-    );
+    speakCoach(speakableSquares(spokenText));
 
     // AI narration enriches the instant template above once it arrives -
     // never blocks or delays it. Skipped in demo mode (no real game row on
@@ -460,27 +467,17 @@ export function GameRoom({ gameId }: { gameId: string }) {
       .then((result) => {
         if (!result.narrative || narrationGenerationRef.current !== generation) return;
         setCoachLine({ fen: state.currentFen, text: result.narrative });
-        void speak(speakableSquares(result.narrative), { voiceName }).catch((error: unknown) =>
-          setMessage(
-            error instanceof Error
-              ? error.message
-              : 'Não foi possível reproduzir a voz do Treinador.',
-          ),
-        );
+        speakCoach(speakableSquares(result.narrative));
       })
       .catch(() => undefined);
-  }, [coachSuggestion, gameId, isDemo, muted, state.currentFen, voiceName]);
+  }, [coachSuggestion, gameId, isDemo, muted, speakCoach, state.currentFen]);
 
   useEffect(() => {
     if (muted || !pendingCoachMove) return;
     const { quality, uci } = pendingCoachMove;
     const spokenText = `Atenção: eu acho que esse lance é ${moveQualityLabel[quality.quality].toLowerCase()}, com perda de ${quality.centipawnLoss} centipawns.${quality.missedWin ? ' Havia uma posição melhor.' : ''}`;
     queueMicrotask(() => setCoachLine({ fen: state.currentFen, text: spokenText }));
-    void speak(spokenText, { voiceName }).catch((error: unknown) =>
-      setMessage(
-        error instanceof Error ? error.message : 'Não foi possível reproduzir a voz do Treinador.',
-      ),
-    );
+    speakCoach(spokenText);
 
     if (isDemo) return;
     const generation = ++narrationGenerationRef.current;
@@ -502,16 +499,10 @@ export function GameRoom({ gameId }: { gameId: string }) {
       .then((result) => {
         if (!result.narrative || narrationGenerationRef.current !== generation) return;
         setCoachLine({ fen: state.currentFen, text: result.narrative });
-        void speak(speakableSquares(result.narrative), { voiceName }).catch((error: unknown) =>
-          setMessage(
-            error instanceof Error
-              ? error.message
-              : 'Não foi possível reproduzir a voz do Treinador.',
-          ),
-        );
+        speakCoach(speakableSquares(result.narrative));
       })
       .catch(() => undefined);
-  }, [coachSuggestion, gameId, isDemo, muted, pendingCoachMove, state.currentFen, voiceName]);
+  }, [coachSuggestion, gameId, isDemo, muted, pendingCoachMove, speakCoach, state.currentFen]);
 
   const groupedMoves = useMemo(() => {
     const rows: Array<{ number: number; white?: GameMove; black?: GameMove }> = [];
@@ -709,30 +700,17 @@ export function GameRoom({ gameId }: { gameId: string }) {
       </aside>
 
       <section className="boardColumn" aria-label="Área do tabuleiro">
-        {isDemo && assistedGameAvailable ? (
-          <div className="assistedGameBar" role="region" aria-label="Partida assistida">
-            {assistedColor === null ? (
-              <>
-                <span>Partida assistida: escolha sua cor para receber sugestões do Treinador.</span>
-                <button onClick={() => setAssistedColor('white')} type="button">
-                  Jogar de brancas
-                </button>
-                <button onClick={() => setAssistedColor('black')} type="button">
-                  Jogar de pretas
-                </button>
-              </>
-            ) : (
-              <>
-                <span>
-                  Partida assistida ativa: sugestões do Treinador para as{' '}
-                  {assistedColor === 'white' ? 'brancas' : 'pretas'}.
-                </span>
-                <button onClick={() => setAssistedColor(null)} type="button">
-                  Encerrar partida assistida
-                </button>
-              </>
-            )}
-          </div>
+        {coachEnabled ? (
+          <CoachCallout
+            message={
+              coachLine?.fen === state.currentFen
+                ? coachLine.text
+                : coachSuggestion
+                  ? (formatCoachExplanation(state.currentFen, coachSuggestion) ??
+                    'Estou analisando esta posição…')
+                  : 'Estou analisando esta posição…'
+            }
+          />
         ) : null}
         <div className="mobilePlayer">
           <Player
@@ -825,6 +803,54 @@ export function GameRoom({ gameId }: { gameId: string }) {
             >
               ↻
             </button>
+            {isDemo && assistedGameAvailable ? (
+              assistedColor === null ? (
+                <>
+                  <button
+                    aria-label="Partida assistida jogando de brancas"
+                    onClick={() => setAssistedColor('white')}
+                    title="Partida assistida: o Treinador ajuda as brancas"
+                    type="button"
+                  >
+                    🎓♙
+                  </button>
+                  <button
+                    aria-label="Partida assistida jogando de pretas"
+                    onClick={() => setAssistedColor('black')}
+                    title="Partida assistida: o Treinador ajuda as pretas"
+                    type="button"
+                  >
+                    🎓♟
+                  </button>
+                </>
+              ) : (
+                <button
+                  aria-label="Encerrar partida assistida"
+                  onClick={() => setAssistedColor(null)}
+                  title="Encerrar partida assistida"
+                  type="button"
+                >
+                  🎓✕
+                </button>
+              )
+            ) : null}
+            {isDemo ? (
+              <button
+                aria-label={
+                  muted ? 'Ligar som e voz do Treinador' : 'Desligar som e voz do Treinador'
+                }
+                aria-pressed={!muted}
+                onClick={() => {
+                  const next = !muted;
+                  setMuted(next);
+                  setSoundMuted(next);
+                }}
+                title={muted ? 'Som desligado' : 'Som ligado'}
+                type="button"
+              >
+                {muted ? '🔇' : '🔊'}
+              </button>
+            ) : null}
             <button
               aria-label={stageFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
               aria-pressed={stageFullscreen}
@@ -871,18 +897,6 @@ export function GameRoom({ gameId }: { gameId: string }) {
           />
         </div>
         <MoveAnnouncement announcement={announcement} />
-        {coachEnabled ? (
-          <CoachCallout
-            message={
-              coachLine?.fen === state.currentFen
-                ? coachLine.text
-                : coachSuggestion
-                  ? (formatCoachExplanation(state.currentFen, coachSuggestion) ??
-                    'Estou analisando esta posição…')
-                  : 'Estou analisando esta posição…'
-            }
-          />
-        ) : null}
         <p className="gameMessage" role="status">
           {message}
         </p>
