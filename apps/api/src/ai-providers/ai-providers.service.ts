@@ -444,23 +444,32 @@ export class AiProvidersService implements OnModuleInit, OnModuleDestroy {
     );
   }
 
-  /** Single writer of the rotating refresh token: only the API renews; the worker just reads. */
+  /**
+   * Renews the access token ahead of time. The worker renews too when it finds it expired; both
+   * take the same database lock, so the rotating refresh token is never used twice.
+   */
   async refreshChatgptIfNeeded(): Promise<void> {
-    const row = await this.repository.getChatgptOAuth();
-    if (!row?.encryptedRefreshToken || !row.oauthClientId) return;
-    const expiresAt = row.accessTokenExpiresAt?.getTime() ?? 0;
-    if (expiresAt - Date.now() > CHATGPT_REFRESH_MARGIN_MS) return;
-    try {
-      await this.storeChatgptTokens(
-        await refreshTokens(
-          row.oauthClientId,
-          decryptSecret(row.encryptedRefreshToken, this.encryptionKey()),
-        ),
-      );
-    } catch (error) {
-      if (error instanceof Error) await this.repository.recordChatgptError(error.message);
-      throw error;
-    }
+    const peek = await this.repository.getChatgptOAuth();
+    if (!peek?.encryptedRefreshToken || !peek.oauthClientId) return;
+    if ((peek.accessTokenExpiresAt?.getTime() ?? 0) - Date.now() > CHATGPT_REFRESH_MARGIN_MS)
+      return;
+    await this.repository.withChatgptRefreshLock(async (row) => {
+      // Re-checked under the lock: the worker may have just renewed it.
+      if (!row?.encryptedRefreshToken || !row.oauthClientId) return;
+      const expiresAt = row.accessTokenExpiresAt?.getTime() ?? 0;
+      if (expiresAt - Date.now() > CHATGPT_REFRESH_MARGIN_MS) return;
+      try {
+        await this.storeChatgptTokens(
+          await refreshTokens(
+            row.oauthClientId,
+            decryptSecret(row.encryptedRefreshToken, this.encryptionKey()),
+          ),
+        );
+      } catch (error) {
+        if (error instanceof Error) await this.repository.recordChatgptError(error.message);
+        throw error;
+      }
+    });
   }
 
   private async storeChatgptTokens(tokens: ChatgptTokens): Promise<void> {

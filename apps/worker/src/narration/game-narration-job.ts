@@ -5,6 +5,7 @@ import type { Sql } from 'postgres';
 
 import { recordGameNarration } from '../analysis/analysis-metrics.js';
 import { decryptSecret } from '../config/secret-cipher.js';
+import { freshChatgptAccessToken } from './chatgpt-token.js';
 import { callLlm, type LlmConfig } from './llm-client.js';
 import {
   buildGameSummaryPrompt,
@@ -116,7 +117,11 @@ async function resolveNarrationAiConfig(
   `;
   if (!row?.encryptedApiKey || !row.model) return null;
   return {
-    apiKey: decryptSecret(row.encryptedApiKey, encryptionKey),
+    apiKey:
+      row.provider === 'chatgpt'
+        ? ((await freshChatgptAccessToken(sql, encryptionKey)) ??
+          decryptSecret(row.encryptedApiKey, encryptionKey))
+        : decryptSecret(row.encryptedApiKey, encryptionKey),
     model: row.model,
     provider: row.provider,
   };

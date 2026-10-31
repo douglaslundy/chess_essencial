@@ -57,6 +57,24 @@ export class AiProvidersRepository {
     return row ?? null;
   }
 
+  /**
+   * Runs a token renewal holding the lock the worker also takes: OpenAI rotates the refresh token
+   * on every use, so two concurrent renewals would leave one side with a revoked token. `run`
+   * gets the row re-read under the lock.
+   */
+  async withChatgptRefreshLock(run: (row: ChatgptOAuthRow | null) => Promise<void>): Promise<void> {
+    await this.database.client.begin(async (tx) => {
+      await tx`SELECT pg_advisory_xact_lock(hashtext('xadrez.chatgpt_oauth_refresh'))`;
+      const [row] = await tx<ChatgptOAuthRow[]>`
+        SELECT oauth_client_id AS "oauthClientId", encrypted_refresh_token AS "encryptedRefreshToken",
+          access_token_expires_at AS "accessTokenExpiresAt", encrypted_oauth_pending AS "encryptedOauthPending",
+          model
+        FROM ai_provider_keys WHERE provider = 'chatgpt'
+      `;
+      await run(row ?? null);
+    });
+  }
+
   /** Saves the in-flight PKCE state (and the client id) when the admin clicks "Conectar". */
   async saveChatgptPending(clientId: string, encryptedPending: string): Promise<void> {
     await this.database.client`
