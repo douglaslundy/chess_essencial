@@ -8,7 +8,8 @@ import { BackupService } from './backup.service.js';
 const describeDatabase = process.env.RUN_DB_TESTS === 'true' ? describe : describe.skip;
 
 // Runs on its own CI step: a restore truncates and reloads the whole database.
-describeDatabase('platform backup round trip', () => {
+// The CI database carries the full seed (30k library games, exercises…): allow real time.
+describeDatabase('platform backup round trip', { timeout: 120_000 }, () => {
   let sql: ReturnType<typeof postgres>;
   let service: BackupService;
 
