@@ -4,6 +4,8 @@ import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   CanvasTexture,
+  CylinderGeometry,
+  PlaneGeometry,
   Quaternion,
   RepeatWrapping,
   SRGBColorSpace,
@@ -85,27 +87,103 @@ function texture(url: string, onReady: () => void) {
   return entry.map;
 }
 
+/**
+ * Where the carved pedestal ends in each photo (fraction of the photo height) and its width
+ * (fraction of the photo height). The pedestal is rebuilt as a real cylinder wrapped in the photo's
+ * own gothic band, so the piece stands on its square; the photo shows only the figure above it.
+ */
+const PEDESTAL: Record<Kind, { cut: number; width: number }> = {
+  b: { cut: 0.18, width: 0.359 },
+  k: { cut: 0.19, width: 0.363 },
+  n: { cut: 0.2, width: 0.424 },
+  p: { cut: 0.21, width: 0.48 },
+  q: { cut: 0.19, width: 0.373 },
+  r: { cut: 0.21, width: 0.494 },
+};
+
 const worldPos = new Vector3();
+const cameraDir = new Vector3();
 const parentQuat = new Quaternion();
 const yawQuat = new Quaternion();
 const UP = new Vector3(0, 1, 0);
 
+/** Plane showing only the photo above the pedestal (v from `cut` to 1). */
+function figureGeometry(width: number, height: number, cut: number) {
+  const geometry = new PlaneGeometry(width, height);
+  const uv = geometry.attributes.uv!;
+  for (let i = 0; i < uv.count; i += 1) uv.setY(i, cut + uv.getY(i) * (1 - cut));
+  return geometry;
+}
+
 /**
- * A carved statue: the photo of the angle nearest to the camera, standing upright and turned to
- * face the camera (around the vertical axis only, so it stays planted on its square).
+ * Pedestal side: the front photo's pedestal band wrapped around the cylinder, mirrored on the back
+ * half so the gothic arches run all the way round.
+ */
+function pedestalGeometry(radius: number, height: number, cut: number, bandWidth: number) {
+  const geometry = new CylinderGeometry(radius * 0.94, radius, height, 48, 1, true);
+  const uv = geometry.attributes.uv!;
+  for (let i = 0; i < uv.count; i += 1) {
+    const around = Math.abs(((uv.getX(i) * 2) % 2) - 1);
+    uv.setXY(i, 0.5 - bandWidth / 2 + around * bandWidth, uv.getY(i) * cut);
+  }
+  return geometry;
+}
+
+let contactShadow: CanvasTexture | null = null;
+/** Soft dark blot under each piece: the cue that makes it rest on the board. */
+function contactShadowTexture() {
+  if (contactShadow || typeof document === 'undefined') return contactShadow;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 128;
+  const ctx = canvas.getContext('2d')!;
+  const gradient = ctx.createRadialGradient(64, 64, 18, 64, 64, 64);
+  gradient.addColorStop(0, 'rgba(0,0,0,0.75)');
+  gradient.addColorStop(0.55, 'rgba(0,0,0,0.35)');
+  gradient.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 128, 128);
+  contactShadow = new CanvasTexture(canvas);
+  return contactShadow;
+}
+
+/**
+ * A carved statue: a real pedestal standing on the square, topped by the photo of the figure
+ * from the angle nearest to the camera. All figures turn with the camera's heading (parallel to
+ * each other, upright), so the set reads as one row of statues instead of cards facing a point.
  */
 export function MedievalStatue({ color, kind }: { color: 'w' | 'b'; kind: Kind }) {
-  const mesh = useRef<Mesh>(null);
+  const figure = useRef<Mesh>(null);
   const views = MEDIEVAL_VIEWS[kind];
   const [angle, setAngle] = useState(() => views[0]!);
   const [, setLoaded] = useState(0);
   const height = MEDIEVAL_HEIGHT[kind];
+  const { cut, width: pedestalWidth } = PEDESTAL[kind];
   const map = useMemo(
     () => texture(medievalViewUrl(color, kind, angle), () => setLoaded((n) => n + 1)),
     [angle, color, kind],
   );
+  const front0 = useMemo(
+    () => texture(medievalViewUrl(color, kind, 0), () => setLoaded((n) => n + 1)),
+    [color, kind],
+  );
   const image = map.image as { width?: number; height?: number } | undefined;
+  const frontImage = front0.image as { width?: number; height?: number } | undefined;
   const width = image?.width && image.height ? (height * image.width) / image.height : height * 0.4;
+  const radius = (pedestalWidth * height) / 2;
+  const pedestalHeight = cut * height;
+  const figureHeight = height - pedestalHeight;
+  const figureGeom = useMemo(
+    () => figureGeometry(width, figureHeight, cut),
+    [cut, figureHeight, width],
+  );
+  const bandWidth =
+    frontImage?.width && frontImage.height
+      ? Math.min(0.92, ((pedestalWidth * frontImage.height) / frontImage.width) * 0.9)
+      : 0.9;
+  const pedestalGeom = useMemo(
+    () => pedestalGeometry(radius, pedestalHeight, cut, bandWidth),
+    [bandWidth, cut, pedestalHeight, radius],
+  );
   // Pieces face the opponent, as on a real board.
   const front = color === 'w' ? -1 : 1;
 
@@ -114,8 +192,16 @@ export function MedievalStatue({ color, kind }: { color: 'w' | 'b'; kind: Kind }
     for (const view of views) texture(medievalViewUrl(color, kind, view), () => undefined);
   }, [color, kind, views]);
 
+  useEffect(
+    () => () => {
+      figureGeom.dispose();
+      pedestalGeom.dispose();
+    },
+    [figureGeom, pedestalGeom],
+  );
+
   useFrame(({ camera }) => {
-    const node = mesh.current;
+    const node = figure.current;
     if (!node?.parent) return;
     node.parent.getWorldPosition(worldPos);
     const dx = camera.position.x - worldPos.x;
@@ -124,16 +210,36 @@ export function MedievalStatue({ color, kind }: { color: 'w' | 'b'; kind: Kind }
     const degrees = (Math.atan2(-front * dx, front * dz) * 180) / Math.PI;
     const next = nearestView(views, (degrees + 360) % 360, angle);
     if (next !== angle) setAngle(next);
+    camera.getWorldDirection(cameraDir);
     node.parent.getWorldQuaternion(parentQuat);
-    yawQuat.setFromAxisAngle(UP, Math.atan2(dx, dz));
+    yawQuat.setFromAxisAngle(UP, Math.atan2(-cameraDir.x, -cameraDir.z));
     node.quaternion.copy(parentQuat.invert().multiply(yawQuat));
   });
 
+  const ready = Boolean(image?.width && frontImage?.width);
+  const stone = color === 'w' ? '#e4dccb' : '#26262a';
   return (
-    <mesh castShadow position={[0, height / 2, 0]} ref={mesh} visible={Boolean(image?.width)}>
-      <planeGeometry args={[width, height]} />
-      <meshBasicMaterial alphaTest={0.5} alphaToCoverage map={map} toneMapped={false} />
-    </mesh>
+    <group visible={ready}>
+      <mesh position={[0, 0.004, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[radius * 1.35, 32]} />
+        <meshBasicMaterial depthWrite={false} map={contactShadowTexture()} transparent />
+      </mesh>
+      <mesh castShadow geometry={pedestalGeom} position={[0, pedestalHeight / 2, 0]} receiveShadow>
+        <meshStandardMaterial map={front0} roughness={color === 'w' ? 0.6 : 0.35} />
+      </mesh>
+      <mesh position={[0, pedestalHeight, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[radius * 0.94, 48]} />
+        <meshStandardMaterial color={stone} roughness={0.75} />
+      </mesh>
+      <mesh
+        castShadow
+        geometry={figureGeom}
+        position={[0, pedestalHeight + figureHeight / 2, 0]}
+        ref={figure}
+      >
+        <meshBasicMaterial alphaTest={0.5} alphaToCoverage map={map} toneMapped={false} />
+      </mesh>
+    </group>
   );
 }
 
