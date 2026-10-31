@@ -279,3 +279,27 @@
   gap: 1rem;
   padding: 0.4rem 0;
 }
+
+/* Provedor de IA ativo, sempre visível no topo da página de administração. */
+.activeBanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.75rem;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--success, #2f9e5b);
+  border-radius: 12px;
+  background: rgb(47 158 91 / 0.12);
+}
+.activeBanner span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.activeBanner strong {
+  font-size: 1.1rem;
+}
+.activeBannerNone {
+  border-color: var(--warning, #d39b22);
+  background: rgb(211 155 34 / 0.12);
+}

@@ -78,6 +78,15 @@ async function callAnthropic(
   }, options.timeoutMs);
 }
 
+/**
+ * OpenAI renamed the output cap to max_completion_tokens (newer models reject max_tokens).
+ * Reasoning models (o-series, gpt-5) also spend that budget thinking before they answer,
+ * so they get headroom or the reply can come back empty.
+ */
+export function openAiTokenBudget(model: string, maxTokens: number) {
+  return /^(o\d|gpt-5)/i.test(model) ? maxTokens + 4000 : maxTokens;
+}
+
 async function callOpenAi(
   config: LlmConfig,
   system: string,
@@ -88,7 +97,7 @@ async function callOpenAi(
   return withTimeout(async (signal) => {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       body: JSON.stringify({
-        max_tokens: maxTokens,
+        max_completion_tokens: openAiTokenBudget(config.model, maxTokens),
         messages: [
           { content: system, role: 'system' },
           { content: userMessage, role: 'user' },

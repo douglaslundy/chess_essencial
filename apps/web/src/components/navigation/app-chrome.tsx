@@ -22,7 +22,7 @@ const navigation = [
   { href: '/app/feed', label: 'Feed', requiresFeature: 'social_access' },
   { href: '/app/planos', label: 'Planos' },
   { href: '/app/partida/demo', label: 'Tabuleiro demonstrativo' },
-  { href: '/regras', label: 'Regras da comunidade' },
+  { href: '/app/regras', label: 'Regras da comunidade' },
 ] as const;
 
 const HEARTBEAT_INTERVAL_MS = 30_000;
@@ -90,7 +90,7 @@ export function AppChrome({ children }: { children: ReactNode }) {
   return (
     <div className={`appShell ${sidebarCollapsed ? 'sidebarCollapsed' : ''}`}>
       <aside className={`appSidebar ${menuOpen ? 'mobileSidebarOpen' : ''}`} id="app-navigation">
-        <Link className="sidebarBrand" href="/">
+        <Link className="sidebarBrand" href="/app">
           <span>XE</span>
           <strong>Xadrez Essencial</strong>
         </Link>
@@ -153,7 +153,7 @@ export function AppChrome({ children }: { children: ReactNode }) {
           >
             <span aria-hidden="true">{sidebarCollapsed ? '»' : '«'}</span>
           </button>
-          <Link className="mobileBrand" href="/">
+          <Link className="mobileBrand" href="/app">
             XE
           </Link>
           <span>Plataforma de jogo</span>

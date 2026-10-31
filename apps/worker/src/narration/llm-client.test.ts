@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { callLlm, LlmRequestError } from './llm-client.js';
+import { callLlm, LlmRequestError, openAiTokenBudget } from './llm-client.js';
 
 const originalFetch = global.fetch;
 
@@ -135,5 +135,28 @@ describe('callLlm', () => {
         'user',
       ),
     ).rejects.toThrow(LlmRequestError);
+  });
+});
+
+describe('openai output cap', () => {
+  it('sends max_completion_tokens (newer models reject max_tokens)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve({ choices: [{ message: { content: 'Ok.' } }] }),
+      ok: true,
+    });
+    global.fetch = fetchMock as never;
+
+    await callLlm({ apiKey: 'sk-test', model: 'gpt-4o-mini', provider: 'openai' }, 's', 'u');
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(init.body as string) as Record<string, unknown>;
+    expect(body).not.toHaveProperty('max_tokens');
+    expect(body.max_completion_tokens).toBeGreaterThan(0);
+  });
+
+  it('gives reasoning models headroom for their thinking tokens', () => {
+    expect(openAiTokenBudget('gpt-4o-mini', 300)).toBe(300);
+    expect(openAiTokenBudget('gpt-5.5-pro', 300)).toBe(4300);
+    expect(openAiTokenBudget('o4-mini', 300)).toBe(4300);
   });
 });

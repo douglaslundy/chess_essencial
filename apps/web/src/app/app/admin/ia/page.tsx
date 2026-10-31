@@ -66,6 +66,8 @@ export default function AdminAiProvidersPage() {
         };
         for (const entry of list) next[entry.provider] = entry;
         setProviders(next);
+        const active = list.find((entry) => entry.isActive);
+        if (active) setSelectedProvider(active.provider);
         setLoadMessage('');
         setCards((current) => {
           const updated = { ...current };
@@ -181,6 +183,7 @@ export default function AdminAiProvidersPage() {
   }
 
   const current = providers[selectedProvider];
+  const activeProvider = PROVIDERS.find((provider) => providers[provider]?.isActive) ?? null;
   const card = cards[selectedProvider];
 
   return (
@@ -198,6 +201,26 @@ export default function AdminAiProvidersPage() {
       <p className={styles.status} role="status">
         {loadMessage}
       </p>
+      {loadMessage ? null : (
+        <p
+          className={`${styles.activeBanner} ${activeProvider ? '' : styles.activeBannerNone}`}
+          role="status"
+        >
+          {activeProvider ? (
+            <>
+              <span>Provedor ativo</span>
+              <strong>{PROVIDER_LABELS[activeProvider]}</strong>
+              <span>modelo {providers[activeProvider]?.model}</span>
+            </>
+          ) : (
+            <>
+              <span>Provedor ativo</span>
+              <strong>Nenhum</strong>
+              <span>a IA está desligada na plataforma</span>
+            </>
+          )}
+        </p>
+      )}
       <div className={styles.inlineFieldRow}>
         <label className={styles.field}>
           Qual IA deseja configurar?

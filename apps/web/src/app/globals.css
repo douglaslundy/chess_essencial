@@ -4348,3 +4348,10 @@ textarea::placeholder {
     backdrop-filter: blur(4px);
   }
 }
+
+/* Regras dentro da plataforma (com o menu lateral). */
+.appRulesPage {
+  min-height: 0;
+  grid-template-rows: none;
+  padding: 1rem var(--page-padding, 1rem) 2rem;
+}
