@@ -442,7 +442,8 @@
 
 /* No computador o tabuleiro do desafio acompanha a altura da tela (com o menu recolhido, a largura toda). */
 @media (min-width: 1101px) {
-  .boardArea {
+  .boardArea,
+  .guidedTraining .boardArea {
     --board-max: calc(100dvh - 8.5rem);
     --board-cap: 60rem;
     width: min(100%, var(--board-max), var(--board-cap));
