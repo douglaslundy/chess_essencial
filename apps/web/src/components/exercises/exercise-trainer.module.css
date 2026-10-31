@@ -533,4 +533,38 @@
   .guidedPage > .boardArea :global(.boardWithCoordinates) {
     width: min(100%, var(--board-max));
   }
+  /* 3D: câmera e histórico do exercício na mesma linha (câmera à esquerda do centro, histórico à
+     direita); o quadro 3D fica com a altura da linha que sobrou. */
+  .guidedPage > .boardArea:not(:global(.isFullscreen)):has(:global(.board3d)) {
+    --board3d-height: calc(100cqh - 3rem);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 0.4rem;
+  }
+  .guidedPage > .boardArea:not(:global(.isFullscreen)):has(:global(.board3d)) > * {
+    grid-column: 1 / -1;
+  }
+  .guidedPage > .boardArea:not(:global(.isFullscreen)) > :global(.board3d) {
+    display: contents;
+  }
+  .guidedPage > .boardArea:not(:global(.isFullscreen)) :global(.board3dViewport) {
+    grid-column: 1 / -1;
+  }
+  .guidedPage > .boardArea:not(:global(.isFullscreen)) :global(.board3dCamera) {
+    grid-column: 1;
+    justify-self: end;
+    flex-wrap: nowrap;
+  }
+  .guidedPage > .boardArea:not(:global(.isFullscreen)):has(:global(.board3d)) > .boardControls {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+    align-self: center;
+    flex-wrap: nowrap;
+    gap: 0.3rem;
+  }
+  .guidedPage > .boardArea:has(:global(.board3d)) > .boardControls button {
+    min-height: 2rem;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.78rem;
+  }
 }
