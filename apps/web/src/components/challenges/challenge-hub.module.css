@@ -2,3 +2,10 @@
   min-width: 0;
   padding: var(--page-padding);
 }
+
+/* No computador o treino já tem o próprio espaçamento; o tabuleiro ganha a altura. */
+@media (min-width: 1101px) {
+  .page {
+    padding: 0;
+  }
+}

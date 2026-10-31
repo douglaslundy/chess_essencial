@@ -442,13 +442,59 @@
 
 /* No computador o tabuleiro do desafio acompanha a altura da tela (com o menu recolhido, a largura toda). */
 @media (min-width: 1101px) {
-  .boardArea,
-  .guidedTraining .boardArea {
+  .boardArea {
     --board-max: calc(100dvh - 8.5rem);
     --board-cap: 60rem;
     width: min(100%, var(--board-max), var(--board-cap));
   }
   .boardArea :global(.boardWithCoordinates) {
     width: 100%;
+  }
+
+  /* Desafios no computador: textos numa coluna estreita à esquerda, tabuleiro com todo o resto.
+     O cartão do exercício some (display: contents) e seus itens entram direto na grade da página. */
+  .guidedPage {
+    grid-template-columns: minmax(15rem, 21rem) minmax(0, 1fr);
+    /* As linhas automáticas recebem os textos; a última (1fr) absorve a altura do tabuleiro. */
+    grid-template-rows: repeat(16, auto) 1fr;
+    column-gap: 1.25rem;
+    row-gap: 0;
+    align-items: start;
+    min-height: 0;
+    padding: 0.75rem 1rem;
+  }
+  .guidedPage > *,
+  .guidedTraining > * {
+    grid-column: 1;
+    margin: 0 0 0.55rem;
+  }
+  .guidedPage .heading,
+  .guidedTraining {
+    text-align: left;
+  }
+  .guidedPage .heading p {
+    margin: 0.25rem 0 0;
+  }
+  .guidedPage .themeFilter {
+    justify-self: stretch;
+  }
+  .guidedTraining {
+    display: contents;
+  }
+  /* Fora da tela cheia, que tem as próprias medidas. */
+  .guidedTraining .boardArea:not(:global(.isFullscreen)) {
+    --board-max: calc(100dvh - 9.5rem);
+    --board-cap: 200rem;
+    --board3d-width: 100%;
+    --board3d-height: calc(100dvh - 11.5rem);
+    --board3d-aspect: auto;
+    grid-column: 2;
+    grid-row: 1 / -1;
+    width: 100%;
+    margin: 0;
+    gap: 0.5rem;
+  }
+  .guidedTraining .boardArea :global(.boardWithCoordinates) {
+    width: min(100%, var(--board-max));
   }
 }
