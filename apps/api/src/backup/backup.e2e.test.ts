@@ -37,7 +37,8 @@ describeDatabase('platform backup round trip', { timeout: 120_000 }, () => {
     `;
     const backup = await exportToBuffer();
 
-    await sql`DELETE FROM exercises WHERE id IN (SELECT id FROM exercises LIMIT 5)`;
+    // Something written after the backup must be gone once it is restored.
+    await sql`INSERT INTO platform_settings (key, value) VALUES ('backup.e2e.marker', '{}')`;
     const report = await service.restore(
       Readable.from(backup),
       '00000000-0000-4000-8000-000000000000',
@@ -49,6 +50,8 @@ describeDatabase('platform backup round trip', { timeout: 120_000 }, () => {
         (SELECT count(*)::integer FROM exercises) AS exercises
     `;
     expect(after).toEqual(before);
+    const marker = await sql`SELECT 1 FROM platform_settings WHERE key = 'backup.e2e.marker'`;
+    expect(marker).toHaveLength(0);
     expect(report.tables).toBeGreaterThan(10);
     expect(report.rows).toBeGreaterThan(0);
   });
