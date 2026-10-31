@@ -8,3 +8,6 @@ coverage
 .env
 .env.*
 *.log
+# Deploy runtime state (log written during the build, DB backups): changes every run and
+# would bust the build cache, forcing three full monorepo builds per deploy.
+.deploy

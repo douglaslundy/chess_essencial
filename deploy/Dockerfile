@@ -13,7 +13,8 @@ ARG NEXT_PUBLIC_API_URL=http://localhost:4000/v1
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 RUN pnpm install --frozen-lockfile
-RUN pnpm exec turbo run build --concurrency=2
+# One task at a time: the shared VPS has little free RAM and parallel builds were OOM-killed.
+RUN pnpm exec turbo run build --concurrency=1
 
 FROM node:24.14.1-bookworm-slim AS runtime-base
 
