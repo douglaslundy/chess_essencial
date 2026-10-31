@@ -150,11 +150,10 @@ jobs:
 
       - name: Apply clean migrations and seed
         run: |
-          pnpm content:validate
+          pnpm content:validate:exercises
           pnpm --filter @xadrez/api db:migrate
           pnpm --filter @xadrez/api db:seed
           pnpm --filter @xadrez/api db:import-exercises database/content/Xadrez_Essencial_Exercicios_1_a_1298.json --strict
-          pnpm --filter @xadrez/api db:import-lessons database/content/Xadrez_Essencial_Aulas_1_a_119.json --strict --publish
           pnpm --filter @xadrez/api db:import-library database/content/library/games.jsonl.gz
           pnpm --filter @xadrez/api db:seed-learning-path
           pnpm --filter @xadrez/api db:audit-learning-path

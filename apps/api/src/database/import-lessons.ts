@@ -13,8 +13,7 @@ const strict = args.includes('--strict');
 const repositoryRoot = fileURLToPath(new URL('../../../../', import.meta.url));
 const sourcePath = resolve(
   repositoryRoot,
-  args.find((argument) => !argument.startsWith('--')) ??
-    'database/content/Xadrez_Essencial_Aulas_1_a_119.json',
+  args.find((argument) => !argument.startsWith('--')) ?? '',
 );
 const raw = await readFile(sourcePath, 'utf8');
 const dataset = normalizeLessonDataset(JSON.parse(raw) as unknown, basename(sourcePath));

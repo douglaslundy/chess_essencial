@@ -89,6 +89,8 @@ procedure.
 
 ## Lesson source and canonical dataset
 
+> **Removed from deploy (2026-10-31):** the book lesson dataset (`Xadrez_Essencial_Aulas_1_a_119.json`) was deleted from the repository and is no longer imported by `deploy/remote-deploy.sh` or CI. The importer (`db:import-lessons <file>`) remains as a generic tool and now requires an explicit file path. The description below is historical.
+
 The provided `Xadrez_Essencial_Volumes_1_a_10.pdf` has 476 pages and SHA-256
 `5c04386a52193fb6f89b969731f307ac30c3ef08dd7ea9ebfec7a400e4c9662b`. Text extraction
 and volume boundaries were verified for all ten volumes. The deployable lesson dataset lives
