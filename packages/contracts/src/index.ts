@@ -378,3 +378,20 @@ export {
   type LearningWorldSummary,
   type StartLearningStageResult,
 } from './learning-path.js';
+export {
+  libraryFacetsSchema,
+  libraryGameSchema,
+  libraryGameSummarySchema,
+  libraryResultSchema,
+  libraryReviewEntrySchema,
+  libraryReviewSchema,
+  librarySearchQuerySchema,
+  librarySearchResultSchema,
+  type LibraryFacets,
+  type LibraryGame,
+  type LibraryGameSummary,
+  type LibraryReview,
+  type LibraryReviewEntry,
+  type LibrarySearchQuery,
+  type LibrarySearchResult,
+} from './library.js';

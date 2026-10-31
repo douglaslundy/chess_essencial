@@ -1861,10 +1861,131 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/library/games': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Buscar partidas de estudo da biblioteca */
+    get: operations['searchLibraryGames'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/library/facets': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Listar jogadores e aberturas disponíveis para filtro */
+    get: operations['getLibraryFacets'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/library/games/{gameId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Obter uma partida da biblioteca com todos os lances */
+    get: operations['getLibraryGame'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/library/games/{gameId}/review': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        gameId: string;
+      };
+      cookie?: never;
+    };
+    /** Ler a revisão (já gerada) da partida */
+    get: operations['getLibraryReview'];
+    put?: never;
+    /** Solicitar a revisão por IA (gerada uma única vez por partida e reutilizada) */
+    post: operations['requestLibraryReview'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    LibraryGameSummary: {
+      black: string;
+      blackElo: number | null;
+      eco: string | null;
+      event: string | null;
+      /** Format: uuid */
+      id: string;
+      openingFamily: string | null;
+      openingName: string | null;
+      playedOn: string | null;
+      plyCount: number;
+      /** @enum {string} */
+      result: '1-0' | '0-1' | '1/2-1/2';
+      white: string;
+      whiteElo: number | null;
+    };
+    LibraryGame: components['schemas']['LibraryGameSummary'] & {
+      movesSan: string[];
+      round: string | null;
+      site: string | null;
+    };
+    LibrarySearchResult: {
+      items: components['schemas']['LibraryGameSummary'][];
+      total: number;
+    };
+    LibraryFacets: {
+      openings: components['schemas']['LibraryFacetItem'][];
+      players: components['schemas']['LibraryFacetItem'][];
+    };
+    LibraryFacetItem: {
+      count: number;
+      name: string;
+    };
+    LibraryReviewEntry: {
+      better: string | null;
+      betterWhy: string | null;
+      expect: string | null;
+      ply: number;
+      strength: string | null;
+      summary: string;
+      weakness: string | null;
+      why: string;
+    };
+    LibraryReview: {
+      aiAvailable: boolean;
+      entries: components['schemas']['LibraryReviewEntry'][];
+      /** @enum {string} */
+      status: 'none' | 'generating' | 'completed' | 'failed';
+      totalPlies: number;
+    };
     SubscriptionPayment: {
       amountCents: number;
       /** @enum {string} */
@@ -6235,6 +6356,134 @@ export interface operations {
           'application/json': components['schemas']['ExerciseMetrics'];
         };
       };
+    };
+  };
+  searchLibraryGames: {
+    parameters: {
+      query?: {
+        q?: string;
+        player?: string;
+        opening?: string;
+        eco?: string;
+        result?: '1-0' | '0-1' | '1/2-1/2';
+        yearFrom?: number;
+        yearTo?: number;
+        limit?: number;
+        offset?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Página de partidas */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LibrarySearchResult'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+    };
+  };
+  getLibraryFacets: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Facetas de filtro */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LibraryFacets'];
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  getLibraryGame: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        gameId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Partida completa */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LibraryGame'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  getLibraryReview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        gameId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Estado e comentários lance a lance */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LibraryReview'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  requestLibraryReview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        gameId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Estado atual da revisão */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LibraryReview'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
     };
   };
 }

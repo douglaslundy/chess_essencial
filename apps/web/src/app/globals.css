@@ -911,7 +911,7 @@ input:focus-visible {
   grid-area: board;
   display: grid;
   min-width: 0;
-  align-self: center;
+  align-self: start;
   justify-items: center;
   overflow: hidden;
 }
@@ -3879,5 +3879,28 @@ textarea::placeholder {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+  }
+}
+
+.boardModeToggle {
+  min-height: var(--control-height, 2.75rem);
+  padding: 0 0.9rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.boardModeToggle[aria-pressed='true'] {
+  border-color: var(--gold);
+}
+
+@media (max-width: 640px) {
+  .boardModeToggle {
+    padding: 0 0.6rem;
+    font-size: 0.75rem;
   }
 }

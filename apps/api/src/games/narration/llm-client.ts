@@ -24,9 +24,17 @@ export interface LlmConfig {
 
 export class LlmRequestError extends Error {}
 
-async function withTimeout<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {
+export interface LlmCallOptions {
+  maxTokens?: number;
+  timeoutMs?: number;
+}
+
+async function withTimeout<T>(
+  run: (signal: AbortSignal) => Promise<T>,
+  timeoutMs = REQUEST_TIMEOUT_MS,
+): Promise<T> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await run(controller.signal);
   } finally {
@@ -34,11 +42,17 @@ async function withTimeout<T>(run: (signal: AbortSignal) => Promise<T>): Promise
   }
 }
 
-async function callAnthropic(config: LlmConfig, system: string, userMessage: string) {
+async function callAnthropic(
+  config: LlmConfig,
+  system: string,
+  userMessage: string,
+  options: LlmCallOptions,
+) {
+  const maxTokens = options.maxTokens ?? MAX_OUTPUT_TOKENS;
   return withTimeout(async (signal) => {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       body: JSON.stringify({
-        max_tokens: MAX_OUTPUT_TOKENS,
+        max_tokens: maxTokens,
         messages: [{ content: userMessage, role: 'user' }],
         model: config.model,
         system,
@@ -61,14 +75,20 @@ async function callAnthropic(config: LlmConfig, system: string, userMessage: str
     const text = data.content.find((block) => block.type === 'text')?.text?.trim();
     if (!text) throw new LlmRequestError('Resposta da Anthropic sem conteúdo de texto');
     return text;
-  });
+  }, options.timeoutMs);
 }
 
-async function callOpenAi(config: LlmConfig, system: string, userMessage: string) {
+async function callOpenAi(
+  config: LlmConfig,
+  system: string,
+  userMessage: string,
+  options: LlmCallOptions,
+) {
+  const maxTokens = options.maxTokens ?? MAX_OUTPUT_TOKENS;
   return withTimeout(async (signal) => {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       body: JSON.stringify({
-        max_tokens: MAX_OUTPUT_TOKENS,
+        max_tokens: maxTokens,
         messages: [
           { content: system, role: 'system' },
           { content: userMessage, role: 'user' },
@@ -92,16 +112,22 @@ async function callOpenAi(config: LlmConfig, system: string, userMessage: string
     const text = data.choices[0]?.message?.content?.trim();
     if (!text) throw new LlmRequestError('Resposta da OpenAI sem conteúdo de texto');
     return text;
-  });
+  }, options.timeoutMs);
 }
 
-async function callGemini(config: LlmConfig, system: string, userMessage: string) {
+async function callGemini(
+  config: LlmConfig,
+  system: string,
+  userMessage: string,
+  options: LlmCallOptions,
+) {
+  const maxTokens = options.maxTokens ?? MAX_OUTPUT_TOKENS;
   return withTimeout(async (signal) => {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(config.model)}:generateContent?key=${encodeURIComponent(config.apiKey)}`;
     const response = await fetch(url, {
       body: JSON.stringify({
         contents: [{ parts: [{ text: userMessage }], role: 'user' }],
-        generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS },
+        generationConfig: { maxOutputTokens: maxTokens },
         systemInstruction: { parts: [{ text: system }] },
       }),
       headers: { 'content-type': 'application/json' },
@@ -118,20 +144,21 @@ async function callGemini(config: LlmConfig, system: string, userMessage: string
     const text = data.candidates[0]?.content?.parts?.[0]?.text?.trim();
     if (!text) throw new LlmRequestError('Resposta do Gemini sem conteúdo de texto');
     return text;
-  });
+  }, options.timeoutMs);
 }
 
 export async function callLlm(
   config: LlmConfig,
   system: string,
   userMessage: string,
+  options: LlmCallOptions = {},
 ): Promise<string> {
   switch (config.provider) {
     case 'anthropic':
-      return callAnthropic(config, system, userMessage);
+      return callAnthropic(config, system, userMessage, options);
     case 'openai':
-      return callOpenAi(config, system, userMessage);
+      return callOpenAi(config, system, userMessage, options);
     case 'gemini':
-      return callGemini(config, system, userMessage);
+      return callGemini(config, system, userMessage, options);
   }
 }

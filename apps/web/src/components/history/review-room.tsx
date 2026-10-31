@@ -297,11 +297,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
                 </p>
                 {signal.recommendation ? (
                   <p>
-                    <Link
-                      href={`/app/exercicios?exerciseId=${signal.recommendation.exerciseId}&q=${encodeURIComponent(
-                        signal.recommendation.exerciseTitle,
-                      )}`}
-                    >
+                    <Link href="/app/desafios">
                       Praticar: {signal.recommendation.exerciseTitle}
                     </Link>
                     {' — '}

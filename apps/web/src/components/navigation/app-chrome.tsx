@@ -6,6 +6,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 
 import { AuthStatus } from '@/components/auth/auth-status';
 import { api } from '@/lib/api/client';
+import { useBoardMode } from '@/lib/board-mode';
 import { useEntitlements } from '@/lib/subscriptions/use-entitlements';
 
 const navigation = [
@@ -13,7 +14,7 @@ const navigation = [
   { href: '/app/treinamento', label: 'Treinamento' },
   { href: '/app/jogar', label: 'Jogar' },
   { href: '/app/partidas', label: 'Partidas' },
-  { href: '/app/exercicios', label: 'Exercícios' },
+  { href: '/app/biblioteca', label: 'Biblioteca de partidas' },
   { href: '/app/desafios', label: 'Desafios' },
   { href: '/app/ranking', label: 'Ranking', requiresFeature: 'social_access' },
   { href: '/app/cursos', label: 'Cursos e aulas' },
@@ -32,6 +33,7 @@ export function AppChrome({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const { hasFeature } = useEntitlements();
+  const { mode, setMode } = useBoardMode();
 
   useEffect(() => {
     queueMicrotask(() => setMenuOpen(false));
@@ -124,6 +126,14 @@ export function AppChrome({ children }: { children: ReactNode }) {
             XE
           </Link>
           <span>Plataforma de jogo</span>
+          <button
+            aria-pressed={mode === '3d'}
+            className="boardModeToggle"
+            onClick={() => setMode(mode === '3d' ? '2d' : '3d')}
+            type="button"
+          >
+            Tabuleiro 3D: {mode === '3d' ? 'ligado' : 'desligado'}
+          </button>
           <AuthStatus />
         </header>
         {children}

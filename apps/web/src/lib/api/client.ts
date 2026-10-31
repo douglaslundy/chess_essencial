@@ -1,4 +1,8 @@
 import type {
+  LibraryFacets,
+  LibraryGame,
+  LibraryReview,
+  LibrarySearchResult,
   AiVoiceOptions,
   SynthesizeSpeechInput,
   AdminBotStats,
@@ -619,6 +623,15 @@ export const api = {
     request<GameAnalysis>(`/games/${gameId}/analysis`, token),
   getGameNarration: (gameId: string, token: string) =>
     request<GameNarration>(`/games/${gameId}/narration`, token),
+  searchLibraryGames: (query: URLSearchParams, token: string) =>
+    request<LibrarySearchResult>(`/library/games?${query.toString()}`, token),
+  getLibraryFacets: (token: string) => request<LibraryFacets>('/library/facets', token),
+  getLibraryGame: (gameId: string, token: string) =>
+    request<LibraryGame>(`/library/games/${gameId}`, token),
+  getLibraryReview: (gameId: string, token: string) =>
+    request<LibraryReview>(`/library/games/${gameId}/review`, token),
+  requestLibraryReview: (gameId: string, token: string) =>
+    request<LibraryReview>(`/library/games/${gameId}/review`, token, { method: 'POST' }),
   getLiveNarration: (gameId: string, input: LiveNarrationRequest, token: string) =>
     request<LiveNarrationResult>(`/games/${gameId}/live-narration`, token, {
       body: JSON.stringify(input),

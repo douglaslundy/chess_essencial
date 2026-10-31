@@ -138,6 +138,7 @@ fi
 "${compose[@]}" run --rm api pnpm --filter @xadrez/api db:seed
 "${compose[@]}" run --rm api pnpm --filter @xadrez/api db:import-exercises database/content/Xadrez_Essencial_Exercicios_1_a_1298.json --strict
 "${compose[@]}" run --rm api pnpm --filter @xadrez/api db:import-lessons database/content/Xadrez_Essencial_Aulas_1_a_119.json --strict --publish
+"${compose[@]}" run --rm api pnpm --filter @xadrez/api db:import-library database/content/library/games.jsonl.gz
 "${compose[@]}" run --rm api pnpm --filter @xadrez/api db:seed-learning-path
 "${compose[@]}" run --rm api pnpm --filter @xadrez/api db:audit-learning-path
 

@@ -1863,6 +1863,81 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ExerciseMetrics'}
+  /library/games:
+    get:
+      summary: Buscar partidas de estudo da biblioteca
+      operationId: searchLibraryGames
+      parameters:
+        - {name: q, in: query, schema: {type: string}}
+        - {name: player, in: query, schema: {type: string}}
+        - {name: opening, in: query, schema: {type: string}}
+        - {name: eco, in: query, schema: {type: string}}
+        - {name: result, in: query, schema: {type: string, enum: ['1-0', '0-1', '1/2-1/2']}}
+        - {name: yearFrom, in: query, schema: {type: integer}}
+        - {name: yearTo, in: query, schema: {type: integer}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 50}}
+        - {name: offset, in: query, schema: {type: integer, minimum: 0}}
+      responses:
+        '200':
+          description: Página de partidas
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LibrarySearchResult'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /library/facets:
+    get:
+      summary: Listar jogadores e aberturas disponíveis para filtro
+      operationId: getLibraryFacets
+      responses:
+        '200':
+          description: Facetas de filtro
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LibraryFacets'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /library/games/{gameId}:
+    get:
+      summary: Obter uma partida da biblioteca com todos os lances
+      operationId: getLibraryGame
+      parameters:
+        - {name: gameId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Partida completa
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LibraryGame'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /library/games/{gameId}/review:
+    parameters:
+      - {name: gameId, in: path, required: true, schema: {type: string, format: uuid}}
+    get:
+      summary: Ler a revisão (já gerada) da partida
+      operationId: getLibraryReview
+      responses:
+        '200':
+          description: Estado e comentários lance a lance
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LibraryReview'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+    post:
+      summary: Solicitar a revisão por IA (gerada uma única vez por partida e reutilizada)
+      operationId: requestLibraryReview
+      responses:
+        '200':
+          description: Estado atual da revisão
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/LibraryReview'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
 components:
   parameters:
     GameId:
@@ -1894,6 +1969,69 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    LibraryGameSummary:
+      type: object
+      required: [black, blackElo, eco, event, id, openingFamily, openingName, playedOn, plyCount, result, white, whiteElo]
+      properties:
+        black: {type: string}
+        blackElo: {type: [integer, 'null']}
+        eco: {type: [string, 'null']}
+        event: {type: [string, 'null']}
+        id: {type: string, format: uuid}
+        openingFamily: {type: [string, 'null']}
+        openingName: {type: [string, 'null']}
+        playedOn: {type: [string, 'null']}
+        plyCount: {type: integer}
+        result: {type: string, enum: ['1-0', '0-1', '1/2-1/2']}
+        white: {type: string}
+        whiteElo: {type: [integer, 'null']}
+    LibraryGame:
+      allOf:
+        - $ref: '#/components/schemas/LibraryGameSummary'
+        - type: object
+          required: [movesSan, round, site]
+          properties:
+            movesSan: {type: array, items: {type: string}}
+            round: {type: [string, 'null']}
+            site: {type: [string, 'null']}
+    LibrarySearchResult:
+      type: object
+      required: [items, total]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/LibraryGameSummary'}}
+        total: {type: integer}
+    LibraryFacets:
+      type: object
+      required: [openings, players]
+      properties:
+        openings: {type: array, items: {$ref: '#/components/schemas/LibraryFacetItem'}}
+        players: {type: array, items: {$ref: '#/components/schemas/LibraryFacetItem'}}
+    LibraryFacetItem:
+      type: object
+      required: [count, name]
+      properties:
+        count: {type: integer}
+        name: {type: string}
+    LibraryReviewEntry:
+      type: object
+      required: [better, betterWhy, expect, ply, strength, summary, weakness, why]
+      properties:
+        better: {type: [string, 'null']}
+        betterWhy: {type: [string, 'null']}
+        expect: {type: [string, 'null']}
+        ply: {type: integer}
+        strength: {type: [string, 'null']}
+        summary: {type: string}
+        weakness: {type: [string, 'null']}
+        why: {type: string}
+    LibraryReview:
+      type: object
+      required: [aiAvailable, entries, status, totalPlies]
+      properties:
+        aiAvailable: {type: boolean}
+        entries: {type: array, items: {$ref: '#/components/schemas/LibraryReviewEntry'}}
+        status: {type: string, enum: [none, generating, completed, failed]}
+        totalPlies: {type: integer}
     SubscriptionPayment:
       type: object
       required: [amountCents, billingPeriod, currency, id, paidAt, provider, status]

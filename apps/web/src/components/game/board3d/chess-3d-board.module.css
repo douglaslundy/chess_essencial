@@ -1,0 +1,53 @@
+.wrapper {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+/* Tamanho fixo derivado do viewport: o tabuleiro nunca muda de posição ao mudar o conteúdo ao redor. */
+.viewport {
+  width: min(100%, calc(100dvh - 14rem), 46.5rem);
+  min-width: 15rem;
+  aspect-ratio: 1 / 1;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  touch-action: none;
+  cursor: grab;
+  background: #14110f;
+}
+.viewport:active {
+  cursor: grabbing;
+}
+.viewport canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+.camera {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+}
+.camera button {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0 0.7rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.camera button:hover {
+  border-color: var(--gold);
+}
+.fallback {
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+}

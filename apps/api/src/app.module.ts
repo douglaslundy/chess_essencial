@@ -8,6 +8,7 @@ import { validateApiEnv } from './config/env.js';
 import { CoursesModule } from './courses/courses.module.js';
 import { DatabaseModule } from './database/database.module.js';
 import { ExercisesModule } from './exercises/exercises.module.js';
+import { LibraryModule } from './library/library.module.js';
 import { FeedModule } from './feed/feed.module.js';
 import { GamesModule } from './games/games.module.js';
 import { HealthController } from './health/health.controller.js';
@@ -35,6 +36,7 @@ import { VoiceModule } from './voice/voice.module.js';
     CoursesModule,
     DatabaseModule,
     ExercisesModule,
+    LibraryModule,
     FeedModule,
     GamesModule,
     LearningPathModule,

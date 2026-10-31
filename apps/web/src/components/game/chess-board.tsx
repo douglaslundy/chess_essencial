@@ -2,7 +2,10 @@
 
 import { Chess, type Color, type PieceSymbol, type Square } from 'chess.js';
 
+import dynamic from 'next/dynamic';
+
 import { useDialogA11y } from '@/components/ui/dialog-a11y';
+import { useBoardMode } from '@/lib/board-mode';
 import { useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from 'react';
 
 const pieceNames: Record<PieceSymbol, string> = {
@@ -209,7 +212,7 @@ interface ChessBoardProps {
   pieceTheme?: PieceTheme;
 }
 
-export function ChessBoard({
+function ChessBoard2D({
   fen,
   orientation,
   disabled,
@@ -404,4 +407,27 @@ export function ChessBoard({
       ) : null}
     </>
   );
+}
+
+const Chess3DBoard = dynamic(() => import('./board3d/chess-3d-board'), {
+  loading: () => <p role="status">Carregando tabuleiro 3D…</p>,
+  ssr: false,
+});
+
+/** Renders the flat board, or the immersive 3D board when the player enabled it (menu switch). */
+export function ChessBoard(props: ChessBoardProps) {
+  const { mode } = useBoardMode();
+  if (mode === '3d') {
+    return (
+      <Chess3DBoard
+        disabled={props.disabled}
+        fen={props.fen}
+        lastMove={props.lastMove}
+        movableColor={props.movableColor}
+        onMove={props.onMove}
+        orientation={props.orientation}
+      />
+    );
+  }
+  return <ChessBoard2D {...props} />;
 }

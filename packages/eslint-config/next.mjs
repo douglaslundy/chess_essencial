@@ -3,4 +3,10 @@ import nextTypeScript from 'eslint-config-next/typescript';
 
 import baseConfig from './base.mjs';
 
-export default [...baseConfig, ...nextVitals, ...nextTypeScript];
+// Interações usam componentes da página (ConfirmDialog, avisos inline); diálogos nativos são proibidos.
+export default [
+  ...baseConfig,
+  ...nextVitals,
+  ...nextTypeScript,
+  { rules: { 'no-alert': 'error' } },
+];

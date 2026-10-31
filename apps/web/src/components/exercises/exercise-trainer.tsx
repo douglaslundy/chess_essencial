@@ -77,7 +77,6 @@ interface ExerciseTrainerProps {
   initialExerciseId?: string | undefined;
   initialQuery?: string;
   positionType?: 'legal_position' | 'illustrative_diagram' | 'text_only';
-  showSourceFilter?: boolean;
   showThemeFilter?: boolean;
   storageKey?: string;
   title?: string;
@@ -90,7 +89,6 @@ export function ExerciseTrainer({
   initialExerciseId,
   initialQuery = '',
   positionType,
-  showSourceFilter = false,
   showThemeFilter = false,
   storageKey = 'xadrez.challenge_training_session',
   title = 'Exercícios de Xadrez Essencial',
@@ -105,7 +103,7 @@ export function ExerciseTrainer({
   const [difficulty, setDifficulty] = useState(initialDifficulty);
   const [moduleNumber, setModuleNumber] = useState('');
   const [query, setQuery] = useState(initialQuery);
-  const [source, setSource] = useState<ExerciseSource>('all');
+  const [source] = useState<ExerciseSource>('all');
   const [theme, setTheme] = useState('');
   const [themes, setThemes] = useState<ExerciseTheme[]>([]);
   const [result, setResult] = useState(emptySearch);
@@ -297,11 +295,6 @@ export function ExerciseTrainer({
       active = false;
     };
   }, [guided, showThemeFilter]);
-
-  function selectSource(next: ExerciseSource) {
-    setSource(next);
-    void resumeOrStart({ source: next, theme });
-  }
 
   function selectTheme(next: string) {
     setTheme(next);
@@ -634,27 +627,6 @@ export function ExerciseTrainer({
             <span>Tempo médio</span>
           </div>
         </section>
-      ) : null}
-
-      {guided && showSourceFilter ? (
-        <div className={styles.sourceFilter} role="group" aria-label="Origem dos exercícios">
-          {(
-            [
-              { label: 'Todos', value: 'all' },
-              { label: 'Mates clássicos', value: 'classic' },
-              { label: 'Livro', value: 'book' },
-            ] as const
-          ).map((option) => (
-            <button
-              aria-pressed={source === option.value}
-              key={option.value}
-              onClick={() => selectSource(option.value)}
-              type="button"
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
       ) : null}
 
       {guided && showThemeFilter ? (
