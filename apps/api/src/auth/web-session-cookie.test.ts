@@ -37,4 +37,20 @@ describe('web refresh cookie', () => {
       expect.stringContaining('xadrez_refresh=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax'),
     );
   });
+
+  it('drops Secure and the __Host- prefix when the web origin is plain HTTP', () => {
+    const header = vi.fn();
+    const config = new ConfigService({
+      AUTH_REFRESH_TTL_SECONDS: 3_600,
+      NODE_ENV: 'production',
+      WEB_ORIGIN: 'http://192.168.0.233:3100',
+    });
+
+    setRefreshCookie({ header } as never, 'opaque-token', config);
+
+    const cookie = header.mock.calls[0]![1] as string;
+    expect(cookie).toContain('xadrez_refresh=opaque-token');
+    expect(cookie).not.toContain('Secure');
+    expect(cookie).not.toContain('__Host-');
+  });
 });
