@@ -107,6 +107,9 @@ const worldPos = new Vector3();
 const cameraDir = new Vector3();
 const parentQuat = new Quaternion();
 const yawQuat = new Quaternion();
+const figureShift = new Vector3();
+/** How far the figure stands in front of the pedestal's centre, as a fraction of its radius. */
+const FIGURE_SHIFT = 0.55;
 const UP = new Vector3(0, 1, 0);
 
 /** Plane showing only the photo above the pedestal (v from `cut` to 1). */
@@ -215,7 +218,16 @@ export function MedievalStatue({ color, kind }: { color: 'w' | 'b'; kind: Kind }
     camera.getWorldDirection(cameraDir);
     node.parent.getWorldQuaternion(parentQuat);
     yawQuat.setFromAxisAngle(UP, Math.atan2(-cameraDir.x, -cameraDir.z));
-    node.quaternion.copy(parentQuat.invert().multiply(yawQuat));
+    const toLocal = parentQuat.invert();
+    node.quaternion.copy(toLocal).multiply(yawQuat);
+    // A flat figure at the disc's centre left the near half of the pedestal top bare, as if a cut-out
+    // stood on a plate; a carved body would cover it, so the figure steps towards the viewer.
+    figureShift
+      .set(-cameraDir.x, 0, -cameraDir.z)
+      .normalize()
+      .multiplyScalar(radius * FIGURE_SHIFT)
+      .applyQuaternion(toLocal);
+    node.position.set(figureShift.x, pedestalHeight + figureHeight / 2, figureShift.z);
   });
 
   const ready = Boolean(image?.width && frontImage?.width);
