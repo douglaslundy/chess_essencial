@@ -4,9 +4,18 @@ import { Chess, type Color, type PieceSymbol, type Square } from 'chess.js';
 
 import dynamic from 'next/dynamic';
 
+import { detectMove, walkPath, type PlayedMove } from '@/components/game/move-path';
+import { MoveToast } from '@/components/game/move-toast';
 import { useDialogA11y } from '@/components/ui/dialog-a11y';
 import { useBoardMode } from '@/lib/board-mode';
-import { useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from 'react';
+import {
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent,
+  type KeyboardEvent,
+} from 'react';
 
 const pieceNames: Record<PieceSymbol, string> = {
   k: 'rei',
@@ -212,6 +221,28 @@ interface ChessBoardProps {
   pieceTheme?: PieceTheme;
 }
 
+interface BoardEffectProps {
+  /** Move to announce in the fading balloon, or null. */
+  toast: PlayedMove | null;
+  /** Move whose piece should walk to its destination, or null. */
+  walk: PlayedMove | null;
+}
+
+const WALK_STEP_MS = 170;
+
+function prefersReducedMotion() {
+  return (
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
+/** Display (column,row) of a square for the given orientation, 0..7 from the top-left. */
+function cell(square: Square, orientation: BoardOrientation): [number, number] {
+  const file = square.charCodeAt(0) - 97;
+  const rank = Number(square[1]) - 1;
+  return orientation === 'white' ? [file, 7 - rank] : [7 - file, rank];
+}
+
 function ChessBoard2D({
   fen,
   orientation,
@@ -220,7 +251,9 @@ function ChessBoard2D({
   movableColor,
   onMove,
   pieceTheme = 'classic',
-}: ChessBoardProps) {
+  toast,
+  walk,
+}: ChessBoardProps & BoardEffectProps) {
   const chess = useMemo(() => {
     try {
       return new Chess(fen);
@@ -234,6 +267,36 @@ function ChessBoard2D({
   const [focused, setFocused] = useState<Square>(orientation === 'white' ? 'e2' : 'e7');
   const [promotion, setPromotion] = useState<{ from: Square; to: Square } | null>(null);
   const promotionFocusRef = useRef<HTMLButtonElement>(null);
+  const walker = useRef<HTMLDivElement>(null);
+  const [walkedId, setWalkedId] = useState(0);
+  const walking = walk && walk.id !== walkedId && !prefersReducedMotion() ? walk : null;
+
+  // The piece walks square by square (small hop on each) on a layer above the squares,
+  // because each square clips its own content.
+  useLayoutEffect(() => {
+    const node = walker.current;
+    if (!walking || !node) return;
+    const points = [walking.from, ...walkPath(walking.from, walking.to, walking.piece)].map(
+      (square) => cell(square, orientation),
+    );
+    const frames: Keyframe[] = [];
+    points.forEach(([x, y], index) => {
+      frames.push({ transform: `translate(${x * 100}%, ${y * 100}%)` });
+      const next = points[index + 1];
+      if (next)
+        frames.push({
+          transform: `translate(${((x + next[0]) / 2) * 100}%, ${((y + next[1]) / 2) * 100 - 18}%) scale(1.08)`,
+        });
+    });
+    const animation = node.animate(frames, {
+      duration: (points.length - 1) * WALK_STEP_MS,
+      easing: 'linear',
+      fill: 'forwards',
+    });
+    const id = walking.id;
+    animation.onfinish = () => setWalkedId(id);
+    return () => animation.cancel();
+  }, [walking, orientation]);
 
   useDialogA11y({
     initialFocusRef: promotionFocusRef,
@@ -335,6 +398,7 @@ function ChessBoard2D({
                   selected === square ? 'selectedSquare' : '',
                   destinations.has(square) ? 'targetSquare' : '',
                   isLast ? 'lastMoveSquare' : '',
+                  walking?.to === square ? 'walkTarget' : '',
                 ].join(' ')}
                 draggable={
                   Boolean(piece) &&
@@ -362,6 +426,12 @@ function ChessBoard2D({
             );
           })}
         </div>
+        {walking ? (
+          <div aria-hidden="true" className="walkingPiece" ref={walker}>
+            {renderPiece({ color: walking.color, type: walking.piece }, pieceTheme)}
+          </div>
+        ) : null}
+        <MoveToast move={toast} />
         <div className="boardRanks boardRanksRight" aria-hidden="true">
           {[...(orientation === 'white' ? '87654321' : '12345678')].map((rank) => (
             <span key={rank}>{rank}</span>
@@ -414,20 +484,54 @@ const Chess3DBoard = dynamic(() => import('./board3d/chess-3d-board'), {
   ssr: false,
 });
 
+const CaptureCinematic = dynamic(() => import('./capture-fx/capture-cinematic'), { ssr: false });
+
+/** Tracks the last single move that produced the current FEN (derived during render, no flicker). */
+function usePlayedMove(fen: string): PlayedMove | null {
+  const [track, setTrack] = useState<{ count: number; fen: string; played: PlayedMove | null }>({
+    count: 0,
+    fen,
+    played: null,
+  });
+  if (track.fen !== fen) {
+    const move = detectMove(track.fen, fen);
+    const count = track.count + 1;
+    setTrack({ count, fen, played: move ? { ...move, id: count } : null });
+  }
+  return track.played;
+}
+
 /** Renders the flat board, or the immersive 3D board when the player enabled it (menu switch). */
 export function ChessBoard(props: ChessBoardProps) {
-  const { mode } = useBoardMode();
+  const { effects, mode } = useBoardMode();
+  const played = usePlayedMove(props.fen);
+  const toast = effects.moveToast ? played : null;
+  const walk = effects.moveAnimation ? played : null;
+  const cinematic =
+    effects.captureAnimation && played?.captured ? (
+      <CaptureCinematic key={played.id} move={played} />
+    ) : null;
   if (mode === '3d') {
     return (
-      <Chess3DBoard
-        disabled={props.disabled}
-        fen={props.fen}
-        lastMove={props.lastMove}
-        movableColor={props.movableColor}
-        onMove={props.onMove}
-        orientation={props.orientation}
-      />
+      <>
+        <Chess3DBoard
+          disabled={props.disabled}
+          fen={props.fen}
+          lastMove={props.lastMove}
+          movableColor={props.movableColor}
+          onMove={props.onMove}
+          orientation={props.orientation}
+          toast={toast}
+          walk={walk}
+        />
+        {cinematic}
+      </>
     );
   }
-  return <ChessBoard2D {...props} />;
+  return (
+    <>
+      <ChessBoard2D {...props} toast={toast} walk={walk} />
+      {cinematic}
+    </>
+  );
 }

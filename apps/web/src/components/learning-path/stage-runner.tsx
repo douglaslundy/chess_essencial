@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { ChessBoard } from '@/components/game/chess-board';
+import { solverOrientation } from '@/components/game/move-path';
 import { api } from '@/lib/api/client';
 import { usePieceTheme } from '@/lib/piece-theme';
 import { speak, stopSpeaking } from '@/lib/speech';
@@ -390,7 +391,7 @@ export function StageRunner({ stageId }: { stageId: string }) {
             disabled={phase !== 'playing' || viewingAt !== null}
             fen={displayedFen}
             onMove={(uci) => void playMove(uci)}
-            orientation="white"
+            orientation={solverOrientation(startingFen)}
             pieceTheme={pieceTheme}
           />
         </div>

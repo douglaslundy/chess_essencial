@@ -6,6 +6,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObjec
 import { BackSide, type Group } from 'three';
 
 import styles from './chess-3d-board.module.css';
+import { walkPath, type PlayedMove } from '@/components/game/move-path';
+import { MoveToast } from '@/components/game/move-toast';
 import { useDialogA11y } from '@/components/ui/dialog-a11y';
 import { pieceGeometry } from './piece-geometry';
 import { initialPieces, reconcile, type TrackedPiece } from './piece-tracker';
@@ -19,6 +21,8 @@ export interface Chess3DBoardProps {
   movableColor?: 'w' | 'b' | undefined;
   onMove: (uci: string) => void;
   orientation: Board3DOrientation;
+  toast?: PlayedMove | null;
+  walk?: PlayedMove | null;
 }
 
 interface View {
@@ -35,6 +39,35 @@ const PROMOTION_CHOICES = [
   ['n', 'Cavalo'],
 ] as const;
 const MOVE_SECONDS = 0.55;
+const WALK_STEP_SECONDS = 0.24;
+/** Pointer travel (px) that turns a tap into a camera drag; finger jitter must still count as a tap. */
+const DRAG_THRESHOLD_PX = 10;
+const VIEW_KEY = 'xadrez.board3d_view';
+
+interface StoredView {
+  /** Azimuth relative to the player's side, so a locked angle works for both colors. */
+  azimuth: number;
+  distance: number;
+  locked: boolean;
+  polar: number;
+}
+
+function readStoredView(): StoredView | null {
+  try {
+    const raw = window.localStorage.getItem(VIEW_KEY);
+    return raw ? (JSON.parse(raw) as StoredView) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredView(view: StoredView) {
+  try {
+    window.localStorage.setItem(VIEW_KEY, JSON.stringify(view));
+  } catch {
+    // The lock still works on this page; it just won't persist.
+  }
+}
 const GHOST_SECONDS = 0.9;
 const DEFAULT_POLAR = 0.95;
 const DEFAULT_DISTANCE = 13.5;
@@ -67,19 +100,21 @@ function PieceMesh({
   ghost,
   piece,
   selected,
+  walk,
 }: {
   captorXZ?: [number, number] | null;
   ghost?: boolean;
   piece: TrackedPiece;
   selected?: boolean;
+  walk?: boolean;
 }) {
   const group = useRef<Group>(null);
   const [tx, tz] = squareToXZ(piece.square);
   const anim = useRef({
-    from: [tx, tz] as [number, number],
     lastSquare: piece.square,
+    points: [[tx, tz]] as Array<[number, number]>,
     start: -1,
-    to: [tx, tz] as [number, number],
+    walking: false,
   });
   const reduced = prefersReducedMotion();
   const geometry = useMemo(() => pieceGeometry(piece.type), [piece.type]);
@@ -91,8 +126,14 @@ function PieceMesh({
     const now = state.clock.elapsedTime;
     const a = anim.current;
     if (!ghost && a.lastSquare !== piece.square) {
-      a.from = [node.position.x, node.position.z];
-      a.to = [tx, tz];
+      const origin: [number, number] = [node.position.x, node.position.z];
+      a.walking = Boolean(walk);
+      a.points = walk
+        ? [
+            origin,
+            ...walkPath(a.lastSquare as Square, piece.square as Square, piece.type).map(squareToXZ),
+          ]
+        : [origin, [tx, tz]];
       a.start = now;
       a.lastSquare = piece.square;
     }
@@ -122,13 +163,19 @@ function PieceMesh({
     let z = tz;
     let y = 0;
     if (a.start >= 0) {
-      const raw = reduced ? 1 : (now - a.start) / MOVE_SECONDS;
+      const segments = a.points.length - 1;
+      const duration = a.walking ? segments * WALK_STEP_SECONDS : MOVE_SECONDS;
+      const raw = reduced ? 1 : (now - a.start) / duration;
       const k = Math.min(Math.max(raw, 0), 1);
-      const e = ease(k);
-      x = a.from[0] + (a.to[0] - a.from[0]) * e;
-      z = a.from[1] + (a.to[1] - a.from[1]) * e;
-      const hop = piece.type === 'n' ? 1.5 : 0.7;
-      y = Math.sin(Math.PI * k) * hop;
+      // Walking: one small hop per square; otherwise a single eased arc.
+      const s = Math.min(Math.floor(k * segments), segments - 1);
+      const local = a.walking ? k * segments - s : ease(k);
+      const p = a.points[s]!;
+      const q = a.points[s + 1]!;
+      x = p[0] + (q[0] - p[0]) * local;
+      z = p[1] + (q[1] - p[1]) * local;
+      const hop = a.walking ? 0.35 : piece.type === 'n' ? 1.5 : 0.7;
+      y = Math.sin(Math.PI * (a.walking ? local : k)) * hop;
       // Landing squash gives the capture a visible "thud".
       const squash = k > 0.85 && k < 1 ? 1 - Math.sin(((k - 0.85) / 0.15) * Math.PI) * 0.08 : 1;
       node.scale.set(1 + (1 - squash) * 0.5, squash, 1 + (1 - squash) * 0.5);
@@ -136,7 +183,7 @@ function PieceMesh({
     } else {
       node.scale.set(1, 1, 1);
     }
-    if (selected) y += 0.18 + Math.sin(now * 5) * 0.03;
+    if (selected && a.start < 0) y += 0.18 + Math.sin(now * 5) * 0.03;
     node.position.set(x, y, z);
   });
 
@@ -259,7 +306,7 @@ function BoardSquares({
       cells.push(
         <group key={square} position={[x, 0, z]}>
           <mesh
-            onClick={(event) => {
+            onPointerUp={(event) => {
               event.stopPropagation();
               onSquare(square);
             }}
@@ -274,7 +321,7 @@ function BoardSquares({
           </mesh>
           {destination !== undefined ? (
             <mesh
-              onClick={(event) => {
+              onPointerUp={(event) => {
                 event.stopPropagation();
                 onSquare(square);
               }}
@@ -308,6 +355,7 @@ function Scene({
   pieces,
   selected,
   view,
+  walk,
 }: {
   destinations: Map<string, boolean>;
   ghosts: Ghost[];
@@ -316,6 +364,7 @@ function Scene({
   pieces: TrackedPiece[];
   selected: string | null;
   view: MutableRefObject<Rig>;
+  walk: boolean;
 }) {
   return (
     <>
@@ -347,12 +396,12 @@ function Scene({
       {pieces.map((piece) => (
         <group
           key={piece.id}
-          onClick={(event) => {
+          onPointerUp={(event) => {
             event.stopPropagation();
             onSquare(piece.square as Square);
           }}
         >
-          <PieceMesh piece={piece} selected={piece.square === selected} />
+          <PieceMesh piece={piece} selected={piece.square === selected} walk={walk} />
         </group>
       ))}
       {ghosts.map((ghost) => (
@@ -381,6 +430,8 @@ export default function Chess3DBoard({
   movableColor,
   onMove,
   orientation,
+  toast = null,
+  walk = null,
 }: Chess3DBoardProps) {
   const [initial] = useState(() => initialPieces(fen));
   const tracker = useRef(initial);
@@ -409,7 +460,8 @@ export default function Chess3DBoard({
       polar: DEFAULT_POLAR,
     },
   });
-  const drag = useRef<{ x: number; y: number } | null>(null);
+  const drag = useRef<{ startX: number; startY: number; x: number; y: number } | null>(null);
+  const [locked, setLocked] = useState(false);
   const timers = useRef<number[]>([]);
 
   useEffect(() => {
@@ -418,10 +470,35 @@ export default function Chess3DBoard({
     return () => pending.forEach((timer) => window.clearTimeout(timer));
   }, []);
 
+  // Keeps the player's side in front; a locked angle is restored relative to that side.
   useEffect(() => {
     const base = orientation === 'white' ? 0 : Math.PI;
-    view.current.target.azimuth = base;
+    const stored = readStoredView();
+    const target = view.current.target;
+    if (!stored?.locked) {
+      target.azimuth = base;
+      return;
+    }
+    Object.assign(target, {
+      azimuth: base + stored.azimuth,
+      distance: stored.distance,
+      polar: stored.polar,
+    });
+    queueMicrotask(() => setLocked(true));
   }, [orientation]);
+
+  function toggleLock() {
+    const base = orientation === 'white' ? 0 : Math.PI;
+    const target = view.current.target;
+    const next = !locked;
+    writeStoredView({
+      azimuth: target.azimuth - base,
+      distance: target.distance,
+      locked: next,
+      polar: target.polar,
+    });
+    setLocked(next);
+  }
 
   // Reconcile the incoming FEN with the tracked pieces; vanished pieces become animated ghosts.
   useEffect(() => {
@@ -503,6 +580,7 @@ export default function Chess3DBoard({
   );
 
   function rotate(dAzimuth: number, dPolar: number, dDistance = 0) {
+    if (locked) return;
     const target = view.current.target;
     target.azimuth += dAzimuth;
     target.polar = Math.min(Math.max(target.polar + dPolar, 0.15), 1.45);
@@ -537,17 +615,26 @@ export default function Chess3DBoard({
         className={styles.viewport}
         onPointerCancel={() => (drag.current = null)}
         onPointerDown={(event) => {
-          drag.current = { x: event.clientX, y: event.clientY };
+          drag.current = {
+            startX: event.clientX,
+            startY: event.clientY,
+            x: event.clientX,
+            y: event.clientY,
+          };
           dragged.current = false;
         }}
         onPointerMove={(event) => {
-          if (!drag.current || event.buttons === 0) return;
-          const dx = event.clientX - drag.current.x;
-          const dy = event.clientY - drag.current.y;
-          if (Math.abs(dx) + Math.abs(dy) < 3) return;
+          if (!drag.current || event.buttons === 0 || locked) return;
+          const d = drag.current;
+          if (
+            !dragged.current &&
+            Math.hypot(event.clientX - d.startX, event.clientY - d.startY) < DRAG_THRESHOLD_PX
+          )
+            return;
           dragged.current = true;
-          drag.current = { x: event.clientX, y: event.clientY };
-          rotate(-dx * 0.008, -dy * 0.006);
+          rotate(-(event.clientX - d.x) * 0.008, -(event.clientY - d.y) * 0.006);
+          d.x = event.clientX;
+          d.y = event.clientY;
         }}
         onPointerUp={() => (drag.current = null)}
         role="img"
@@ -566,8 +653,12 @@ export default function Chess3DBoard({
             pieces={pieces}
             selected={selected}
             view={view}
+            walk={Boolean(walk)}
           />
         </Canvas>
+        <div className={styles.toastLayer}>
+          <MoveToast move={toast} />
+        </div>
       </div>
       {promotion ? (
         <div className="dialogBackdrop" role="presentation">
@@ -602,7 +693,17 @@ export default function Chess3DBoard({
       ) : null}
       <div aria-label="Controles da câmera 3D" className={styles.camera} role="group">
         <button
+          aria-pressed={locked}
+          className={locked ? styles.lockActive : undefined}
+          onClick={toggleLock}
+          title={locked ? 'Destravar a câmera' : 'Travar a câmera neste ângulo'}
+          type="button"
+        >
+          {locked ? '🔒 Travado' : '🔓 Travar'}
+        </button>
+        <button
           aria-label="Girar para a esquerda"
+          disabled={locked}
           onClick={() => rotate(-Math.PI / 8, 0)}
           type="button"
         >
@@ -610,24 +711,45 @@ export default function Chess3DBoard({
         </button>
         <button
           aria-label="Girar para a direita"
+          disabled={locked}
           onClick={() => rotate(Math.PI / 8, 0)}
           type="button"
         >
           ⟳
         </button>
-        <button aria-label="Inclinar para cima" onClick={() => rotate(0, -0.15)} type="button">
+        <button
+          aria-label="Inclinar para cima"
+          disabled={locked}
+          onClick={() => rotate(0, -0.15)}
+          type="button"
+        >
           ⤒
         </button>
-        <button aria-label="Inclinar para baixo" onClick={() => rotate(0, 0.15)} type="button">
+        <button
+          aria-label="Inclinar para baixo"
+          disabled={locked}
+          onClick={() => rotate(0, 0.15)}
+          type="button"
+        >
           ⤓
         </button>
-        <button aria-label="Aproximar" onClick={() => rotate(0, 0, -1.2)} type="button">
+        <button
+          aria-label="Aproximar"
+          disabled={locked}
+          onClick={() => rotate(0, 0, -1.2)}
+          type="button"
+        >
           ＋
         </button>
-        <button aria-label="Afastar" onClick={() => rotate(0, 0, 1.2)} type="button">
+        <button
+          aria-label="Afastar"
+          disabled={locked}
+          onClick={() => rotate(0, 0, 1.2)}
+          type="button"
+        >
           －
         </button>
-        <button aria-label="Restaurar visão" onClick={reset} type="button">
+        <button aria-label="Restaurar visão" disabled={locked} onClick={reset} type="button">
           Restaurar
         </button>
       </div>

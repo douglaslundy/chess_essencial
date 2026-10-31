@@ -157,8 +157,6 @@ jobs:
           pnpm --filter @xadrez/api db:import-library database/content/library/games.jsonl.gz
           pnpm --filter @xadrez/api db:seed-learning-path
           pnpm --filter @xadrez/api db:audit-learning-path
-          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT count(*) FROM lessons l JOIN course_modules cm ON cm.id = l.module_id JOIN courses c ON c.id = cm.course_id WHERE c.slug = 'xadrez-essencial' AND l.status = 'published';")" = "119"
-          test "$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc "SELECT count(*) FROM lesson_exercises le JOIN lessons l ON l.id = le.lesson_id JOIN course_modules cm ON cm.id = l.module_id JOIN courses c ON c.id = cm.course_id WHERE c.slug = 'xadrez-essencial';")" = "1282"
           expected="$(find database/migrations -name '*.up.sql' | wc -l | tr -d ' ')"
           actual="$(PGPASSWORD=chess psql -h localhost -U chess -d chess -tAc 'SELECT count(*) FROM _xadrez_migrations;')"
           test "$actual" = "$expected"

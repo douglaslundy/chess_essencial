@@ -51,3 +51,23 @@
   border-radius: 12px;
   color: var(--muted);
 }
+.viewport {
+  position: relative;
+}
+/* Balão da jogada no 3D: topo do canvas (lado do adversário), sem bloquear cliques. */
+.toastLayer {
+  position: absolute;
+  inset: 0 0 auto;
+  display: grid;
+  justify-items: center;
+  padding-top: 6%;
+  pointer-events: none;
+}
+.camera button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.camera .lockActive {
+  border-color: var(--gold);
+  background: var(--red);
+}

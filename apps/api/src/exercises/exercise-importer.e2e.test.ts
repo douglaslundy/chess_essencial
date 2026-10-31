@@ -8,11 +8,29 @@ const describeDatabase = process.env.RUN_DB_TESTS === 'true' ? describe : descri
 describeDatabase('exercise importer database integration', () => {
   let sql: ReturnType<typeof postgres>;
 
-  beforeAll(() => {
+  // Lesson the mapped exercise (module 1, chapter 1, page 4) links to. The seed no longer ships
+  // book lessons, so the test creates its own; an existing lesson in that slot works the same.
+  const fixtureLessonId = '0190a000-0000-7000-8000-00000000e501';
+
+  beforeAll(async () => {
     sql = postgres(process.env.DATABASE_URL!, { max: 1, prepare: false });
+    const [module] = await sql<{ id: string }[]>`
+      SELECT cm.id FROM course_modules cm JOIN courses c ON c.id = cm.course_id
+      WHERE c.slug = 'xadrez-essencial' AND cm.source_volume = 1
+    `;
+    const inserted = await sql`
+      INSERT INTO lessons (id, module_id, slug, position, title, estimated_minutes, status, version)
+      VALUES (${fixtureLessonId}, ${module!.id}, 'exercise-importer-fixture', 1,
+        'Exercise importer fixture', 8, 'published', 1)
+      ON CONFLICT DO NOTHING
+      RETURNING id
+    `;
+    if (inserted.length > 0)
+      await sql`INSERT INTO lesson_source_pages (lesson_id, page) VALUES (${fixtureLessonId}, 4)`;
   });
 
   afterAll(async () => {
+    await sql`DELETE FROM lessons WHERE id = ${fixtureLessonId}`;
     await sql`DELETE FROM exercises WHERE source_number IN (50000, 50001, 50002)`;
     await sql`DELETE FROM exercise_import_runs WHERE source_name LIKE 'phase14-%'`;
     await sql.end({ timeout: 5 });

@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Chess } from 'chess.js';
 
 import { ChessBoard } from '@/components/game/chess-board';
+import { solverOrientation } from '@/components/game/move-path';
 import {
   MoveAnnouncement,
   describeImportantMove,
@@ -769,7 +770,7 @@ export function ExerciseTrainer({
                     disabled
                     fen={displayedExercise.fen}
                     onMove={() => undefined}
-                    orientation="white"
+                    orientation={solverOrientation(displayedExercise.fen)}
                     pieceTheme={pieceTheme}
                   />
                 </div>
@@ -784,7 +785,7 @@ export function ExerciseTrainer({
                     }
                     fen={boardFen}
                     onMove={playBoardMove}
-                    orientation="white"
+                    orientation={solverOrientation(current!.fen)}
                     pieceTheme={pieceTheme}
                   />
                   {current!.positionType === 'legal_position' ? (
