@@ -6,7 +6,12 @@
 }
 /* Tamanho fixo derivado do viewport: o tabuleiro nunca muda de posição ao mudar o conteúdo ao redor. */
 .viewport {
-  width: min(100%, var(--board-max, calc(100dvh - 14rem)), 46.5rem);
+  /* Desconta a fileira de controles da câmera, que fica logo abaixo do canvas. */
+  width: min(
+    100%,
+    calc(var(--board-max, calc(100dvh - 14rem)) - 2.5rem),
+    var(--board-cap, 46.5rem)
+  );
   min-width: 15rem;
   aspect-ratio: 1 / 1;
   border-radius: 14px;
@@ -88,4 +93,17 @@
 .camera .lockActive span {
   filter: none;
   opacity: 1;
+}
+/* No computador os controles da câmera ocupam o mínimo de espaço. */
+@media (min-width: 1101px) {
+  .camera {
+    gap: 0.3rem;
+  }
+  .camera button,
+  .camera .lock {
+    min-width: 2rem;
+    min-height: 2rem;
+    padding: 0 0.45rem;
+    font-size: 0.8rem;
+  }
 }

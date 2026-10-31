@@ -27,15 +27,37 @@ const navigation = [
 
 const HEARTBEAT_INTERVAL_MS = 30_000;
 
+const SIDEBAR_KEY = 'xadrez.sidebar_collapsed';
+
 export function AppChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { hasFeature } = useEntitlements();
 
   useEffect(() => {
     queueMicrotask(() => setMenuOpen(false));
   }, [pathname]);
+
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem(SIDEBAR_KEY) === '1')
+        queueMicrotask(() => setSidebarCollapsed(true));
+    } catch {
+      // Storage blocked: the sidebar simply starts open.
+    }
+  }, []);
+
+  function toggleSidebar() {
+    const next = !sidebarCollapsed;
+    setSidebarCollapsed(next);
+    try {
+      window.localStorage.setItem(SIDEBAR_KEY, next ? '1' : '0');
+    } catch {
+      // Preference simply won't persist.
+    }
+  }
 
   useEffect(() => {
     const token = window.localStorage.getItem('xadrez.access_token');
@@ -66,7 +88,7 @@ export function AppChrome({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <div className="appShell">
+    <div className={`appShell ${sidebarCollapsed ? 'sidebarCollapsed' : ''}`}>
       <aside className={`appSidebar ${menuOpen ? 'mobileSidebarOpen' : ''}`} id="app-navigation">
         <Link className="sidebarBrand" href="/">
           <span>XE</span>
@@ -119,6 +141,17 @@ export function AppChrome({ children }: { children: ReactNode }) {
           >
             <span aria-hidden="true">☰</span>
             Menu
+          </button>
+          <button
+            aria-controls="app-navigation"
+            aria-expanded={!sidebarCollapsed}
+            aria-label={sidebarCollapsed ? 'Mostrar menu lateral' : 'Esconder menu lateral'}
+            className="sidebarToggle"
+            onClick={toggleSidebar}
+            title={sidebarCollapsed ? 'Mostrar menu lateral' : 'Esconder menu lateral'}
+            type="button"
+          >
+            <span aria-hidden="true">{sidebarCollapsed ? '»' : '«'}</span>
           </button>
           <Link className="mobileBrand" href="/">
             XE

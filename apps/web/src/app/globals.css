@@ -1947,7 +1947,7 @@ input:focus-visible {
     margin: 0 auto 0.5rem;
   }
 
-  .mobilePlayer + .boardWithCoordinates + .mobilePlayer {
+  .boardStage ~ .mobilePlayer {
     margin: 0.5rem auto 0;
   }
 
@@ -4022,4 +4022,235 @@ textarea::placeholder {
 
 .walkTarget > :not(.moveTarget) {
   visibility: hidden;
+}
+
+/* Menu lateral recolhível (computador): o espaço vai para o tabuleiro. */
+.sidebarToggle {
+  display: inline-grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+@media (min-width: 761px) {
+  .appShell.sidebarCollapsed {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .appShell.sidebarCollapsed .appSidebar {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .sidebarToggle {
+    display: none;
+  }
+}
+
+/* Palco do tabuleiro: contém tabuleiro, comandos e, em tela cheia, os painéis translúcidos. */
+.boardStage {
+  position: relative;
+  display: grid;
+  width: 100%;
+  justify-items: center;
+}
+
+/* Partida no computador: relógios, comandos e lances compactos; o tabuleiro fica com o espaço. */
+@media (min-width: 1101px) {
+  .gamePage {
+    --board-max: calc(100dvh - 12.75rem);
+    --board-cap: 64rem;
+    width: 100%;
+    min-height: 0;
+    grid-template:
+      'identity identity identity' auto
+      'players board moves' auto / minmax(11rem, 14rem) minmax(0, 1fr) minmax(12rem, 15rem);
+    align-items: start;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .gamePage .boardStage .boardWithCoordinates {
+    width: min(100%, var(--board-max), var(--board-cap));
+  }
+
+  .gameIdentity .brandMark {
+    display: none;
+  }
+
+  .gameIdentity strong {
+    font-size: 0.95rem;
+  }
+
+  .playersColumn {
+    justify-content: flex-start;
+    gap: 0.5rem;
+  }
+
+  .playersColumn .playerCard {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    padding: 0.45rem 0.55rem;
+    border-radius: 0.75rem;
+  }
+
+  .playersColumn .playerAvatar {
+    width: 2rem;
+    height: 2rem;
+    grid-row: auto;
+    border-radius: 0.55rem;
+    font-size: 0.8rem;
+  }
+
+  .playersColumn .playerMeta strong {
+    overflow: hidden;
+    font-size: 0.8rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .playersColumn .playerMeta span {
+    font-size: 0.7rem;
+  }
+
+  .playersColumn .chessClock {
+    grid-column: auto;
+    padding: 0.25rem 0.45rem;
+    font-size: 1.15rem;
+    letter-spacing: -0.04em;
+  }
+
+  .gameActions button {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.78rem;
+  }
+
+  .movesPanel {
+    max-height: calc(100dvh - 8.5rem);
+  }
+
+  .panelTabs button {
+    padding: 0.45rem;
+    font-size: 0.8rem;
+  }
+
+  .moveList {
+    min-height: 0;
+    padding: 0.4rem;
+  }
+
+  .moveRow {
+    grid-template-columns: 1.6rem 1fr 1fr;
+    gap: 0.3rem;
+    padding: 0.2rem 0.3rem;
+  }
+
+  .connectionState {
+    padding: 0.45rem 0.6rem;
+    font-size: 0.7rem;
+  }
+
+  .historyControls {
+    gap: 0.3rem;
+    margin-top: 0.35rem;
+  }
+
+  .historyControls button {
+    min-width: 2rem;
+    min-height: 2rem;
+    padding: 0 0.45rem;
+    font-size: 0.85rem;
+  }
+}
+
+.historyControls {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Tela cheia: tabuleiro máximo, comandos logo abaixo; relógio e lances só informativos. */
+.boardStage.isFullscreen {
+  --board-max: calc(100dvh - 5.5rem);
+  --board-cap: 200rem;
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  width: 100vw;
+  height: 100dvh;
+  align-content: center;
+  gap: 0.4rem;
+  padding: 0.75rem;
+  overflow: hidden;
+  background: var(--bg, #0b0b0e);
+}
+
+.boardStage.isFullscreen .boardWithCoordinates {
+  width: min(100%, calc(100dvh - 5.5rem));
+}
+
+.stageClocks,
+.stageMoves {
+  position: absolute;
+  z-index: 9;
+  top: 0.75rem;
+  pointer-events: none;
+}
+
+.stageClocks {
+  left: 0.75rem;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.stageClocks span {
+  display: flex;
+  min-width: 9.5rem;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.5rem;
+  background: rgb(0 0 0 / 0.45);
+  color: rgb(255 255 255 / 0.85);
+  font-size: 0.78rem;
+}
+
+.stageClocks b {
+  font-family: 'Geist Mono', Consolas, monospace;
+  font-size: 1rem;
+}
+
+.stageClocks .stageClockActive {
+  box-shadow: inset 0 0 0 1px rgb(216 182 108 / 0.75);
+}
+
+.stageMoves {
+  right: 0.75rem;
+  display: grid;
+  max-height: 55dvh;
+  gap: 0.1rem;
+  margin: 0;
+  padding: 0.4rem 0.6rem;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background: rgb(0 0 0 / 0.4);
+  color: rgb(255 255 255 / 0.82);
+  font-family: 'Geist Mono', Consolas, monospace;
+  font-size: 0.78rem;
+  list-style: none;
+}
+
+.stageMoves span {
+  color: rgb(255 255 255 / 0.5);
+}
+
+.stageHint {
+  color: var(--muted);
+  font-size: 0.75rem;
 }

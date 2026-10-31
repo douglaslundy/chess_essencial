@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChessBoard, type BoardOrientation } from './chess-board';
 import { GameResultDialog, type GameResult } from './game-result-dialog';
 import { MoveAnnouncement, describeImportantMove, type Announcement } from './move-announcement';
+import { useStageFullscreen } from './use-stage-fullscreen';
 import { CoachCallout } from '@/components/coach/coach-callout';
 import { formatCoachExplanation } from '@/components/coach/coach-explanation';
 import { moveQualityLabel } from '@/components/history/move-narration';
@@ -132,7 +133,9 @@ export function stepHistoryIndex(
 ): number | null {
   if (moves.length === 0) return null;
   const base = historyBaseIndex(viewIndex, moves);
-  return Math.max(0, Math.min(moves.length - 1, base + offset));
+  const next = Math.max(0, Math.min(moves.length - 1, base + offset));
+  // Reaching the latest move is the live position: leave history mode automatically.
+  return next === moves.length - 1 ? null : next;
 }
 
 // Where a demo move branches from: keeps moves up to the viewed position and
@@ -347,17 +350,34 @@ export function GameRoom({ gameId }: { gameId: string }) {
     previousStatusRef.current = state.status;
   }, [isDemo, myColor, state.result, state.status, state.termination]);
 
+  const stageRef = useRef<HTMLDivElement>(null);
+  const { active: stageFullscreen, toggle: toggleStageFullscreen } = useStageFullscreen(stageRef);
   const viewingHistory = viewIndex !== null;
   const viewedMove = viewingHistory ? moves[viewIndex] : undefined;
   const displayFen = viewedMove ? viewedMove.fenAfter : state.currentFen;
 
   function viewMove(ply: number) {
-    setViewIndex(ply - 1);
+    setViewIndex(ply >= moves.length ? null : ply - 1);
   }
 
   function stepView(offset: -1 | 1) {
     setViewIndex((current) => stepHistoryIndex(current, offset, moves));
   }
+
+  // Arrow keys browse the move history (except while a board square has keyboard focus).
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target instanceof Element && target.closest('input, select, textarea, .chessBoard'))
+        return;
+      if (event.key === 'ArrowLeft')
+        setViewIndex((current) => stepHistoryIndex(current, -1, moves));
+      if (event.key === 'ArrowRight')
+        setViewIndex((current) => stepHistoryIndex(current, 1, moves));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [moves]);
 
   function returnToLive() {
     setViewIndex(null);
@@ -726,41 +746,96 @@ export function GameRoom({ gameId }: { gameId: string }) {
             clock={displayedClock(state, orientation === 'white' ? 'black' : 'white', serverOffset)}
           />
         </div>
-        <ChessBoard
-          disabled={isDemo ? !canMove : viewingHistory || !canMove}
-          fen={displayFen}
-          lastMove={lastMove ? { from: lastMove.from, to: lastMove.to } : undefined}
-          movableColor={
-            isDemo
-              ? displayFen.split(' ')[1] === 'b'
-                ? 'b'
-                : 'w'
-              : myColor === 'white'
-                ? 'w'
-                : myColor === 'black'
+        <div className={`boardStage ${stageFullscreen ? 'isFullscreen' : ''}`} ref={stageRef}>
+          <ChessBoard
+            disabled={isDemo ? !canMove : viewingHistory || !canMove}
+            fen={displayFen}
+            lastMove={lastMove ? { from: lastMove.from, to: lastMove.to } : undefined}
+            movableColor={
+              isDemo
+                ? displayFen.split(' ')[1] === 'b'
                   ? 'b'
-                  : undefined
-          }
-          onMove={(uci) => {
-            primeAudio();
-            if (isDemo) playDemoMove(uci);
-            else if (state.coachMode) void handleCoachMove(uci);
-            else sendMove(uci);
-          }}
-          orientation={orientation}
-          pieceTheme={pieceTheme}
-        />
-        <div className="historyControls">
-          <button disabled={moves.length === 0} onClick={() => stepView(-1)} type="button">
-            ← Voltar lance
-          </button>
-          <button
-            disabled={viewIndex === null || viewIndex >= moves.length - 1}
-            onClick={() => stepView(1)}
-            type="button"
-          >
-            Avançar lance →
-          </button>
+                  : 'w'
+                : myColor === 'white'
+                  ? 'w'
+                  : myColor === 'black'
+                    ? 'b'
+                    : undefined
+            }
+            onMove={(uci) => {
+              primeAudio();
+              if (isDemo) playDemoMove(uci);
+              else if (state.coachMode) void handleCoachMove(uci);
+              else sendMove(uci);
+            }}
+            orientation={orientation}
+            pieceTheme={pieceTheme}
+          />
+          {stageFullscreen ? (
+            <>
+              {/* Read-only overlays: pointer-events none, so they never block a move. */}
+              <div aria-hidden="true" className="stageClocks">
+                {([orientation === 'white' ? 'black' : 'white', orientation] as const).map(
+                  (color) => (
+                    <span
+                      className={state.sideToMove === color ? 'stageClockActive' : undefined}
+                      key={color}
+                    >
+                      {(color === 'white' ? white : black)?.displayName ??
+                        (color === 'white' ? 'Brancas' : 'Pretas')}
+                      <b>{formatClock(displayedClock(state, color, serverOffset))}</b>
+                    </span>
+                  ),
+                )}
+              </div>
+              <ol aria-hidden="true" className="stageMoves">
+                {groupedMoves.slice(-12).map((row) => (
+                  <li key={row.number}>
+                    <span>{row.number}.</span> {row.white ? toBrazilianSan(row.white.san) : ''}{' '}
+                    {row.black ? toBrazilianSan(row.black.san) : ''}
+                  </li>
+                ))}
+              </ol>
+            </>
+          ) : null}
+          <div className="historyControls" role="group" aria-label="Comandos do tabuleiro">
+            <button
+              aria-label="Voltar lance"
+              disabled={moves.length === 0}
+              onClick={() => stepView(-1)}
+              title="Voltar lance (←)"
+              type="button"
+            >
+              ◀
+            </button>
+            <button
+              aria-label="Avançar lance"
+              disabled={viewIndex === null}
+              onClick={() => stepView(1)}
+              title="Avançar lance (→)"
+              type="button"
+            >
+              ▶
+            </button>
+            <button
+              aria-label="Girar tabuleiro"
+              onClick={() => setOrientation((value) => (value === 'white' ? 'black' : 'white'))}
+              title="Girar tabuleiro"
+              type="button"
+            >
+              ↻
+            </button>
+            <button
+              aria-label={stageFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+              aria-pressed={stageFullscreen}
+              onClick={toggleStageFullscreen}
+              title={stageFullscreen ? 'Sair da tela cheia (Esc ou F)' : 'Tela cheia (F)'}
+              type="button"
+            >
+              {stageFullscreen ? '✕' : '⛶'}
+            </button>
+            {stageFullscreen ? <span className="stageHint">Esc ou F para sair</span> : null}
+          </div>
         </div>
         {isDemo && viewingHistory ? (
           <p className="demoBranchHint" role="note">
@@ -830,11 +905,13 @@ export function GameRoom({ gameId }: { gameId: string }) {
                 {row.white ? (
                   <button
                     aria-current={viewIndex === row.white.ply - 1}
+                    aria-label={formatMove(row.white)}
                     className="moveLink"
                     onClick={() => viewMove(row.white!.ply)}
+                    title={formatMove(row.white)}
                     type="button"
                   >
-                    {formatMove(row.white)}
+                    {toBrazilianSan(row.white.san)}
                   </button>
                 ) : (
                   <strong />
@@ -842,11 +919,13 @@ export function GameRoom({ gameId }: { gameId: string }) {
                 {row.black ? (
                   <button
                     aria-current={viewIndex === row.black.ply - 1}
+                    aria-label={formatMove(row.black)}
                     className="moveLink"
                     onClick={() => viewMove(row.black!.ply)}
+                    title={formatMove(row.black)}
                     type="button"
                   >
-                    {formatMove(row.black)}
+                    {toBrazilianSan(row.black.san)}
                   </button>
                 ) : (
                   <strong />

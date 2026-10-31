@@ -60,9 +60,10 @@ describe('history navigation helpers', () => {
     expect(stepHistoryIndex(0, -1, moves)).toBe(0);
   });
 
-  it('steps forward one move at a time, clamped at the last move', () => {
+  it('steps forward one move at a time and returns to live on the last move', () => {
     expect(stepHistoryIndex(0, 1, moves)).toBe(1);
-    expect(stepHistoryIndex(2, 1, moves)).toBe(2);
+    expect(stepHistoryIndex(1, 1, moves)).toBeNull();
+    expect(stepHistoryIndex(null, 1, moves)).toBeNull();
   });
 
   it('does nothing meaningful with zero moves', () => {
