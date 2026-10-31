@@ -605,6 +605,84 @@ export function ExerciseTrainer({
       offset < 0 ? 'Lance desfeito. Você pode repeti-lo.' : 'Lance repetido no tabuleiro.',
     );
   }
+  // Only called while an exercise is displayed.
+  function renderBoard() {
+    if (!displayedExercise) return null;
+    return viewingHistory
+      ? displayedExercise.fen && (
+          <div className={styles.boardArea}>
+            <ChessBoard
+              disabled
+              fen={displayedExercise.fen}
+              onMove={() => undefined}
+              orientation={solverOrientation(displayedExercise.fen)}
+              pieceTheme={pieceTheme}
+            />
+          </div>
+        )
+      : boardFen && (
+          <div
+            className={`${styles.boardArea} boardStage ${boardFullscreen ? 'isFullscreen' : ''}`}
+            ref={boardStageRef}
+          >
+            <ChessBoard
+              disabled={
+                current!.positionType !== 'legal_position' ||
+                boardLocked ||
+                Boolean(boardHistory && boardHistory.index < boardHistory.moves.length)
+              }
+              fen={boardFen}
+              onMove={playBoardMove}
+              orientation={solverOrientation(current!.fen)}
+              pieceTheme={pieceTheme}
+            />
+            {current!.positionType === 'legal_position' ? (
+              <div
+                className={styles.boardControls}
+                aria-label="Controles do histórico do exercício"
+              >
+                <button
+                  className={styles.secondaryAction}
+                  disabled={!boardHistory || boardHistory.index === 0}
+                  onClick={() => moveBoardHistory(-1)}
+                  type="button"
+                >
+                  ← Voltar lance
+                </button>
+                <button
+                  className={styles.secondaryAction}
+                  disabled={!boardHistory || boardHistory.index >= boardHistory.moves.length}
+                  onClick={() => moveBoardHistory(1)}
+                  type="button"
+                >
+                  ↻ Repetir lance
+                </button>
+                <button
+                  aria-label={boardFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+                  aria-pressed={boardFullscreen}
+                  className={styles.secondaryAction}
+                  onClick={toggleBoardFullscreen}
+                  title={boardFullscreen ? 'Sair da tela cheia (Esc ou F)' : 'Tela cheia (F)'}
+                  type="button"
+                >
+                  {boardFullscreen ? '✕ Sair' : '⛶ Tela cheia'}
+                </button>
+              </div>
+            ) : null}
+            {evaluationFailed ? (
+              <button className={styles.primaryAction} onClick={retryEvaluation} type="button">
+                🔄 Tentar avaliar novamente
+              </button>
+            ) : null}
+            {!guided ? (
+              <details>
+                <summary>Ver posição FEN</summary>
+                <code className={styles.fen}>{current!.fen}</code>
+              </details>
+            ) : null}
+          </div>
+        );
+  }
   return (
     <main className={`${styles.page} ${guided ? styles.guidedPage : ''}`}>
       <header className={styles.heading}>
@@ -767,84 +845,7 @@ export function ExerciseTrainer({
             </section>
           ) : null}
           <p>{displayedExercise.promptMd}</p>
-          {viewingHistory
-            ? displayedExercise.fen && (
-                <div className={styles.boardArea}>
-                  <ChessBoard
-                    disabled
-                    fen={displayedExercise.fen}
-                    onMove={() => undefined}
-                    orientation={solverOrientation(displayedExercise.fen)}
-                    pieceTheme={pieceTheme}
-                  />
-                </div>
-              )
-            : boardFen && (
-                <div
-                  className={`${styles.boardArea} boardStage ${boardFullscreen ? 'isFullscreen' : ''}`}
-                  ref={boardStageRef}
-                >
-                  <ChessBoard
-                    disabled={
-                      current!.positionType !== 'legal_position' ||
-                      boardLocked ||
-                      Boolean(boardHistory && boardHistory.index < boardHistory.moves.length)
-                    }
-                    fen={boardFen}
-                    onMove={playBoardMove}
-                    orientation={solverOrientation(current!.fen)}
-                    pieceTheme={pieceTheme}
-                  />
-                  {current!.positionType === 'legal_position' ? (
-                    <div
-                      className={styles.boardControls}
-                      aria-label="Controles do histórico do exercício"
-                    >
-                      <button
-                        className={styles.secondaryAction}
-                        disabled={!boardHistory || boardHistory.index === 0}
-                        onClick={() => moveBoardHistory(-1)}
-                        type="button"
-                      >
-                        ← Voltar lance
-                      </button>
-                      <button
-                        className={styles.secondaryAction}
-                        disabled={!boardHistory || boardHistory.index >= boardHistory.moves.length}
-                        onClick={() => moveBoardHistory(1)}
-                        type="button"
-                      >
-                        ↻ Repetir lance
-                      </button>
-                      <button
-                        aria-label={boardFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
-                        aria-pressed={boardFullscreen}
-                        className={styles.secondaryAction}
-                        onClick={toggleBoardFullscreen}
-                        title={boardFullscreen ? 'Sair da tela cheia (Esc ou F)' : 'Tela cheia (F)'}
-                        type="button"
-                      >
-                        {boardFullscreen ? '✕ Sair' : '⛶ Tela cheia'}
-                      </button>
-                    </div>
-                  ) : null}
-                  {evaluationFailed ? (
-                    <button
-                      className={styles.primaryAction}
-                      onClick={retryEvaluation}
-                      type="button"
-                    >
-                      🔄 Tentar avaliar novamente
-                    </button>
-                  ) : null}
-                  {!guided ? (
-                    <details>
-                      <summary>Ver posição FEN</summary>
-                      <code className={styles.fen}>{current!.fen}</code>
-                    </details>
-                  ) : null}
-                </div>
-              )}
+          {!guided ? renderBoard() : null}
           {!viewingHistory && !boardFen ? (
             <p className={styles.textOnlyNotice}>
               Este exercício do livro não contém uma posição de tabuleiro associada.
@@ -935,7 +936,9 @@ export function ExerciseTrainer({
             </div>
           ) : null}
         </section>
-      ) : training?.status === 'completed' && training.total === 0 ? (
+      ) : null}
+      {displayedExercise && guided ? renderBoard() : null}
+      {displayedExercise ? null : training?.status === 'completed' && training.total === 0 ? (
         <section className={styles.training}>
           <h2>Você já resolveu tudo por aqui!</h2>
           <p>

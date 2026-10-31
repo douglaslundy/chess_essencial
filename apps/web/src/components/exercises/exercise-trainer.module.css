@@ -451,50 +451,86 @@
     width: 100%;
   }
 
-  /* Desafios no computador: textos numa coluna estreita à esquerda, tabuleiro com todo o resto.
-     O cartão do exercício some (display: contents) e seus itens entram direto na grade da página. */
+  /* Desafios no computador: título, exercício e tema numa faixa compacta em cima; o tabuleiro
+     fica com toda a altura que sobra (medida pelo próprio contêiner, cqw/cqh). */
   .guidedPage {
-    grid-template-columns: minmax(15rem, 21rem) minmax(0, 1fr);
-    /* As linhas automáticas recebem os textos; a última (1fr) absorve a altura do tabuleiro. */
-    grid-template-rows: repeat(16, auto) 1fr;
+    grid-template: auto auto minmax(0, 1fr) / auto minmax(0, 1fr) auto;
     column-gap: 1.25rem;
-    row-gap: 0;
-    align-items: start;
+    row-gap: 0.35rem;
+    align-items: center;
+    height: calc(100dvh - 4.5rem);
     min-height: 0;
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 1rem;
   }
-  .guidedPage > *,
-  .guidedTraining > * {
-    grid-column: 1;
-    margin: 0 0 0.55rem;
+  .guidedPage > * {
+    grid-column: 1 / -1;
+    margin: 0;
   }
-  .guidedPage .heading,
-  .guidedTraining {
+  .guidedPage .heading {
+    grid-area: 1 / 1;
     text-align: left;
   }
-  .guidedPage .heading p {
-    margin: 0.25rem 0 0;
+  .guidedPage .heading span {
+    font-size: 0.6rem;
   }
-  .guidedPage .themeFilter {
-    justify-self: stretch;
+  .guidedPage .heading h1 {
+    margin: 0.1rem 0;
+    font-size: 1.15rem;
+  }
+  .guidedPage .heading p {
+    max-width: 22rem;
+    margin: 0;
+    font-size: 0.72rem;
+    line-height: 1.3;
   }
   .guidedTraining {
-    display: contents;
+    grid-area: 1 / 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: flex-start;
+    gap: 0.2rem 0.75rem;
+    width: auto;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    text-align: left;
+    font-size: 0.8rem;
+  }
+  .guidedTraining h2 {
+    font-size: 0.95rem;
+  }
+  .guidedTraining .badge {
+    font-size: 0.62rem;
+  }
+  .guidedTraining .exerciseNav {
+    margin: 0;
+  }
+  .guidedPage .themeFilter {
+    grid-area: 1 / 3;
+    font-size: 0.7rem;
+  }
+  .guidedPage .status {
+    min-height: 0;
+    font-size: 0.75rem;
   }
   /* Fora da tela cheia, que tem as próprias medidas. */
-  .guidedTraining .boardArea:not(:global(.isFullscreen)) {
-    --board-max: calc(100dvh - 9.5rem);
+  .guidedPage > .boardArea:not(:global(.isFullscreen)) {
+    --board-max: calc(100cqh - 2.75rem);
     --board-cap: 200rem;
     --board3d-width: 100%;
-    --board3d-height: calc(100dvh - 11.5rem);
+    --board3d-height: calc(100cqh - 5.5rem);
     --board3d-aspect: auto;
-    grid-column: 2;
-    grid-row: 1 / -1;
+    grid-row: 3;
+    align-self: stretch;
+    container-type: size;
     width: 100%;
-    margin: 0;
-    gap: 0.5rem;
+    min-height: 0;
+    gap: 0.4rem;
+    align-content: start;
   }
-  .guidedTraining .boardArea :global(.boardWithCoordinates) {
+  .guidedPage > .boardArea :global(.boardWithCoordinates) {
     width: min(100%, var(--board-max));
   }
 }
