@@ -8,8 +8,9 @@ const describeDatabase = process.env.RUN_DB_TESTS === 'true' ? describe : descri
 describeDatabase('exercise importer database integration', () => {
   let sql: ReturnType<typeof postgres>;
 
-  // Lesson the mapped exercise (module 1, chapter 1, page 4) links to. The seed no longer ships
-  // book lessons, so the test creates its own; an existing lesson in that slot works the same.
+  // Lesson the mapped exercise (module 1, chapter 77, page 4) links to. The seed no longer ships
+  // book lessons, so the test creates its own; position 77 stays clear of lessons other
+  // integration files create in parallel.
   const fixtureLessonId = '0190a000-0000-7000-8000-00000000e501';
 
   beforeAll(async () => {
@@ -20,7 +21,7 @@ describeDatabase('exercise importer database integration', () => {
     `;
     const inserted = await sql`
       INSERT INTO lessons (id, module_id, slug, position, title, estimated_minutes, status, version)
-      VALUES (${fixtureLessonId}, ${module!.id}, 'exercise-importer-fixture', 1,
+      VALUES (${fixtureLessonId}, ${module!.id}, 'exercise-importer-fixture', 77,
         'Exercise importer fixture', 8, 'published', 1)
       ON CONFLICT DO NOTHING
       RETURNING id
@@ -42,7 +43,7 @@ describeDatabase('exercise importer database integration', () => {
         {
           id: 'phase14-idempotent',
           module: 1,
-          chapter: 1,
+          chapter: 77,
           number: 50000,
           pages: [4],
           prompt: 'Explain the mapped concept.',

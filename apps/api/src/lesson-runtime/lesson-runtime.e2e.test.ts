@@ -5,6 +5,10 @@ import { createApp } from '../bootstrap.js';
 
 const describeDatabase = process.env.RUN_DB_TESTS === 'true' ? describe : describe.skip;
 const lessonId = '00000000-0000-4000-8000-000000000999';
+const neighbourLessons = [
+  ['00000000-0000-4000-8000-000000000998', 998],
+  ['00000000-0000-4000-8000-000000001000', 1000],
+] as const;
 
 describeDatabase('lesson runtime database integration', () => {
   let app: Awaited<ReturnType<typeof createApp>>;
@@ -27,6 +31,16 @@ describeDatabase('lesson runtime database integration', () => {
         'Runtime integration fixture', 8, 'published', 1)
       ON CONFLICT (id) DO UPDATE SET status = 'published'
     `;
+    // Published neighbours for previous/next navigation; the seed no longer ships book lessons.
+    for (const [id, position] of neighbourLessons)
+      await sql`
+        INSERT INTO lessons (id, module_id, slug, position, title, estimated_minutes, status, version)
+        VALUES (${id}, ${module!.id}, ${`runtime-integration-neighbour-${position}`}, ${position},
+          'Runtime integration neighbour', 8, 'published', 1)
+        ON CONFLICT (id) DO UPDATE SET status = 'published'
+      `;
+    for (const [id] of neighbourLessons)
+      await sql`INSERT INTO lesson_source_pages (lesson_id, page) VALUES (${id}, 1) ON CONFLICT DO NOTHING`;
     await sql`DELETE FROM lesson_steps WHERE lesson_id = ${lessonId}`;
     await sql`DELETE FROM lesson_source_pages WHERE lesson_id = ${lessonId}`;
     const steps = [
@@ -77,6 +91,7 @@ describeDatabase('lesson runtime database integration', () => {
   afterAll(async () => {
     await sql`UPDATE user_course_enrollments SET last_lesson_id = NULL WHERE last_lesson_id = ${lessonId}`;
     await sql`DELETE FROM lessons WHERE id = ${lessonId}`;
+    for (const [id] of neighbourLessons) await sql`DELETE FROM lessons WHERE id = ${id}`;
     await sql.end({ timeout: 5 });
     await app.close();
   });
