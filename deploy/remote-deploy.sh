@@ -11,7 +11,7 @@ COMPOSE_FILE="$ROOT_DIR/deploy/docker-compose.vps.yml"
 # for every command so auto-deploys never drop the HTTPS routing.
 OVERLAY_FILE="$ROOT_DIR/deploy/docker-compose.traefik.yml"
 PROJECT_NAME="xadrez-essencial"
-ONE_TIME_LOCAL_BACKUP_CEILING="0046_voice_audio_cache.up.sql"
+ONE_TIME_LOCAL_BACKUP_CEILING="0047_chatgpt_oauth.up.sql"
 IMAGE_TAG="$(git rev-parse --short=12 HEAD)"
 export IMAGE_TAG
 

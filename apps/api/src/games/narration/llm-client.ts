@@ -156,6 +156,77 @@ async function callGemini(
   }, options.timeoutMs);
 }
 
+// "Sign in with ChatGPT" plan usage only runs through the Responses API, streaming and
+// unstored, and rejects system-role items, temperature and max_output_tokens. The system
+// prompt therefore travels inside the single user message.
+const CHATGPT_RESPONSES_URL = 'https://api.openai.com/v1/responses';
+
+/** Joins the text deltas of a Responses API event stream (falls back to the completed event). */
+export function parseResponsesStream(stream: string): string {
+  let text = '';
+  let completed = '';
+  for (const line of stream.split('\n')) {
+    if (!line.startsWith('data:')) continue;
+    const payload = line.slice(5).trim();
+    if (!payload || payload === '[DONE]') continue;
+    let event: {
+      delta?: string;
+      response?: { output?: Array<{ content?: Array<{ text?: string }> }> };
+      type?: string;
+    };
+    try {
+      event = JSON.parse(payload) as typeof event;
+    } catch {
+      continue;
+    }
+    if (event.type === 'response.output_text.delta' && event.delta) text += event.delta;
+    if (event.type === 'response.completed') {
+      completed = (event.response?.output ?? [])
+        .flatMap((item) => item.content ?? [])
+        .map((part) => part.text ?? '')
+        .join('');
+    }
+  }
+  return (text || completed).trim();
+}
+
+async function callChatgpt(
+  config: LlmConfig,
+  system: string,
+  userMessage: string,
+  options: LlmCallOptions,
+) {
+  return withTimeout(async (signal) => {
+    const response = await fetch(CHATGPT_RESPONSES_URL, {
+      body: JSON.stringify({
+        input: [
+          {
+            content: [{ text: `${system}\n\n${userMessage}`, type: 'input_text' }],
+            role: 'user',
+          },
+        ],
+        model: config.model,
+        store: false,
+        stream: true,
+      }),
+      headers: {
+        accept: 'text/event-stream',
+        authorization: `Bearer ${config.apiKey}`,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
+      signal,
+    });
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      throw new LlmRequestError(`ChatGPT respondeu ${response.status}: ${body.slice(0, 500)}`);
+    }
+    const text = parseResponsesStream(await response.text());
+    if (!text) throw new LlmRequestError('Resposta do ChatGPT sem conteúdo de texto');
+    return text;
+  }, options.timeoutMs);
+}
+
 export async function callLlm(
   config: LlmConfig,
   system: string,
@@ -169,5 +240,7 @@ export async function callLlm(
       return callOpenAi(config, system, userMessage, options);
     case 'gemini':
       return callGemini(config, system, userMessage, options);
+    case 'chatgpt':
+      return callChatgpt(config, system, userMessage, options);
   }
 }

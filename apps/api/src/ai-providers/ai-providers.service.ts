@@ -9,6 +9,7 @@ import {
 import {
   BadRequestException,
   Injectable,
+  type OnModuleDestroy,
   OnModuleInit,
   Optional,
   ServiceUnavailableException,
@@ -21,10 +22,25 @@ import { SettingsRepository } from '../settings/settings.repository.js';
 import { AiProvidersRepository, type AiProviderKeyRow } from './ai-providers.repository.js';
 import { callLlm, LlmRequestError } from '../games/narration/llm-client.js';
 import {
+  authorizeUrlFor,
+  ChatgptOAuthError,
+  exchangeCode,
+  newPendingAuthorization,
+  refreshTokens,
+  revokeRefreshToken,
+  type ChatgptTokens,
+  type PendingAuthorization,
+} from './chatgpt-oauth.js';
+import {
   AiProviderKeyInvalidError,
+  CHATGPT_PLAN_MODELS,
   listModelsForProvider,
   type LiveModel,
 } from './model-listing.js';
+
+/** Renew the ChatGPT access token (1 h lifetime) well before it expires, so the worker always reads a valid one. */
+const CHATGPT_REFRESH_MARGIN_MS = 20 * 60_000;
+const CHATGPT_REFRESH_CHECK_MS = 5 * 60_000;
 
 // Key this feature replaces (SP, 2026-07-26): a single JSON blob with a
 // plaintext key, one provider at a time. Migrated once at boot, then never
@@ -43,7 +59,9 @@ interface LegacyNarrationAiConfig {
 }
 
 @Injectable()
-export class AiProvidersService implements OnModuleInit {
+export class AiProvidersService implements OnModuleInit, OnModuleDestroy {
+  private chatgptTimer: ReturnType<typeof setInterval> | null = null;
+
   constructor(
     private readonly repository: AiProvidersRepository,
     private readonly legacySettings: SettingsRepository,
@@ -66,7 +84,16 @@ export class AiProvidersService implements OnModuleInit {
    * otherwise the whole point of adding encryption would be undermined by
    * a live plaintext copy sitting next to it.
    */
+  onModuleDestroy() {
+    if (this.chatgptTimer) clearInterval(this.chatgptTimer);
+  }
+
   async onModuleInit() {
+    this.chatgptTimer = setInterval(
+      () => void this.refreshChatgptIfNeeded().catch(() => undefined),
+      CHATGPT_REFRESH_CHECK_MS,
+    );
+    this.chatgptTimer.unref?.();
     // The whole method is best-effort: this runs on every app boot,
     // including test/CI environments with no real database connection at
     // all — a failure here (DB unreachable, encryption not configured yet)
@@ -110,6 +137,7 @@ export class AiProvidersService implements OnModuleInit {
       lastValidatedAt: row?.lastValidatedAt?.toISOString() ?? null,
       lastValidationError: row?.lastValidationError ?? null,
       model: row?.model ?? null,
+      oauthClientId: row?.oauthClientId ?? null,
       provider,
     };
   }
@@ -190,6 +218,7 @@ export class AiProvidersService implements OnModuleInit {
     actorUserId: string,
   ): Promise<AiProviderKey> {
     const existing = await this.repository.get(provider);
+    if (provider === 'chatgpt') return this.updateChatgptModel(existing, input.model, actorUserId);
     const plainApiKey = this.resolvePlainApiKey(provider, existing, input.apiKey);
 
     let liveModels: LiveModel[];
@@ -268,6 +297,7 @@ export class AiProvidersService implements OnModuleInit {
    * test-without-persisting shape as SettingsService#testMercadoPagoConnection().
    */
   async test(provider: AiProvider): Promise<AiProviderTestResult> {
+    if (provider === 'chatgpt') await this.refreshChatgptIfNeeded();
     const existing = await this.repository.get(provider);
     if (!existing?.encryptedApiKey || !existing.model) {
       throw new BadRequestException(
@@ -296,6 +326,7 @@ export class AiProvidersService implements OnModuleInit {
     model: string;
     provider: AiProvider;
   } | null> {
+    if (provider === 'chatgpt') await this.refreshChatgptIfNeeded().catch(() => undefined);
     const row = await this.repository.get(provider);
     if (!row?.encryptedApiKey || !row.model) return null;
     return {
@@ -311,6 +342,7 @@ export class AiProvidersService implements OnModuleInit {
     model: string;
     provider: AiProvider;
   } | null> {
+    await this.refreshChatgptIfNeeded().catch(() => undefined);
     const row = await this.repository.getActive();
     if (!row?.encryptedApiKey || !row.model) return null;
     return {
@@ -318,5 +350,127 @@ export class AiProvidersService implements OnModuleInit {
       model: row.model,
       provider: row.provider,
     };
+  }
+
+  // ---------- ChatGPT (OAuth) ----------
+
+  private async updateChatgptModel(
+    existing: AiProviderKeyRow | null,
+    model: string,
+    actorUserId: string,
+  ): Promise<AiProviderKey> {
+    if (!existing?.encryptedApiKey) {
+      throw new BadRequestException('Conecte a conta do ChatGPT antes de escolher o modelo.');
+    }
+    const row = await this.repository.upsert('chatgpt', {
+      encryptedApiKey: null,
+      keyPreview: null,
+      lastValidationError: null,
+      model,
+    });
+    await this.audit?.record(
+      actorUserId,
+      'admin.ai_provider_key_updated',
+      'ai_provider_key',
+      'chatgpt',
+      {
+        model,
+      },
+    );
+    const publicModel = this.toPublic('chatgpt', row);
+    publicModel.availableModels = this.toPublicModels(
+      'chatgpt',
+      CHATGPT_PLAN_MODELS.map((id) => ({ contextWindowTokens: null, id, maxOutputTokens: null })),
+    );
+    return publicModel;
+  }
+
+  /** Step 1: PKCE state saved server-side; the admin's browser is sent to OpenAI's consent page. */
+  async startChatgptOAuth(clientId: string, redirectUri: string, actorUserId: string) {
+    const pending = newPendingAuthorization(clientId, redirectUri);
+    await this.repository.saveChatgptPending(
+      clientId,
+      encryptSecret(JSON.stringify(pending), this.encryptionKey()),
+    );
+    await this.audit?.record(
+      actorUserId,
+      'admin.chatgpt_oauth_started',
+      'ai_provider_key',
+      'chatgpt',
+      {},
+    );
+    return { authorizeUrl: authorizeUrlFor(pending), redirectUri };
+  }
+
+  /** Step 2 (OAuth callback): checks state, exchanges the code and stores the tokens encrypted. */
+  async completeChatgptOAuth(code: string, state: string): Promise<void> {
+    const row = await this.repository.getChatgptOAuth();
+    if (!row?.encryptedOauthPending) {
+      throw new ChatgptOAuthError(
+        'Nenhuma conexão com o ChatGPT foi iniciada. Clique em Conectar de novo.',
+      );
+    }
+    const pending = JSON.parse(
+      decryptSecret(row.encryptedOauthPending, this.encryptionKey()),
+    ) as PendingAuthorization;
+    if (pending.state !== state)
+      throw new ChatgptOAuthError('Resposta de autorização inválida (state).');
+    if (pending.expiresAt < Date.now()) {
+      throw new ChatgptOAuthError('A autorização expirou. Clique em Conectar de novo.');
+    }
+    try {
+      await this.storeChatgptTokens(await exchangeCode(pending, code));
+    } catch (error) {
+      if (error instanceof Error) await this.repository.recordChatgptError(error.message);
+      throw error;
+    }
+  }
+
+  async disconnectChatgpt(actorUserId: string): Promise<void> {
+    const row = await this.repository.getChatgptOAuth();
+    if (row?.oauthClientId && row.encryptedRefreshToken) {
+      await revokeRefreshToken(
+        row.oauthClientId,
+        decryptSecret(row.encryptedRefreshToken, this.encryptionKey()),
+      );
+    }
+    await this.repository.clearChatgptTokens();
+    await this.audit?.record(
+      actorUserId,
+      'admin.chatgpt_oauth_disconnected',
+      'ai_provider_key',
+      'chatgpt',
+      {},
+    );
+  }
+
+  /** Single writer of the rotating refresh token: only the API renews; the worker just reads. */
+  async refreshChatgptIfNeeded(): Promise<void> {
+    const row = await this.repository.getChatgptOAuth();
+    if (!row?.encryptedRefreshToken || !row.oauthClientId) return;
+    const expiresAt = row.accessTokenExpiresAt?.getTime() ?? 0;
+    if (expiresAt - Date.now() > CHATGPT_REFRESH_MARGIN_MS) return;
+    try {
+      await this.storeChatgptTokens(
+        await refreshTokens(
+          row.oauthClientId,
+          decryptSecret(row.encryptedRefreshToken, this.encryptionKey()),
+        ),
+      );
+    } catch (error) {
+      if (error instanceof Error) await this.repository.recordChatgptError(error.message);
+      throw error;
+    }
+  }
+
+  private async storeChatgptTokens(tokens: ChatgptTokens): Promise<void> {
+    const key = this.encryptionKey();
+    await this.repository.saveChatgptTokens({
+      accessTokenExpiresAt: tokens.expiresAt,
+      encryptedAccessToken: encryptSecret(tokens.accessToken, key),
+      encryptedRefreshToken: tokens.refreshToken ? encryptSecret(tokens.refreshToken, key) : null,
+      keyPreview: tokens.account ? tokens.account.slice(0, 12) : 'ChatGPT',
+      model: CHATGPT_PLAN_MODELS[0]!,
+    });
   }
 }

@@ -8,6 +8,9 @@ const booleanString = z
 
 export const apiEnvSchema = z.object({
   API_PORT: z.coerce.number().int().min(1).max(65_535).default(4000),
+  // Public base URL of this API (with /v1), used as the OAuth redirect target; derived from
+  // the request when unset.
+  API_PUBLIC_URL: z.string().url().optional(),
   AUTH_ACCESS_SECRET: optionalSecret,
   AUTH_ACCESS_TTL_SECONDS: z.coerce.number().int().min(60).max(3_600).default(900),
   AUTH_EXPOSE_VERIFICATION_TOKEN: booleanString,

@@ -865,6 +865,57 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/admin/ai-providers/chatgpt/oauth/start': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Start "Sign in with ChatGPT" (OAuth + PKCE) for the platform's AI calls (admin only) */
+    post: operations['adminStartChatgptOAuth'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/ai-providers/chatgpt/oauth': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Disconnect the ChatGPT account (revokes the refresh token, admin only) */
+    delete: operations['adminDisconnectChatgpt'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/ai-providers/chatgpt/oauth/callback': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** OAuth redirect target; stores the tokens and sends the browser back to the admin panel */
+    get: operations['chatgptOAuthCallback'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/settings/assisted-game': {
     parameters: {
       query?: never;
@@ -2554,8 +2605,18 @@ export interface components {
       lastValidatedAt: string | null;
       lastValidationError: string | null;
       model: string | null;
+      oauthClientId?: string | null;
       /** @enum {string} */
-      provider: 'anthropic' | 'openai' | 'gemini';
+      provider: 'anthropic' | 'openai' | 'gemini' | 'chatgpt';
+    };
+    ChatgptOAuthStartInput: {
+      clientId: string;
+    };
+    ChatgptOAuthStartResult: {
+      /** Format: uri */
+      authorizeUrl: string;
+      /** Format: uri */
+      redirectUri: string;
     };
     UpdateAiProviderKeyInput: {
       apiKey?: string;
@@ -4647,7 +4708,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        provider: 'anthropic' | 'openai' | 'gemini';
+        provider: 'anthropic' | 'openai' | 'gemini' | 'chatgpt';
       };
       cookie?: never;
     };
@@ -4676,7 +4737,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        provider: 'anthropic' | 'openai' | 'gemini';
+        provider: 'anthropic' | 'openai' | 'gemini' | 'chatgpt';
       };
       cookie?: never;
     };
@@ -4701,7 +4762,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        provider: 'anthropic' | 'openai' | 'gemini';
+        provider: 'anthropic' | 'openai' | 'gemini' | 'chatgpt';
       };
       cookie?: never;
     };
@@ -4730,7 +4791,7 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        provider: 'anthropic' | 'openai' | 'gemini';
+        provider: 'anthropic' | 'openai' | 'gemini' | 'chatgpt';
       };
       cookie?: never;
     };
@@ -4752,6 +4813,75 @@ export interface operations {
       401: components['responses']['Problem'];
       403: components['responses']['Problem'];
       404: components['responses']['Problem'];
+    };
+  };
+  adminStartChatgptOAuth: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ChatgptOAuthStartInput'];
+      };
+    };
+    responses: {
+      /** @description OpenAI consent URL to open in the browser */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChatgptOAuthStartResult'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  adminDisconnectChatgpt: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Disconnected */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  chatgptOAuthCallback: {
+    parameters: {
+      query?: {
+        code?: string;
+        state?: string;
+        error_description?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Redirect to /app/admin/ia with the outcome */
+      302: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
     };
   };
   getAssistedGameSettings: {

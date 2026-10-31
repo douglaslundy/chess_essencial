@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { callLlm, LlmRequestError, openAiTokenBudget } from './llm-client.js';
+import { callLlm, LlmRequestError, openAiTokenBudget, parseResponsesStream } from './llm-client.js';
 
 const originalFetch = global.fetch;
 
@@ -158,5 +158,23 @@ describe('openai output cap', () => {
     expect(openAiTokenBudget('gpt-4o-mini', 300)).toBe(300);
     expect(openAiTokenBudget('gpt-5.5-pro', 300)).toBe(4300);
     expect(openAiTokenBudget('o4-mini', 300)).toBe(4300);
+  });
+});
+
+describe('chatgpt (Responses API stream)', () => {
+  it('joins the output text deltas', () => {
+    const stream = [
+      'event: response.output_text.delta',
+      'data: {"type":"response.output_text.delta","delta":"Olá, "}',
+      'data: {"type":"response.output_text.delta","delta":"aluno."}',
+      'data: [DONE]',
+    ].join('\n');
+    expect(parseResponsesStream(stream)).toBe('Olá, aluno.');
+  });
+
+  it('falls back to the completed response when there are no deltas', () => {
+    const stream =
+      'data: {"type":"response.completed","response":{"output":[{"content":[{"text":"Pronto."}]}]}}';
+    expect(parseResponsesStream(stream)).toBe('Pronto.');
   });
 });

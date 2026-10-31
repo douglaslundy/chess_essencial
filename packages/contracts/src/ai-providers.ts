@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
-// The 3 providers actually wired up for LLM calls (apps/worker/src/narration/llm-client.ts).
-export const aiProviderSchema = z.enum(['anthropic', 'openai', 'gemini']);
+// Providers wired up for LLM calls (apps/worker/src/narration/llm-client.ts). "chatgpt" is
+// the OAuth option (Sign in with ChatGPT, plan usage) next to the API-key ones.
+export const aiProviderSchema = z.enum(['anthropic', 'openai', 'gemini', 'chatgpt']);
 
 export const aiProviderModelMetadataSchema = z.object({
   contextWindowTokens: z.number().int().positive().nullable(),
@@ -29,6 +30,8 @@ export const aiProviderKeySchema = z.object({
   lastValidatedAt: z.string().datetime().nullable(),
   lastValidationError: z.string().nullable(),
   model: z.string().nullable(),
+  /** ChatGPT (OAuth) only: the OAuth client registered with OpenAI. */
+  oauthClientId: z.string().nullable().optional(),
   provider: aiProviderSchema,
 });
 
@@ -55,6 +58,16 @@ export const aiProviderModelListSchema = z.object({
   models: z.array(aiProviderModelSchema),
 });
 
+/** Starts "Sign in with ChatGPT" (OAuth 2.0 + PKCE) for the platform's AI calls. */
+export const chatgptOAuthStartInputSchema = z.object({
+  clientId: z.string().trim().min(1).max(200),
+});
+
+export const chatgptOAuthStartResultSchema = z.object({
+  authorizeUrl: z.string().url(),
+  redirectUri: z.string().url(),
+});
+
 export const aiProviderTestResultSchema = z.object({
   generatedText: z.string(),
 });
@@ -65,6 +78,8 @@ export type AiProviderModelMetadata = z.infer<typeof aiProviderModelMetadataSche
 export type AiProviderKey = z.infer<typeof aiProviderKeySchema>;
 export type AiProviderModelList = z.infer<typeof aiProviderModelListSchema>;
 export type AiProviderTestResult = z.infer<typeof aiProviderTestResultSchema>;
+export type ChatgptOAuthStartInput = z.infer<typeof chatgptOAuthStartInputSchema>;
+export type ChatgptOAuthStartResult = z.infer<typeof chatgptOAuthStartResultSchema>;
 export type ListAiProviderModelsInput = z.infer<typeof listAiProviderModelsInputSchema>;
 export type UpdateAiProviderKeyInput = z.infer<typeof updateAiProviderKeyInputSchema>;
 export type UpdateAiProviderActiveInput = z.infer<typeof updateAiProviderActiveInputSchema>;
@@ -92,6 +107,8 @@ export const AI_MODEL_METADATA_CATALOG: Record<
   AiProvider,
   Record<string, AiProviderModelMetadata>
 > = {
+  // Plan usage is billed to the ChatGPT subscription, not per token: no prices to show.
+  chatgpt: {},
   anthropic: {
     'claude-haiku-4-5': {
       contextWindowTokens: 200_000,

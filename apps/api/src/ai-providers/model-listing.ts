@@ -112,6 +112,8 @@ export async function listGeminiModels(apiKey: string): Promise<LiveModel[]> {
     }));
 }
 
+export const CHATGPT_PLAN_MODELS = ['gpt-5.5', 'gpt-5.5-mini', 'gpt-5.4', 'gpt-5.4-mini'];
+
 export function listModelsForProvider(provider: AiProvider, apiKey: string): Promise<LiveModel[]> {
   switch (provider) {
     case 'anthropic':
@@ -120,5 +122,11 @@ export function listModelsForProvider(provider: AiProvider, apiKey: string): Pro
       return listOpenAiModels(apiKey);
     case 'gemini':
       return listGeminiModels(apiKey);
+    case 'chatgpt':
+      // Plan-usage tokens are not meant for the model catalog endpoint; offer the
+      // ChatGPT-plan models instead and let the test call confirm the choice.
+      return Promise.resolve(
+        CHATGPT_PLAN_MODELS.map((id) => ({ contextWindowTokens: null, id, maxOutputTokens: null })),
+      );
   }
 }

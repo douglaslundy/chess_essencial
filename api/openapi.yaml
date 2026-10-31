@@ -811,7 +811,7 @@ paths:
       summary: Validate a key and list its available models, without saving it (admin only)
       operationId: adminListAiProviderModels
       parameters:
-        - {name: provider, in: path, required: true, schema: {type: string, enum: [anthropic, openai, gemini]}}
+        - {name: provider, in: path, required: true, schema: {type: string, enum: [anthropic, openai, gemini, chatgpt]}}
       requestBody:
         required: true
         content:
@@ -831,7 +831,7 @@ paths:
       summary: Make a real completion call with the already-saved key, to confirm it works (admin only)
       operationId: adminTestAiProviderKey
       parameters:
-        - {name: provider, in: path, required: true, schema: {type: string, enum: [anthropic, openai, gemini]}}
+        - {name: provider, in: path, required: true, schema: {type: string, enum: [anthropic, openai, gemini, chatgpt]}}
       responses:
         '200':
           description: The literal text the model generated
@@ -846,7 +846,7 @@ paths:
       summary: Save and validate an AI provider's key/model (admin only)
       operationId: adminUpdateAiProviderKey
       parameters:
-        - {name: provider, in: path, required: true, schema: {type: string, enum: [anthropic, openai, gemini]}}
+        - {name: provider, in: path, required: true, schema: {type: string, enum: [anthropic, openai, gemini, chatgpt]}}
       requestBody:
         required: true
         content:
@@ -866,7 +866,7 @@ paths:
       summary: Activate or deactivate an AI provider (deactivates any other automatically)
       operationId: adminSetAiProviderActive
       parameters:
-        - {name: provider, in: path, required: true, schema: {type: string, enum: [anthropic, openai, gemini]}}
+        - {name: provider, in: path, required: true, schema: {type: string, enum: [anthropic, openai, gemini, chatgpt]}}
       requestBody:
         required: true
         content:
@@ -881,6 +881,43 @@ paths:
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
+  /admin/ai-providers/chatgpt/oauth/start:
+    post:
+      summary: Start "Sign in with ChatGPT" (OAuth + PKCE) for the platform's AI calls (admin only)
+      operationId: adminStartChatgptOAuth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ChatgptOAuthStartInput'}
+      responses:
+        '201':
+          description: OpenAI consent URL to open in the browser
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ChatgptOAuthStartResult'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /admin/ai-providers/chatgpt/oauth:
+    delete:
+      summary: Disconnect the ChatGPT account (revokes the refresh token, admin only)
+      operationId: adminDisconnectChatgpt
+      responses:
+        '204': {description: Disconnected}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /ai-providers/chatgpt/oauth/callback:
+    get:
+      summary: OAuth redirect target; stores the tokens and sends the browser back to the admin panel
+      operationId: chatgptOAuthCallback
+      security: []
+      parameters:
+        - {name: code, in: query, required: false, schema: {type: string}}
+        - {name: state, in: query, required: false, schema: {type: string}}
+        - {name: error_description, in: query, required: false, schema: {type: string}}
+      responses:
+        '302': {description: Redirect to /app/admin/ia with the outcome}
   /settings/assisted-game:
     get:
       summary: Get whether "partida assistida" is currently enabled
@@ -2763,7 +2800,20 @@ components:
         lastValidatedAt: {type: [string, 'null'], format: date-time}
         lastValidationError: {type: [string, 'null']}
         model: {type: [string, 'null']}
-        provider: {type: string, enum: [anthropic, openai, gemini]}
+        oauthClientId: {type: [string, 'null']}
+        provider: {type: string, enum: [anthropic, openai, gemini, chatgpt]}
+    ChatgptOAuthStartInput:
+      type: object
+      required: [clientId]
+      properties:
+        clientId: {type: string, minLength: 1, maxLength: 200}
+      additionalProperties: false
+    ChatgptOAuthStartResult:
+      type: object
+      required: [authorizeUrl, redirectUri]
+      properties:
+        authorizeUrl: {type: string, format: uri}
+        redirectUri: {type: string, format: uri}
     UpdateAiProviderKeyInput:
       type: object
       required: [model]

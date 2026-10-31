@@ -1,4 +1,6 @@
 import type {
+  ChatgptOAuthStartInput,
+  ChatgptOAuthStartResult,
   LibraryFacets,
   LibraryGame,
   LibraryReview,
@@ -558,6 +560,13 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify(input),
     }),
+  adminStartChatgptOAuth: (input: ChatgptOAuthStartInput, token: string) =>
+    request<ChatgptOAuthStartResult>('/admin/ai-providers/chatgpt/oauth/start', token, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  adminDisconnectChatgpt: (token: string) =>
+    request<void>('/admin/ai-providers/chatgpt/oauth', token, { method: 'DELETE' }),
   adminSetAiProviderActive: (
     provider: AiProvider,
     input: UpdateAiProviderActiveInput,

@@ -10,7 +10,16 @@ export interface AiProviderKeyRow {
   lastValidatedAt: Date | null;
   lastValidationError: string | null;
   model: string | null;
+  oauthClientId?: string | null;
   provider: AiProvider;
+}
+
+export interface ChatgptOAuthRow {
+  accessTokenExpiresAt: Date | null;
+  encryptedOauthPending: string | null;
+  encryptedRefreshToken: string | null;
+  model: string | null;
+  oauthClientId: string | null;
 }
 
 @Injectable()
@@ -21,7 +30,7 @@ export class AiProvidersRepository {
     return this.database.client<AiProviderKeyRow[]>`
       SELECT provider, encrypted_api_key AS "encryptedApiKey", key_preview AS "keyPreview",
         model, is_active AS "isActive", last_validated_at AS "lastValidatedAt",
-        last_validation_error AS "lastValidationError"
+        last_validation_error AS "lastValidationError", oauth_client_id AS "oauthClientId"
       FROM ai_provider_keys
       ORDER BY provider
     `;
@@ -36,6 +45,68 @@ export class AiProvidersRepository {
       WHERE provider = ${provider}
     `;
     return row ?? null;
+  }
+
+  async getChatgptOAuth(): Promise<ChatgptOAuthRow | null> {
+    const [row] = await this.database.client<ChatgptOAuthRow[]>`
+      SELECT oauth_client_id AS "oauthClientId", encrypted_refresh_token AS "encryptedRefreshToken",
+        access_token_expires_at AS "accessTokenExpiresAt", encrypted_oauth_pending AS "encryptedOauthPending",
+        model
+      FROM ai_provider_keys WHERE provider = 'chatgpt'
+    `;
+    return row ?? null;
+  }
+
+  /** Saves the in-flight PKCE state (and the client id) when the admin clicks "Conectar". */
+  async saveChatgptPending(clientId: string, encryptedPending: string): Promise<void> {
+    await this.database.client`
+      INSERT INTO ai_provider_keys (provider, oauth_client_id, encrypted_oauth_pending)
+      VALUES ('chatgpt', ${clientId}, ${encryptedPending})
+      ON CONFLICT (provider) DO UPDATE SET
+        oauth_client_id = EXCLUDED.oauth_client_id,
+        encrypted_oauth_pending = EXCLUDED.encrypted_oauth_pending,
+        updated_at = now()
+    `;
+  }
+
+  /** Stores a fresh token set; the access token lives in encrypted_api_key like any provider key. */
+  async saveChatgptTokens(fields: {
+    accessTokenExpiresAt: Date;
+    encryptedAccessToken: string;
+    encryptedRefreshToken: string | null;
+    keyPreview: string | null;
+    model: string;
+  }): Promise<void> {
+    await this.database.client`
+      UPDATE ai_provider_keys SET
+        encrypted_api_key = ${fields.encryptedAccessToken},
+        encrypted_refresh_token = COALESCE(${fields.encryptedRefreshToken}, encrypted_refresh_token),
+        access_token_expires_at = ${fields.accessTokenExpiresAt},
+        key_preview = COALESCE(${fields.keyPreview}, key_preview),
+        model = COALESCE(model, ${fields.model}),
+        encrypted_oauth_pending = NULL,
+        last_validated_at = now(),
+        last_validation_error = NULL,
+        updated_at = now()
+      WHERE provider = 'chatgpt'
+    `;
+  }
+
+  async recordChatgptError(message: string): Promise<void> {
+    await this.database.client`
+      UPDATE ai_provider_keys SET last_validation_error = ${message}, updated_at = now()
+      WHERE provider = 'chatgpt'
+    `;
+  }
+
+  /** Disconnect: forget every token and deactivate (the client id stays for reconnecting). */
+  async clearChatgptTokens(): Promise<void> {
+    await this.database.client`
+      UPDATE ai_provider_keys SET
+        encrypted_api_key = NULL, encrypted_refresh_token = NULL, access_token_expires_at = NULL,
+        encrypted_oauth_pending = NULL, key_preview = NULL, is_active = false, updated_at = now()
+      WHERE provider = 'chatgpt'
+    `;
   }
 
   async getActive(): Promise<AiProviderKeyRow | null> {
