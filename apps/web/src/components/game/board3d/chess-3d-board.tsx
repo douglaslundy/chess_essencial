@@ -10,7 +10,7 @@ import styles from './chess-3d-board.module.css';
 import { walkPath, type PlayedMove } from '@/components/game/move-path';
 import { MoveToast } from '@/components/game/move-toast';
 import { useDialogA11y } from '@/components/ui/dialog-a11y';
-import { MedievalFrame, MedievalStatue, useMedievalMaterials } from './medieval';
+import { MedievalFrame, MedievalStatue, MedievalTower, useMedievalMaterials } from './medieval';
 import { pieceGeometry } from './piece-geometry';
 import { initialPieces, reconcile, type TrackedPiece } from './piece-tracker';
 
@@ -208,7 +208,9 @@ function PieceMesh({
 
   return (
     <group position={home} ref={group} rotation={[0, white ? Math.PI / 2 : -Math.PI / 2, 0]}>
-      {medieval ? (
+      {medieval && piece.type === 'r' ? (
+        <MedievalTower color={piece.color} />
+      ) : medieval ? (
         <MedievalStatue color={piece.color} kind={piece.type} />
       ) : (
         <>

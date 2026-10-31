@@ -5,11 +5,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   CanvasTexture,
   CylinderGeometry,
+  LatheGeometry,
   PlaneGeometry,
   Quaternion,
   RepeatWrapping,
   SRGBColorSpace,
   TextureLoader,
+  Vector2,
   Vector3,
   type Mesh,
   type Texture,
@@ -239,6 +241,115 @@ export function MedievalStatue({ color, kind }: { color: 'w' | 'b'; kind: Kind }
       >
         <meshBasicMaterial alphaTest={0.5} alphaToCoverage map={map} toneMapped={false} />
       </mesh>
+    </group>
+  );
+}
+
+/**
+ * Rook outline traced from its front photo: [height, radius], both as fractions of the photo
+ * height. Merlons stand above `ROOK_MERLONS_FROM`.
+ */
+const ROOK_PROFILE: Array<[number, number]> = [
+  [0, 0.2],
+  [0.02, 0.235],
+  [0.04, 0.247],
+  [0.1, 0.245],
+  [0.12, 0.229],
+  [0.2, 0.22],
+  [0.25, 0.221],
+  [0.26, 0.201],
+  [0.29, 0.2],
+  [0.31, 0.17],
+  [0.34, 0.166],
+  [0.52, 0.162],
+  [0.56, 0.15],
+  [0.58, 0.14],
+  [0.79, 0.137],
+  [0.82, 0.157],
+  [0.85, 0.186],
+  [0.95, 0.184],
+];
+const ROOK_MERLONS_FROM = 0.95;
+const ROOK_MERLONS = 8;
+
+/** Lathe of the rook outline with the front photo wrapped round it, mirrored like the pedestals. */
+function towerGeometry(height: number, aspect: number) {
+  const geometry = new LatheGeometry(
+    ROOK_PROFILE.map(([y, r]) => new Vector2(r * height, y * height)),
+    48,
+  );
+  const uv = geometry.attributes.uv!;
+  const position = geometry.attributes.position!;
+  for (let i = 0; i < uv.count; i += 1) {
+    const r = Math.hypot(position.getX(i), position.getZ(i)) / height;
+    const around = Math.abs(((uv.getX(i) * 2) % 2) - 1);
+    // Each ring samples only its own row's width of the photo, so the edges never reach past it.
+    const band = Math.min(0.96, ((2 * r) / aspect) * 0.92);
+    uv.setXY(i, 0.5 - band / 2 + around * band, position.getY(i) / height);
+  }
+  return geometry;
+}
+
+/**
+ * The rook is a solid of revolution, so it is turned in 3D from its photo instead of shown as a
+ * flat cut-out: the cut-out's straight walls carried the photo's own perspective and the tower
+ * looked tilted on its pedestal.
+ */
+export function MedievalTower({ color }: { color: 'w' | 'b' }) {
+  const [, setLoaded] = useState(0);
+  const height = MEDIEVAL_HEIGHT.r;
+  const map = useMemo(
+    () => texture(medievalViewUrl(color, 'r', 0), () => setLoaded((n) => n + 1)),
+    [color],
+  );
+  const image = map.image as { width?: number; height?: number } | undefined;
+  const aspect = image?.width && image.height ? image.width / image.height : 0.5;
+  const geometry = useMemo(() => towerGeometry(height, aspect), [aspect, height]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+
+  const stone = color === 'w' ? '#e4dccb' : '#26262a';
+  const roughness = color === 'w' ? 0.6 : 0.35;
+  const [, rimRadius] = ROOK_PROFILE[ROOK_PROFILE.length - 1]!;
+  const rim = rimRadius * height;
+  const merlonHeight = (1 - ROOK_MERLONS_FROM) * height;
+  const merlonWidth = ((2 * Math.PI * rim) / ROOK_MERLONS) * 0.55;
+  return (
+    <group visible={Boolean(image?.width)}>
+      <mesh position={[0, 0.004, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[ROOK_PROFILE[2]![1] * height * 1.35, 32]} />
+        <meshBasicMaterial depthWrite={false} map={contactShadowTexture()} transparent />
+      </mesh>
+      {/* Turned so the photo's front (the arched window) faces the players. */}
+      <mesh castShadow geometry={geometry} receiveShadow rotation={[0, Math.PI / 2, 0]}>
+        <meshStandardMaterial map={map} roughness={roughness} />
+      </mesh>
+      <mesh
+        position={[0, ROOK_MERLONS_FROM * height, 0]}
+        receiveShadow
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
+        <circleGeometry args={[rim, 48]} />
+        <meshStandardMaterial color={stone} roughness={0.75} />
+      </mesh>
+      {Array.from({ length: ROOK_MERLONS }, (_, i) => {
+        const a = (i / ROOK_MERLONS) * Math.PI * 2;
+        return (
+          <mesh
+            castShadow
+            key={i}
+            position={[
+              Math.sin(a) * rim * 0.9,
+              ROOK_MERLONS_FROM * height + merlonHeight / 2,
+              Math.cos(a) * rim * 0.9,
+            ]}
+            receiveShadow
+            rotation={[0, a, 0]}
+          >
+            <boxGeometry args={[merlonWidth, merlonHeight, rim * 0.22]} />
+            <meshStandardMaterial color={stone} roughness={roughness} />
+          </mesh>
+        );
+      })}
     </group>
   );
 }
