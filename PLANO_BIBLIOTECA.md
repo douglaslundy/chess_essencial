@@ -34,4 +34,5 @@ Concluir dataset -> testar UI no navegador -> F2.
 - Pendências: rodar `pnpm build` + CI; decidir se filtra pool da Jornada só para tag challenge; commit/push/deploy aguardam pedido.
 
 ## Cache de áudio TTS (2026-10-31)
+
 - Migration 0046 voice_audio_cache (sha256 de modelo|voz|instrução|texto normalizado -> mp3 bytea). VoiceService.synthesize consulta antes de chamar OpenAI, deduplica chamadas simultâneas; resposta com ETag + Cache-Control immutable (navegador também reaproveita). Sem poda automática (last_used_at permite).
