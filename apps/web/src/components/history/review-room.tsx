@@ -403,6 +403,10 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
         </div>
       </header>
       <section className="reviewBoard">
+        {/* Treinador acima do tabuleiro, como na partida: o comentário fica à vista do lance. */}
+        {shouldNarrateReviewMove(currentMoveAnalysis, myColor) ? (
+          <CoachCallout message={coachMessage || narrateMove(currentMoveAnalysis!)} />
+        ) : null}
         <ChessBoard
           disabled
           fen={fen}
@@ -496,7 +500,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
             Narrar lances por voz
           </label>
           {shouldNarrateReviewMove(currentMoveAnalysis, myColor) ? (
-            <CoachCallout message={coachMessage || narrateMove(currentMoveAnalysis!)} />
+            <span>Comentário do Treinador acima do tabuleiro.</span>
           ) : currentMoveAnalysis ? (
             <span>Lance do adversário: sem narração do Treinador.</span>
           ) : (
