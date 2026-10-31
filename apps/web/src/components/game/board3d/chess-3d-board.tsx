@@ -202,12 +202,11 @@ function PieceMesh({
           roughness={white ? 0.45 : 0.3}
         />
       </mesh>
-      {/* Gold rim keeps dark pieces readable (king vs queen vs pawn) against dark squares and from above. */}
-      {white ? null : (
-        <mesh geometry={geometry} scale={[1.06, 1.02, 1.06]}>
-          <meshBasicMaterial color="#d8b25a" side={BackSide} />
-        </mesh>
-      )}
+      {/* Rim keeps every piece readable (king vs queen vs pawn) against same-tone squares and from
+          above: gold around dark pieces, deep bronze around light ones. */}
+      <mesh geometry={geometry} scale={[1.06, 1.02, 1.06]}>
+        <meshBasicMaterial color={white ? '#7a5326' : '#d8b25a'} side={BackSide} />
+      </mesh>
     </group>
   );
 }
