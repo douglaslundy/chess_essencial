@@ -267,7 +267,7 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
                       ? 'A IA está preparando a revisão desta partida. Os comentários aparecem aqui assim que ficarem prontos.'
                       : review && !review.aiAvailable
                         ? 'A IA não está ativada na plataforma, por isso esta partida ainda não tem comentários.'
-                        : 'Sem comentário para este lance.'}
+                        : `${mover} jogam ${toBrazilianSan(frame?.san ?? '')}.`}
                   </p>
                 )}
               </>

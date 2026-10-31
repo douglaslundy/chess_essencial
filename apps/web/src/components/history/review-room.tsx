@@ -14,9 +14,8 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   buildFallbackNarration,
   moveQualityLabel,
-  narrateMove,
   narrationTextForPlayer,
-  shouldNarrateReviewMove,
+  reviewMoveComment,
 } from './move-narration';
 import { reviewEligibility, type ReviewEligibility } from './review-eligibility';
 import { CoachCallout } from '@/components/coach/coach-callout';
@@ -38,6 +37,8 @@ const ANALYSIS_STATUS_LABEL: Record<GameAnalysis['status'], string> = {
   processing: 'Estou analisando esta partida agora — tente novamente em instantes.',
 };
 
+const WELCOME = 'Olá, seja bem-vindo! Vamos revisar essa partida.';
+
 const QUALITY_ROWS: Array<{ key: keyof GameAnalysisQualityCounts; label: string }> = [
   { key: 'otimo', label: moveQualityLabel.otimo },
   { key: 'excelente', label: moveQualityLabel.excelente },
@@ -48,12 +49,15 @@ const QUALITY_ROWS: Array<{ key: keyof GameAnalysisQualityCounts; label: string 
   { key: 'missedWin', label: 'Oportunidades perdidas' },
 ];
 
-function speakNarration(
-  narration: GameNarration,
-  voiceName: string | null,
-  myColor: 'white' | 'black' | null,
-) {
-  return speak(speakableSquares(narrationTextForPlayer(narration, myColor)), { voiceName });
+/**
+ * The AI voice can fail (not configured, quota, iOS autoplay block): the browser voice keeps
+ * the Treinador audible, with a short notice instead of a silent error.
+ */
+function speakCoach(text: string, voiceName: string | null, notify: (message: string) => void) {
+  speak(text, { interrupt: true, voiceName }).catch(() => {
+    notify('A voz por IA falhou; o Treinador está usando a voz do navegador.');
+    void speak(text, { interrupt: true }).catch(() => undefined);
+  });
 }
 
 export interface FutureEvaluation {
@@ -152,35 +156,27 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
         : null;
 
   const { voiceName, reviewNarrationEnabled, setReviewNarrationEnabled } = useVoicePreference();
+  const moveComment = reviewMoveComment(
+    ply ? (moves[ply - 1] ?? null) : null,
+    currentMoveAnalysis,
+    effectiveNarration?.keyMoments ?? [],
+    myColor,
+  );
+  const coachText = ply === 0 ? WELCOME : moveComment;
 
+  // Navigating with the buttons is the user gesture iOS needs (speech.ts unlocks on first tap).
   useEffect(() => {
-    if (!reviewNarrationEnabled || !shouldNarrateReviewMove(currentMoveAnalysis, myColor)) return;
-    const narrationText = narrateMove(currentMoveAnalysis!);
-    queueMicrotask(() => setCoachMessage(narrationText));
-    void speak(narrationText, { voiceName }).catch((error: unknown) =>
-      setMessage(
-        error instanceof Error ? error.message : 'Não foi possível reproduzir a voz do Treinador.',
-      ),
-    );
-  }, [currentMoveAnalysis, myColor, reviewNarrationEnabled, voiceName]);
+    if (view !== 'moves' || !reviewNarrationEnabled || !coachText) return;
+    speakCoach(coachText, voiceName, setMessage);
+  }, [coachText, ply, reviewNarrationEnabled, view, voiceName]);
 
   useEffect(() => {
     if (!reviewNarrationEnabled) stopSpeaking();
   }, [reviewNarrationEnabled]);
 
   function startMoveByMoveReview() {
-    const welcome = 'Olá, seja bem-vindo! Vamos revisar essa partida.';
+    setPly(0);
     setView('moves');
-    setCoachMessage(welcome);
-    if (reviewNarrationEnabled) {
-      void speak(welcome, { voiceName }).catch((error: unknown) =>
-        setMessage(
-          error instanceof Error
-            ? error.message
-            : 'Não foi possível reproduzir a voz do Treinador.',
-        ),
-      );
-    }
   }
 
   const current = annotations.find((item) => item.ply === ply);
@@ -286,10 +282,10 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
               <h2 id="learning-signals-title">Próximos passos de estudo</h2>
             </div>
             {learningSignals.map((signal) => (
-              <div className="reviewNarrationSection" key={signal.id}>
-                <h3>
+              <details className="reviewNarrationSection" key={signal.id}>
+                <summary>
                   Lance {signal.ply}: {signal.skillLabel}
-                </h3>
+                </summary>
                 <p>
                   {signal.signalType === 'missed_opportunity'
                     ? 'O motor identificou uma oportunidade concreta que não foi aproveitada.'
@@ -306,7 +302,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
                 ) : (
                   <p>Ainda não há um exercício publicado compatível com esta habilidade.</p>
                 )}
-              </div>
+              </details>
             ))}
           </section>
         ) : null}
@@ -316,15 +312,9 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
               <h2>Resumo narrado</h2>
               <button
                 onClick={() => {
-                  setCoachMessage(narrationTextForPlayer(effectiveNarration, myColor));
-                  void speakNarration(effectiveNarration, voiceName, myColor).catch(
-                    (error: unknown) =>
-                      setMessage(
-                        error instanceof Error
-                          ? error.message
-                          : 'Não foi possível reproduzir a voz do Treinador.',
-                      ),
-                  );
+                  const text = narrationTextForPlayer(effectiveNarration, myColor);
+                  setCoachMessage(text);
+                  speakCoach(speakableSquares(text), voiceName, setMessage);
                 }}
                 type="button"
               >
@@ -332,10 +322,9 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
               </button>
             </div>
             <CoachCallout message={coachMessage || effectiveNarration.summary} />
-            <p>{effectiveNarration.summary}</p>
             {effectiveNarration.keyMoments.length > 0 ? (
-              <div className="reviewNarrationSection">
-                <h3>Momentos-chave</h3>
+              <details className="reviewNarrationSection">
+                <summary>Momentos-chave ({effectiveNarration.keyMoments.length})</summary>
                 {effectiveNarration.keyMoments.map((moment) => (
                   <p key={moment.ply}>
                     <strong>
@@ -344,27 +333,27 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
                     {moment.narrative}
                   </p>
                 ))}
-              </div>
+              </details>
             ) : null}
             {effectiveNarration.patterns.length > 0 ? (
-              <div className="reviewNarrationSection">
-                <h3>Padrões observados</h3>
+              <details className="reviewNarrationSection">
+                <summary>Padrões observados ({effectiveNarration.patterns.length})</summary>
                 <ul>
                   {effectiveNarration.patterns.map((pattern) => (
                     <li key={pattern}>{pattern}</li>
                   ))}
                 </ul>
-              </div>
+              </details>
             ) : null}
             {effectiveNarration.studyPlan.length > 0 ? (
-              <div className="reviewNarrationSection">
-                <h3>Plano de estudo</h3>
+              <details className="reviewNarrationSection">
+                <summary>Plano de estudo ({effectiveNarration.studyPlan.length})</summary>
                 <ul>
                   {effectiveNarration.studyPlan.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
                 </ul>
-              </div>
+              </details>
             ) : null}
           </section>
         ) : null}
@@ -404,9 +393,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
       </header>
       <section className="reviewBoard">
         {/* Treinador acima do tabuleiro, como na partida: o comentário fica à vista do lance. */}
-        {shouldNarrateReviewMove(currentMoveAnalysis, myColor) ? (
-          <CoachCallout message={coachMessage || narrateMove(currentMoveAnalysis!)} />
-        ) : null}
+        {coachText ? <CoachCallout message={coachText} /> : null}
         <ChessBoard
           disabled
           fen={fen}
@@ -417,6 +404,38 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
           orientation={orientation}
           pieceTheme={pieceTheme}
         />
+        <div aria-label="Navegar pelos lances" className="reviewNavigation" role="group">
+          <button aria-label="Início" disabled={ply === 0} onClick={() => setPly(0)} type="button">
+            ⏮
+          </button>
+          <button
+            aria-label="Lance anterior"
+            disabled={ply === 0}
+            onClick={() => setPly((value) => value - 1)}
+            type="button"
+          >
+            ◀
+          </button>
+          <span>
+            Ply {ply}/{moves.length}
+          </span>
+          <button
+            aria-label="Próximo lance"
+            disabled={ply >= moves.length}
+            onClick={() => setPly((value) => value + 1)}
+            type="button"
+          >
+            ▶
+          </button>
+          <button
+            aria-label="Último lance"
+            disabled={ply >= moves.length}
+            onClick={() => setPly(moves.length)}
+            type="button"
+          >
+            ⏭
+          </button>
+        </div>
         {arrowFrom && arrowTo ? (
           <p className="annotationPreview">
             Seta: {arrowFrom} → {arrowTo}
@@ -424,27 +443,6 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
         ) : null}
       </section>
       <aside className="reviewPanel">
-        <div className="reviewNavigation">
-          <button disabled={ply === 0} onClick={() => setPly(0)} type="button">
-            ⏮
-          </button>
-          <button disabled={ply === 0} onClick={() => setPly((value) => value - 1)} type="button">
-            ◀
-          </button>
-          <span>
-            Ply {ply}/{moves.length}
-          </span>
-          <button
-            disabled={ply >= moves.length}
-            onClick={() => setPly((value) => value + 1)}
-            type="button"
-          >
-            ▶
-          </button>
-          <button disabled={ply >= moves.length} onClick={() => setPly(moves.length)} type="button">
-            ⏭
-          </button>
-        </div>
         <div className="reviewMoves">
           {moves.map((move) => (
             <button
@@ -499,13 +497,14 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
             />
             Narrar lances por voz
           </label>
-          {shouldNarrateReviewMove(currentMoveAnalysis, myColor) ? (
+          {moveComment ? (
             <span>Comentário do Treinador acima do tabuleiro.</span>
-          ) : currentMoveAnalysis ? (
+          ) : ply > 0 ? (
             <span>Lance do adversário: sem narração do Treinador.</span>
-          ) : (
+          ) : null}
+          {analysis?.status !== 'completed' ? (
             <span>{ANALYSIS_STATUS_LABEL[analysis?.status ?? 'pending']}</span>
-          )}
+          ) : null}
         </section>
       </aside>
     </main>

@@ -153,13 +153,17 @@ describe('speak', () => {
     const synth = installFakeSynth(true);
     localStorage.setItem('xadrez.access_token', 'token');
     generateAiSpeech.mockResolvedValue(new Blob(['mp3'], { type: 'audio/mpeg' }));
-    const play = vi.fn().mockResolvedValue(undefined);
+    const play = vi.fn();
     class FakeAudio {
-      addEventListener(event: string, listener: () => void) {
-        if (event === 'ended') queueMicrotask(listener);
-      }
+      onended: (() => void) | null = null;
+      onerror: (() => void) | null = null;
       pause = vi.fn();
-      play = play;
+      src = '';
+      play = () => {
+        play(this.src);
+        queueMicrotask(() => this.onended?.());
+        return Promise.resolve();
+      };
     }
     vi.stubGlobal('Audio', FakeAudio);
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:openai');
@@ -170,7 +174,40 @@ describe('speak', () => {
 
     expect(generateAiSpeech).toHaveBeenCalledWith({ text: 'Olá', voice: 'openai:marin' }, 'token');
     expect(play).toHaveBeenCalledTimes(1);
+    expect(play).toHaveBeenCalledWith('blob:openai');
     expect(synth.speak).not.toHaveBeenCalled();
+  });
+
+  it('unlocks one shared audio element on the first tap and reuses it for AI clips (iOS)', async () => {
+    installFakeSynth(true);
+    localStorage.setItem('xadrez.access_token', 'token');
+    generateAiSpeech.mockResolvedValue(new Blob(['mp3'], { type: 'audio/mpeg' }));
+    // Listeners from earlier imports of the module also fire, so track sources per element.
+    const instances: Array<{ played: string[] }> = [];
+    class FakeAudio {
+      onended: (() => void) | null = null;
+      played: string[] = [];
+      src = '';
+      constructor() {
+        instances.push(this);
+      }
+      pause = vi.fn();
+      play = () => {
+        this.played.push(this.src.slice(0, 14));
+        queueMicrotask(() => this.onended?.());
+        return Promise.resolve();
+      };
+    }
+    vi.stubGlobal('Audio', FakeAudio);
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:openai');
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const { speak } = await import('./speech');
+
+    window.dispatchEvent(new Event('pointerdown'));
+    await speak('Olá', { voiceName: 'openai:marin' });
+
+    const aiElement = instances.find((item) => item.played.includes('blob:openai'));
+    expect(aiElement?.played).toEqual(['data:audio/wav', 'blob:openai']);
   });
 
   it('reports an OpenAI failure and never falls back to the system voice', async () => {

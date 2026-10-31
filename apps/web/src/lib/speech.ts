@@ -10,11 +10,28 @@ let voicesReady: Promise<void> | null = null;
 let audioQueue: Promise<void> = Promise.resolve();
 let queueGeneration = 0;
 
+let sharedAudio: HTMLAudioElement | null = null;
+// 2 samples of 8-bit silence: playing it inside the first tap unlocks the shared element.
+const SILENT_WAV =
+  'data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQIAAACAgA==';
+
+// iOS only plays media started from a tap. One audio element, played silently on the first
+// tap, is reused for every AI voice clip (a fresh Audio() after a fetch would be blocked).
+function audioElement(): HTMLAudioElement {
+  sharedAudio ??= new Audio();
+  return sharedAudio;
+}
+
 // iOS only starts speech from a tap; an empty utterance on the first tap unlocks later narration.
-if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+if (typeof window !== 'undefined') {
   const unlock = () => {
     window.removeEventListener('pointerdown', unlock);
-    window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
+    if ('speechSynthesis' in window) window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
+    if (typeof Audio !== 'undefined') {
+      const audio = audioElement();
+      audio.src = SILENT_WAV;
+      audio.play().catch(() => undefined);
+    }
   };
   window.addEventListener('pointerdown', unlock);
 }
@@ -69,16 +86,15 @@ async function speakWithAi(text: string, voiceName: string, generation: number):
     );
     if (generation !== queueGeneration) return;
     url = URL.createObjectURL(blob);
-    audio = new Audio(url);
+    audio = audioElement();
+    audio.src = url;
     currentAudio = audio;
     currentAudioUrl = url;
     await new Promise<void>((resolve, reject) => {
-      audio!.addEventListener('ended', () => resolve(), { once: true });
-      audio!.addEventListener(
-        'error',
-        () => reject(new Error('O navegador não conseguiu reproduzir o áudio da OpenAI.')),
-        { once: true },
-      );
+      // Handlers (not listeners) so a clip stopped midway never resolves on the next clip's end.
+      audio!.onended = () => resolve();
+      audio!.onerror = () =>
+        reject(new Error('O navegador não conseguiu reproduzir o áudio da OpenAI.'));
       audio!.play().catch(reject);
     });
   } catch (error) {

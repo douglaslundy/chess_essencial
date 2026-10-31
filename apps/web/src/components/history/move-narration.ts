@@ -1,5 +1,6 @@
 import type {
   GameAnalysis,
+  GameMove,
   GameMoveAnalysis,
   GameNarration,
   GameNarrationKeyMoment,
@@ -58,6 +59,24 @@ export function narrateMove(move: GameMoveAnalysis): string {
   }
   if (move.missedWin) sentence += ' Havia uma oportunidade melhor nessa posição.';
   return speakableSquares(sentence);
+}
+
+/**
+ * Treinador's comment for the reviewed ply: the AI key-moment narrative when one exists,
+ * else the engine-based sentence, else (analysis missing or still running) just the move,
+ * so the bubble never shows an "unavailable" message. Null for the opponent's moves.
+ */
+export function reviewMoveComment(
+  move: Pick<GameMove, 'color' | 'ply' | 'san'> | null,
+  analysis: GameMoveAnalysis | null,
+  keyMoments: GameNarrationKeyMoment[],
+  myColor: 'white' | 'black' | null,
+): string | null {
+  if (!move || !myColor || move.color !== myColor) return null;
+  const moment = keyMoments.find((item) => item.ply === move.ply && item.color === myColor);
+  if (moment?.narrative) return speakableSquares(moment.narrative);
+  if (analysis) return narrateMove(analysis);
+  return speakableSquares(`Você jogou ${toBrazilianSan(move.san)}.`);
 }
 
 /**

@@ -11,6 +11,7 @@ import {
   describeMoveQuality,
   narrateMove,
   narrationTextForPlayer,
+  reviewMoveComment,
   shouldNarrateReviewMove,
 } from './move-narration';
 
@@ -161,5 +162,32 @@ describe('player-only review narration', () => {
     };
     expect(narrationTextForPlayer(narration, 'white')).toBe('Summary. White tip.');
     expect(narrationTextForPlayer(narration, 'black')).toBe('Summary. Black tip.');
+  });
+});
+
+describe('reviewMoveComment', () => {
+  const played = { color: 'white' as const, ply: 1, san: 'Nf3' };
+
+  it('stays silent on the opponent moves', () => {
+    expect(reviewMoveComment(played, move(), [], 'black')).toBeNull();
+    expect(reviewMoveComment(null, null, [], 'white')).toBeNull();
+  });
+
+  it('prefers the AI key-moment narrative for this ply', () => {
+    const moment = {
+      color: 'white' as const,
+      narrative: 'Bom desenvolvimento.',
+      ply: 1,
+      quality: 'bom' as const,
+      san: 'Nf3',
+    };
+    expect(reviewMoveComment(played, move(), [moment], 'white')).toBe('Bom desenvolvimento.');
+  });
+
+  it('uses the engine sentence, and the bare move when there is no analysis yet', () => {
+    expect(reviewMoveComment(played, move({ san: 'Nf3' }), [], 'white')).toBe(
+      narrateMove(move({ san: 'Nf3' })),
+    );
+    expect(reviewMoveComment(played, null, [], 'white')).toMatch(/^Você jogou C/);
   });
 });
