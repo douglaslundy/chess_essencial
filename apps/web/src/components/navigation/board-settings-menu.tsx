@@ -8,6 +8,7 @@ const EFFECT_LABELS: Array<[keyof BoardEffects, string, string]> = [
   ['moveToast', 'Balão da jogada', 'Mostra a anotação do lance por 2 segundos.'],
   ['moveAnimation', 'Animação de movimento', 'A peça caminha casa a casa até o destino.'],
   ['captureAnimation', 'Animação de captura', 'Duelo com o poder de cada peça e som.'],
+  ['coordinates3d', 'Coordenadas no 3D', 'Letras e números das casas na borda do tabuleiro.'],
 ];
 
 /** Non-modal popover in the top bar: board options never cover or shift the board. */

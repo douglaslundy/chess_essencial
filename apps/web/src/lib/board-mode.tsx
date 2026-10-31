@@ -11,12 +11,15 @@ export interface BoardEffects {
   moveAnimation: boolean;
   /** Cinematic duel (per-piece power + sound) when a piece is captured. */
   captureAnimation: boolean;
+  /** Letters and numbers on the 3D board's wooden frame. On by default. */
+  coordinates3d: boolean;
 }
 
 const STORAGE_KEY = 'xadrez.board_mode';
 const EFFECTS_KEY = 'xadrez.board_effects';
 const DEFAULT_EFFECTS: BoardEffects = {
   captureAnimation: false,
+  coordinates3d: true,
   moveAnimation: false,
   moveToast: true,
 };

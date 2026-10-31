@@ -520,6 +520,7 @@ export function ChessBoard(props: ChessBoardProps) {
           lastMove={props.lastMove}
           movableColor={props.movableColor}
           onMove={props.onMove}
+          coordinates={effects.coordinates3d}
           orientation={props.orientation}
           toast={toast}
           walk={walk}

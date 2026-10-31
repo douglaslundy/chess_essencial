@@ -5,6 +5,7 @@ import { Chess, type Square } from 'chess.js';
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { BackSide, type Group } from 'three';
 
+import { BoardCoordinates } from './board-coordinates';
 import styles from './chess-3d-board.module.css';
 import { walkPath, type PlayedMove } from '@/components/game/move-path';
 import { MoveToast } from '@/components/game/move-toast';
@@ -23,6 +24,8 @@ export interface Chess3DBoardProps {
   orientation: Board3DOrientation;
   toast?: PlayedMove | null;
   walk?: PlayedMove | null;
+  /** Letters and numbers on the wooden frame. */
+  coordinates?: boolean;
 }
 
 interface View {
@@ -353,7 +356,9 @@ function BoardSquares({
 }
 
 function Scene({
+  coordinates,
   destinations,
+  flip,
   ghosts,
   lastMove,
   onSquare,
@@ -362,7 +367,9 @@ function Scene({
   view,
   walk,
 }: {
+  coordinates: boolean;
   destinations: Map<string, boolean>;
+  flip: boolean;
   ghosts: Ghost[];
   lastMove?: { from: string; to: string } | undefined;
   onSquare: (square: Square) => void;
@@ -392,6 +399,7 @@ function Scene({
         <boxGeometry args={[9.4, 0.5, 9.4]} />
         <meshStandardMaterial color="#4a2f1c" roughness={0.6} />
       </mesh>
+      {coordinates ? <BoardCoordinates flip={flip} /> : null}
       <BoardSquares
         destinations={destinations}
         lastMove={lastMove}
@@ -437,6 +445,7 @@ export default function Chess3DBoard({
   orientation,
   toast = null,
   walk = null,
+  coordinates = true,
 }: Chess3DBoardProps) {
   const [initial] = useState(() => initialPieces(fen));
   const tracker = useRef(initial);
@@ -651,7 +660,9 @@ export default function Chess3DBoard({
           shadows
         >
           <Scene
+            coordinates={coordinates}
             destinations={destinations}
+            flip={orientation === 'black'}
             ghosts={ghosts}
             lastMove={lastMove}
             onSquare={onSquare}
