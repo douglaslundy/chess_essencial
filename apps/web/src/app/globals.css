@@ -4281,21 +4281,37 @@ textarea::placeholder {
 .boardStage.isFullscreen:has(.board3d) .historyControls {
   position: fixed;
   z-index: 10;
-  left: 50%;
   margin: 0;
   padding: 0.3rem 0.45rem;
-  transform: translateX(-50%);
   border-radius: 0.75rem;
   background: rgb(0 0 0 / 0.38);
   backdrop-filter: blur(4px);
 }
 
+/* Uma linha só no rodapé: câmera à esquerda do centro, lances à direita; as letras da borda ficam livres. */
+.boardStage.isFullscreen .board3dCamera,
+.boardStage.isFullscreen:has(.board3d) .historyControls {
+  bottom: 0.5rem;
+  width: max-content;
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+  padding: 0.25rem 0.35rem;
+}
+
 .boardStage.isFullscreen .board3dCamera {
-  bottom: 3.6rem;
+  right: calc(50% + 0.2rem);
 }
 
 .boardStage.isFullscreen:has(.board3d) .historyControls {
-  bottom: 0.75rem;
+  left: calc(50% + 0.2rem);
+}
+
+.boardStage.isFullscreen .board3dCamera button,
+.boardStage.isFullscreen:has(.board3d) .historyControls button {
+  min-width: 1.85rem;
+  min-height: 1.85rem;
+  padding: 0 0.4rem;
+  font-size: 0.78rem;
 }
 
 /* Partida 3D no computador: relógios e lances ficam dentro do quadro, nos cantos superiores
