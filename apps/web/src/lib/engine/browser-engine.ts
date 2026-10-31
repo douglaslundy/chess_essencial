@@ -12,6 +12,7 @@ export interface EvaluateOptions {
 const ENGINE_URL = '/engine/stockfish-18-lite-single.js';
 const DEFAULT_DEPTH = 10;
 const EVALUATE_TIMEOUT_MS = 15_000;
+const START_TIMEOUT_MS = 20_000;
 
 let workerPromise: Promise<Worker> | null = null;
 // Stockfish speaks one UCI conversation at a time; queue evaluate() calls so
@@ -35,9 +36,22 @@ function getWorker(): Promise<Worker> {
         worker.removeEventListener('message', onMessage);
         reject(event.error instanceof Error ? event.error : new Error('Falha ao iniciar o motor'));
       };
+      // A worker that never answers (blocked WebAssembly, old browser) must fail, not hang.
+      const timeout = setTimeout(() => {
+        worker.removeEventListener('message', onMessage);
+        worker.terminate();
+        reject(new Error('O motor de xadrez não iniciou'));
+      }, START_TIMEOUT_MS);
+      worker.addEventListener('message', (event: MessageEvent<string>) => {
+        if (event.data === 'uciok') clearTimeout(timeout);
+      });
       worker.addEventListener('message', onMessage);
       worker.addEventListener('error', onError, { once: true });
       worker.postMessage('uci');
+    });
+    // Next call tries again instead of reusing a failed start.
+    workerPromise.catch(() => {
+      workerPromise = null;
     });
   }
   return workerPromise;

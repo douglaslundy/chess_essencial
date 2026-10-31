@@ -36,6 +36,7 @@ export function useCoachEngine(options: {
   const { enabled, fen, suggestEnabled } = options;
   const [suggestion, setSuggestion] = useState<CoachSuggestion | null>(null);
   const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
   const beforeRef = useRef<CachedEvaluation | null>(null);
 
   useEffect(() => {
@@ -50,6 +51,7 @@ export function useCoachEngine(options: {
       .then((evaluation) => {
         if (cancelled) return;
         beforeRef.current = { fen, mate: evaluation.mate, scoreCp: evaluation.scoreCp };
+        setFailed(false);
         setSuggestion(
           suggestEnabled
             ? {
@@ -62,7 +64,9 @@ export function useCoachEngine(options: {
         );
       })
       .catch(() => {
-        if (!cancelled) setSuggestion(null);
+        if (cancelled) return;
+        setSuggestion(null);
+        setFailed(true);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -99,5 +103,5 @@ export function useCoachEngine(options: {
     });
   }
 
-  return { checkCandidateMove, loading, suggestion };
+  return { checkCandidateMove, failed, loading, suggestion };
 }

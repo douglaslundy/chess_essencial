@@ -10,6 +10,15 @@ let voicesReady: Promise<void> | null = null;
 let audioQueue: Promise<void> = Promise.resolve();
 let queueGeneration = 0;
 
+// iOS only starts speech from a tap; an empty utterance on the first tap unlocks later narration.
+if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+  const unlock = () => {
+    window.removeEventListener('pointerdown', unlock);
+    window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
+  };
+  window.addEventListener('pointerdown', unlock);
+}
+
 function ensureVoicesLoaded(synth: SpeechSynthesis): Promise<void> {
   if (synth.getVoices().length > 0) return Promise.resolve();
   voicesReady ??= new Promise((resolve) => {

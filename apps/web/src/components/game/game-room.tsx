@@ -411,7 +411,11 @@ export function GameRoom({ gameId }: { gameId: string }) {
     sideToMove: state.sideToMove,
     status: state.status,
   });
-  const { checkCandidateMove, suggestion: coachSuggestion } = useCoachEngine({
+  const {
+    checkCandidateMove,
+    failed: coachFailed,
+    suggestion: coachSuggestion,
+  } = useCoachEngine({
     enabled: coachEnabled,
     fen: state.currentFen,
     suggestEnabled: shouldSuggestCoachMove({
@@ -646,7 +650,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
           <strong>{isDemo ? 'Tabuleiro demonstrativo' : 'Partida ao vivo'}</strong>
           <span>
             {isDemo
-              ? 'Modo local, sem conexão realtime'
+              ? 'Treino contra o bot no seu aparelho (não usa o servidor)'
               : state.status === 'active'
                 ? 'Rápida · 10 min'
                 : 'Partida encerrada'}
@@ -708,7 +712,9 @@ export function GameRoom({ gameId }: { gameId: string }) {
                 : coachSuggestion
                   ? (formatCoachExplanation(state.currentFen, coachSuggestion) ??
                     'Estou analisando esta posição…')
-                  : 'Estou analisando esta posição…'
+                  : coachFailed
+                    ? 'Não consegui analisar esta posição: o motor de análise não carregou neste navegador.'
+                    : 'Estou analisando esta posição…'
             }
           />
         ) : null}

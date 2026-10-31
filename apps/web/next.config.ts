@@ -10,9 +10,11 @@ const contentSecurityPolicy = [
   "form-action 'self'",
   "frame-ancestors 'none'",
   "img-src 'self' data: blob: https: http:",
-  "media-src 'self' data:",
+  // blob: plays the AI voice (TTS audio fetched from the API).
+  "media-src 'self' data: blob:",
   "object-src 'none'",
-  "script-src 'self' 'unsafe-inline'",
+  // wasm-unsafe-eval lets the Treinador's Stockfish (WebAssembly) compile; it does not allow eval().
+  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
 ].join('; ');
 
