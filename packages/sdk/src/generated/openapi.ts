@@ -916,6 +916,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/admin/backup': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Download a full platform backup (.xebak, gzip) - admin only */
+    get: operations['adminDownloadBackup'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/backup/restore': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Replace all platform data with a backup file (destructive, admin only) */
+    post: operations['adminRestoreBackup'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/settings/assisted-game': {
     parameters: {
       query?: never;
@@ -2608,6 +2642,11 @@ export interface components {
       oauthClientId?: string | null;
       /** @enum {string} */
       provider: 'anthropic' | 'openai' | 'gemini' | 'chatgpt';
+    };
+    BackupRestoreReport: {
+      migration: string;
+      rows: number;
+      tables: number;
     };
     ChatgptOAuthStartInput: {
       clientId: string;
@@ -4882,6 +4921,57 @@ export interface operations {
         };
         content?: never;
       };
+    };
+  };
+  adminDownloadBackup: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Backup file stream */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/gzip': string;
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  adminRestoreBackup: {
+    parameters: {
+      query?: never;
+      header: {
+        'x-confirm-restore': 'APAGAR-E-RESTAURAR';
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/octet-stream': string;
+      };
+    };
+    responses: {
+      /** @description Restore report */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BackupRestoreReport'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
     };
   };
   getAssistedGameSettings: {

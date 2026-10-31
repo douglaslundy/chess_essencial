@@ -16,6 +16,8 @@ import { RedisService } from './redis/redis.service.js';
 export function corsOptions(webOrigin: string) {
   return {
     credentials: true,
+    // Lets the admin page read the backup file name on a cross-origin download.
+    exposedHeaders: ['content-disposition'],
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     origin: webOrigin,
   };
@@ -33,6 +35,14 @@ export async function createApp() {
   app.useWebSocketAdapter(new WsAdapter(app));
 
   app.setGlobalPrefix('v1');
+  // Backup restore uploads arrive as raw bytes and are streamed (never buffered) into the
+  // restore, so they are exempt from the JSON body limit.
+  app
+    .getHttpAdapter()
+    .getInstance()
+    .addContentTypeParser('application/octet-stream', (_request, payload, done) =>
+      done(null, payload),
+    );
   app.enableCors(corsOptions(config.getOrThrow<string>('WEB_ORIGIN')));
   app.enableShutdownHooks();
   app.useGlobalFilters(new ProblemDetailsFilter());

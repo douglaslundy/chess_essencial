@@ -918,6 +918,38 @@ paths:
         - {name: error_description, in: query, required: false, schema: {type: string}}
       responses:
         '302': {description: Redirect to /app/admin/ia with the outcome}
+  /admin/backup:
+    get:
+      summary: Download a full platform backup (.xebak, gzip) - admin only
+      operationId: adminDownloadBackup
+      responses:
+        '200':
+          description: Backup file stream
+          content:
+            application/gzip:
+              schema: {type: string, format: binary}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /admin/backup/restore:
+    post:
+      summary: Replace all platform data with a backup file (destructive, admin only)
+      operationId: adminRestoreBackup
+      parameters:
+        - {name: x-confirm-restore, in: header, required: true, schema: {type: string, enum: [APAGAR-E-RESTAURAR]}}
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: {type: string, format: binary}
+      responses:
+        '201':
+          description: Restore report
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BackupRestoreReport'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
   /settings/assisted-game:
     get:
       summary: Get whether "partida assistida" is currently enabled
@@ -2802,6 +2834,13 @@ components:
         model: {type: [string, 'null']}
         oauthClientId: {type: [string, 'null']}
         provider: {type: string, enum: [anthropic, openai, gemini, chatgpt]}
+    BackupRestoreReport:
+      type: object
+      required: [migration, rows, tables]
+      properties:
+        migration: {type: string}
+        rows: {type: integer}
+        tables: {type: integer}
     ChatgptOAuthStartInput:
       type: object
       required: [clientId]

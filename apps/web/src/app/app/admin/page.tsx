@@ -46,7 +46,13 @@ const sections = [
     href: '/app/admin/ia',
     title: 'Provedores de IA',
     description:
-      'Chaves de API por provedor (Anthropic, OpenAI, Gemini), usadas na narração da revisão pós-partida.',
+      'Chaves de API por provedor (Anthropic, OpenAI, Gemini) ou conta do ChatGPT via OAuth, usadas pela IA da plataforma.',
+  },
+  {
+    href: '/app/admin/backup',
+    title: 'Backup e restauração',
+    description:
+      'Baixar todos os dados da plataforma (usuários, partidas, histórico…) e restaurar a partir de um backup.',
   },
   {
     href: '/app/admin/metricas',
