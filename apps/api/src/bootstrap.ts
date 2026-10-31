@@ -9,6 +9,18 @@ import { registerHttpSecurity } from './common/security/http-security.js';
 import { MetricsService } from './observability/metrics.service.js';
 import { RedisService } from './redis/redis.service.js';
 
+/**
+ * @fastify/cors only allows GET, HEAD and POST unless told otherwise, which made every
+ * browser PUT/PATCH/DELETE (e.g. saving an AI provider key) fail its preflight.
+ */
+export function corsOptions(webOrigin: string) {
+  return {
+    credentials: true,
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    origin: webOrigin,
+  };
+}
+
 export async function createApp() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
@@ -21,10 +33,7 @@ export async function createApp() {
   app.useWebSocketAdapter(new WsAdapter(app));
 
   app.setGlobalPrefix('v1');
-  app.enableCors({
-    credentials: true,
-    origin: config.getOrThrow<string>('WEB_ORIGIN'),
-  });
+  app.enableCors(corsOptions(config.getOrThrow<string>('WEB_ORIGIN')));
   app.enableShutdownHooks();
   app.useGlobalFilters(new ProblemDetailsFilter());
   registerHttpSecurity(app, config, app.get(MetricsService), app.get(RedisService));
