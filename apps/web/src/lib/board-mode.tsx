@@ -17,6 +17,8 @@ export interface BoardEffects {
   rimWhite: boolean;
   /** Gold outline around the dark pieces in 3D. On by default. */
   rimBlack: boolean;
+  /** 3D style: medieval statues on a stone board instead of the simple turned set. */
+  medieval3d: boolean;
 }
 
 const STORAGE_KEY = 'xadrez.board_mode';
@@ -24,6 +26,7 @@ const EFFECTS_KEY = 'xadrez.board_effects';
 const DEFAULT_EFFECTS: BoardEffects = {
   captureAnimation: false,
   coordinates3d: true,
+  medieval3d: false,
   rimBlack: true,
   rimWhite: true,
   moveAnimation: false,

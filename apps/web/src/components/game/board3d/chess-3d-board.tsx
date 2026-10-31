@@ -10,6 +10,7 @@ import styles from './chess-3d-board.module.css';
 import { walkPath, type PlayedMove } from '@/components/game/move-path';
 import { MoveToast } from '@/components/game/move-toast';
 import { useDialogA11y } from '@/components/ui/dialog-a11y';
+import { MedievalFrame, MedievalStatue, useMedievalMaterials } from './medieval';
 import { pieceGeometry } from './piece-geometry';
 import { initialPieces, reconcile, type TrackedPiece } from './piece-tracker';
 
@@ -28,6 +29,8 @@ export interface Chess3DBoardProps {
   coordinates?: boolean;
   /** Outline around each color's pieces (gold on dark, bronze on light). */
   rims?: { b: boolean; w: boolean };
+  /** Medieval set: carved statues (photographed angles) on a stone and oak board. */
+  medieval?: boolean;
 }
 
 interface View {
@@ -105,6 +108,7 @@ interface Ghost {
 function PieceMesh({
   captorXZ,
   ghost,
+  medieval = false,
   piece,
   rim = true,
   selected,
@@ -112,6 +116,7 @@ function PieceMesh({
 }: {
   captorXZ?: [number, number] | null;
   ghost?: boolean;
+  medieval?: boolean;
   piece: TrackedPiece;
   rim?: boolean;
   selected?: boolean;
@@ -203,20 +208,26 @@ function PieceMesh({
 
   return (
     <group position={home} ref={group} rotation={[0, white ? Math.PI / 2 : -Math.PI / 2, 0]}>
-      <mesh castShadow geometry={geometry} receiveShadow>
-        <meshStandardMaterial
-          color={white ? '#f1e7d0' : '#5a5e72'}
-          metalness={white ? 0.15 : 0.3}
-          roughness={white ? 0.45 : 0.3}
-        />
-      </mesh>
-      {/* Rim keeps every piece readable (king vs queen vs pawn) against same-tone squares and from
+      {medieval ? (
+        <MedievalStatue color={piece.color} kind={piece.type} />
+      ) : (
+        <>
+          <mesh castShadow geometry={geometry} receiveShadow>
+            <meshStandardMaterial
+              color={white ? '#f1e7d0' : '#5a5e72'}
+              metalness={white ? 0.15 : 0.3}
+              roughness={white ? 0.45 : 0.3}
+            />
+          </mesh>
+          {/* Rim keeps every piece readable (king vs queen vs pawn) against same-tone squares and from
           above: gold around dark pieces, deep bronze around light ones. */}
-      {rim ? (
-        <mesh geometry={geometry} scale={[1.06, 1.02, 1.06]}>
-          <meshBasicMaterial color={white ? '#7a5326' : '#d8b25a'} side={BackSide} />
-        </mesh>
-      ) : null}
+          {rim ? (
+            <mesh geometry={geometry} scale={[1.06, 1.02, 1.06]}>
+              <meshBasicMaterial color={white ? '#7a5326' : '#d8b25a'} side={BackSide} />
+            </mesh>
+          ) : null}
+        </>
+      )}
     </group>
   );
 }
@@ -320,11 +331,13 @@ function CameraRig({ view }: { view: MutableRefObject<Rig> }) {
 function BoardSquares({
   destinations,
   lastMove,
+  maps,
   onSquare,
   selected,
 }: {
   destinations: Map<string, boolean>;
   lastMove?: { from: string; to: string } | undefined;
+  maps?: ReturnType<typeof useMedievalMaterials> | undefined;
   onSquare: (square: Square) => void;
   selected: string | null;
 }) {
@@ -348,10 +361,20 @@ function BoardSquares({
             rotation={[-Math.PI / 2, 0, 0]}
           >
             <planeGeometry args={[1, 1]} />
-            <meshStandardMaterial
-              color={highlighted ? (light ? '#d9d46a' : '#b9b23a') : light ? '#ead7ae' : '#8f6340'}
-              roughness={0.7}
-            />
+            {maps ? (
+              <meshStandardMaterial
+                color={highlighted ? (light ? '#f0e68a' : '#c9b04a') : '#ffffff'}
+                map={light ? maps.light : maps.dark}
+                roughness={0.85}
+              />
+            ) : (
+              <meshStandardMaterial
+                color={
+                  highlighted ? (light ? '#d9d46a' : '#b9b23a') : light ? '#ead7ae' : '#8f6340'
+                }
+                roughness={0.7}
+              />
+            )}
           </mesh>
           {destination !== undefined ? (
             <mesh
@@ -388,12 +411,14 @@ function Scene({
   flip,
   ghosts,
   lastMove,
+  medieval,
   onSquare,
   pieces,
   selected,
   view,
   walk,
 }: {
+  medieval: boolean;
   coordinates: boolean;
   rims: { b: boolean; w: boolean };
   destinations: Map<string, boolean>;
@@ -406,9 +431,29 @@ function Scene({
   view: MutableRefObject<Rig>;
   walk: boolean;
 }) {
+  const maps = useMedievalMaterials();
   return (
     <>
-      <color args={['#14110f']} attach="background" />
+      <color args={[medieval ? '#0f0b09' : '#14110f']} attach="background" />
+      {/* Torchlight from the players' sides warms the stone. */}
+      {medieval ? (
+        <>
+          <pointLight
+            color="#ffb46b"
+            decay={1.4}
+            distance={22}
+            intensity={18}
+            position={[-6, 4, 7]}
+          />
+          <pointLight
+            color="#ffb46b"
+            decay={1.4}
+            distance={22}
+            intensity={14}
+            position={[6, 4, -7]}
+          />
+        </>
+      ) : null}
       <ambientLight intensity={0.75} />
       <hemisphereLight args={['#fff3dc', '#3a2a20', 0.5]} />
       <directionalLight intensity={0.9} position={[-6, 8, -5]} />
@@ -423,14 +468,19 @@ function Scene({
         shadow-mapSize={[1024, 1024]}
       />
       <CameraRig view={view} />
-      <mesh position={[0, -0.27, 0]} receiveShadow>
-        <boxGeometry args={[9.4, 0.5, 9.4]} />
-        <meshStandardMaterial color="#4a2f1c" roughness={0.6} />
-      </mesh>
+      {medieval ? (
+        <MedievalFrame maps={maps} />
+      ) : (
+        <mesh position={[0, -0.27, 0]} receiveShadow>
+          <boxGeometry args={[9.4, 0.5, 9.4]} />
+          <meshStandardMaterial color="#4a2f1c" roughness={0.6} />
+        </mesh>
+      )}
       {coordinates ? <BoardCoordinates flip={flip} /> : null}
       <BoardSquares
         destinations={destinations}
         lastMove={lastMove}
+        maps={medieval ? maps : undefined}
         onSquare={onSquare}
         selected={selected}
       />
@@ -443,6 +493,7 @@ function Scene({
           }}
         >
           <PieceMesh
+            medieval={medieval}
             piece={piece}
             rim={rims[piece.color]}
             selected={piece.square === selected}
@@ -455,6 +506,7 @@ function Scene({
           <PieceMesh
             captorXZ={ghost.captor}
             ghost
+            medieval={medieval}
             piece={ghost.piece}
             rim={rims[ghost.piece.color]}
           />
@@ -485,6 +537,7 @@ export default function Chess3DBoard({
   walk = null,
   coordinates = true,
   rims = DEFAULT_RIMS,
+  medieval = false,
 }: Chess3DBoardProps) {
   const [initial] = useState(() => initialPieces(fen));
   const tracker = useRef(initial);
@@ -705,6 +758,7 @@ export default function Chess3DBoard({
             flip={orientation === 'black'}
             ghosts={ghosts}
             lastMove={lastMove}
+            medieval={medieval}
             onSquare={onSquare}
             pieces={pieces}
             selected={selected}

@@ -85,6 +85,29 @@ export function BoardSettingsMenu() {
               <small>Girar, inclinar e aproximar o tabuleiro.</small>
             </span>
           </label>
+          {mode === '3d' ? (
+            <fieldset className="boardStyleChoice">
+              <legend>Estilo do tabuleiro 3D</legend>
+              <label>
+                <input
+                  checked={!effects.medieval3d}
+                  name={`${panelId}-style`}
+                  onChange={() => setEffect('medieval3d', false)}
+                  type="radio"
+                />
+                <span>Simples</span>
+              </label>
+              <label>
+                <input
+                  checked={effects.medieval3d}
+                  name={`${panelId}-style`}
+                  onChange={() => setEffect('medieval3d', true)}
+                  type="radio"
+                />
+                <span>Medieval</span>
+              </label>
+            </fieldset>
+          ) : null}
           {EFFECT_LABELS.map(([key, label, hint]) => (
             <label key={key}>
               <input
