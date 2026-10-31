@@ -9,6 +9,8 @@ const EFFECT_LABELS: Array<[keyof BoardEffects, string, string]> = [
   ['moveAnimation', 'Animação de movimento', 'A peça caminha casa a casa até o destino.'],
   ['captureAnimation', 'Animação de captura', 'Duelo com o poder de cada peça e som.'],
   ['coordinates3d', 'Coordenadas no 3D', 'Letras e números das casas na borda do tabuleiro.'],
+  ['rimWhite', 'Contorno nas peças brancas (3D)', 'Linha bronze ao redor das peças brancas.'],
+  ['rimBlack', 'Contorno nas peças pretas (3D)', 'Linha dourada ao redor das peças pretas.'],
 ];
 
 /** Non-modal popover in the top bar: board options never cover or shift the board. */

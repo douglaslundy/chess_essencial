@@ -4065,13 +4065,19 @@ textarea::placeholder {
 /* Partida no computador: relógios, comandos e lances compactos; o tabuleiro fica com o espaço. */
 @media (min-width: 1101px) {
   .gamePage {
-    --board-max: calc(100dvh - 12.75rem);
+    /* 2D: square limited by the height left after the top bar and the command row. */
+    --board-max: calc(100dvh - 9.25rem);
     --board-cap: 64rem;
+    /* 3D: the frame takes the whole column and the remaining height; the camera fits the board to it. */
+    --board3d-width: 100%;
+    --board3d-height: calc(100dvh - 11.75rem);
+    --board3d-aspect: auto;
     width: 100%;
     min-height: 0;
-    grid-template:
-      'identity identity identity' auto
-      'players board moves' auto / minmax(11rem, 14rem) minmax(0, 1fr) minmax(12rem, 15rem);
+    grid-template: 'players board moves' auto / minmax(9.5rem, 12rem) minmax(0, 1fr) minmax(
+        10.5rem,
+        13rem
+      );
     align-items: start;
     gap: 0.75rem;
     padding: 0.75rem 1rem;
@@ -4081,12 +4087,9 @@ textarea::placeholder {
     width: min(100%, var(--board-max), var(--board-cap));
   }
 
-  .gameIdentity .brandMark {
+  /* Título da partida sai no computador; girar fica nos comandos do tabuleiro. */
+  .gameIdentity {
     display: none;
-  }
-
-  .gameIdentity strong {
-    font-size: 0.95rem;
   }
 
   .playersColumn {
@@ -4179,6 +4182,9 @@ textarea::placeholder {
 .boardStage.isFullscreen {
   --board-max: calc(100dvh - 5.5rem);
   --board-cap: 200rem;
+  --board3d-width: 100%;
+  --board3d-height: calc(100dvh - 8rem);
+  --board3d-aspect: auto;
   position: fixed;
   inset: 0;
   z-index: 90;
@@ -4253,4 +4259,76 @@ textarea::placeholder {
 .stageHint {
   color: var(--muted);
   font-size: 0.75rem;
+}
+
+/* Tela cheia imersiva no 3D: a cena cobre a tela inteira; relógio, lances e comandos flutuam
+   sobre ela (os comandos continuam clicáveis, relógio e lances não). */
+.boardStage.isFullscreen:has(.board3d) {
+  padding: 0;
+}
+
+.boardStage.isFullscreen .board3dViewport {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+}
+
+.boardStage.isFullscreen .board3dCamera,
+.boardStage.isFullscreen:has(.board3d) .historyControls {
+  position: fixed;
+  z-index: 10;
+  left: 50%;
+  margin: 0;
+  padding: 0.3rem 0.45rem;
+  transform: translateX(-50%);
+  border-radius: 0.75rem;
+  background: rgb(0 0 0 / 0.38);
+  backdrop-filter: blur(4px);
+}
+
+.boardStage.isFullscreen .board3dCamera {
+  bottom: 3.6rem;
+}
+
+.boardStage.isFullscreen:has(.board3d) .historyControls {
+  bottom: 0.75rem;
+}
+
+/* Partida 3D no computador: relógios e lances ficam dentro do quadro, nos cantos superiores
+   que o tabuleiro em perspectiva não usa; o tabuleiro ganha a largura toda da página. */
+@media (min-width: 1101px) {
+  .gamePage:has(.board3d) {
+    --board3d-height: calc(100dvh - 10.75rem);
+    grid-template: 'board' auto / minmax(0, 1fr);
+  }
+
+  .gamePage:has(.board3d) .playersColumn,
+  .gamePage:has(.board3d) .movesPanel {
+    position: absolute;
+    z-index: 6;
+    top: 1.35rem;
+  }
+
+  .gamePage:has(.board3d) .playersColumn {
+    left: 1.6rem;
+    width: 12rem;
+  }
+
+  .gamePage:has(.board3d) .playersColumn .playerCard,
+  .gamePage:has(.board3d) .gameActions button {
+    background: rgb(17 17 21 / 0.62);
+    backdrop-filter: blur(4px);
+  }
+
+  .gamePage:has(.board3d) .movesPanel {
+    right: 1.6rem;
+    width: 12.5rem;
+    max-height: min(42dvh, 22rem);
+    background: rgb(17 17 21 / 0.62);
+    backdrop-filter: blur(4px);
+  }
 }

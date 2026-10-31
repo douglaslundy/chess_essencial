@@ -26,6 +26,8 @@ export interface Chess3DBoardProps {
   walk?: PlayedMove | null;
   /** Letters and numbers on the wooden frame. */
   coordinates?: boolean;
+  /** Outline around each color's pieces (gold on dark, bronze on light). */
+  rims?: { b: boolean; w: boolean };
 }
 
 interface View {
@@ -42,6 +44,7 @@ const PROMOTION_CHOICES = [
   ['n', 'Cavalo'],
 ] as const;
 const MOVE_SECONDS = 0.55;
+const DEFAULT_RIMS = { b: true, w: true };
 const WALK_STEP_SECONDS = 0.38;
 /** Pointer travel (px) that turns a tap into a camera drag; finger jitter must still count as a tap. */
 const DRAG_THRESHOLD_PX = 10;
@@ -103,12 +106,14 @@ function PieceMesh({
   captorXZ,
   ghost,
   piece,
+  rim = true,
   selected,
   walk,
 }: {
   captorXZ?: [number, number] | null;
   ghost?: boolean;
   piece: TrackedPiece;
+  rim?: boolean;
   selected?: boolean;
   walk?: boolean;
 }) {
@@ -207,9 +212,11 @@ function PieceMesh({
       </mesh>
       {/* Rim keeps every piece readable (king vs queen vs pawn) against same-tone squares and from
           above: gold around dark pieces, deep bronze around light ones. */}
-      <mesh geometry={geometry} scale={[1.06, 1.02, 1.06]}>
-        <meshBasicMaterial color={white ? '#7a5326' : '#d8b25a'} side={BackSide} />
-      </mesh>
+      {rim ? (
+        <mesh geometry={geometry} scale={[1.06, 1.02, 1.06]}>
+          <meshBasicMaterial color={white ? '#7a5326' : '#d8b25a'} side={BackSide} />
+        </mesh>
+      ) : null}
     </group>
   );
 }
@@ -263,6 +270,18 @@ interface Rig {
   target: View;
 }
 
+/**
+ * Distances are tuned for a square frame, where the board's width is the limit. A wider frame
+ * lets the camera come closer until the board's depth (its height on screen) is the limit, so
+ * the board fills the space instead of floating in the middle of it.
+ */
+const VERTICAL_FIT = 0.72;
+/** Aim slightly towards the player so the near rank and file letters stay clear of overlays. */
+const AIM_TOWARDS_PLAYER = 0.6;
+function frameFit(aspect: number) {
+  return Math.max(VERTICAL_FIT, 1.06 / Math.max(aspect, 0.1));
+}
+
 /** Eases the camera toward the requested view (spherical coordinates around the board centre). */
 function stepCamera(
   rig: Rig,
@@ -271,23 +290,30 @@ function stepCamera(
     position: { set: (x: number, y: number, z: number) => void };
   },
   delta: number,
+  aspect = 1,
 ) {
   const { current, target } = rig;
   const k = 1 - Math.exp(-delta * 7);
   current.azimuth += (target.azimuth - current.azimuth) * k;
   current.polar += (target.polar - current.polar) * k;
   current.distance += (target.distance - current.distance) * k;
-  const r = current.distance;
+  const r = current.distance * frameFit(aspect);
   camera.position.set(
     r * Math.sin(current.polar) * Math.sin(current.azimuth),
     r * Math.cos(current.polar),
     r * Math.sin(current.polar) * Math.cos(current.azimuth),
   );
-  camera.lookAt(0, 0, 0);
+  camera.lookAt(
+    Math.sin(current.azimuth) * AIM_TOWARDS_PLAYER,
+    0,
+    Math.cos(current.azimuth) * AIM_TOWARDS_PLAYER,
+  );
 }
 
 function CameraRig({ view }: { view: MutableRefObject<Rig> }) {
-  useFrame((state, delta) => stepCamera(view.current, state.camera, delta));
+  useFrame((state, delta) =>
+    stepCamera(view.current, state.camera, delta, state.size.width / (state.size.height || 1)),
+  );
   return null;
 }
 
@@ -357,6 +383,7 @@ function BoardSquares({
 
 function Scene({
   coordinates,
+  rims,
   destinations,
   flip,
   ghosts,
@@ -368,6 +395,7 @@ function Scene({
   walk,
 }: {
   coordinates: boolean;
+  rims: { b: boolean; w: boolean };
   destinations: Map<string, boolean>;
   flip: boolean;
   ghosts: Ghost[];
@@ -414,12 +442,22 @@ function Scene({
             onSquare(piece.square as Square);
           }}
         >
-          <PieceMesh piece={piece} selected={piece.square === selected} walk={walk} />
+          <PieceMesh
+            piece={piece}
+            rim={rims[piece.color]}
+            selected={piece.square === selected}
+            walk={walk}
+          />
         </group>
       ))}
       {ghosts.map((ghost) => (
         <group key={`ghost-${ghost.key}`}>
-          <PieceMesh captorXZ={ghost.captor} ghost piece={ghost.piece} />
+          <PieceMesh
+            captorXZ={ghost.captor}
+            ghost
+            piece={ghost.piece}
+            rim={rims[ghost.piece.color]}
+          />
           <Burst at={squareToXZ(ghost.piece.square)} />
         </group>
       ))}
@@ -446,6 +484,7 @@ export default function Chess3DBoard({
   toast = null,
   walk = null,
   coordinates = true,
+  rims = DEFAULT_RIMS,
 }: Chess3DBoardProps) {
   const [initial] = useState(() => initialPieces(fen));
   const tracker = useRef(initial);
@@ -623,10 +662,10 @@ export default function Chess3DBoard({
     : 'Tabuleiro 3D';
 
   return (
-    <div className={styles.wrapper}>
+    <div className={`${styles.wrapper} board3d`}>
       <div
         aria-label={summary}
-        className={styles.viewport}
+        className={`${styles.viewport} board3dViewport`}
         onPointerCancel={() => (drag.current = null)}
         onPointerDown={(event) => {
           drag.current = {
@@ -661,6 +700,7 @@ export default function Chess3DBoard({
         >
           <Scene
             coordinates={coordinates}
+            rims={rims}
             destinations={destinations}
             flip={orientation === 'black'}
             ghosts={ghosts}
@@ -707,7 +747,11 @@ export default function Chess3DBoard({
           </div>
         </div>
       ) : null}
-      <div aria-label="Controles da câmera 3D" className={styles.camera} role="group">
+      <div
+        aria-label="Controles da câmera 3D"
+        className={`${styles.camera} board3dCamera`}
+        role="group"
+      >
         <button
           aria-pressed={locked}
           aria-label={locked ? 'Destravar a câmera' : 'Travar a câmera neste ângulo'}

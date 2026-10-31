@@ -13,6 +13,10 @@ export interface BoardEffects {
   captureAnimation: boolean;
   /** Letters and numbers on the 3D board's wooden frame. On by default. */
   coordinates3d: boolean;
+  /** Bronze outline around the light pieces in 3D. On by default. */
+  rimWhite: boolean;
+  /** Gold outline around the dark pieces in 3D. On by default. */
+  rimBlack: boolean;
 }
 
 const STORAGE_KEY = 'xadrez.board_mode';
@@ -20,6 +24,8 @@ const EFFECTS_KEY = 'xadrez.board_effects';
 const DEFAULT_EFFECTS: BoardEffects = {
   captureAnimation: false,
   coordinates3d: true,
+  rimBlack: true,
+  rimWhite: true,
   moveAnimation: false,
   moveToast: true,
 };

@@ -7,13 +7,14 @@
 /* Tamanho fixo derivado do viewport: o tabuleiro nunca muda de posição ao mudar o conteúdo ao redor. */
 .viewport {
   /* Desconta a fileira de controles da câmera, que fica logo abaixo do canvas. */
-  width: min(
-    100%,
-    calc(var(--board-max, calc(100dvh - 14rem)) - 2.5rem),
-    var(--board-cap, 46.5rem)
+  width: var(
+    --board3d-width,
+    min(100%, calc(var(--board-max, calc(100dvh - 14rem)) - 2.5rem), var(--board-cap, 46.5rem))
   );
+  /* Pages may give the 3D frame a fixed height and free aspect so it fills the space. */
+  height: var(--board3d-height, auto);
   min-width: 15rem;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: var(--board3d-aspect, 4 / 3);
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid var(--border);
