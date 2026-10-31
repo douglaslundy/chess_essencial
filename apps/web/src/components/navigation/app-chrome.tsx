@@ -17,7 +17,6 @@ const navigation = [
   { href: '/app/biblioteca', label: 'Biblioteca de partidas' },
   { href: '/app/desafios', label: 'Desafios' },
   { href: '/app/ranking', label: 'Ranking', requiresFeature: 'social_access' },
-  { href: '/app/cursos', label: 'Cursos e aulas' },
   { href: '/app/amigos', label: 'Amigos', requiresFeature: 'social_access' },
   { href: '/app/mensagens', label: 'Mensagens', requiresFeature: 'social_access' },
   { href: '/app/feed', label: 'Feed', requiresFeature: 'social_access' },

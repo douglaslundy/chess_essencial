@@ -3,7 +3,7 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Chess, type Square } from 'chess.js';
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
-import type { Group } from 'three';
+import { BackSide, type Group } from 'three';
 
 import styles from './chess-3d-board.module.css';
 import { useDialogA11y } from '@/components/ui/dialog-a11y';
@@ -144,11 +144,17 @@ function PieceMesh({
     <group position={[tx, 0, tz]} ref={group} rotation={[0, white ? Math.PI / 2 : -Math.PI / 2, 0]}>
       <mesh castShadow geometry={geometry} receiveShadow>
         <meshStandardMaterial
-          color={white ? '#f1e7d0' : '#2a2421'}
-          metalness={0.15}
-          roughness={white ? 0.45 : 0.35}
+          color={white ? '#f1e7d0' : '#5a5e72'}
+          metalness={white ? 0.15 : 0.3}
+          roughness={white ? 0.45 : 0.3}
         />
       </mesh>
+      {/* Gold rim keeps dark pieces readable (king vs queen vs pawn) against dark squares and from above. */}
+      {white ? null : (
+        <mesh geometry={geometry} scale={[1.06, 1.02, 1.06]}>
+          <meshBasicMaterial color="#d8b25a" side={BackSide} />
+        </mesh>
+      )}
     </group>
   );
 }
@@ -316,6 +322,7 @@ function Scene({
       <color args={['#14110f']} attach="background" />
       <ambientLight intensity={0.75} />
       <hemisphereLight args={['#fff3dc', '#3a2a20', 0.5]} />
+      <directionalLight intensity={0.9} position={[-6, 8, -5]} />
       <directionalLight
         castShadow
         intensity={1.8}

@@ -187,11 +187,9 @@ export function LessonPlayer({ lessonId }: { lessonId: string }) {
             ) : (
               <p>Você concluiu a última aula deste curso.</p>
             )}
-            {overview?.courseSlug ? (
-              <Link className="secondaryAction" href={`/app/cursos/${overview.courseSlug}`}>
-                Voltar ao curso
-              </Link>
-            ) : null}
+            <Link className="secondaryAction" href="/app/treinamento">
+              Voltar ao treinamento
+            </Link>
           </div>
         </section>
       ) : step ? (

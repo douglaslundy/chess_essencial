@@ -6,7 +6,7 @@
 }
 /* Tamanho fixo derivado do viewport: o tabuleiro nunca muda de posição ao mudar o conteúdo ao redor. */
 .viewport {
-  width: min(100%, calc(100dvh - 14rem), 46.5rem);
+  width: min(100%, var(--board-max, calc(100dvh - 14rem)), 46.5rem);
   min-width: 15rem;
   aspect-ratio: 1 / 1;
   border-radius: 14px;

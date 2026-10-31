@@ -54,6 +54,8 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
   const [playing, setPlaying] = useState(false);
   const [message, setMessage] = useState('Carregando partida…');
   const [requesting, setRequesting] = useState(false);
+  const [audioNotice, setAudioNotice] = useState('');
+  const [autoRequested, setAutoRequested] = useState(false);
 
   const token = () => window.localStorage.getItem('xadrez.access_token');
 
@@ -106,13 +108,21 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
   const fen =
     frame?.fen ?? built?.startFen ?? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
+  const mover = ply % 2 === 1 ? 'Brancas' : 'Pretas';
+  const fallbackSpeech = `${mover} jogam ${speakableSquares(toBrazilianSan(frame?.san ?? ''))}.`;
+  // A string (not the entry object) so review polling does not restart the narration.
+  const narration = entry ? speechFor(entry) : fallbackSpeech;
   const go = useCallback((next: number) => setPly(Math.min(Math.max(next, 0), total)), [total]);
 
   // Narration: speaks the stored summary whenever the move changes (or audio is turned on).
   useEffect(() => {
-    if (!audio || !entry) return;
-    void speak(speechFor(entry), { interrupt: true, voiceName }).catch(() => undefined);
-  }, [audio, entry, voiceName]);
+    if (!audio || ply === 0) return;
+    // The AI voice can fail (no key, quota, autoplay block); the browser voice keeps the narration going.
+    speak(narration, { interrupt: true, voiceName }).catch(() => {
+      setAudioNotice('A voz por IA falhou; usando a voz do navegador.');
+      void speak(narration, { interrupt: true }).catch(() => undefined);
+    });
+  }, [audio, narration, ply, voiceName]);
 
   useEffect(() => {
     if (!audio) stopSpeaking();
@@ -148,6 +158,24 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [go, ply]);
 
+  const wantsReview =
+    review !== null &&
+    review.aiAvailable &&
+    (review.status === 'none' || review.status === 'failed');
+  // The review is generated once and stored; opening a game without one starts it right away.
+  useEffect(() => {
+    if (!wantsReview || autoRequested) return;
+    const accessToken = token();
+    if (!accessToken) return;
+    queueMicrotask(() => setAutoRequested(true));
+    api
+      .requestLibraryReview(gameId, accessToken)
+      .then(setReview)
+      .catch((error: unknown) =>
+        setMessage(error instanceof Error ? error.message : 'Falha ao solicitar a revisão.'),
+      );
+  }, [wantsReview, autoRequested, gameId]);
+
   async function requestReview() {
     const accessToken = token();
     if (!accessToken) return;
@@ -174,11 +202,7 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
     );
   }
 
-  const mover = ply % 2 === 1 ? 'Brancas' : 'Pretas';
-  const canRequest =
-    review !== null &&
-    review.aiAvailable &&
-    (review.status === 'none' || review.status === 'failed');
+  const canRequest = wantsReview && autoRequested;
 
   return (
     <main className={styles.page}>
@@ -238,9 +262,11 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
                   </ul>
                 ) : (
                   <p>
-                    {generating
-                      ? 'A IA está preparando a revisão…'
-                      : 'Sem comentário disponível para este lance.'}
+                    {generating || requesting || wantsReview
+                      ? 'A IA está preparando a revisão desta partida. Os comentários aparecem aqui assim que ficarem prontos.'
+                      : review && !review.aiAvailable
+                        ? 'A IA não está ativada na plataforma, por isso esta partida ainda não tem comentários.'
+                        : 'Sem comentário para este lance.'}
                   </p>
                 )}
               </>
@@ -346,6 +372,11 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
         </p>
       ) : null}
       {message ? <p className={styles.status}>{message}</p> : null}
+      {audio && audioNotice ? (
+        <p className={styles.status} role="status">
+          {audioNotice}
+        </p>
+      ) : null}
 
       <nav aria-label="Lances" className={styles.moveList}>
         {built.frames.map((item, index) => (

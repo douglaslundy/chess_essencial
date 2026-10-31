@@ -3,7 +3,7 @@ import Link from 'next/link';
 const highlights = [
   'Partidas ao vivo com servidor autoritativo',
   'Exercícios e desafios progressivos, do iniciante ao avançado',
-  'Cursos e aulas interativas com tabuleiro',
+  'Biblioteca de partidas de grandes mestres com revisão comentada por IA',
 ];
 
 export default function HomePage() {
