@@ -13,6 +13,7 @@ import { Chess } from 'chess.js';
 
 import { ChessBoard } from '@/components/game/chess-board';
 import { solverOrientation } from '@/components/game/move-path';
+import { useStageFullscreen } from '@/components/game/use-stage-fullscreen';
 import {
   MoveAnnouncement,
   describeImportantMove,
@@ -131,6 +132,9 @@ export function ExerciseTrainer({
   const opponentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingEvaluationRef = useRef<Parameters<typeof evaluatePlayedLine> | null>(null);
   const [evaluationFailed, setEvaluationFailed] = useState(false);
+  const boardStageRef = useRef<HTMLDivElement>(null);
+  const { active: boardFullscreen, toggle: toggleBoardFullscreen } =
+    useStageFullscreen(boardStageRef);
   const [boardHistory, setBoardHistory] = useState<{
     exerciseId: string;
     index: number;
@@ -776,7 +780,10 @@ export function ExerciseTrainer({
                 </div>
               )
             : boardFen && (
-                <div className={styles.boardArea}>
+                <div
+                  className={`${styles.boardArea} boardStage ${boardFullscreen ? 'isFullscreen' : ''}`}
+                  ref={boardStageRef}
+                >
                   <ChessBoard
                     disabled={
                       current!.positionType !== 'legal_position' ||
@@ -808,6 +815,16 @@ export function ExerciseTrainer({
                         type="button"
                       >
                         ↻ Repetir lance
+                      </button>
+                      <button
+                        aria-label={boardFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+                        aria-pressed={boardFullscreen}
+                        className={styles.secondaryAction}
+                        onClick={toggleBoardFullscreen}
+                        title={boardFullscreen ? 'Sair da tela cheia (Esc ou F)' : 'Tela cheia (F)'}
+                        type="button"
+                      >
+                        {boardFullscreen ? '✕ Sair' : '⛶ Tela cheia'}
                       </button>
                     </div>
                   ) : null}
