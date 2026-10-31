@@ -70,7 +70,8 @@ function writeStoredView(view: StoredView) {
 }
 const GHOST_SECONDS = 0.9;
 const DEFAULT_POLAR = 0.95;
-const DEFAULT_DISTANCE = 13.5;
+// Far enough that the near corners of the board stay inside a square frame on any screen.
+const DEFAULT_DISTANCE = 17;
 
 /** Board coordinates: file a..h -> x -3.5..3.5, rank 1..8 -> z 3.5..-3.5 (white side at +z). */
 function squareToXZ(square: string): [number, number] {

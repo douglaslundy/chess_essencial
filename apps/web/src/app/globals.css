@@ -3913,13 +3913,11 @@ textarea::placeholder {
 }
 
 .boardSettingsPanel {
-  position: absolute;
-  top: calc(100% + 0.4rem);
-  right: 0;
+  /* left/top/width calculados no componente para nunca sair da tela. */
+  position: fixed;
   z-index: 60;
   display: grid;
   gap: 0.35rem;
-  width: min(19rem, calc(100vw - 2rem));
   padding: 0.6rem;
   border: 1px solid var(--gold);
   border-radius: 12px;
