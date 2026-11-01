@@ -8,6 +8,7 @@ const EFFECT_LABELS: Array<[keyof BoardEffects, string, string]> = [
   ['moveToast', 'Balão da jogada', 'Mostra a anotação do lance por 2 segundos.'],
   ['moveAnimation', 'Animação de movimento', 'A peça caminha casa a casa até o destino.'],
   ['captureAnimation', 'Animação de captura', 'Duelo com o poder de cada peça e som.'],
+  ['squareNames', 'Nome das casas', 'Mostra A1, B2… dentro das casas vazias (2D e 3D).'],
   ['coordinates3d', 'Coordenadas no 3D', 'Letras e números das casas na borda do tabuleiro.'],
   ['rimWhite', 'Contorno nas peças brancas (3D)', 'Linha bronze ao redor das peças brancas.'],
   ['rimBlack', 'Contorno nas peças pretas (3D)', 'Linha dourada ao redor das peças pretas.'],

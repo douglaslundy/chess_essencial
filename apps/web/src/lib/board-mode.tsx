@@ -19,6 +19,8 @@ export interface BoardEffects {
   rimBlack: boolean;
   /** 3D style: medieval statues on a stone board instead of the simple turned set. */
   medieval3d: boolean;
+  /** Square name ("A1") written inside every empty square, 2D and 3D. Off by default. */
+  squareNames: boolean;
 }
 
 const STORAGE_KEY = 'xadrez.board_mode';
@@ -31,6 +33,7 @@ const DEFAULT_EFFECTS: BoardEffects = {
   rimWhite: true,
   moveAnimation: false,
   moveToast: true,
+  squareNames: false,
 };
 
 interface BoardModeValue {

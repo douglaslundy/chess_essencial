@@ -1156,6 +1156,51 @@ input:focus-visible {
   content: '';
 }
 
+/* Treinador hint: blue (distinct from the yellow last move), never blocks a click. */
+.hintFrom::after,
+.hintPath::after,
+.hintTarget::after {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  content: '';
+}
+
+.hintFrom::after {
+  inset: 0;
+  box-shadow: inset 0 0 0 0.22rem rgba(47, 163, 255, 0.9);
+}
+
+.hintPath::after {
+  inset: 0;
+  background: radial-gradient(circle, rgba(47, 163, 255, 0.85) 0 13%, rgba(47, 163, 255, 0.22) 14%);
+}
+
+.hintTarget::after {
+  inset: 6%;
+  border: 0.3rem solid rgba(47, 163, 255, 0.95);
+  border-radius: 999px;
+  background: rgba(47, 163, 255, 0.25);
+}
+
+/* Square name on empty squares: dark on light squares, light on dark, 30% transparent. */
+.squareName {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.7;
+  font-size: clamp(0.55rem, 1.7vmin, 0.95rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.lightSquare .squareName {
+  color: #000;
+}
+
+.darkSquare .squareName {
+  color: #fff;
+}
+
 .moveTarget {
   position: absolute;
   z-index: 3;

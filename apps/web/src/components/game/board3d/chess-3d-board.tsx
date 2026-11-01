@@ -5,9 +5,9 @@ import { Chess, type Square } from 'chess.js';
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { BackSide, type Group } from 'three';
 
-import { BoardCoordinates } from './board-coordinates';
+import { BoardCoordinates, SquareName } from './board-coordinates';
 import styles from './chess-3d-board.module.css';
-import { walkPath, type PlayedMove } from '@/components/game/move-path';
+import { hintSquares, walkPath, type PlayedMove } from '@/components/game/move-path';
 import { MoveToast } from '@/components/game/move-toast';
 import { useDialogA11y } from '@/components/ui/dialog-a11y';
 import { MedievalFrame, MedievalStatue, MedievalTower, useMedievalMaterials } from './medieval';
@@ -19,8 +19,12 @@ export type Board3DOrientation = 'white' | 'black';
 export interface Chess3DBoardProps {
   disabled?: boolean | undefined;
   fen: string;
+  /** Treinador's suggested move: its path is marked up to the target square. */
+  hint?: { from: string; to: string } | undefined;
   lastMove?: { from: string; to: string } | undefined;
   movableColor?: 'w' | 'b' | undefined;
+  /** Square name ("A1") on every empty square. */
+  squareNames?: boolean;
   onMove: (uci: string) => void;
   orientation: Board3DOrientation;
   toast?: PlayedMove | null;
@@ -336,18 +340,28 @@ function CameraRig({ view }: { view: MutableRefObject<Rig> }) {
   return null;
 }
 
+const HINT_BLUE = '#2fa3ff';
+
 function BoardSquares({
   destinations,
+  flip,
+  hint,
   lastMove,
   maps,
+  occupied,
   onSquare,
   selected,
+  squareNames,
 }: {
   destinations: Map<string, boolean>;
+  flip: boolean;
+  hint: { from: string | null; path: Set<string>; target: string | null };
   lastMove?: { from: string; to: string } | undefined;
   maps?: ReturnType<typeof useMedievalMaterials> | undefined;
+  occupied: Set<string>;
   onSquare: (square: Square) => void;
   selected: string | null;
+  squareNames: boolean;
 }) {
   const cells = [];
   for (let file = 0; file < 8; file += 1) {
@@ -358,6 +372,7 @@ function BoardSquares({
       const highlighted =
         square === selected || square === lastMove?.from || square === lastMove?.to;
       const destination = destinations.get(square);
+      const hinted = square === hint.from || square === hint.target || hint.path.has(square);
       cells.push(
         <group key={square} position={[x, 0, z]}>
           <mesh
@@ -371,19 +386,42 @@ function BoardSquares({
             <planeGeometry args={[1, 1]} />
             {maps ? (
               <meshStandardMaterial
-                color={highlighted ? (light ? '#f0e68a' : '#c9b04a') : '#ffffff'}
+                // Light squares slightly grey so the white pieces stand out from them.
+                color={
+                  highlighted ? (light ? '#f0e68a' : '#c9b04a') : light ? '#d8d8d8' : '#ffffff'
+                }
                 map={light ? maps.light : maps.dark}
                 roughness={0.85}
               />
             ) : (
               <meshStandardMaterial
                 color={
-                  highlighted ? (light ? '#d9d46a' : '#b9b23a') : light ? '#ead7ae' : '#8f6340'
+                  highlighted ? (light ? '#d9d46a' : '#b9b23a') : light ? '#d6cfc3' : '#8f6340'
                 }
                 roughness={0.7}
               />
             )}
           </mesh>
+          {hinted ? (
+            <mesh
+              position={[0, 0.015, 0]}
+              raycast={() => undefined}
+              renderOrder={-1}
+              rotation={[-Math.PI / 2, 0, 0]}
+            >
+              {square === hint.target ? (
+                <ringGeometry args={[0.32, 0.46, 40]} />
+              ) : square === hint.from ? (
+                <ringGeometry args={[0.44, 0.5, 4, 1, Math.PI / 4]} />
+              ) : (
+                <circleGeometry args={[0.13, 24]} />
+              )}
+              <meshBasicMaterial color={HINT_BLUE} opacity={0.9} transparent />
+            </mesh>
+          ) : null}
+          {squareNames && !occupied.has(square) ? (
+            <SquareName flip={flip} light={light} text={square.toUpperCase()} />
+          ) : null}
           {destination !== undefined ? (
             <mesh
               onPointerUp={(event) => {
@@ -418,14 +456,18 @@ function Scene({
   destinations,
   flip,
   ghosts,
+  hint,
   lastMove,
   medieval,
   onSquare,
   pieces,
   selected,
+  squareNames,
   view,
   walk,
 }: {
+  hint: { from: string | null; path: Set<string>; target: string | null };
+  squareNames: boolean;
   medieval: boolean;
   coordinates: boolean;
   rims: { b: boolean; w: boolean };
@@ -487,10 +529,14 @@ function Scene({
       {coordinates ? <BoardCoordinates flip={flip} /> : null}
       <BoardSquares
         destinations={destinations}
+        flip={flip}
+        hint={hint}
         lastMove={lastMove}
         maps={medieval ? maps : undefined}
+        occupied={new Set(pieces.map((piece) => piece.square))}
         onSquare={onSquare}
         selected={selected}
+        squareNames={squareNames}
       />
       {pieces.map((piece) => (
         <group
@@ -537,16 +583,22 @@ function webglAvailable() {
 export default function Chess3DBoard({
   disabled,
   fen,
+  hint,
   lastMove,
   movableColor,
   onMove,
   orientation,
+  squareNames = false,
   toast = null,
   walk = null,
   coordinates = true,
   rims = DEFAULT_RIMS,
   medieval = false,
 }: Chess3DBoardProps) {
+  const hinted = useMemo(
+    () => ({ from: hint?.from ?? null, ...hintSquares(fen, hint) }),
+    [fen, hint],
+  );
   const [initial] = useState(() => initialPieces(fen));
   const tracker = useRef(initial);
   const [pieces, setPieces] = useState<TrackedPiece[]>(initial.pieces);
@@ -773,11 +825,13 @@ export default function Chess3DBoard({
             destinations={destinations}
             flip={orientation === 'black'}
             ghosts={ghosts}
+            hint={hinted}
             lastMove={lastMove}
             medieval={medieval}
             onSquare={onSquare}
             pieces={pieces}
             selected={selected}
+            squareNames={squareNames}
             view={view}
             walk={Boolean(walk)}
           />

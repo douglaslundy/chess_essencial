@@ -66,3 +66,19 @@ export function walkPath(from: Square, to: Square, piece: PieceSymbol): Square[]
   for (let i = 1; i <= steps; i += 1) path.push(at(fx + sx * i, fy + sy * i));
   return path;
 }
+
+/** Squares the hinted piece crosses (origin and target excluded) and its target; empty when invalid. */
+export function hintSquares(
+  fen: string,
+  hint: { from: string; to: string } | undefined,
+): { path: Set<string>; target: string | null } {
+  let piece: PieceSymbol | undefined;
+  try {
+    piece = hint ? new Chess(fen).get(hint.from as Square)?.type : undefined;
+  } catch {
+    piece = undefined;
+  }
+  if (!hint || !piece) return { path: new Set(), target: null };
+  const path = walkPath(hint.from as Square, hint.to as Square, piece);
+  return { path: new Set(path.slice(0, -1)), target: hint.to };
+}

@@ -34,7 +34,9 @@ export function useCoachEngine(options: {
   suggestEnabled: boolean;
 }) {
   const { enabled, fen, suggestEnabled } = options;
-  const [suggestion, setSuggestion] = useState<CoachSuggestion | null>(null);
+  const [evaluated, setSuggestion] = useState<(CoachSuggestion & { fen: string }) | null>(null);
+  // Until the new position is evaluated the previous tip is stale: never hand it out.
+  const suggestion: CoachSuggestion | null = evaluated?.fen === fen ? evaluated : null;
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
   const beforeRef = useRef<CachedEvaluation | null>(null);
@@ -56,6 +58,7 @@ export function useCoachEngine(options: {
           suggestEnabled
             ? {
                 bestMoveUci: evaluation.bestMove,
+                fen,
                 mate: evaluation.mate,
                 principalVariation: evaluation.principalVariation.slice(0, 7),
                 scoreCp: evaluation.scoreCp,

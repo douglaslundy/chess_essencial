@@ -11,6 +11,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { AiProvidersService } from '../ai-providers/ai-providers.service.js';
 import { callLlm } from '../games/narration/llm-client.js';
+import { withBrazilianNotation } from './brazilian-notation.js';
 import {
   buildChunkPrompt,
   chunkEnd,
@@ -85,7 +86,7 @@ export class LibraryService {
     ]);
     return {
       aiAvailable: config !== null,
-      entries: review?.entries ?? [],
+      entries: (review?.entries ?? []).map(withBrazilianNotation),
       status: review?.status ?? 'none',
       totalPlies: game.ply_count,
     };

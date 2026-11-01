@@ -4,7 +4,7 @@ import { Chess, type Color, type PieceSymbol, type Square } from 'chess.js';
 
 import dynamic from 'next/dynamic';
 
-import { detectMove, walkPath, type PlayedMove } from '@/components/game/move-path';
+import { detectMove, hintSquares, walkPath, type PlayedMove } from '@/components/game/move-path';
 import { MoveToast } from '@/components/game/move-toast';
 import { useDialogA11y } from '@/components/ui/dialog-a11y';
 import { useBoardMode } from '@/lib/board-mode';
@@ -215,17 +215,23 @@ interface ChessBoardProps {
   fen: string;
   orientation: BoardOrientation;
   disabled?: boolean;
+  /** Treinador's suggested move: its path is drawn up to the target square. */
+  hint?: { from: string; to: string } | undefined;
   lastMove?: { from: string; to: string } | undefined;
   movableColor?: Color | undefined;
   onMove: (uci: string) => void;
   pieceTheme?: PieceTheme;
 }
 
+/** "a1" → "A1", the form the player asked to read on the squares. */
+const squareName = (square: string) => square.toUpperCase();
+
 interface BoardEffectProps {
   /** Move to announce in the fading balloon, or null. */
   toast: PlayedMove | null;
   /** Move whose piece should walk to its destination, or null. */
   walk: PlayedMove | null;
+  squareNames: boolean;
 }
 
 const WALK_STEP_MS = 320;
@@ -247,13 +253,16 @@ function ChessBoard2D({
   fen,
   orientation,
   disabled,
+  hint,
   lastMove,
   movableColor,
   onMove,
   pieceTheme = 'classic',
+  squareNames,
   toast,
   walk,
 }: ChessBoardProps & BoardEffectProps) {
+  const hinted = useMemo(() => hintSquares(fen, hint), [fen, hint]);
   const chess = useMemo(() => {
     try {
       return new Chess(fen);
@@ -399,6 +408,9 @@ function ChessBoard2D({
                   destinations.has(square) ? 'targetSquare' : '',
                   isLast ? 'lastMoveSquare' : '',
                   walking?.to === square ? 'walkTarget' : '',
+                  hint?.from === square ? 'hintFrom' : '',
+                  hinted.path.has(square) ? 'hintPath' : '',
+                  hinted.target === square ? 'hintTarget' : '',
                 ].join(' ')}
                 draggable={
                   Boolean(piece) &&
@@ -419,6 +431,11 @@ function ChessBoard2D({
                 type="button"
               >
                 {piece ? renderPiece(piece, pieceTheme) : null}
+                {!piece && squareNames ? (
+                  <span className="squareName" aria-hidden="true">
+                    {squareName(square)}
+                  </span>
+                ) : null}
                 {destinations.has(square) ? (
                   <span className="moveTarget" aria-hidden="true" />
                 ) : null}
@@ -517,7 +534,9 @@ export function ChessBoard(props: ChessBoardProps) {
         <Chess3DBoard
           disabled={props.disabled}
           fen={props.fen}
+          hint={props.hint}
           lastMove={props.lastMove}
+          squareNames={effects.squareNames}
           movableColor={props.movableColor}
           onMove={props.onMove}
           coordinates={effects.coordinates3d}
@@ -533,7 +552,7 @@ export function ChessBoard(props: ChessBoardProps) {
   }
   return (
     <>
-      <ChessBoard2D {...props} toast={toast} walk={walk} />
+      <ChessBoard2D {...props} squareNames={effects.squareNames} toast={toast} walk={walk} />
       {cinematic}
     </>
   );

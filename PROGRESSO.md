@@ -408,6 +408,11 @@ Nenhuma tarefa de desenvolvimento acionável no backlog. O item de dicas da Jorn
 - Gates locais completos passaram de novo após o refactor: format:check, typecheck, lint, 24 testes web, build de produção.
 ## Concluído
 
+- [x] Dica do Treinador no tabuleiro (2D e 3D): `hint` no `ChessBoard` marca origem, casas do caminho (`walkPath`) e casa-alvo em azul. `useCoachEngine` só devolve sugestão da FEN atual (antes a dica velha era reaproveitada até o motor terminar).
+- [x] Opção "Nome das casas" (`squareNames` em board-mode): A1… nas casas vazias, preto nas claras e branco nas escuras, 70% opaco; 3D usa `SquareName` com renderOrder -1.
+- [x] 3D: casas claras levemente cinza (#d6cfc3; medieval tinge #d8d8d8).
+- [x] Biblioteca: textos da revisão saem da API em notação brasileira (`brazilian-notation.ts`); `better` segue SAN porque a web já traduz.
+
 - [x] Treinador em tempo real: `game-room.tsx` fala com `interrupt: true` e chama `stopSpeaking()` a cada mudança de `state.currentFen` (lance rápido não deixa dica velha na fila). `speakableSquares` lê O-O/O-O-O (e 0-0) como "roque pequeno/grande" em toda narração.
 
 - [x] Biblioteca: coleção "Lendárias" (`collection=legendary`), lista curada em `apps/api/src/library/legendary-games.ts` casada por jogadores+ano+rodada (ids mudam a cada importação). 11 partidas conferidas na produção; Ivanchuk–Yusupov 91, Short–Timman 91, Fischer–Petrosian 71 e Carlsen–Ernst 04 não estão no acervo.

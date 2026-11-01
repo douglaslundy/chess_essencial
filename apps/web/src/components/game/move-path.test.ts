@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { detectMove, solverOrientation, walkPath } from './move-path';
+import { detectMove, hintSquares, solverOrientation, walkPath } from './move-path';
 
 const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
@@ -32,6 +32,19 @@ describe('detectMove', () => {
   it('returns null when the position jumped', () => {
     expect(detectMove(START, START)).toBeNull();
     expect(detectMove('not a fen', START)).toBeNull();
+  });
+});
+
+describe('hintSquares', () => {
+  it('marks the squares the hinted piece crosses and its target', () => {
+    const { path, target } = hintSquares(START, { from: 'g1', to: 'f3' });
+    expect([...path]).toEqual(['g2', 'g3']);
+    expect(target).toBe('f3');
+  });
+
+  it('is empty without a hint or when the origin square is empty', () => {
+    expect(hintSquares(START, undefined).target).toBeNull();
+    expect(hintSquares(START, { from: 'e4', to: 'e5' }).target).toBeNull();
   });
 });
 

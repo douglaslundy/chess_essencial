@@ -40,12 +40,28 @@ describe('useCoachEngine', () => {
     );
 
     await waitFor(() => expect(result.current.suggestion).not.toBeNull());
-    expect(result.current.suggestion).toEqual({
+    expect(result.current.suggestion).toMatchObject({
       bestMoveUci: 'e2e4',
       mate: null,
       principalVariation: ['e2e4', 'e7e5'],
       scoreCp: 25,
     });
+  });
+
+  it('hides the previous suggestion as soon as the position changes', async () => {
+    evaluatePosition
+      .mockReset()
+      .mockResolvedValueOnce(evaluation())
+      .mockReturnValueOnce(new Promise(() => undefined));
+
+    const { rerender, result } = renderHook(
+      ({ fen }) => useCoachEngine({ enabled: true, fen, suggestEnabled: true }),
+      { initialProps: { fen: START_FEN } },
+    );
+    await waitFor(() => expect(result.current.suggestion).not.toBeNull());
+
+    rerender({ fen: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1' });
+    expect(result.current.suggestion).toBeNull();
   });
 
   it('evaluates but hides the suggestion when suggestEnabled is off', async () => {

@@ -773,6 +773,14 @@ export function GameRoom({ gameId }: { gameId: string }) {
           <ChessBoard
             disabled={isDemo ? !canMove : viewingHistory || !canMove}
             fen={displayFen}
+            hint={
+              coachSuggestion?.bestMoveUci && displayFen === state.currentFen
+                ? {
+                    from: coachSuggestion.bestMoveUci.slice(0, 2),
+                    to: coachSuggestion.bestMoveUci.slice(2, 4),
+                  }
+                : undefined
+            }
             lastMove={lastMove ? { from: lastMove.from, to: lastMove.to } : undefined}
             movableColor={
               isDemo
