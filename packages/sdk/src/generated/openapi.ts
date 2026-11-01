@@ -2017,6 +2017,40 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/course-trail/progress': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Listar as atividades do curso do zero concluídas pelo aluno */
+    get: operations['getCourseTrailProgress'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/course-trail/progress/{activityId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** Marcar uma atividade do curso do zero como concluída (idempotente) */
+    put: operations['completeCourseTrailActivity'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2045,6 +2079,9 @@ export interface components {
     LibrarySearchResult: {
       items: components['schemas']['LibraryGameSummary'][];
       total: number;
+    };
+    CourseTrailProgress: {
+      completedActivityIds: string[];
     };
     LibraryFacets: {
       openings: components['schemas']['LibraryFacetItem'][];
@@ -6706,6 +6743,51 @@ export interface operations {
       400: components['responses']['Problem'];
       401: components['responses']['Problem'];
       404: components['responses']['Problem'];
+    };
+  };
+  getCourseTrailProgress: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Progresso do aluno no curso do zero */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CourseTrailProgress'];
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  completeCourseTrailActivity: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        activityId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Progresso atualizado */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CourseTrailProgress'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
     };
   };
 }

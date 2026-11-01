@@ -383,6 +383,11 @@ export {
   type StartLearningStageResult,
 } from './learning-path.js';
 export {
+  courseTrailActivityIdSchema,
+  courseTrailProgressSchema,
+  type CourseTrailProgress,
+} from './course-trail.js';
+export {
   libraryFacetsSchema,
   libraryGameSchema,
   libraryGameSummarySchema,

@@ -73,3 +73,5 @@ O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.
 
 `0048_initial_rating_zero.down.sql` volta o valor inicial do rating para 1200 e devolve 1200 só a quem continua sem nenhuma partida avaliada (rating 0, sem transações). Quem já jogou partidas avaliadas depois da migration mantém o rating calculado a partir de 0.
+
+`0049_course_progress.down.sql` remove a tabela de progresso do curso novo. Os alunos voltam à primeira atividade; o conteúdo do curso fica nos arquivos da web e não é afetado.

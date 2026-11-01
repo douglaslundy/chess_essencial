@@ -218,6 +218,8 @@ interface ChessBoardProps {
   /** Treinador's suggested move: its path is drawn up to the target square. */
   hint?: { from: string; to: string } | undefined;
   lastMove?: { from: string; to: string } | undefined;
+  /** Course stars still to collect (squares). */
+  marks?: readonly string[] | undefined;
   movableColor?: Color | undefined;
   onMove: (uci: string) => void;
   pieceTheme?: PieceTheme;
@@ -255,6 +257,7 @@ function ChessBoard2D({
   disabled,
   hint,
   lastMove,
+  marks,
   movableColor,
   onMove,
   pieceTheme = 'classic',
@@ -431,7 +434,12 @@ function ChessBoard2D({
                 type="button"
               >
                 {piece ? renderPiece(piece, pieceTheme) : null}
-                {!piece && squareNames ? (
+                {marks?.includes(square) ? (
+                  <span className="courseStar" aria-hidden="true">
+                    ★
+                  </span>
+                ) : null}
+                {!piece && squareNames && !marks?.includes(square) ? (
                   <span className="squareName" aria-hidden="true">
                     {squareName(square)}
                   </span>
@@ -536,6 +544,7 @@ export function ChessBoard(props: ChessBoardProps) {
           fen={props.fen}
           hint={props.hint}
           lastMove={props.lastMove}
+          marks={props.marks}
           squareNames={effects.squareNames}
           movableColor={props.movableColor}
           onMove={props.onMove}

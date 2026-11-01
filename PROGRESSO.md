@@ -1,10 +1,21 @@
-2026-11-01 - **PRÓXIMA TAREFA: CURSO-01, Curso do Zero ao Avançado** (o usuário vai pedir para iniciar depois do compact). Ler **só** `docs/CURSO_DO_ZERO.md`, que tem o pedido, as fontes, a trilha, o modelo de passos, a UI e as fases, e a seção "Curso" de `TAREFAS.md`.
+2026-11-01 - **PRÓXIMA TAREFA: CURSO-02** (as outras etapas do nível 0: dama, rei, cavalo, peão, posição inicial, roque, en passant, afogamento, captura, proteção, combate, valor, garfo, xeques e mate em 1). Ler `docs/CURSO_DO_ZERO.md` e `apps/web/src/components/course/` (tipos, conteúdo, lógica dos passos e player). Só acrescentar módulos em `course-content.ts`; o teste de conteúdo valida as posições. Para roque e en passant, o passo `move` já serve. O passo `stars` mantém sempre o mesmo lado a jogar.
+
+2026-11-01 - **CURSO-01 CONCLUÍDA.**
+- **Servidor:** migração 0049 `course_progress`, autorizada sem restic como terceira exceção de backup só local; módulo `apps/api/src/course/`; rotas `/v1/course-trail/progress`; contrato `course-trail.ts`; OpenAPI; e2e.
+- **Web, lógica e conteúdo:** `components/course/` com `course-types.ts`, `course-step.ts` (lógica pura, com testes) e `course-content.ts`. O módulo "torre e bispo" tem 3 atividades: torre, bispo e primeiro xeque-mate.
+- **Web, telas:** `course-player.tsx` no esqueleto gamePage, com balão, voz, ◀ ↻ ▶ e 🔊. A seta só fica verde depois de cumprir o passo, e ao concluir a atividade o progresso é salvo. `course-map.tsx` é a lista em `/app/curso`, com ✓.
+- **Tabuleiro:** nova prop `marks` (estrelas) no 2D (★ dourada) e no 3D (pentágono dourado).
+- **Menu:** novo item "Curso".
+- **Verificação:** feita no harness (`.harness/curso.tsx`) a 1366px, em 3D e a 390px.
+- **Decisão:** nomes `course-trail` para não colidir com `CourseProgress` e `/courses` do sistema antigo.
+- **Fora desta tarefa:** o tipo `puzzle` fica para a CURSO-04, e o mate em N lances precisa de motor.
+
 
 Decisões:
 - **Independência:** é um curso novo, que ignora `courses`, `lesson-runtime` e `learning-path` e o conteúdo antigo.
-- **Conteúdo:** fica em arquivos versionados, sem banco nem migração (a migração exige restic).
+- **Conteúdo:** fica em arquivos versionados (só o progresso vai ao banco).
 - **Validação:** no cliente, com chess.js.
-- **Progresso:** em localStorage na fase 1.
+- **Progresso:** no servidor (tabela course_progress), autorizado sem restic.
 - **Nível 0:** reescrever as 20 etapas do "Aprenda" da Lichess (`lichess-org/lila`, `ui/learn/src/stage`; código AGPL, então só posições e ideias, com textos próprios).
 
 Reaproveitar:

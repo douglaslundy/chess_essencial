@@ -47,7 +47,7 @@ O nosso banco já tem os problemas com temas: tabela de exercícios, coluna `tag
 
 ## Modelo de conteúdo (proposto)
 
-Conteúdo **em arquivos versionados no repositório** (TS/JSON), não no banco. Assim não há migração, e a próxima migração exige restic na VPS. Para editar o conteúdo, faz-se commit.
+Conteúdo **em arquivos versionados no repositório**: `apps/web/src/components/course/course-content.ts`. Só o progresso vai ao banco. Para editar o conteúdo, faz-se commit. O teste `course-step.test.ts` confere que cada passo do conteúdo tem solução: estrelas alcançáveis, lance aceito legal e mate existente.
 
 ```ts
 type CourseStep =
@@ -63,8 +63,7 @@ interface CourseModule { id: string; level: 0|1|2|3|4; title: string; activities
 - **`say`:** é o que o Treinador mostra e fala, com `speak(speakableSquares(say), { interrupt: true })`.
 - **`stars`:** a peça precisa passar por todas as casas marcadas, sem ser capturada.
 - **Validação:** feita no cliente com chess.js. Lição não é partida avaliada, então a regra de "servidor autoritativo" do AGENTS.md (relógio, resultado e rating) não se aplica. O progresso, sim, vai para o servidor quando houver tabela.
-- **Progresso, fase 1:** `localStorage` por usuário, no mesmo padrão de `apps/web/src/components/library/watched-games.ts`.
-- **Progresso, fase 2:** migração de progresso, que exige restic.
+- **Progresso:** no servidor desde a CURSO-01. Tabela `course_progress` (migração 0049, autorizada pelo usuário sem restic em 2026-11-01). Rotas: GET `/v1/course-trail/progress` e PUT `/v1/course-trail/progress/{activityId}`.
 
 ## UI (reaproveitar o que já está aprovado)
 

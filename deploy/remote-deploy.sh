@@ -11,9 +11,9 @@ COMPOSE_FILE="$ROOT_DIR/deploy/docker-compose.vps.yml"
 # for every command so auto-deploys never drop the HTTPS routing.
 OVERLAY_FILE="$ROOT_DIR/deploy/docker-compose.traefik.yml"
 PROJECT_NAME="xadrez-essencial"
-# Second one-time exception, authorized by the user on 2026-10-31 (restic still not installed):
-# 0048 runs with the local dump only. The next migration requires the offsite backup again.
-ONE_TIME_LOCAL_BACKUP_CEILING="0048_initial_rating_zero.up.sql"
+# Third one-time exception, authorized by the user on 2026-11-01 (restic still not installed):
+# 0049 runs with the local dump only. The next migration requires the offsite backup again.
+ONE_TIME_LOCAL_BACKUP_CEILING="0049_course_progress.up.sql"
 IMAGE_TAG="$(git rev-parse --short=12 HEAD)"
 export IMAGE_TAG
 

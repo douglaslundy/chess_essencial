@@ -1,6 +1,7 @@
 import type {
   ChatgptOAuthStartInput,
   ChatgptOAuthStartResult,
+  CourseTrailProgress,
   LibraryFacets,
   LibraryGame,
   LibraryReview,
@@ -637,6 +638,10 @@ export const api = {
   getLibraryFacets: (token: string) => request<LibraryFacets>('/library/facets', token),
   getLibraryGame: (gameId: string, token: string) =>
     request<LibraryGame>(`/library/games/${gameId}`, token),
+  getCourseTrailProgress: (token: string) =>
+    request<CourseTrailProgress>('/course-trail/progress', token),
+  completeCourseTrailActivity: (activityId: string, token: string) =>
+    request<CourseTrailProgress>(`/course-trail/progress/${activityId}`, token, { method: 'PUT' }),
   getLibraryReview: (gameId: string, token: string) =>
     request<LibraryReview>(`/library/games/${gameId}/review`, token),
   requestLibraryReview: (gameId: string, token: string) =>

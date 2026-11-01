@@ -12,6 +12,7 @@ import { useEntitlements } from '@/lib/subscriptions/use-entitlements';
 
 const navigation = [
   { href: '/app', label: 'Visão geral' },
+  { href: '/app/curso', label: 'Curso' },
   { href: '/app/treinamento', label: 'Treinamento' },
   { href: '/app/jogar', label: 'Jogar' },
   { href: '/app/partidas', label: 'Partidas' },

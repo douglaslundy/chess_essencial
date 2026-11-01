@@ -22,6 +22,8 @@ export interface Chess3DBoardProps {
   /** Treinador's suggested move: its path is marked up to the target square. */
   hint?: { from: string; to: string } | undefined;
   lastMove?: { from: string; to: string } | undefined;
+  /** Course stars still to collect. */
+  marks?: readonly string[] | undefined;
   movableColor?: 'w' | 'b' | undefined;
   /** Square name ("A1") on every empty square. */
   squareNames?: boolean;
@@ -343,6 +345,8 @@ function CameraRig({ view }: { view: MutableRefObject<Rig> }) {
 }
 
 const HINT_BLUE = '#2fa3ff';
+const STAR_GOLD = '#f5c400';
+const NO_MARKS: readonly string[] = [];
 
 function BoardSquares({
   destinations,
@@ -351,6 +355,7 @@ function BoardSquares({
   hint,
   lastMove,
   maps,
+  marks,
   occupied,
   onSquare,
   selected,
@@ -362,6 +367,7 @@ function BoardSquares({
   hint: { from: string | null; path: Set<string>; target: string | null };
   lastMove?: { from: string; to: string } | undefined;
   maps?: ReturnType<typeof useMedievalMaterials> | undefined;
+  marks: readonly string[];
   occupied: Set<string>;
   onSquare: (square: Square) => void;
   selected: string | null;
@@ -437,6 +443,16 @@ function BoardSquares({
               <meshBasicMaterial color={HINT_BLUE} opacity={0.9} transparent />
             </mesh>
           ) : null}
+          {marks.includes(square) ? (
+            <mesh
+              position={[0, 0.03, 0]}
+              raycast={() => undefined}
+              rotation={[-Math.PI / 2, 0, Math.PI / 2]}
+            >
+              <circleGeometry args={[0.26, 5]} />
+              <meshBasicMaterial color={STAR_GOLD} />
+            </mesh>
+          ) : null}
           {squareNames && !occupied.has(square) ? (
             <SquareName flip={flip} light={light} text={square.toUpperCase()} />
           ) : null}
@@ -477,6 +493,7 @@ function Scene({
   greyLight,
   hint,
   lastMove,
+  marks,
   medieval,
   onSquare,
   pieces,
@@ -487,6 +504,7 @@ function Scene({
 }: {
   greyLight: boolean;
   hint: { from: string | null; path: Set<string>; target: string | null };
+  marks: readonly string[];
   squareNames: boolean;
   medieval: boolean;
   coordinates: boolean;
@@ -554,6 +572,7 @@ function Scene({
         hint={hint}
         lastMove={lastMove}
         maps={medieval ? maps : undefined}
+        marks={marks}
         occupied={new Set(pieces.map((piece) => piece.square))}
         onSquare={onSquare}
         selected={selected}
@@ -606,6 +625,7 @@ export default function Chess3DBoard({
   fen,
   hint,
   lastMove,
+  marks = NO_MARKS,
   movableColor,
   onMove,
   orientation,
@@ -850,6 +870,7 @@ export default function Chess3DBoard({
             greyLight={greyLightSquares}
             hint={hinted}
             lastMove={lastMove}
+            marks={marks}
             medieval={medieval}
             onSquare={onSquare}
             pieces={pieces}

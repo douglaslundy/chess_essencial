@@ -1201,6 +1201,16 @@ input:focus-visible {
   color: #fff;
 }
 
+.courseStar {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  color: #f5c400;
+  font-size: clamp(1.1rem, 4.4vmin, 2.4rem);
+  line-height: 1;
+  text-shadow: 0 0 3px rgb(0 0 0 / 55%);
+}
+
 .moveTarget {
   position: absolute;
   z-index: 3;

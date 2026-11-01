@@ -2011,6 +2011,31 @@ paths:
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
+  /course-trail/progress:
+    get:
+      summary: Listar as atividades do curso do zero concluídas pelo aluno
+      operationId: getCourseTrailProgress
+      responses:
+        '200':
+          description: Progresso do aluno no curso do zero
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseTrailProgress'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /course-trail/progress/{activityId}:
+    put:
+      summary: Marcar uma atividade do curso do zero como concluída (idempotente)
+      operationId: completeCourseTrailActivity
+      parameters:
+        - {name: activityId, in: path, required: true, schema: {type: string, pattern: '^[a-z0-9-]{1,80}$'}}
+      responses:
+        '200':
+          description: Progresso atualizado
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseTrailProgress'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
 components:
   parameters:
     GameId:
@@ -2073,6 +2098,13 @@ components:
       properties:
         items: {type: array, items: {$ref: '#/components/schemas/LibraryGameSummary'}}
         total: {type: integer}
+    CourseTrailProgress:
+      type: object
+      required: [completedActivityIds]
+      properties:
+        completedActivityIds:
+          type: array
+          items: {type: string, pattern: '^[a-z0-9-]{1,80}$'}
     LibraryFacets:
       type: object
       required: [openings, players]
