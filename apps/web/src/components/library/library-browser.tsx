@@ -17,6 +17,7 @@ const RESULT_LABEL: Record<string, string> = {
 };
 
 interface Filters {
+  collection: string;
   opening: string;
   player: string;
   q: string;
@@ -25,7 +26,15 @@ interface Filters {
   yearTo: string;
 }
 
-const EMPTY: Filters = { opening: '', player: '', q: '', result: '', yearFrom: '', yearTo: '' };
+const EMPTY: Filters = {
+  collection: '',
+  opening: '',
+  player: '',
+  q: '',
+  result: '',
+  yearFrom: '',
+  yearTo: '',
+};
 
 function toQuery(filters: Filters, offset: number) {
   const params = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(offset) });
@@ -99,6 +108,14 @@ export function LibraryBrowser() {
         <p>Filtre por jogador, abertura ou resultado e revise lance a lance, com narração.</p>
       </header>
       <form className={styles.filters} onSubmit={submit}>
+        <label>
+          Coleção
+          <select onChange={(e) => set('collection')(e.target.value)} value={draft.collection}>
+            <option value="">Todas as partidas</option>
+            <option value="famous">Famosas (campeões mundiais)</option>
+            <option value="finals">Finais de campeonato</option>
+          </select>
+        </label>
         <label>
           Jogador
           <input

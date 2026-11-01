@@ -1944,6 +1944,10 @@ paths:
         - {name: result, in: query, schema: {type: string, enum: ['1-0', '0-1', '1/2-1/2']}}
         - {name: yearFrom, in: query, schema: {type: integer}}
         - {name: yearTo, in: query, schema: {type: integer}}
+        - name: collection
+          in: query
+          description: famous = duelos entre campeões mundiais; finals = Mundial, Candidatos e finais de torneio
+          schema: {type: string, enum: [famous, finals]}
         - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 50}}
         - {name: offset, in: query, schema: {type: integer, minimum: 0}}
       responses:

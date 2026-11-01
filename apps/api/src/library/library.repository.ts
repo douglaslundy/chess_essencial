@@ -26,6 +26,26 @@ export interface LibraryReviewRow {
   status: 'generating' | 'completed' | 'failed';
 }
 
+/** Name prefixes (lowercase) of classical world champions as they appear in the imported PGNs. */
+export const WORLD_CHAMPION_PREFIXES = [
+  'botvinnik',
+  'smyslov',
+  'tal,',
+  'petrosian',
+  'spassky',
+  'fischer',
+  'karpov',
+  'kasparov',
+  'kramnik',
+  'anand',
+  'topalov',
+  'carlsen',
+  'ding liren',
+  'gukesh',
+];
+// Title matches, Candidates and the final stage of tournaments ("World Blitz Final", "GCT Finals").
+const FINALS_EVENT_PATTERN = '(world championship|wch|candidates|\\mfinals?\\M)';
+
 const likePattern = (value: string) => `%${value.toLowerCase().replace(/[\\%_]/g, '\\$&')}%`;
 
 @Injectable()
@@ -44,6 +64,14 @@ export class LibraryRepository {
     if (query.result) conditions.push(sql`result = ${query.result}`);
     if (query.yearFrom) conditions.push(sql`played_year >= ${query.yearFrom}`);
     if (query.yearTo) conditions.push(sql`played_year <= ${query.yearTo}`);
+    if (query.collection === 'famous') {
+      const champion = (column: 'white' | 'black') =>
+        sql`EXISTS (SELECT 1 FROM unnest(${WORLD_CHAMPION_PREFIXES}::text[]) AS p WHERE lower(${sql(column)}) LIKE p || '%')`;
+      conditions.push(sql`${champion('white')} AND ${champion('black')}`);
+    }
+    if (query.collection === 'finals') {
+      conditions.push(sql`coalesce(event, '') ~* ${FINALS_EVENT_PATTERN}`);
+    }
     if (query.q) {
       const p = likePattern(query.q);
       conditions.push(

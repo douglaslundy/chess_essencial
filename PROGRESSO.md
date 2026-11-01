@@ -408,6 +408,8 @@ Nenhuma tarefa de desenvolvimento acionável no backlog. O item de dicas da Jorn
 - Gates locais completos passaram de novo após o refactor: format:check, typecheck, lint, 24 testes web, build de produção.
 ## Concluído
 
+- [x] Biblioteca: filtro "Coleção" (`collection=famous|finals`). Sem coluna nova (próxima migração exige restic): famosas = duelo entre dois campeões mundiais clássicos (`WORLD_CHAMPION_PREFIXES`, 1.272 partidas); finais = evento casa `world championship|wch|candidates|final(s)` (2.409).
+
 - [x] Mobile: tabuleiro "cortado" no iPhone era zoom por toque duplo nos botões de lance (Chromium emulando iPhone 14 renderiza 390px sem estouro, em 2D e 3D). `html { touch-action: manipulation }` tira o zoom de toque duplo e mantém o de pinça; desktop intocado.
 
 - [x] Biblioteca: ao chegar no último lance abre a caixa de resultado (mesma da partida) com "Brancas/Pretas venceram" ou "Empate" e o motivo; a voz também fala. PGN só tem o resultado, então o motivo vem da posição final (`final-verdict.ts`): decisivo sem mate = desistência; empate sem afogamento/material/repetição = acordo.

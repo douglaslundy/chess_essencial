@@ -6588,6 +6588,8 @@ export interface operations {
         result?: '1-0' | '0-1' | '1/2-1/2';
         yearFrom?: number;
         yearTo?: number;
+        /** @description famous = duelos entre campeões mundiais; finals = Mundial, Candidatos e finais de torneio */
+        collection?: 'famous' | 'finals';
         limit?: number;
         offset?: number;
       };
