@@ -164,7 +164,7 @@ describeDatabase('matchmaking and rating database integration', () => {
       JOIN game_bots ON game_bots.game_id = games.id
       WHERE games.id = ${game.id}
     `;
-    expect(persisted).toEqual({ difficulty: 'matched', rated: false, targetRating: 1200 });
+    expect(persisted).toEqual({ difficulty: 'matched', rated: false, targetRating: 0 });
   });
 
   it('leaves an untimed bot game unrated', async () => {
@@ -219,7 +219,8 @@ describeDatabase('matchmaking and rating database integration', () => {
       WHERE user_id = ${human.userId} AND pool = 'blitz'
     `;
     expect(humanProfile).toMatchObject({ gamesCount: 1, losses: 1 });
-    expect(humanProfile?.rating).toBeLessThan(1200);
+    // Starts at 0 and never goes below it, so a first loss keeps 0.
+    expect(humanProfile?.rating).toBe(0);
 
     const [botProfile] = await database.client<{ count: number }[]>`
       SELECT count(*)::integer AS count FROM rating_profiles WHERE user_id = ${BOT_USER_ID}
@@ -250,7 +251,7 @@ describeDatabase('matchmaking and rating database integration', () => {
        AND player.user_id = ${first.userId}
       WHERE game_bots.game_id = ${response.json().gameId}
     `;
-    expect(bot).toEqual({ color: 'white', targetRating: 1200 });
+    expect(bot).toEqual({ color: 'white', targetRating: 0 });
   });
 
   it('finishes a matched game and writes an idempotent immutable rating ledger', async () => {
@@ -288,7 +289,8 @@ describeDatabase('matchmaking and rating database integration', () => {
       SELECT count(*)::integer AS count, sum(delta)::integer AS "deltaSum"
       FROM rating_transactions WHERE game_id = ${gameId}
     `;
-    expect(ledger).toEqual({ count: 2, deltaSum: 0 });
+    // Both start at 0: the winner gains 20, the loser cannot drop below 0.
+    expect(ledger).toEqual({ count: 2, deltaSum: 20 });
     expect(await ratings.processFinishedGame(gameId)).toBe(false);
 
     const [afterRetry] = await database.client<{ count: number }[]>`
@@ -319,7 +321,7 @@ describeDatabase('matchmaking and rating database integration', () => {
       .filter((entry: { userId: string }) => [first.userId, second.userId].includes(entry.userId))
       .map((entry: { rating: number }) => entry.rating)
       .sort((left: number, right: number) => left - right);
-    expect(phaseFiveRatings).toEqual([1180, 1220]);
+    expect(phaseFiveRatings).toEqual([0, 20]);
 
     expect(await ratings.reverseGame(gameId, 'integration test reversal')).toBe(true);
     expect(await ratings.reverseGame(gameId, 'duplicate reversal')).toBe(false);
@@ -328,7 +330,7 @@ describeDatabase('matchmaking and rating database integration', () => {
       WHERE user_id IN (${first.userId}, ${second.userId}) AND pool = 'blitz'
       ORDER BY rating
     `;
-    expect(reversedProfiles.map((profile) => profile.rating)).toEqual([1200, 1200]);
+    expect(reversedProfiles.map((profile) => profile.rating)).toEqual([0, 0]);
     const [reversedLedger] = await database.client<{ count: number }[]>`
       SELECT count(*)::integer AS count FROM rating_transactions WHERE game_id = ${gameId}
     `;

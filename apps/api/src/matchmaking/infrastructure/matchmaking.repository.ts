@@ -1,6 +1,7 @@
 import { randomInt, randomUUID } from 'node:crypto';
 
 import { ChessJsRules } from '@xadrez/chess-domain';
+import { INITIAL_RATING } from '@xadrez/rating-domain';
 import type {
   CreateChallengeInput,
   JoinQueueInput,
@@ -431,7 +432,7 @@ export class MatchmakingRepository {
       SELECT rating FROM rating_profiles
       WHERE user_id = ${userId} AND pool = ${pool}::rating_pool
     `;
-    return profile?.rating ?? 1200;
+    return profile?.rating ?? INITIAL_RATING;
   }
 
   private async chooseColor(

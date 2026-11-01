@@ -53,7 +53,7 @@ export function AuthStatus() {
     api
       .getRatings(token)
       .then((value) => {
-        // A pool with no rated game still holds the initial 1200: it is not a rating yet.
+        // Only pools already played are listed; the others are still at the initial 0.
         if (active) setRatings(value.filter((rating) => rating.gamesCount > 0));
       })
       .catch(() => {

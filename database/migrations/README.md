@@ -71,3 +71,5 @@ pnpm --filter @xadrez/api db:rollback
 
 O rollback de `0001_base` é destrutivo e remove todas as tabelas do schema base. As extensões
 `pgcrypto` e `citext` são preservadas porque podem ser compartilhadas por outros schemas.
+
+`0048_initial_rating_zero.down.sql` volta o valor inicial do rating para 1200 e devolve 1200 só a quem continua sem nenhuma partida avaliada (rating 0, sem transações). Quem já jogou partidas avaliadas depois da migration mantém o rating calculado a partir de 0.

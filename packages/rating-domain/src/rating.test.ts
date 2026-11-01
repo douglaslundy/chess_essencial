@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   calculateRatingChange,
   expectedScoreFide,
+  INITIAL_RATING,
   FIDE_EXPECTED_SCORE_BANDS,
   kFactor,
   roundHalfAwayFromZero,
@@ -55,5 +56,17 @@ describe('rating calculation', () => {
     expect(calculateRatingChange(profile, 1800, 1).delta).toBe(10);
     expect(calculateRatingChange(profile, 1800, 0.5).delta).toBe(0);
     expect(calculateRatingChange(profile, 1800, 0).delta).toBe(-10);
+  });
+
+  it('starts at 0, climbs on a win against a stronger player and never goes below 0', () => {
+    const newcomer = { rating: INITIAL_RATING, gamesCount: 0, hasEverReached2400: false };
+
+    expect(INITIAL_RATING).toBe(0);
+    expect(calculateRatingChange(newcomer, 1200, 1)).toMatchObject({ delta: 37, ratingAfter: 37 });
+    expect(calculateRatingChange(newcomer, 1200, 0)).toMatchObject({ delta: 0, ratingAfter: 0 });
+    expect(calculateRatingChange({ ...newcomer, rating: 2 }, 1200, 0)).toMatchObject({
+      delta: -2,
+      ratingAfter: 0,
+    });
   });
 });

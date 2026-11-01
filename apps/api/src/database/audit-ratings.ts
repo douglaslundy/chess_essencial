@@ -1,7 +1,8 @@
+import { INITIAL_RATING } from '@xadrez/rating-domain';
 import postgres from 'postgres';
 
 // Read-only rating audit: for every human profile, explains where its current rating comes from
-// (the 1200 seed, rated games, or an inconsistency) so an unexpected number can be traced.
+// (the initial rating, rated games, or an inconsistency) so an unexpected number can be traced.
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error('DATABASE_URL is required');
 
@@ -21,13 +22,13 @@ interface ProfileAudit {
 }
 
 function explain(row: ProfileAudit): string {
-  if (row.transactions === 0 && row.rating === 1200) {
+  if (row.transactions === 0 && row.rating === INITIAL_RATING) {
     return row.unratedGames > 0
-      ? `valor inicial do cadastro (1200); as ${row.unratedGames} partidas deste ritmo não valem rating`
-      : 'valor inicial do cadastro (1200); nenhuma partida neste ritmo';
+      ? `valor inicial (${INITIAL_RATING}); as ${row.unratedGames} partidas deste ritmo não valem rating`
+      : `valor inicial (${INITIAL_RATING}); nenhuma partida neste ritmo`;
   }
   if (row.transactions === 0)
-    return 'INCONSISTENTE: rating diferente de 1200 sem nenhuma partida avaliada';
+    return 'INCONSISTENTE: rating diferente do inicial sem nenhuma partida avaliada';
   if (row.lastTransactionRating !== row.rating) {
     return `INCONSISTENTE: última partida avaliada deixou ${row.lastTransactionRating}, perfil mostra ${row.rating}`;
   }

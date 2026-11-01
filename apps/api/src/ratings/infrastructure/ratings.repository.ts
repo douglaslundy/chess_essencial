@@ -1,4 +1,4 @@
-import { calculateRatingChange, type GameScore } from '@xadrez/rating-domain';
+import { calculateRatingChange, INITIAL_RATING, type GameScore } from '@xadrez/rating-domain';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 
 import { DatabaseService } from '../../database/database.service.js';
@@ -197,7 +197,9 @@ export class RatingsRepository {
           FOR UPDATE
         `;
         if (!profile) throw new InternalServerErrorException('Rating profile not found');
-        const ratingAfter = profile.rating - original.delta;
+        // Never below the initial rating, even if later games already took the player near it.
+        const ratingAfter = Math.max(INITIAL_RATING, profile.rating - original.delta);
+        const reversalDelta = ratingAfter - profile.rating;
         const nextGamesCount = Math.max(0, profile.gamesCount - 1);
         const win = original.actualScore === 1 ? 1 : 0;
         const draw = original.actualScore === 0.5 ? 1 : 0;
@@ -205,7 +207,7 @@ export class RatingsRepository {
         const calculation = {
           originalTransactionId: original.id,
           originalDelta: original.delta,
-          rawDelta: -original.delta,
+          rawDelta: reversalDelta,
           reason,
         };
 
@@ -217,7 +219,7 @@ export class RatingsRepository {
           ) VALUES (
             ${original.userId}, ${gameId}, ${original.pool}::rating_pool,
             ${profile.rating}, ${original.opponentRating}, ${original.expectedScore},
-            ${original.actualScore}, ${original.kFactor}, ${-original.delta}, ${ratingAfter},
+            ${original.actualScore}, ${original.kFactor}, ${reversalDelta}, ${ratingAfter},
             ${`${original.algorithmVersion}:reversal`}, ${JSON.stringify(calculation)}::jsonb,
             'reversal', ${original.id}
           )

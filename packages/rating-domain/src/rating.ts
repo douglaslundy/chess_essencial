@@ -1,4 +1,7 @@
-export const RATING_ALGORITHM_VERSION = 'xe-fide-table-2025-10-v1';
+export const RATING_ALGORITHM_VERSION = 'xe-fide-table-2026-10-v2';
+
+/** Every player starts at 0 and climbs; the rating never goes below it. */
+export const INITIAL_RATING = 0;
 
 export const FIDE_EXPECTED_SCORE_BANDS = [
   [0, 3, 0.5],
@@ -107,7 +110,8 @@ export function calculateRatingChange(
   const expectedScore = expectedScoreFide(profile.rating, opponentRating);
   const factor = kFactor(profile);
   const rawDelta = (actualScore - expectedScore) * factor;
-  const delta = roundHalfAwayFromZero(rawDelta);
+  // Floor at the initial rating: a loss near 0 costs only what is left.
+  const delta = Math.max(roundHalfAwayFromZero(rawDelta), INITIAL_RATING - profile.rating);
 
   return {
     algorithmVersion: RATING_ALGORITHM_VERSION,

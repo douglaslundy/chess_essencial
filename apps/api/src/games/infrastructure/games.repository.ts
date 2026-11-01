@@ -1,6 +1,7 @@
 import { createHash, randomInt, randomUUID } from 'node:crypto';
 
 import { ChessJsRules, IllegalMoveError } from '@xadrez/chess-domain';
+import { INITIAL_RATING } from '@xadrez/rating-domain';
 import type {
   CreateGameInput,
   CreateBotGameInput,
@@ -189,7 +190,7 @@ export class GamesRepository {
       const ratings = await transaction<{ rating: number; userId: string }[]>`
         SELECT
           selected.user_id AS "userId",
-          COALESCE(rating_profiles.rating, 1200)::integer AS rating
+          COALESCE(rating_profiles.rating, ${INITIAL_RATING})::integer AS rating
         FROM (
           VALUES (${creatorUserId}::uuid), (${input.opponentUserId}::uuid)
         ) AS selected(user_id)
@@ -235,8 +236,8 @@ export class GamesRepository {
       await transaction`
         INSERT INTO game_players (game_id, user_id, color, rating_before)
         VALUES
-          (${gameId}, ${creatorUserId}, ${creatorColor}, ${ratingByUser.get(creatorUserId) ?? 1200}),
-          (${gameId}, ${input.opponentUserId}, ${opponentColor}, ${ratingByUser.get(input.opponentUserId) ?? 1200})
+          (${gameId}, ${creatorUserId}, ${creatorColor}, ${ratingByUser.get(creatorUserId) ?? INITIAL_RATING}),
+          (${gameId}, ${input.opponentUserId}, ${opponentColor}, ${ratingByUser.get(input.opponentUserId) ?? INITIAL_RATING})
       `;
 
       return this.getStateInTransaction(transaction, gameId, creatorUserId);
@@ -281,7 +282,7 @@ export class GamesRepository {
         SELECT rating FROM rating_profiles
         WHERE user_id = ${userId} AND pool = ${timeControl.pool}::rating_pool
       `;
-      const userRating = profile?.rating ?? 1200;
+      const userRating = profile?.rating ?? INITIAL_RATING;
       // Treinador mode always matches the bot to the player's own rating —
       // any explicit difficulty picked client-side is ignored — and never
       // touches the official rating, regardless of the time control's own
