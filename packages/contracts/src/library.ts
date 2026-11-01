@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const libraryResultSchema = z.enum(['1-0', '0-1', '1/2-1/2']);
 
 export const librarySearchQuerySchema = z.object({
-  collection: z.enum(['famous', 'finals']).optional(),
+  collection: z.enum(['famous', 'finals', 'legendary']).optional(),
   eco: z.string().trim().min(1).max(3).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
   offset: z.coerce.number().int().nonnegative().default(0),

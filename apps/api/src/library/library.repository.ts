@@ -2,6 +2,7 @@ import type { LibraryReviewEntry, LibrarySearchQuery } from '@xadrez/contracts';
 import { Injectable } from '@nestjs/common';
 
 import { DatabaseService } from '../database/database.service.js';
+import { LEGENDARY_GAMES } from './legendary-games.js';
 
 export interface LibraryGameRow {
   black: string;
@@ -71,6 +72,13 @@ export class LibraryRepository {
     }
     if (query.collection === 'finals') {
       conditions.push(sql`coalesce(event, '') ~* ${FINALS_EVENT_PATTERN}`);
+    }
+    if (query.collection === 'legendary') {
+      const picks = LEGENDARY_GAMES.map(
+        (game) =>
+          sql`(lower(white) LIKE ${`${game.white}%`} AND lower(black) LIKE ${`${game.black}%`} AND played_year = ${game.year} AND round = ${game.round})`,
+      );
+      conditions.push(sql`(${picks.reduce((acc, part) => sql`${acc} OR ${part}`)})`);
     }
     if (query.q) {
       const p = likePattern(query.q);

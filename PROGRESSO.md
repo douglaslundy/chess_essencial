@@ -408,6 +408,8 @@ Nenhuma tarefa de desenvolvimento acionável no backlog. O item de dicas da Jorn
 - Gates locais completos passaram de novo após o refactor: format:check, typecheck, lint, 24 testes web, build de produção.
 ## Concluído
 
+- [x] Biblioteca: coleção "Lendárias" (`collection=legendary`), lista curada em `apps/api/src/library/legendary-games.ts` casada por jogadores+ano+rodada (ids mudam a cada importação). 11 partidas conferidas na produção; Ivanchuk–Yusupov 91, Short–Timman 91, Fischer–Petrosian 71 e Carlsen–Ernst 04 não estão no acervo.
+
 - [x] Biblioteca: filtro "Coleção" (`collection=famous|finals`). Sem coluna nova (próxima migração exige restic): famosas = duelo entre dois campeões mundiais clássicos (`WORLD_CHAMPION_PREFIXES`, 1.272 partidas); finais = evento casa `world championship|wch|candidates|final(s)` (2.409).
 
 - [x] Mobile: tabuleiro "cortado" no iPhone era zoom por toque duplo nos botões de lance (Chromium emulando iPhone 14 renderiza 390px sem estouro, em 2D e 3D). `html { touch-action: manipulation }` tira o zoom de toque duplo e mantém o de pinça; desktop intocado.

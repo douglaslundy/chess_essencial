@@ -112,6 +112,7 @@ export function LibraryBrowser() {
           Coleção
           <select onChange={(e) => set('collection')(e.target.value)} value={draft.collection}>
             <option value="">Todas as partidas</option>
+            <option value="legendary">Lendárias</option>
             <option value="famous">Famosas (campeões mundiais)</option>
             <option value="finals">Finais de campeonato</option>
           </select>
