@@ -18,7 +18,7 @@ import { useCoachEngine } from '@/lib/engine/use-coach-engine';
 import { speakableSquares, toBrazilianSan } from '@/lib/notation';
 import { usePieceTheme } from '@/lib/piece-theme';
 import { GameSocket } from '@/lib/realtime/game-socket';
-import { speak } from '@/lib/speech';
+import { speak, stopSpeaking } from '@/lib/speech';
 import { useVoicePreference } from '@/lib/voice-preference';
 import {
   isSoundMuted,
@@ -451,9 +451,10 @@ export function GameRoom({ gameId }: { gameId: string }) {
   // the Treinador audible instead of silently showing only text.
   const speakCoach = useCallback(
     (text: string) => {
-      speak(text, { voiceName }).catch(() => {
+      // interrupt: the Treinador always speaks about the current position, never a queued old tip.
+      speak(text, { interrupt: true, voiceName }).catch(() => {
         setMessage('A voz por IA falhou; o Treinador está usando a voz do navegador.');
-        void speak(text).catch(() => undefined);
+        void speak(text, { interrupt: true }).catch(() => undefined);
       });
     },
     [voiceName],
@@ -462,6 +463,12 @@ export function GameRoom({ gameId }: { gameId: string }) {
   useEffect(() => {
     if (!coachEnabled) narrationGenerationRef.current += 1;
   }, [coachEnabled]);
+
+  // Any move cuts the tip being spoken; the next position's tip starts fresh.
+  useEffect(() => {
+    narrationGenerationRef.current += 1;
+    stopSpeaking();
+  }, [state.currentFen]);
 
   useEffect(() => {
     if (muted || !coachSuggestion || !coachSuggestion.bestMoveUci) return;

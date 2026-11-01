@@ -46,4 +46,12 @@ describe('speakableSquares', () => {
   it('leaves text with no square references untouched', () => {
     expect(speakableSquares('Eu sugiro roque pequeno')).toBe('Eu sugiro roque pequeno');
   });
+
+  it('reads castling notation as roque', () => {
+    expect(speakableSquares('Eu indico O-O. A linha é Bc4, Be7, O-O-O.')).toBe(
+      'Eu indico roque pequeno. A linha é B cê 4, B é 7, roque grande.',
+    );
+    expect(speakableSquares('Você jogou 0-0+')).toBe('Você jogou roque pequeno+');
+    expect(speakableSquares('Resultado 1-0')).toBe('Resultado 1-0');
+  });
 });

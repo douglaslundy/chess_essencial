@@ -36,11 +36,16 @@ const FILE_NAME_PT: Record<string, string> = {
  * safe, spelled-out form, e.g. "g6" → "gê 6". Use for any string passed to
  * speech synthesis; not for on-screen display. */
 export function speakableSquares(text: string): string {
-  return text
-    .replace(
-      /([a-h])([1-8])/g,
-      (_match, file: string, rank: string) => ` ${FILE_NAME_PT[file]} ${rank}`,
-    )
-    .replace(/\s+/g, ' ')
-    .trim();
+  return (
+    text
+      // Castling SAN ("O-O", "O-O-O", also typed with zeros) is read letter by letter otherwise.
+      .replace(/(?<![\w-])[O0]-[O0]-[O0](?![\w-])/g, 'roque grande')
+      .replace(/(?<![\w-])[O0]-[O0](?![\w-])/g, 'roque pequeno')
+      .replace(
+        /([a-h])([1-8])/g,
+        (_match, file: string, rank: string) => ` ${FILE_NAME_PT[file]} ${rank}`,
+      )
+      .replace(/\s+/g, ' ')
+      .trim()
+  );
 }
