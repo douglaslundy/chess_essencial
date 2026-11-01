@@ -65,7 +65,7 @@ describeDatabase('matchmaking and rating database integration', () => {
       url: '/v1/matchmaking/queues',
     });
     expect(queued.statusCode, queued.body).toBe(201);
-    expect(queued.json()).toMatchObject({ status: 'queued', minRating: 1100, maxRating: 1300 });
+    expect(queued.json()).toMatchObject({ status: 'queued', minRating: 0, maxRating: 100 });
 
     const matched = await app.inject({
       headers: auth(second),
@@ -164,7 +164,7 @@ describeDatabase('matchmaking and rating database integration', () => {
       JOIN game_bots ON game_bots.game_id = games.id
       WHERE games.id = ${game.id}
     `;
-    expect(persisted).toEqual({ difficulty: 'matched', rated: false, targetRating: 0 });
+    expect(persisted).toEqual({ difficulty: 'matched', rated: false, targetRating: 100 });
   });
 
   it('leaves an untimed bot game unrated', async () => {
@@ -251,7 +251,7 @@ describeDatabase('matchmaking and rating database integration', () => {
        AND player.user_id = ${first.userId}
       WHERE game_bots.game_id = ${response.json().gameId}
     `;
-    expect(bot).toEqual({ color: 'white', targetRating: 0 });
+    expect(bot).toEqual({ color: 'white', targetRating: 100 });
   });
 
   it('finishes a matched game and writes an idempotent immutable rating ledger', async () => {

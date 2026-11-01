@@ -73,7 +73,7 @@ export class MatchmakingRepository {
           enqueued_at, heartbeat_at
         ) VALUES (
           ${userId}, ${timeControl.pool}::rating_pool, ${timeControl.id}, ${rating},
-          ${rating - 100}, ${rating + 100}, ${now.toISOString()}, ${now.toISOString()}
+          ${Math.max(INITIAL_RATING, rating - 100)}, ${rating + 100}, ${now.toISOString()}, ${now.toISOString()}
         )
         ON CONFLICT (user_id) DO UPDATE SET
           pool = EXCLUDED.pool, time_control_id = EXCLUDED.time_control_id,
@@ -136,7 +136,7 @@ export class MatchmakingRepository {
           status: 'queued',
           pool: timeControl.pool,
           timeControlCode: timeControl.code,
-          minRating: rating - selfRange,
+          minRating: Math.max(INITIAL_RATING, rating - selfRange),
           maxRating: rating + selfRange,
           enqueuedAt: selfEnqueuedAt.toISOString(),
         };
@@ -159,7 +159,7 @@ export class MatchmakingRepository {
         status: 'matched',
         pool: timeControl.pool,
         timeControlCode: timeControl.code,
-        minRating: rating - selfRange,
+        minRating: Math.max(INITIAL_RATING, rating - selfRange),
         maxRating: rating + selfRange,
         enqueuedAt: selfEnqueuedAt.toISOString(),
         gameId,

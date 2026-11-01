@@ -84,6 +84,7 @@ export interface BotTurn {
 }
 
 const BOT_USER_ID = '00000000-0000-4000-8000-000000000b07';
+const MIN_BOT_RATING = 100;
 const difficultyRatings: Record<Exclude<BotDifficulty, 'matched'>, number> = {
   beginner: 800,
   intermediate: 1200,
@@ -288,8 +289,12 @@ export class GamesRepository {
       // touches the official rating, regardless of the time control's own
       // rated flag (same spirit as the existing untimed/demo mode).
       const botDifficulty = input.coachMode ? 'matched' : input.botDifficulty;
+      // A "matched" bot follows the player, but bots play at 100 at the weakest (game_bots CHECK),
+      // so a newcomer at 0 meets the weakest bot.
       const targetRating =
-        botDifficulty === 'matched' ? userRating : difficultyRatings[botDifficulty];
+        botDifficulty === 'matched'
+          ? Math.max(MIN_BOT_RATING, userRating)
+          : difficultyRatings[botDifficulty];
       const rated = input.coachMode ? false : timeControl.rated;
       const playerColor =
         input.playerColor === 'random'
