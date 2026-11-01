@@ -25,6 +25,14 @@ body {
   overflow-x: clip;
 }
 
+html {
+  /* iOS: tapping ▶ twice zoomed the page in and cut the board on the right;
+     manipulation drops double-tap zoom and keeps pinch zoom. */
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 main,
 section,
 article,
