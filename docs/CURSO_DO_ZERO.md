@@ -1,6 +1,6 @@
 # Curso do Zero ao Avançado (rating 0 → 2500)
 
-Documento-fonte do novo curso. Pedido do usuário em 2026-11-01. **Ignorar o sistema atual de cursos/aulas/Jornada** (módulos `courses`, `lesson-runtime`, `learning-path`, rotas `/app/aula`, `/app/treinamento`, livro): o curso novo é independente. Pode-se *reaproveitar componentes de UI* (tabuleiro, voz, balão do Treinador), não o modelo de dados nem o conteúdo antigo.
+Documento-fonte do novo curso. Pedido do usuário em 2026-11-01. **Ignorar o sistema atual de cursos/aulas/Jornada** (módulos `courses`, `lesson-runtime`, `learning-path`, rotas `/app/aula`, `/app/treinamento`, livro): o curso novo é independente. Pode-se _reaproveitar componentes de UI_ (tabuleiro, voz, balão do Treinador), não o modelo de dados nem o conteúdo antigo.
 
 ## O que o usuário quer (palavras dele, resumidas)
 
@@ -11,22 +11,24 @@ Documento-fonte do novo curso. Pedido do usuário em 2026-11-01. **Ignorar o sis
 
 ## Fontes pesquisadas (2026-11-01)
 
-| Fonte | Uso | Licença / cuidado |
-|---|---|---|
-| **Lichess "Aprenda"**: `lichess-org/lila`, pasta `ui/learn/src/stage/*.ts` | Nível 0 inteiro. 20 etapas, cada uma com 5–8 níveis `{goal, fen, apples (estrelas), nbMoves, shapes (setas)}`. | Código AGPL-3.0. **Reescrever no nosso formato**: posições e ideias sim, código não. |
-| Textos pt-BR do "Aprenda": `translation/dest/learn/pt-BR.xml` (mesmo repositório) | Referência de tom e conteúdo. | Também no repositório AGPL: escrever textos próprios, sem colar. |
-| **Lichess "Prática"**: `modules/practice/src/main/PracticeSections.scala` | Temas dos níveis 1–4. Seções e IDs de estudo listados abaixo. | **Licença dos estudos NÃO confirmada** (Cloudflare bloqueou os termos). Confirmar antes de importar PGN (`https://lichess.org/api/study/{id}.pgn`). Se não puder, usar só os temas e montar as posições. |
-| **Banco de problemas da Lichess (CC0)** | Exercícios táticos por rating e tema. | Domínio público. |
-| Método dos Passos (Stappenmethode, Brunia & van Wijgerden), Passos 1–6 | **Só a ordem dos temas** (Passo 1 ≈ até 800 … Passo 6 ≈ 2100–2200 FIDE). | Livros protegidos: não copiar conteúdo. |
-| ChessDojo 0–2400 | Descartado (pago e fechado). | — |
+| Fonte                                                                             | Uso                                                                                                            | Licença / cuidado                                                                                                                                                                                        |
+| --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Lichess "Aprenda"**: `lichess-org/lila`, pasta `ui/learn/src/stage/*.ts`        | Nível 0 inteiro. 20 etapas, cada uma com 5–8 níveis `{goal, fen, apples (estrelas), nbMoves, shapes (setas)}`. | Código AGPL-3.0. **Reescrever no nosso formato**: posições e ideias sim, código não.                                                                                                                     |
+| Textos pt-BR do "Aprenda": `translation/dest/learn/pt-BR.xml` (mesmo repositório) | Referência de tom e conteúdo.                                                                                  | Também no repositório AGPL: escrever textos próprios, sem colar.                                                                                                                                         |
+| **Lichess "Prática"**: `modules/practice/src/main/PracticeSections.scala`         | Temas dos níveis 1–4. Seções e IDs de estudo listados abaixo.                                                  | **Licença dos estudos NÃO confirmada** (Cloudflare bloqueou os termos). Confirmar antes de importar PGN (`https://lichess.org/api/study/{id}.pgn`). Se não puder, usar só os temas e montar as posições. |
+| **Banco de problemas da Lichess (CC0)**                                           | Exercícios táticos por rating e tema.                                                                          | Domínio público.                                                                                                                                                                                         |
+| Método dos Passos (Stappenmethode, Brunia & van Wijgerden), Passos 1–6            | **Só a ordem dos temas** (Passo 1 ≈ até 800 … Passo 6 ≈ 2100–2200 FIDE).                                       | Livros protegidos: não copiar conteúdo.                                                                                                                                                                  |
+| ChessDojo 0–2400                                                                  | Descartado (pago e fechado).                                                                                   | —                                                                                                                                                                                                        |
 
 As 20 etapas do "Aprenda", na ordem do `list.ts`:
+
 - **Peças:** rook, bishop, queen, king, knight, pawn.
 - **Regras:** setup, castling, enpassant, stalemate.
 - **Combate:** capture, protection, combat, value, fork.
 - **Xeque e mate:** check1, outOfCheck, checkmate1, check2.
 
 Seções da "Prática":
+
 - **checkmates:** 7 estudos (BJy6fEDf, fE4k21MW, 8yadFPpU, PDkQDt6u, 96Lij7wH, Rg2cMBZ6, ByhlXnmM).
 - **fundamental-tactics:** 8 estudos.
 - **advanced-tactics:** 10 estudos.
@@ -37,13 +39,13 @@ O nosso banco já tem os problemas com temas: tabela de exercícios, coluna `tag
 
 ## Trilha (níveis do curso)
 
-| Nível | Faixa | Módulos | Fonte |
-|---|---|---|---|
-| 0 Regras | 0–400 | As 20 etapas do "Aprenda", reescritas | Aprenda |
-| 1 Iniciante | 400–1000 | Mates básicos (dama, torre, duas torres em escadinha), valor das peças, táticas de 1 lance | Prática "checkmates" + problemas 400–1000 |
-| 2 Básico | 1000–1500 | Princípios de abertura (centro, desenvolvimento, roque), táticas fundamentais (garfo, cravada, espeto, ataque descoberto) | Prática "fundamental-tactics" + problemas 1000–1500 |
-| 3 Intermediário | 1500–1900 | Meio de jogo (planos, estrutura de peões), táticas avançadas, finais de peões | Prática "advanced-tactics" e "pawn-endgames" + problemas |
-| 4 Avançado | 1900–2500 | Finais de torre, estratégia, partidas lendárias comentadas | Prática "rook-endgames", coleção `legendary` da biblioteca, problemas acima de 1900 |
+| Nível           | Faixa     | Módulos                                                                                                                   | Fonte                                                                               |
+| --------------- | --------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| 0 Regras        | 0–400     | As 20 etapas do "Aprenda", reescritas                                                                                     | Aprenda                                                                             |
+| 1 Iniciante     | 400–1000  | Mates básicos (dama, torre, duas torres em escadinha), valor das peças, táticas de 1 lance                                | Prática "checkmates" + problemas 400–1000                                           |
+| 2 Básico        | 1000–1500 | Princípios de abertura (centro, desenvolvimento, roque), táticas fundamentais (garfo, cravada, espeto, ataque descoberto) | Prática "fundamental-tactics" + problemas 1000–1500                                 |
+| 3 Intermediário | 1500–1900 | Meio de jogo (planos, estrutura de peões), táticas avançadas, finais de peões                                             | Prática "advanced-tactics" e "pawn-endgames" + problemas                            |
+| 4 Avançado      | 1900–2500 | Finais de torre, estratégia, partidas lendárias comentadas                                                                | Prática "rook-endgames", coleção `legendary` da biblioteca, problemas acima de 1900 |
 
 ## Modelo de conteúdo (proposto)
 
@@ -51,13 +53,28 @@ Conteúdo **em arquivos versionados no repositório**: `apps/web/src/components/
 
 ```ts
 type CourseStep =
-  | { kind: 'info'; say: string; fen?: string; arrows?: Arrow[] }      // só instrução, setinha avança
+  | { kind: 'info'; say: string; fen?: string; arrows?: Arrow[] } // só instrução, setinha avança
   | { kind: 'stars'; say: string; fen: string; stars: string[]; maxMoves?: number } // pegue as estrelas (estilo "Aprenda")
-  | { kind: 'move'; say: string; fen: string; accept: string[] /* UCI */; reply?: string /* UCI do adversário */ }
-  | { kind: 'mate'; say: string; fen: string; inMoves: number }       // validado pelo chess.js (isCheckmate)
+  | {
+      kind: 'move';
+      say: string;
+      fen: string;
+      accept: string[] /* UCI */;
+      reply?: string; /* UCI do adversário */
+    }
+  | { kind: 'mate'; say: string; fen: string; inMoves: number } // validado pelo chess.js (isCheckmate)
   | { kind: 'puzzle'; say: string; theme: string; ratingMin: number; ratingMax: number }; // puxa do banco
-interface CourseActivity { id: string; title: string; steps: CourseStep[] }   // cerca de 5 passos
-interface CourseModule { id: string; level: 0|1|2|3|4; title: string; activities: CourseActivity[] }
+interface CourseActivity {
+  id: string;
+  title: string;
+  steps: CourseStep[];
+} // cerca de 5 passos
+interface CourseModule {
+  id: string;
+  level: 0 | 1 | 2 | 3 | 4;
+  title: string;
+  activities: CourseActivity[];
+}
 ```
 
 - **`say`:** é o que o Treinador mostra e fala, com `speak(speakableSquares(say), { interrupt: true })`.
@@ -92,6 +109,7 @@ interface CourseModule { id: string; level: 0|1|2|3|4; title: string; activities
 5. **CURSO-05 em diante:** níveis 2, 3 e 4, e o progresso no servidor (migração só com restic).
 
 Cada fase:
+
 - Rodar lint, typecheck e testes.
 - Conferir no harness esbuild (`apps/web/.harness`, servido em `127.0.0.1:8779` a partir de `.harness/r`).
 - Conferir no celular, a 390px.
