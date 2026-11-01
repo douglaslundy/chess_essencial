@@ -19,6 +19,8 @@ export interface BoardEffects {
   rimBlack: boolean;
   /** 3D style: medieval statues on a stone board instead of the simple turned set. */
   medieval3d: boolean;
+  /** Grey light squares in 3D so the white pieces stand out. On by default. */
+  greyLight3d: boolean;
   /** Square name ("A1") written inside every empty square, 2D and 3D. Off by default. */
   squareNames: boolean;
 }
@@ -28,6 +30,7 @@ const EFFECTS_KEY = 'xadrez.board_effects';
 const DEFAULT_EFFECTS: BoardEffects = {
   captureAnimation: false,
   coordinates3d: true,
+  greyLight3d: true,
   medieval3d: false,
   rimBlack: true,
   rimWhite: true,

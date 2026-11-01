@@ -25,6 +25,8 @@ export interface Chess3DBoardProps {
   movableColor?: 'w' | 'b' | undefined;
   /** Square name ("A1") on every empty square. */
   squareNames?: boolean;
+  /** Grey light squares, so the white pieces stand out from them. */
+  greyLightSquares?: boolean;
   onMove: (uci: string) => void;
   orientation: Board3DOrientation;
   toast?: PlayedMove | null;
@@ -345,6 +347,7 @@ const HINT_BLUE = '#2fa3ff';
 function BoardSquares({
   destinations,
   flip,
+  greyLight,
   hint,
   lastMove,
   maps,
@@ -355,6 +358,7 @@ function BoardSquares({
 }: {
   destinations: Map<string, boolean>;
   flip: boolean;
+  greyLight: boolean;
   hint: { from: string | null; path: Set<string>; target: string | null };
   lastMove?: { from: string; to: string } | undefined;
   maps?: ReturnType<typeof useMedievalMaterials> | undefined;
@@ -386,9 +390,15 @@ function BoardSquares({
             <planeGeometry args={[1, 1]} />
             {maps ? (
               <meshStandardMaterial
-                // Light squares slightly grey so the white pieces stand out from them.
+                // Optional grey light squares so the white pieces stand out from them.
                 color={
-                  highlighted ? (light ? '#f0e68a' : '#c9b04a') : light ? '#979797' : '#ffffff'
+                  highlighted
+                    ? light
+                      ? '#f0e68a'
+                      : '#c9b04a'
+                    : light && greyLight
+                      ? '#979797'
+                      : '#ffffff'
                 }
                 map={light ? maps.light : maps.dark}
                 roughness={0.85}
@@ -396,7 +406,15 @@ function BoardSquares({
             ) : (
               <meshStandardMaterial
                 color={
-                  highlighted ? (light ? '#d9d46a' : '#b9b23a') : light ? '#8f8b84' : '#8f6340'
+                  highlighted
+                    ? light
+                      ? '#d9d46a'
+                      : '#b9b23a'
+                    : light
+                      ? greyLight
+                        ? '#8f8b84'
+                        : '#ead7ae'
+                      : '#8f6340'
                 }
                 roughness={0.7}
               />
@@ -456,6 +474,7 @@ function Scene({
   destinations,
   flip,
   ghosts,
+  greyLight,
   hint,
   lastMove,
   medieval,
@@ -466,6 +485,7 @@ function Scene({
   view,
   walk,
 }: {
+  greyLight: boolean;
   hint: { from: string | null; path: Set<string>; target: string | null };
   squareNames: boolean;
   medieval: boolean;
@@ -530,6 +550,7 @@ function Scene({
       <BoardSquares
         destinations={destinations}
         flip={flip}
+        greyLight={greyLight}
         hint={hint}
         lastMove={lastMove}
         maps={medieval ? maps : undefined}
@@ -589,6 +610,7 @@ export default function Chess3DBoard({
   onMove,
   orientation,
   squareNames = false,
+  greyLightSquares = true,
   toast = null,
   walk = null,
   coordinates = true,
@@ -825,6 +847,7 @@ export default function Chess3DBoard({
             destinations={destinations}
             flip={orientation === 'black'}
             ghosts={ghosts}
+            greyLight={greyLightSquares}
             hint={hinted}
             lastMove={lastMove}
             medieval={medieval}

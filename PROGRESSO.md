@@ -408,6 +408,8 @@ Nenhuma tarefa de desenvolvimento acionável no backlog. O item de dicas da Jorn
 - Gates locais completos passaram de novo após o refactor: format:check, typecheck, lint, 24 testes web, build de produção.
 ## Concluído
 
+- [x] Opção "Escurecer casas claras (3D)" (`greyLight3d`, ligada por padrão) no menu Tabuleiro; desligada volta às cores antigas (#ead7ae / medieval #ffffff).
+
 - [x] Dica do Treinador no tabuleiro (2D e 3D): `hint` no `ChessBoard` marca origem, casas do caminho (`walkPath`) e casa-alvo em azul. `useCoachEngine` só devolve sugestão da FEN atual (antes a dica velha era reaproveitada até o motor terminar).
 - [x] Opção "Nome das casas" (`squareNames` em board-mode): A1… nas casas vazias, preto nas claras e branco nas escuras, 70% opaco; 3D usa `SquareName` com renderOrder -1.
 - [x] 3D: casas claras levemente cinza (#d6cfc3; medieval tinge #d8d8d8).
