@@ -408,6 +408,7 @@ Nenhuma tarefa de desenvolvimento acionável no backlog. O item de dicas da Jorn
 - Gates locais completos passaram de novo após o refactor: format:check, typecheck, lint, 24 testes web, build de produção.
 ## Concluído
 
+- [x] Biblioteca: ao chegar no último lance abre a caixa de resultado (mesma da partida) com "Brancas/Pretas venceram" ou "Empate" e o motivo; a voz também fala. PGN só tem o resultado, então o motivo vem da posição final (`final-verdict.ts`): decisivo sem mate = desistência; empate sem afogamento/material/repetição = acordo.
 - [x] Revisões da Jornada aceitam táticas jogáveis sem dica; auditoria integral confirma 21/21 pools disponíveis e virou gate de CI/deploy.
 - [x] Deploy `530ccad` por Git pull automático, com CI promovida, dump local validado, migrations 0041–0043 e healthchecks verdes.
 - [x] Projetos externos preservados: hashes de containers e volumes idênticos antes e depois do deploy.

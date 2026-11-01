@@ -5,6 +5,7 @@ import { Chess } from 'chess.js';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { finalVerdict } from './final-verdict';
 import { formatPlayedOn } from './format-date';
 import styles from './library.module.css';
 import { markGameWatched } from './watched-games';
@@ -32,7 +33,7 @@ interface Frame {
   to: string;
 }
 
-function buildFrames(movesSan: string[]): { frames: Frame[]; startFen: string } {
+function buildFrames(movesSan: string[]): { final: Chess; frames: Frame[]; startFen: string } {
   const chess = new Chess();
   const startFen = chess.fen();
   const frames: Frame[] = [];
@@ -40,7 +41,7 @@ function buildFrames(movesSan: string[]): { frames: Frame[]; startFen: string } 
     const move = chess.move(san);
     frames.push({ fen: chess.fen(), from: move.from, san: move.san, to: move.to });
   }
-  return { frames, startFen };
+  return { final: chess, frames, startFen };
 }
 
 function speechFor(entry: LibraryReviewEntry) {
@@ -60,6 +61,7 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
   const [requesting, setRequesting] = useState(false);
   const [audioNotice, setAudioNotice] = useState('');
   const [autoRequested, setAutoRequested] = useState(false);
+  const [verdictClosed, setVerdictClosed] = useState(false);
 
   const token = () => window.localStorage.getItem('xadrez.access_token');
 
@@ -112,11 +114,24 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
   const fen =
     frame?.fen ?? built?.startFen ?? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
+  const verdict = useMemo(
+    () => (built && game ? finalVerdict(game.result, built.final) : null),
+    [built, game],
+  );
+  const atEnd = total > 0 && ply === total;
+
   const mover = ply % 2 === 1 ? 'Brancas' : 'Pretas';
   const fallbackSpeech = `${mover} jogam ${speakableSquares(toBrazilianSan(frame?.san ?? ''))}.`;
   // A string (not the entry object) so review polling does not restart the narration.
-  const narration = entry ? speechFor(entry) : fallbackSpeech;
-  const go = useCallback((next: number) => setPly(Math.min(Math.max(next, 0), total)), [total]);
+  const moveNarration = entry ? speechFor(entry) : fallbackSpeech;
+  const narration = atEnd && verdict ? `${moveNarration} ${verdict.detail}` : moveNarration;
+  const go = useCallback(
+    (next: number) => {
+      setVerdictClosed(false);
+      setPly(Math.min(Math.max(next, 0), total));
+    },
+    [total],
+  );
 
   // Advancing the first move counts as watching: the library list marks the game.
   const started = ply > 0;
@@ -289,7 +304,7 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
               aria-label={playing ? 'Pausar' : 'Reproduzir'}
               aria-pressed={playing}
               onClick={() => {
-                if (ply >= total) setPly(0);
+                if (ply >= total) go(0);
                 setPlaying((value) => !value);
               }}
               title={playing ? 'Pausar' : 'Reproduzir'}
@@ -388,6 +403,28 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
           )}
         </div>
       </aside>
+
+      {atEnd && verdict && !verdictClosed ? (
+        <div className="gameResultOverlay" role="presentation">
+          <div
+            aria-labelledby="library-verdict-title"
+            aria-modal="true"
+            className={`gameResultDialog gameResult-${verdict.outcome}`}
+            role="dialog"
+          >
+            <h2 id="library-verdict-title">{verdict.title}</h2>
+            <p>{verdict.detail}</p>
+            <button
+              autoFocus
+              className="gameResultAction"
+              onClick={() => setVerdictClosed(true)}
+              type="button"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
