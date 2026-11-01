@@ -83,7 +83,8 @@ const MIN_POLAR = 0.15;
 // The medieval pieces are photos taken near eye level: seen from high above they look like flat
 // cut-outs, so that board starts lower and cannot be tilted far up.
 const MEDIEVAL_POLAR = 1.17;
-const MEDIEVAL_MIN_POLAR = 1.0;
+// About 20° more than first shipped, at the user's request: higher views trade realism for overview.
+const MEDIEVAL_MIN_POLAR = 0.65;
 // Far enough that the near corners of the board stay inside a square frame on any screen.
 const DEFAULT_DISTANCE = 17;
 
