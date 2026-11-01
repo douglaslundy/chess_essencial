@@ -19,7 +19,8 @@
     "db:import-lessons": "tsx src/database/import-lessons.ts",
     "db:seed-bot-personas": "tsx src/database/seed-bot-personas.ts",
     "db:seed-learning-path": "tsx src/database/seed-learning-path.ts",
-    "db:audit-learning-path": "tsx src/database/audit-learning-path.ts"
+    "db:audit-learning-path": "tsx src/database/audit-learning-path.ts",
+    "db:audit-ratings": "tsx src/database/audit-ratings.ts"
   },
   "dependencies": {
     "@nestjs/common": "11.1.28",
