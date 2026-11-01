@@ -78,4 +78,32 @@ describe('GET /v1/health', () => {
     expect(responses.at(-1)?.statusCode).toBe(429);
     expect(responses.at(-1)?.headers['retry-after']).toBeDefined();
   });
+
+  it('does not charge CORS preflights or health probes to the request budget', async () => {
+    const preflight = await app.inject({
+      headers: {
+        'access-control-request-method': 'GET',
+        origin: process.env.WEB_ORIGIN ?? 'http://localhost:3000',
+      },
+      method: 'OPTIONS',
+      url: '/v1/me',
+    });
+    expect(preflight.headers['ratelimit-limit']).toBeUndefined();
+    expect(preflight.headers['access-control-max-age']).toBe('600');
+    const health = await app.inject({ method: 'GET', url: '/v1/health' });
+    expect(health.headers['ratelimit-limit']).toBeUndefined();
+  });
+
+  it('gives each player behind the proxy their own login budget', async () => {
+    const login = (ip: string) =>
+      app.inject({
+        headers: { 'x-forwarded-for': ip },
+        method: 'POST',
+        payload: {},
+        url: '/v1/auth/login',
+      });
+    for (let index = 0; index < 11; index += 1) await login('203.0.113.7');
+    expect((await login('203.0.113.7')).statusCode).toBe(429);
+    expect((await login('203.0.113.8')).statusCode).not.toBe(429);
+  });
 });

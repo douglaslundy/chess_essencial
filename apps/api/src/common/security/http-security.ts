@@ -6,6 +6,8 @@ import type { ConfigService } from '@nestjs/config';
 import type { MetricsService } from '../../observability/metrics.service.js';
 import type { RedisService } from '../../redis/redis.service.js';
 
+export const GLOBAL_REQUESTS_PER_MINUTE = 1200;
+
 interface WindowEntry {
   count: number;
   resetsAt: number;
@@ -166,12 +168,16 @@ export function registerHttpSecurity(
         requestId: request.id,
       });
     }
+    // CORS preflights and health probes are not user traffic: counting them halved the budget.
+    if (request.method === 'OPTIONS' || path === '/v1/health') return;
     const authAction = path.startsWith('/v1/auth/') ? path.slice('/v1/auth/'.length) : null;
+    // Global budget per client IP sized for a page reload burst times several players sharing
+    // one network (school, home Wi-Fi); login and reports keep their strict anti-abuse limits.
     const policy = authAction
       ? { bucket: `auth-${authAction}`, limit: authAction === 'login' ? 10 : 20, windowMs: 60_000 }
       : path === '/v1/reports'
         ? { bucket: 'reports', limit: 5, windowMs: 60_000 }
-        : { bucket: 'global', limit: 120, windowMs: 60_000 };
+        : { bucket: 'global', limit: GLOBAL_REQUESTS_PER_MINUTE, windowMs: 60_000 };
     const ipKey = createHmac('sha256', config.getOrThrow<string>('AUTH_IP_HASH_SECRET'))
       .update(request.ip)
       .digest('hex');

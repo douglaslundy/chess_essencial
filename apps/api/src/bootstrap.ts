@@ -19,16 +19,22 @@ export function corsOptions(webOrigin: string) {
     // Lets the admin page read the backup file name on a cross-origin download.
     exposedHeaders: ['content-disposition'],
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    // Browsers reuse the preflight for 10 minutes instead of sending one before every call.
+    maxAge: 600,
     origin: webOrigin,
   };
 }
+
+const TRUSTED_PROXIES = ['127.0.0.1', '::1', '10.0.0.0/8', '172.16.0.0/12'];
 
 export async function createApp() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     // 2 MB accommodates base64-encoded avatar uploads (image capped at 512 KB
     // binary server-side); other endpoints stay small by their own schemas.
-    new FastifyAdapter({ bodyLimit: 2_097_152 }),
+    // Traefik and Docker forward from private networks: trusting only those hops makes
+    // request.ip the real player (X-Forwarded-For) instead of one shared proxy address.
+    new FastifyAdapter({ bodyLimit: 2_097_152, trustProxy: TRUSTED_PROXIES }),
   );
   const config = app.get(ConfigService);
 
