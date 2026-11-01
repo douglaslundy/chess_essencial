@@ -388,7 +388,7 @@ function BoardSquares({
               <meshStandardMaterial
                 // Light squares slightly grey so the white pieces stand out from them.
                 color={
-                  highlighted ? (light ? '#f0e68a' : '#c9b04a') : light ? '#d8d8d8' : '#ffffff'
+                  highlighted ? (light ? '#f0e68a' : '#c9b04a') : light ? '#bdbdbd' : '#ffffff'
                 }
                 map={light ? maps.light : maps.dark}
                 roughness={0.85}
@@ -396,7 +396,7 @@ function BoardSquares({
             ) : (
               <meshStandardMaterial
                 color={
-                  highlighted ? (light ? '#d9d46a' : '#b9b23a') : light ? '#d6cfc3' : '#8f6340'
+                  highlighted ? (light ? '#d9d46a' : '#b9b23a') : light ? '#b3aea5' : '#8f6340'
                 }
                 roughness={0.7}
               />
