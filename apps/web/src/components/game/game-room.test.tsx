@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 import type { GameMove } from '@xadrez/contracts';
+import { Chess } from 'chess.js';
 import { describe, expect, it } from 'vitest';
 
 import {
   demoBranchPoint,
+  demoGameEnd,
   gameOutcomeFor,
   historyBaseIndex,
   shouldSuggestCoachMove,
@@ -104,5 +106,21 @@ describe('coach suggestion policy', () => {
     expect(
       shouldSuggestCoachMove({ coachMode: false, isDemo: false, preferenceEnabled: false }),
     ).toBe(false);
+  });
+});
+
+describe('demoGameEnd', () => {
+  it('ends the demo on checkmate with the mating side as winner', () => {
+    const chess = new Chess();
+    for (const move of ['f3', 'e5', 'g4', 'Qh4#']) chess.move(move);
+    expect(demoGameEnd(chess)).toEqual({ result: 'black_win', termination: 'checkmate' });
+  });
+
+  it('reports stalemate as a draw and keeps an ongoing game open', () => {
+    expect(demoGameEnd(new Chess('7k/5Q2/6K1/8/8/8/8/8 b - - 0 1'))).toEqual({
+      result: 'draw',
+      termination: 'stalemate',
+    });
+    expect(demoGameEnd(new Chess())).toBeNull();
   });
 });

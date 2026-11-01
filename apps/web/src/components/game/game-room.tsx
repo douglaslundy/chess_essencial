@@ -122,6 +122,22 @@ export function gameOutcomeFor(
   return result === `${myColor}_win` ? 'win' : 'loss';
 }
 
+/**
+ * How a demo game ends after a move, decided on the device (the demo never reaches the server,
+ * which decides it in real games). Null while the game goes on.
+ */
+export function demoGameEnd(chess: Chess): Pick<GameState, 'result' | 'termination'> | null {
+  if (chess.isCheckmate()) {
+    return { result: chess.turn() === 'w' ? 'black_win' : 'white_win', termination: 'checkmate' };
+  }
+  if (chess.isStalemate()) return { result: 'draw', termination: 'stalemate' };
+  if (chess.isInsufficientMaterial())
+    return { result: 'draw', termination: 'insufficient_material' };
+  if (chess.isThreefoldRepetition()) return { result: 'draw', termination: 'repetition' };
+  if (chess.isDrawByFiftyMoves()) return { result: 'draw', termination: 'fifty_move' };
+  return null;
+}
+
 export function historyBaseIndex(viewIndex: number | null, moves: GameMove[]): number {
   return viewIndex ?? moves.length - 1;
 }
@@ -616,12 +632,28 @@ export function GameRoom({ gameId }: { gameId: string }) {
       };
       setMoves([...baseMoves, nextMove]);
       setViewIndex(null);
+      // A branch played from an earlier position reopens a finished demo.
+      const end = demoGameEnd(chess);
       setState((current) => ({
         ...current,
         currentFen: chess.fen(),
+        result: end?.result ?? 'none',
         sideToMove: chess.turn() === 'w' ? 'white' : 'black',
+        status: end ? 'finished' : 'active',
+        termination: end?.termination ?? 'none',
         version: current.version + 1,
       }));
+      if (end) {
+        // In the demo the player moves both sides, so the side they help (if any) decides it.
+        const outcome = assistedColor
+          ? gameOutcomeFor(end.result, assistedColor)
+          : end.result === 'draw'
+            ? 'draw'
+            : 'win';
+        setResultModal({ outcome, reason: terminationLabels[end.termination] });
+        if (outcome === 'win') playVictorySound();
+        else if (outcome === 'loss') playDefeatSound();
+      }
       setMessage(
         branchAt < moves.length
           ? 'Nova linha a partir deste lance (demonstração).'
