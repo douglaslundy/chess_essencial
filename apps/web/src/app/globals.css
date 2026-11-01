@@ -1689,13 +1689,19 @@ input:focus-visible {
   cursor: pointer;
 }
 
+/* Treinador: balão compacto de altura fixa (duas linhas). "ver mais" abre o texto por cima da
+   página em vez de crescer, para o tabuleiro nunca subir nem descer. */
 .coachCallout {
-  align-items: flex-end;
+  position: relative;
+  z-index: 8;
   display: flex;
-  gap: 0.75rem;
-  margin: 0.8rem auto 0;
-  max-width: 48rem;
+  align-items: flex-start;
+  gap: 0.5rem;
   width: 100%;
+  max-width: 48rem;
+  height: 3.1rem;
+  margin: 0 auto 0.4rem;
+  font-size: 0.8rem;
 }
 
 .coachAvatar {
@@ -1706,58 +1712,86 @@ input:focus-visible {
   box-shadow: var(--shadow-card);
   color: #241a08;
   display: flex;
-  flex: 0 0 3rem;
-  font-size: 1.45rem;
-  height: 3rem;
+  flex: 0 0 2rem;
+  font-size: 1rem;
+  height: 2rem;
   justify-content: center;
 }
 
 .coachSpeechBubble {
-  background: var(--surface);
-  border: 1px solid var(--gold);
-  border-radius: 1rem 1rem 1rem 0.25rem;
-  box-shadow: var(--shadow-card);
-  min-width: 0;
-  padding: 0.75rem 1rem;
   position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--gold);
+  border-radius: 0.75rem 0.75rem 0.75rem 0.2rem;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
 }
 
 .coachSpeechBubble::before {
-  background: var(--surface);
+  background: inherit;
   border-bottom: 1px solid var(--gold);
   border-left: 1px solid var(--gold);
-  bottom: 0.45rem;
   content: '';
-  height: 0.7rem;
-  left: -0.42rem;
+  height: 0.55rem;
+  left: -0.33rem;
   position: absolute;
+  top: 0.7rem;
   transform: rotate(45deg);
-  width: 0.7rem;
+  width: 0.55rem;
 }
 
 .coachSpeechBubble strong {
+  margin-right: 0.3rem;
   color: var(--gold);
-  display: block;
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   letter-spacing: 0.04em;
-  margin-bottom: 0.2rem;
   text-transform: uppercase;
 }
 
 .coachSpeechBubble p {
-  line-height: 1.45;
+  display: -webkit-box;
   margin: 0;
+  overflow: hidden;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Room for "ver mais" at the end of the text. */
+.coachSpeechBubble:has(.coachMoreButton) p {
+  padding-right: 3.4rem;
+}
+
+.coachCallout[data-expanded] .coachSpeechBubble {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 2.5rem;
+  height: auto;
+  max-height: 50dvh;
+  padding-bottom: 1.4rem;
+  overflow-y: auto;
+}
+
+.coachCallout[data-expanded] .coachSpeechBubble p {
+  display: block;
 }
 
 .coachMoreButton {
-  background: none;
+  position: absolute;
+  right: 0.45rem;
+  bottom: 0.2rem;
+  padding: 0 0.25rem;
   border: 0;
+  border-radius: 0.3rem;
+  background: var(--surface);
   color: var(--gold);
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  margin-top: 0.25rem;
-  padding: 0.25rem 0;
   text-decoration: underline;
 }
 
@@ -3450,6 +3484,62 @@ input:focus-visible {
   }
 }
 
+/* Treinamento no computador: mesmo padrão das outras páginas de tabuleiro — instrutor compacto de
+   altura fixa em cima, tabuleiro grande ao centro, comandos e dicas logo abaixo (nada empurra o
+   tabuleiro). */
+@media (min-width: 1101px) {
+  .stageRunnerPage {
+    --board3d-width: 100%;
+    --board3d-height: calc(100dvh - 16.5rem);
+    --board3d-aspect: auto;
+    gap: 0.5rem;
+    padding-block: 0.75rem;
+  }
+
+  .stageRunnerPage:has(.board3d) {
+    width: 100%;
+  }
+
+  .stageRunnerPage > * {
+    order: 2;
+  }
+
+  .stageRunnerPage > .pageHeader,
+  .stageRunnerPage > .instructorBubble {
+    order: 0;
+  }
+
+  .stageRunnerPage > .stageBoardArea {
+    order: 1;
+    width: min(100%, calc(100dvh - 14.5rem));
+  }
+
+  .stageRunnerPage:has(.board3d) > .stageBoardArea {
+    width: 100%;
+  }
+
+  .stageRunnerPage .pageHeader {
+    font-size: 0.85rem;
+  }
+
+  .stageRunnerPage .instructorBubble {
+    height: 3.1rem;
+    gap: 0.5rem;
+    padding: 0.35rem 0.6rem;
+    overflow-y: auto;
+    border-color: var(--gold);
+    font-size: 0.8rem;
+    line-height: 1.35;
+  }
+
+  .stageRunnerPage .instructorAvatar {
+    width: 2rem;
+    height: 2rem;
+    min-width: 2rem;
+    font-size: 1rem;
+  }
+}
+
 .stageHintList {
   list-style: none;
   margin: 0;
@@ -4159,6 +4249,11 @@ textarea::placeholder {
     width: min(100%, var(--board-max), var(--board-cap));
   }
 
+  /* 2D: o Treinador (altura fixa) fica acima do tabuleiro; o quadrado desconta essa faixa. */
+  .gamePage:has(.coachCallout) {
+    --board-max: calc(100dvh - 12.75rem);
+  }
+
   /* Título da partida sai no computador; girar fica nos comandos do tabuleiro. */
   .gameIdentity {
     display: none;
@@ -4390,8 +4485,47 @@ textarea::placeholder {
    que o tabuleiro em perspectiva não usa; o tabuleiro ganha a largura toda da página. */
 @media (min-width: 1101px) {
   .gamePage:has(.board3d) {
-    --board3d-height: calc(100dvh - 10.75rem);
+    --board3d-height: calc(100dvh - 8.5rem);
     grid-template: 'board' auto / minmax(0, 1fr);
+  }
+
+  /* Câmera e histórico numa linha só abaixo do quadro; só quebram se a largura não couber. */
+  .gamePage .boardStage:not(.isFullscreen):has(.board3d) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+  }
+
+  .gamePage .boardStage:not(.isFullscreen) > .board3d {
+    display: contents;
+  }
+
+  .gamePage .boardStage:not(.isFullscreen) .board3dViewport {
+    flex: 0 0 100%;
+  }
+
+  .gamePage .boardStage:not(.isFullscreen) .board3dCamera,
+  .gamePage .boardStage:not(.isFullscreen):has(.board3d) > .historyControls {
+    margin: 0;
+  }
+
+  /* Treinador dentro do quadro, entre jogadores e lances, como eles: não empurra o tabuleiro. */
+  .gamePage:has(.board3d) .coachCallout {
+    position: absolute;
+    top: 1.35rem;
+    right: 15.5rem;
+    left: 15rem;
+    width: auto;
+    max-width: 40rem;
+    margin: 0 auto;
+  }
+
+  .gamePage:has(.board3d) .coachSpeechBubble,
+  .gamePage:has(.board3d) .coachMoreButton {
+    background: rgb(17 17 21 / 0.72);
+    backdrop-filter: blur(4px);
   }
 
   .gamePage:has(.board3d) .playersColumn,

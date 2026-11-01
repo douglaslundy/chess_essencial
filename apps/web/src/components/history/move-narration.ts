@@ -55,7 +55,7 @@ export function narrateMove(move: GameMoveAnalysis): string {
   const label = moveQualityLabel[move.quality];
   let sentence = `${toBrazilianSan(move.san)}: ${label}.`;
   if (move.quality !== 'otimo' && move.quality !== 'excelente' && move.bestMoveUci) {
-    sentence += ` Eu sugiro ${speakableSquarePair(move.bestMoveUci)}.`;
+    sentence += ` Eu indico ${speakableSquarePair(move.bestMoveUci)}.`;
   }
   if (move.missedWin) sentence += ' Havia uma oportunidade melhor nessa posição.';
   return speakableSquares(sentence);
@@ -117,9 +117,7 @@ export function buildFallbackNarration(
             color: worst.color,
             narrative: speakableSquares(
               `No lance ${worst.ply}, ${toBrazilianSan(worst.san)} foi classificado como ${moveQualityLabel[worst.quality].toLowerCase()}` +
-                (worst.bestMoveUci
-                  ? `; o lance sugerido pelo motor era ${formatUciSquares(worst.bestMoveUci)}`
-                  : '') +
+                (worst.bestMoveUci ? `; eu indicaria ${formatUciSquares(worst.bestMoveUci)}` : '') +
                 '.',
             ),
             ply: worst.ply,

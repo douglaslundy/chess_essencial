@@ -713,7 +713,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
                   ? (formatCoachExplanation(state.currentFen, coachSuggestion) ??
                     'Estou analisando esta posição…')
                   : coachFailed
-                    ? 'Não consegui analisar esta posição: o motor de análise não carregou neste navegador.'
+                    ? 'Não consegui analisar esta posição neste navegador.'
                     : 'Estou analisando esta posição…'
             }
           />

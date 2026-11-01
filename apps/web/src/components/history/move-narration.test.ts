@@ -52,7 +52,7 @@ describe('narrateMove', () => {
 
   it('suggests, in first person, an alternative for a weak move, spelling out square letters', () => {
     const sentence = narrateMove(move({ bestMoveUci: 'd2d4', quality: 'erro', san: 'a3' }));
-    expect(sentence).toBe('á 3: Erro. Eu sugiro dê 2 para dê 4.');
+    expect(sentence).toBe('á 3: Erro. Eu indico dê 2 para dê 4.');
   });
 
   it('does not suggest an alternative for otimo/excelente moves even if bestMoveUci is set', () => {

@@ -62,7 +62,7 @@ describe('LiveNarrationService', () => {
         Promise.resolve({
           content: [
             {
-              text: 'Objetivo: disputar a iniciativa. Tema: controle do centro. Estratégia: desenvolver com tempo. Armadilha: nenhuma foi confirmada.',
+              text: 'Eu disputo o centro e desenvolvo com tempo.',
               type: 'text',
             },
           ],
@@ -75,7 +75,7 @@ describe('LiveNarrationService', () => {
 
     expect(result).toEqual({
       narrative:
-        'Eu sugiro mover peão de e2 para e4. Objetivo: disputar a iniciativa. Tema: controle do centro. Estratégia: desenvolver com tempo. Armadilha: nenhuma foi confirmada. Linha possível calculada: e4, e5, Cf3.',
+        'Eu indico mover peão de e2 para e4. Eu disputo o centro e desenvolvo com tempo. Sequência que eu calculo: e4, e5, Cf3.',
     });
   });
 
@@ -103,7 +103,7 @@ describe('LiveNarrationService', () => {
 
     expect(result).toEqual({
       narrative:
-        'Você está prestes a mover peão de a2 para a3. Eu classifico esse lance como erro, com perda de 250 centipawns. Esse lance perde material à toa.',
+        'Você está prestes a mover peão de a2 para a3. Eu classifico esse lance como erro. Esse lance perde material à toa.',
     });
     expect(sql).toHaveBeenCalledTimes(2);
   });
@@ -131,7 +131,7 @@ describe('LiveNarrationService', () => {
 
     expect(result).toEqual({
       narrative:
-        'Você está prestes a mover peão de a2 para a3. Eu classifico esse lance como erro, com perda de 250 centipawns. Já vi essa exatamente antes.',
+        'Você está prestes a mover peão de a2 para a3. Eu classifico esse lance como erro. Já vi essa exatamente antes.',
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -160,6 +160,27 @@ describe('LiveNarrationService', () => {
 
     expect(result.narrative).toContain('dama de d1 para h5');
     expect(result.narrative).not.toContain('peão');
+  });
+
+  it('discards a reply that names the engine: the Treinador speaks for itself', async () => {
+    const aiProviders = fakeAiProviders({
+      apiKey: 'sk-test',
+      model: 'claude-test',
+      provider: 'anthropic',
+    });
+    global.fetch = vi.fn().mockResolvedValue({
+      json: () =>
+        Promise.resolve({
+          content: [{ text: 'O motor recomenda disputar o centro.', type: 'text' }],
+        }),
+      ok: true,
+    }) as never;
+    const service = new LiveNarrationService(aiProviders as never, fakeDatabase() as never);
+
+    const result = await service.narrate(suggestionInput);
+
+    expect(result.narrative).not.toMatch(/motor/i);
+    expect(result.narrative).toContain('Eu indico mover peão de e2 para e4.');
   });
 
   it('never lets an LLM failure escape - a live game must never be interrupted by narration', async () => {

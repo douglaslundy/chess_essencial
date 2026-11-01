@@ -288,8 +288,8 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
                 </summary>
                 <p>
                   {signal.signalType === 'missed_opportunity'
-                    ? 'O motor identificou uma oportunidade concreta que não foi aproveitada.'
-                    : 'O motor mediu uma perda relevante de avaliação após este lance.'}
+                    ? 'Eu identifiquei uma oportunidade concreta que não foi aproveitada.'
+                    : 'Eu medi uma perda relevante de avaliação após este lance.'}
                 </p>
                 {signal.recommendation ? (
                   <p>

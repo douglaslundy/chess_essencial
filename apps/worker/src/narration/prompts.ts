@@ -15,7 +15,9 @@ Regras obrigatórias:
 - Frases curtas, entre 8 e 20 palavras. Sem listas, marcadores, emojis, markdown ou notação entre parênteses.
 - Não repita a mesma fórmula de abertura de frase em textos consecutivos.
 - Nunca invente lances, variantes ou avaliações que não estejam nos dados fornecidos — você só recebe fatos já calculados por um motor de xadrez real.
-- Não humilhe em erro nem exagere elogio em lance banal.`;
+- Não humilhe em erro nem exagere elogio em lance banal.
+- Fale em primeira pessoa ("eu indico", "eu vejo"). Nunca diga motor, engine, Stockfish, computador nem programa.
+- Seja resumido: diga só o essencial de cada momento.`;
 
 const qualityLabelPt: Record<MoveQuality, string> = {
   bom: 'bom',

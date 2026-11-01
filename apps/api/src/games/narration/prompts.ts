@@ -3,16 +3,16 @@ import type { LiveNarrationRequest, MoveQuality } from '@xadrez/contracts';
 
 export type AuthoritativeLiveNarrationRequest = LiveNarrationRequest & { fen: string };
 
-export const LIVE_NARRATION_SYSTEM_PROMPT = `Você é o Treinador, um instrutor de xadrez brasileiro falando em primeira pessoa ("eu") diretamente com o aluno, ao vivo. O texto será unido a uma descrição de lance e a uma linha calculada pelo motor, ambas criadas pelo servidor, e convertido em voz.
+export const LIVE_NARRATION_SYSTEM_PROMPT = `Você é o Treinador, um instrutor de xadrez brasileiro falando em primeira pessoa ("eu") diretamente com o aluno, ao vivo. O servidor acrescenta antes do seu texto qual lance eu indico e, depois, uma sequência curta; tudo vira voz, então seja breve.
 
 Regras obrigatórias:
-- Português do Brasil, no máximo quatro frases curtas e 80 palavras.
-- Responda no formato: "Objetivo: ... Tema: ... Estratégia: ... Armadilha: ...".
-- Explique a finalidade do lance, o tema tático, o plano estratégico e a armadilha; quando não houver evidência, diga que não foi confirmada.
+- Português do Brasil, uma ou duas frases curtas, no máximo 30 palavras no total.
+- Diga só a ideia principal: para que serve o lance e qual é o plano a seguir. Sem rótulos como "Objetivo:" ou "Tema:".
+- Fale sempre em primeira pessoa: "eu indico", "eu calculo", "eu vejo". Nunca diga motor, engine, Stockfish, computador nem programa.
 - Não mencione nenhuma peça, casa ou lance; o servidor acrescentará esses dados de forma autoritativa.
-- Trate a variação do motor como linha possível, nunca como certeza sobre o adversário.
+- Fale de armadilha ou tática só quando os dados a confirmarem.
 - Nunca invente avaliações fora dos dados fornecidos.
-- Sem listas, marcadores, emojis, markdown, aspas ou introdução; responda somente com os quatro campos.`;
+- Sem listas, marcadores, emojis, markdown, aspas ou introdução.`;
 
 const qualityLabelPt: Record<MoveQuality, string> = {
   bom: 'bom',
@@ -33,7 +33,11 @@ const pieceLabel = {
 
 const pieceLetterPt: Record<string, string> = { B: 'B', K: 'R', N: 'C', Q: 'D', R: 'T' };
 const FORBIDDEN_CHESS_REFERENCE = /\b(?:rei|dama|rainha|torre|bispo|cavalo|pe[aã]o|[a-h][1-8])\b/i;
-const REQUIRED_PLAN_FIELDS = [/Objetivo:/i, /Tema:/i, /Estratégia:/i, /Armadilha:/i];
+// The Treinador speaks for itself ("eu indico"): a reply naming the engine is discarded.
+const FORBIDDEN_ENGINE_REFERENCE = /\b(?:motor|engine|stockfish|computador|programa)\b/i;
+const MAX_REASON_WORDS = 45;
+/** Moves of the calculated line read after the suggestion (the suggestion included). */
+const SPOKEN_LINE_MOVES = 3;
 
 function brazilianSan(san: string): string {
   return san
@@ -57,7 +61,7 @@ export function authoritativeMoveDescription(fen: string, uci: string): string {
 function authoritativeVariationDescription(fen: string, variation: string[]): string | null {
   const rules = new ChessJsRules(fen);
   const moves: string[] = [];
-  for (const uci of variation.slice(0, 7)) {
+  for (const uci of variation.slice(0, SPOKEN_LINE_MOVES)) {
     try {
       moves.push(brazilianSan(rules.applyMove(uci).san));
     } catch {
@@ -69,15 +73,13 @@ function authoritativeVariationDescription(fen: string, variation: string[]): st
 
 function fallbackReason(input: AuthoritativeLiveNarrationRequest): string {
   if (input.kind === 'suggestion') {
-    if (input.mate !== null) {
-      return 'Objetivo: manter o ataque decisivo. Tema: sequência de mate. Estratégia: conservar a iniciativa. Armadilha: ameaça forçada confirmada pelo motor.';
-    }
-    return 'Objetivo: preservar a melhor avaliação. Tema: nenhum tema tático foi confirmado. Estratégia: melhorar a coordenação. Armadilha: nenhuma armadilha forçada foi confirmada.';
+    return input.mate !== null
+      ? 'Eu vejo um ataque forçado que leva ao mate; mantenho a iniciativa.'
+      : 'Eu melhoro a coordenação das peças sem assumir riscos.';
   }
-  if (input.missedWin) {
-    return 'Objetivo: evitar perder a vantagem. Tema: oportunidade tática desperdiçada. Estratégia: reavaliar lances forçantes. Armadilha: nenhuma armadilha adicional foi confirmada.';
-  }
-  return 'Objetivo: reduzir a perda de avaliação. Tema: erro tático ou posicional. Estratégia: comparar alternativas seguras. Armadilha: nenhuma armadilha forçada foi confirmada.';
+  return input.missedWin
+    ? 'Esse lance deixa escapar uma vantagem maior; eu procuraria lances mais forçantes.'
+    : 'Esse lance perde parte da vantagem; eu compararia alternativas mais seguras.';
 }
 
 export function composeAuthoritativeNarrative(
@@ -89,18 +91,19 @@ export function composeAuthoritativeNarrative(
     input.kind === 'suggestion' ? input.bestMoveUci : input.uci,
   );
   const normalized = generatedReason.replace(/\s+/g, ' ').trim();
-  const hasRequiredPlan =
-    input.kind !== 'suggestion' || REQUIRED_PLAN_FIELDS.every((field) => field.test(normalized));
   const reason =
-    normalized && !FORBIDDEN_CHESS_REFERENCE.test(normalized) && hasRequiredPlan
+    normalized &&
+    !FORBIDDEN_CHESS_REFERENCE.test(normalized) &&
+    !FORBIDDEN_ENGINE_REFERENCE.test(normalized) &&
+    normalized.split(' ').length <= MAX_REASON_WORDS
       ? normalized
       : fallbackReason(input);
   if (input.kind === 'suggestion') {
     const variation = authoritativeVariationDescription(input.fen, input.principalVariation);
-    const forecast = variation ? ` Linha possível calculada: ${variation}.` : '';
-    return `Eu sugiro mover ${move}. ${reason}${forecast}`;
+    const forecast = variation ? ` Sequência que eu calculo: ${variation}.` : '';
+    return `Eu indico mover ${move}. ${reason}${forecast}`;
   }
-  return `Você está prestes a mover ${move}. Eu classifico esse lance como ${qualityLabelPt[input.quality]}, com perda de ${input.centipawnLoss} centipawns. ${reason}`;
+  return `Você está prestes a mover ${move}. Eu classifico esse lance como ${qualityLabelPt[input.quality]}. ${reason}`;
 }
 
 export function buildLiveNarrationPrompt(input: AuthoritativeLiveNarrationRequest): string {
@@ -108,17 +111,17 @@ export function buildLiveNarrationPrompt(input: AuthoritativeLiveNarrationReques
     return [
       'O servidor já descreverá de modo autoritativo qual peça vai para qual casa e a linha possível.',
       `Posição FEN para análise interna: ${input.fen}`,
-      `O motor encontrou ${formatEval(input.mate, input.scoreCp)} para a sugestão.`,
+      `Minha análise encontrou ${formatEval(input.mate, input.scoreCp)} para a sugestão.`,
       `Variação calculada, limitada a três respostas do adversário: ${input.principalVariation.join(' ') || 'indisponível'}.`,
-      'Explique objetivo, tema, estratégia e armadilha sem citar peças, casas ou lances.',
+      'Explique em uma ou duas frases curtas a ideia do lance, sem citar peças, casas ou lances.',
     ].join('\n');
   }
   return [
     'O servidor já descreverá de modo autoritativo qual peça vai para qual casa.',
     `Posição FEN para análise interna: ${input.fen}`,
-    `O motor classificou a tentativa como ${qualityLabelPt[input.quality]}, com perda de ${input.centipawnLoss} centipawns.`,
+    `Minha análise classificou a tentativa como ${qualityLabelPt[input.quality]}, com perda de ${input.centipawnLoss} centipawns.`,
     input.missedWin ? 'A tentativa também deixa escapar uma vantagem maior.' : '',
-    'Explique objetivo, tema, estratégia e armadilha sem citar peças, casas ou lances.',
+    'Explique em uma ou duas frases curtas a ideia do lance, sem citar peças, casas ou lances.',
   ]
     .filter(Boolean)
     .join('\n');

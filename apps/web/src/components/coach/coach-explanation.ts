@@ -8,6 +8,9 @@ export interface CoachPlanSuggestion {
   principalVariation: string[];
 }
 
+/** Moves of the calculated line shown after the suggestion (the suggestion included). */
+const SPOKEN_LINE_MOVES = 3;
+
 function playUci(chess: Chess, uci: string) {
   return chess.move({
     from: uci.slice(0, 2),
@@ -24,7 +27,7 @@ function possibleLine(fen: string, suggestion: CoachPlanSuggestion): string[] {
       : [suggestion.bestMoveUci, ...suggestion.principalVariation];
   const chess = new Chess(fen);
   const moves: string[] = [];
-  for (const uci of line.slice(0, 7)) {
+  for (const uci of line.slice(0, SPOKEN_LINE_MOVES)) {
     try {
       const move = playUci(chess, uci);
       if (!move) break;
@@ -46,52 +49,25 @@ export function formatCoachExplanation(
   try {
     move = playUci(chess, suggestion.bestMoveUci);
   } catch {
-    return `Eu sugiro ${formatUciSquares(suggestion.bestMoveUci)}. O motor encontrou esse lance como a melhor continuação, mas não foi possível detalhar o plano.`;
+    return `Eu indico ${formatUciSquares(suggestion.bestMoveUci)}.`;
   }
   if (!move) return null;
 
+  // Short on purpose: it is read aloud during the game. The Treinador speaks for itself ("eu").
   const san = toBrazilianSan(move.san);
   const isCentralPawnMove = move.piece === 'p' && ['d4', 'd5', 'e4', 'e5'].includes(move.to);
   const isDevelopment = ['b', 'n'].includes(move.piece) && ['1', '8'].includes(move.from.charAt(1));
 
-  let objective = 'melhorar a coordenação e conservar opções';
-  let theme = 'jogada posicional, sem combinação forçada confirmada';
-  let strategy = 'aumentar gradualmente a atividade antes de assumir riscos';
-  if (suggestion.mate !== null) {
-    objective = `conduzir o ataque até o mate em ${Math.abs(suggestion.mate)}`;
-    theme = 'ataque forçado ao rei';
-    strategy = 'manter a iniciativa e restringir as defesas';
-  } else if (move.san.includes('x')) {
-    objective = 'melhorar o balanço material com uma captura calculada';
-    theme = 'captura e tática de material';
-    strategy = 'converter a oportunidade sem abandonar a segurança';
-  } else if (move.san.includes('+')) {
-    objective = 'ganhar tempo com pressão direta sobre o rei';
-    theme = 'ataque com xeque';
-    strategy = 'usar a iniciativa para limitar as respostas';
-  } else if (move.san.startsWith('O-O')) {
-    objective = 'proteger o rei e conectar as torres';
-    theme = 'segurança do rei';
-    strategy = 'concluir o desenvolvimento antes de abrir o jogo';
-  } else if (isCentralPawnMove) {
-    objective = 'disputar espaço e liberar o desenvolvimento';
-    theme = 'controle do centro';
-    strategy = 'ocupar casas centrais e preparar a mobilização das peças';
-  } else if (isDevelopment) {
-    objective = 'desenvolver uma peça com ganho de atividade';
-    theme = 'desenvolvimento e coordenação';
-    strategy = 'colocar as peças em jogo antes de iniciar operações táticas';
-  }
+  let idea = 'Eu melhoro a coordenação sem assumir riscos';
+  if (suggestion.mate !== null)
+    idea = `Eu conduzo o ataque até o mate em ${Math.abs(suggestion.mate)}`;
+  else if (move.san.includes('x')) idea = 'Eu ganho material com uma captura calculada';
+  else if (move.san.includes('+')) idea = 'Eu ganho tempo pressionando o rei';
+  else if (move.san.startsWith('O-O')) idea = 'Eu protejo o rei e conecto as torres';
+  else if (isCentralPawnMove) idea = 'Eu disputo o centro e libero o desenvolvimento';
+  else if (isDevelopment) idea = 'Eu coloco mais uma peça em jogo';
 
-  const trap =
-    suggestion.mate !== null
-      ? 'a ameaça principal é a sequência forçada de mate'
-      : 'nenhuma armadilha forçada foi confirmada; observe respostas imprecisas';
   const line = possibleLine(fen, suggestion);
-  const forecast =
-    line.length > 1
-      ? ` Linha possível calculada: ${line.join(', ')}.`
-      : ' O motor ainda não confirmou uma linha futura suficientemente estável.';
-
-  return `Eu sugiro ${san}. Objetivo: ${objective}. Tema: ${theme}. Estratégia: ${strategy}. Armadilha: ${trap}.${forecast}`;
+  const forecast = line.length > 1 ? ` Sequência que eu calculo: ${line.join(', ')}.` : '';
+  return `Eu indico ${san}. ${idea}.${forecast}`;
 }

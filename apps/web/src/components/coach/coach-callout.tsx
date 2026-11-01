@@ -9,19 +9,24 @@ interface CoachCalloutProps {
   message: string;
 }
 
+/**
+ * Fixed-height balloon (two lines): a longer comment opens over the page with "ver mais" instead of
+ * growing, so the board below never moves.
+ */
 export function CoachCallout({ label = 'Treinador', message }: CoachCalloutProps) {
   // Expansion belongs to one message: a new comment opens compact again.
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
   const expanded = expandedMessage === message;
   const { lead, rest } = splitCoachText(message);
   return (
-    <aside className="coachCallout" role="status">
+    <aside className="coachCallout" data-expanded={expanded || undefined} role="status">
       <span aria-hidden="true" className="coachAvatar">
         ♞
       </span>
       <div className="coachSpeechBubble">
-        <strong>{label}</strong>
-        <p>{expanded || !rest ? message : lead}</p>
+        <p>
+          <strong>{label}</strong> {expanded || !rest ? message : lead}
+        </p>
         {rest ? (
           <button
             aria-expanded={expanded}
