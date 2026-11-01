@@ -79,6 +79,11 @@ function writeStoredView(view: StoredView) {
 }
 const GHOST_SECONDS = 0.9;
 const DEFAULT_POLAR = 0.95;
+const MIN_POLAR = 0.15;
+// The medieval pieces are photos taken near eye level: seen from high above they look like flat
+// cut-outs, so that board starts lower and cannot be tilted far up.
+const MEDIEVAL_POLAR = 1.17;
+const MEDIEVAL_MIN_POLAR = 1.0;
 // Far enough that the near corners of the board stay inside a square frame on any screen.
 const DEFAULT_DISTANCE = 17;
 
@@ -595,6 +600,14 @@ export default function Chess3DBoard({
     queueMicrotask(() => setLocked(true));
   }, [orientation]);
 
+  const defaultPolar = medieval ? MEDIEVAL_POLAR : DEFAULT_POLAR;
+  const minPolar = medieval ? MEDIEVAL_MIN_POLAR : MIN_POLAR;
+  // Switching board style moves the camera to that style's angle; a locked view is only clamped.
+  useEffect(() => {
+    const target = view.current.target;
+    target.polar = readStoredView()?.locked ? Math.max(target.polar, minPolar) : defaultPolar;
+  }, [defaultPolar, minPolar]);
+
   function toggleLock() {
     const base = orientation === 'white' ? 0 : Math.PI;
     const target = view.current.target;
@@ -691,7 +704,7 @@ export default function Chess3DBoard({
     if (locked) return;
     const target = view.current.target;
     target.azimuth += dAzimuth;
-    target.polar = Math.min(Math.max(target.polar + dPolar, 0.15), 1.45);
+    target.polar = Math.min(Math.max(target.polar + dPolar, minPolar), 1.45);
     target.distance = Math.min(Math.max(target.distance + dDistance, 7), 18);
   }
 
@@ -700,7 +713,7 @@ export default function Chess3DBoard({
     const target = view.current.target;
     const turns = Math.round((view.current.current.azimuth - base) / (2 * Math.PI));
     target.azimuth = base + turns * 2 * Math.PI;
-    target.polar = DEFAULT_POLAR;
+    target.polar = defaultPolar;
     target.distance = DEFAULT_DISTANCE;
   }
 
