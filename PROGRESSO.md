@@ -1,3 +1,22 @@
+2026-11-01 - **PRÓXIMA TAREFA: CURSO-01, Curso do Zero ao Avançado** (o usuário vai pedir para iniciar depois do compact). Ler **só** `docs/CURSO_DO_ZERO.md`, que tem o pedido, as fontes, a trilha, o modelo de passos, a UI e as fases, e a seção "Curso" de `TAREFAS.md`.
+
+Decisões:
+- **Independência:** é um curso novo, que ignora `courses`, `lesson-runtime` e `learning-path` e o conteúdo antigo.
+- **Conteúdo:** fica em arquivos versionados, sem banco nem migração (a migração exige restic).
+- **Validação:** no cliente, com chess.js.
+- **Progresso:** em localStorage na fase 1.
+- **Nível 0:** reescrever as 20 etapas do "Aprenda" da Lichess (`lichess-org/lila`, `ui/learn/src/stage`; código AGPL, então só posições e ideias, com textos próprios).
+
+Reaproveitar:
+- esqueleto `gamePage` (como em `library-study-room.tsx`);
+- `CoachCallout`;
+- `ChessBoard`, que já tem `hint` e `squareNames`;
+- `speak`/`stopSpeaking`.
+
+Pendências do usuário que não mudam esse plano:
+- no 2D, o balão do Treinador ainda encolhe o tabuleiro (ele pediu para aguardar instruções);
+- controles dos Desafios numa linha (entrada abaixo).
+
 2026-11-01 - **REVISÃO QUEBRADA + PADRÃO DA PARTIDA NA BIBLIOTECA/REVISÃO:** (1) "This page couldn't load" na revisão: o worker gravava key_moments/patterns/study_plan como string JSON dentro do jsonb (`${JSON.stringify(x)}::jsonb` é serializado de novo pelo postgres.js); a API devolvia string e `keyMoments.map` derrubava a página. Worker agora usa `::text::jsonb` (idioma da casa) e a API decodifica as 5 linhas antigas (jsonbArray em games.repository) — sem migration (restic). (2) Sala da biblioteca e revisão lance a lance usam o MESMO esqueleto da partida (gamePage/playersColumn/boardColumn/boardStage/historyControls/movesPanel): tabuleiro, comandos compactos e painéis dentro do quadro idênticos; ReplayPlayer compartilhado (components/game/replay-player.tsx); revisão ganhou abas Lances/Anotar. Verificado no harness (.harness/lib.tsx, .harness/review.tsx) a 1334×600. Pendente conhecido: expire-timed-out-games-job grava payload de evento com o mesmo ::jsonb (string).
 
 2026-11-01 - **429 "Limite de requisições excedido":** limite global era 120/min por IP, contando preflight CORS (OPTIONS, ~26% do tráfego) e /v1/health; atrás do Traefik todos os jogadores compartilhavam o IP do proxy. Agora: OPTIONS e /v1/health não contam; global 1200/min por IP (login 10 e denúncias 5 inalterados); Fastify trustProxy só para redes privadas do Docker/loopback (request.ip = jogador real via X-Forwarded-For); CORS maxAge 600 (preflight em cache). Arquivos: apps/api/src/bootstrap.ts, common/security/http-security.ts, health/health.e2e.test.ts.

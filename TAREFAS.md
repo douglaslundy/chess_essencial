@@ -1,5 +1,15 @@
 # Backlog V2
 
+## Curso do Zero ao Avançado (prioridade atual, pedido de 2026-11-01)
+
+Plano completo: `docs/CURSO_DO_ZERO.md`. É independente do sistema antigo de cursos, aulas e Jornada.
+
+- [ ] **CURSO-01:** tipos `CourseStep`, `CourseActivity` e `CourseModule`, player `/app/curso/[atividade]` no esqueleto da partida, e o 1º módulo (torre e bispo) de ponta a ponta. Testes de validação de `info`, `stars`, `move` e `mate`.
+- [ ] **CURSO-02:** as outras etapas do nível 0 (as 20 do "Aprenda" da Lichess, reescritas em pt-BR).
+- [ ] **CURSO-03:** mapa `/app/curso`, progresso em localStorage por usuário, ordem com cadeado e item "Curso" no menu.
+- [ ] **CURSO-04:** confirmar a licença dos estudos da "Prática" da Lichess. Depois, nível 1 (mates básicos e escadinha) e passo `puzzle` vindo do banco por tema e rating.
+- [ ] **CURSO-05:** níveis 2, 3 e 4, e o progresso no servidor (a migração exige restic na VPS).
+
 ## Correções pós-release de 2026-07-30 (concluídas)
 
 - [x] Corrigir desafios do nível atual exibidos como concluídos por rank global calculado depois do filtro.
