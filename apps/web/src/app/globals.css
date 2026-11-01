@@ -4567,6 +4567,86 @@ textarea::placeholder {
   }
 }
 
+/* Biblioteca e revisão usam o esqueleto da partida; este cartão substitui as ações da partida. */
+.libraryGameInfo {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: rgb(17 17 21 / 0.62);
+  backdrop-filter: blur(4px);
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.libraryGameInfo strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.libraryGameInfo a,
+.libraryGameInfo button {
+  justify-self: start;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gold);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.reviewNotes {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  overflow: auto;
+  font-size: 0.78rem;
+}
+
+.reviewNotes label {
+  display: grid;
+  gap: 0.25rem;
+  color: var(--muted);
+}
+
+.reviewNotes .annotationFields {
+  gap: 0.5rem;
+}
+
+.reviewNotes textarea,
+.reviewNotes input {
+  width: 100%;
+  padding: 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.reviewNotes textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.libraryReviewButton {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: var(--red);
+  color: white;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 /* Regras dentro da plataforma (com o menu lateral). */
 .appRulesPage {
   min-height: 0;

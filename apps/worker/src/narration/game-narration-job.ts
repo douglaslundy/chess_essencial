@@ -205,6 +205,7 @@ async function claimNextNarration(
   // The candidate row is excluded from its own quota count because it is the
   // reservation currently being claimed. An expired/null lease makes an
   // interrupted processing row eligible again without parallelizing work.
+  // ::text::jsonb: a bare ::jsonb parameter is serialized again by postgres.js (stored a JSON string).
   await sql`
     UPDATE game_narrations
     SET completed_at = now(), status = 'failed', lease_expires_at = NULL,
@@ -468,12 +469,13 @@ async function narrateGame(sql: Sql, gameId: string, config: LlmConfig): Promise
     san: moment.san,
   }));
 
+  // ::text::jsonb: a bare ::jsonb parameter is serialized again by postgres.js (stored a JSON string).
   await sql`
     UPDATE game_narrations
     SET summary = ${summary},
-        key_moments = ${JSON.stringify(keyMomentsJson)}::jsonb,
-        patterns = ${JSON.stringify(patterns)}::jsonb,
-        study_plan = ${JSON.stringify(studyPlan)}::jsonb
+        key_moments = ${JSON.stringify(keyMomentsJson)}::text::jsonb,
+        patterns = ${JSON.stringify(patterns)}::text::jsonb,
+        study_plan = ${JSON.stringify(studyPlan)}::text::jsonb
     WHERE game_id = ${gameId}
   `;
 }

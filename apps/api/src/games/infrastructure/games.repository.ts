@@ -569,10 +569,10 @@ export class GamesRepository {
     }
     const [row] = await this.database.client<
       {
-        keyMoments: GameNarration['keyMoments'] | null;
-        patterns: string[] | null;
+        keyMoments: GameNarration['keyMoments'] | string | null;
+        patterns: string[] | string | null;
         status: GameNarration['status'];
-        studyPlan: string[] | null;
+        studyPlan: string[] | string | null;
         summary: string | null;
       }[]
     >`
@@ -580,10 +580,10 @@ export class GamesRepository {
       FROM game_narrations WHERE game_id = ${gameId}
     `;
     return {
-      keyMoments: row?.keyMoments ?? [],
-      patterns: row?.patterns ?? [],
+      keyMoments: jsonbArray(row?.keyMoments),
+      patterns: jsonbArray(row?.patterns),
       status: row?.status ?? 'pending',
-      studyPlan: row?.studyPlan ?? [],
+      studyPlan: jsonbArray(row?.studyPlan),
       summary: row?.summary ?? null,
     };
   }
@@ -1354,6 +1354,21 @@ export class GamesRepository {
       ply: Number(row.ply),
       committedAt: this.toIso(row.committedAt) ?? new Date(0).toISOString(),
     };
+  }
+}
+
+/**
+ * Narrations written before the worker fix hold the array as a JSON string inside jsonb;
+ * decoding it here keeps those reviews readable without a data migration.
+ */
+export function jsonbArray<T>(value: T[] | string | null | undefined): T[] {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== 'string') return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) ? (parsed as T[]) : [];
+  } catch {
+    return [];
   }
 }
 

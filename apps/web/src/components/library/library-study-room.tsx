@@ -8,7 +8,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { formatPlayedOn } from './format-date';
 import styles from './library.module.css';
 import { markGameWatched } from './watched-games';
+import { CoachCallout } from '@/components/coach/coach-callout';
 import { ChessBoard, type BoardOrientation } from '@/components/game/chess-board';
+import { ReplayPlayer } from '@/components/game/replay-player';
 import { api } from '@/lib/api/client';
 import { speakableSquares, toBrazilianSan } from '@/lib/notation';
 import { usePieceTheme } from '@/lib/piece-theme';
@@ -211,78 +213,58 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
   }
 
   const canRequest = wantsReview && autoRequested;
+  const rowCount = Math.ceil(built.frames.length / 2);
+  const moveSan = toBrazilianSan(frame?.san ?? '');
+  const coachLabel = ply === 0 ? 'Início' : `Lance ${Math.ceil(ply / 2)} · ${mover} · ${moveSan}`;
+  const coachMessage =
+    ply === 0
+      ? `${game.white} (brancas) contra ${game.black} (pretas). Use as setas para avançar lance a lance.`
+      : entry
+        ? [
+            entry.summary,
+            entry.why,
+            entry.better ? `Melhor seria ${toBrazilianSan(entry.better)}: ${entry.betterWhy}` : '',
+            entry.expect ?? '',
+          ]
+            .filter(Boolean)
+            .join(' ')
+        : generating || requesting || wantsReview
+          ? 'A IA está preparando a revisão desta partida; os comentários aparecem aqui assim que ficarem prontos.'
+          : review && !review.aiAvailable
+            ? 'A IA não está ativada na plataforma, por isso esta partida ainda não tem comentários.'
+            : `${mover} jogam ${moveSan}.`;
+  const topColor = orientation === 'white' ? 'black' : 'white';
+  const sideToMove = ply % 2 === 0 ? 'white' : 'black';
+  const playerCard = (color: 'white' | 'black') => (
+    <ReplayPlayer
+      active={ply > 0 && sideToMove === color}
+      label={color === 'white' ? 'Brancas' : 'Pretas'}
+      name={color === 'white' ? game.white : game.black}
+    />
+  );
 
+  // Same skeleton as the game page (gamePage/boardStage/historyControls/movesPanel), so the
+  // study room inherits its board size, compact controls and in-frame panels.
   return (
-    <main className={styles.page}>
-      <header className={`${styles.heading} ${styles.compact}`}>
-        <span>{game.event ?? 'Partida de estudo'}</span>
-        <h1>
-          {game.white} × {game.black}
-        </h1>
-        <p>
-          {RESULT_LABEL[game.result]}
-          {game.playedOn ? ` · ${formatPlayedOn(game.playedOn)}` : ''}
-          {game.openingName ? ` · ${game.openingName}` : ''}
-        </p>
-      </header>
-
-      <section aria-label="Revisão da partida" className={styles.stage}>
-        <div className={styles.bubbleSlot}>
-          <div aria-live="polite" className={styles.bubble} role="status">
-            {ply === 0 ? (
-              <>
-                <h2>Início da partida</h2>
-                <p>
-                  {game.white} (brancas) contra {game.black} (pretas). Use as setas para avançar
-                  lance a lance.
-                </p>
-              </>
-            ) : (
-              <>
-                <h2>
-                  Lance {Math.ceil(ply / 2)} · {mover} · {toBrazilianSan(frame?.san ?? '')}
-                </h2>
-                {entry ? (
-                  <ul>
-                    <li>
-                      <b>Por quê:</b> {entry.why}
-                    </li>
-                    {entry.strength ? (
-                      <li className={styles.good}>
-                        <b>Forte:</b> {entry.strength}
-                      </li>
-                    ) : null}
-                    {entry.weakness ? (
-                      <li className={styles.warn}>
-                        <b>Fraco:</b> {entry.weakness}
-                      </li>
-                    ) : null}
-                    {entry.better ? (
-                      <li>
-                        <b>Melhor: {toBrazilianSan(entry.better)}</b> {entry.betterWhy}
-                      </li>
-                    ) : null}
-                    {entry.expect ? (
-                      <li>
-                        <b>Espera-se:</b> {entry.expect}
-                      </li>
-                    ) : null}
-                  </ul>
-                ) : (
-                  <p>
-                    {generating || requesting || wantsReview
-                      ? 'A IA está preparando a revisão desta partida. Os comentários aparecem aqui assim que ficarem prontos.'
-                      : review && !review.aiAvailable
-                        ? 'A IA não está ativada na plataforma, por isso esta partida ainda não tem comentários.'
-                        : `${mover} jogam ${toBrazilianSan(frame?.san ?? '')}.`}
-                  </p>
-                )}
-              </>
-            )}
-          </div>
+    <main className="gamePage">
+      <aside className="playersColumn">
+        {playerCard(topColor)}
+        <div className="libraryGameInfo">
+          <strong>{game.event ?? 'Partida de estudo'}</strong>
+          <span>
+            {RESULT_LABEL[game.result]}
+            {game.playedOn ? ` · ${formatPlayedOn(game.playedOn)}` : ''}
+          </span>
+          {game.openingName ? <span>{game.openingName}</span> : null}
+          <Link href="/app/biblioteca">← Biblioteca</Link>
         </div>
+        {playerCard(orientation)}
+      </aside>
 
-        <div className={styles.boardSlot}>
+      <section className="boardColumn" aria-label="Área do tabuleiro">
+        <CoachCallout label={coachLabel} message={coachMessage} />
+        <div className="mobilePlayer">{playerCard(topColor)}</div>
+        <div className="boardStage">
           <ChessBoard
             disabled
             fen={fen}
@@ -291,117 +273,121 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
             orientation={orientation}
             pieceTheme={pieceTheme}
           />
+          <div aria-label="Comandos do tabuleiro" className="historyControls" role="group">
+            <button aria-label="Início" disabled={ply === 0} onClick={() => go(0)} type="button">
+              ⏮
+            </button>
+            <button
+              aria-label="Lance anterior"
+              disabled={ply === 0}
+              onClick={() => go(ply - 1)}
+              type="button"
+            >
+              ◀
+            </button>
+            <button
+              aria-label={playing ? 'Pausar' : 'Reproduzir'}
+              aria-pressed={playing}
+              onClick={() => {
+                if (ply >= total) setPly(0);
+                setPlaying((value) => !value);
+              }}
+              title={playing ? 'Pausar' : 'Reproduzir'}
+              type="button"
+            >
+              {playing ? '⏸' : '⏵'}
+            </button>
+            <button
+              aria-label="Próximo lance"
+              disabled={ply >= total}
+              onClick={() => go(ply + 1)}
+              type="button"
+            >
+              ▶
+            </button>
+            <button
+              aria-label="Fim"
+              disabled={ply >= total}
+              onClick={() => go(total)}
+              type="button"
+            >
+              ⏭
+            </button>
+            <button
+              aria-label={audio ? 'Desligar áudio' : 'Ligar áudio'}
+              aria-pressed={audio}
+              onClick={() => setAudio((value) => !value)}
+              title={audio ? 'Áudio ligado' : 'Áudio desligado'}
+              type="button"
+            >
+              {audio ? '🔊' : '🔇'}
+            </button>
+            <button
+              aria-label="Girar tabuleiro"
+              onClick={() => setOrientation((o) => (o === 'white' ? 'black' : 'white'))}
+              title="Girar tabuleiro"
+              type="button"
+            >
+              ↻
+            </button>
+          </div>
         </div>
-
-        <div aria-label="Controles" className={styles.controls} role="group">
-          <button aria-label="Início" className={styles.button} onClick={() => go(0)} type="button">
-            ⏮
-          </button>
-          <button
-            aria-label="Lance anterior"
-            className={styles.button}
-            disabled={ply === 0}
-            onClick={() => go(ply - 1)}
-            type="button"
-          >
-            ◀
-          </button>
-          <button
-            aria-pressed={playing}
-            className={`${styles.button} ${styles.primary}`}
-            onClick={() => {
-              if (ply >= total) setPly(0);
-              setPlaying((value) => !value);
-            }}
-            type="button"
-          >
-            {playing ? 'Pausar' : 'Reproduzir'}
-          </button>
-          <button
-            aria-label="Próximo lance"
-            className={styles.button}
-            disabled={ply >= total}
-            onClick={() => go(ply + 1)}
-            type="button"
-          >
-            ▶
-          </button>
-          <button
-            aria-label="Fim"
-            className={styles.button}
-            onClick={() => go(total)}
-            type="button"
-          >
-            ⏭
-          </button>
-          <button
-            aria-pressed={audio}
-            className={styles.button}
-            onClick={() => setAudio((value) => !value)}
-            type="button"
-          >
-            {audio ? 'Áudio ligado' : 'Áudio desligado'}
-          </button>
-          <button
-            className={styles.button}
-            onClick={() => setOrientation((o) => (o === 'white' ? 'black' : 'white'))}
-            type="button"
-          >
-            Girar
-          </button>
-        </div>
+        <div className="mobilePlayer">{playerCard(orientation)}</div>
+        {message || (audio && audioNotice) ? (
+          <p className="gameMessage" role="status">
+            {message || audioNotice}
+          </p>
+        ) : null}
       </section>
 
-      {review && review.status === 'none' && !review.aiAvailable ? (
-        <p className={styles.notice}>
-          A revisão comentada ainda não foi gerada e a IA não está ativada na plataforma.
-        </p>
-      ) : null}
-      {canRequest ? (
-        <div className={styles.notice}>
-          <p>
-            {review?.status === 'failed'
-              ? 'A geração anterior foi interrompida; ela continua de onde parou.'
-              : 'Esta partida ainda não tem revisão. Ela será gerada uma única vez pela IA e ficará salva para todos.'}
-          </p>
-          <button
-            className={`${styles.button} ${styles.primary}`}
-            disabled={requesting}
-            onClick={() => void requestReview()}
-            type="button"
-          >
-            {requesting ? 'Solicitando…' : 'Gerar revisão com IA'}
+      <aside className="movesPanel">
+        <div className="panelTabs" role="tablist" aria-label="Partida">
+          <button aria-selected="true" role="tab" type="button">
+            Lances
           </button>
         </div>
-      ) : null}
-      {generating ? (
-        <p className={styles.notice} role="status">
-          Gerando revisão: {review?.entries.length ?? 0} de {total} lances comentados…
-        </p>
-      ) : null}
-      {message ? <p className={styles.status}>{message}</p> : null}
-      {audio && audioNotice ? (
-        <p className={styles.status} role="status">
-          {audioNotice}
-        </p>
-      ) : null}
-
-      <nav aria-label="Lances" className={styles.moveList}>
-        {built.frames.map((item, index) => (
-          <button
-            aria-current={ply === index + 1}
-            key={`${index}-${item.san}`}
-            onClick={() => go(index + 1)}
-            type="button"
-          >
-            {index % 2 === 0 ? `${index / 2 + 1}. ` : ''}
-            {toBrazilianSan(item.san)}
-          </button>
-        ))}
-      </nav>
-      <Link className={styles.button} href="/app/biblioteca">
-        Voltar à biblioteca
-      </Link>
+        <div className="moveList" aria-label="Lista de lances">
+          {Array.from({ length: rowCount }, (_, index) => (
+            <div className="moveRow" key={index}>
+              <span>{index + 1}.</span>
+              {[index * 2 + 1, index * 2 + 2].map((movePly) => {
+                const item = built.frames[movePly - 1];
+                return item ? (
+                  <button
+                    aria-current={ply === movePly}
+                    className="moveLink"
+                    key={movePly}
+                    onClick={() => go(movePly)}
+                    type="button"
+                  >
+                    {toBrazilianSan(item.san)}
+                  </button>
+                ) : (
+                  <strong key={movePly} />
+                );
+              })}
+            </div>
+          ))}
+        </div>
+        <div className="connectionState">
+          {generating ? (
+            `Gerando revisão: ${review?.entries.length ?? 0} de ${total} lances…`
+          ) : canRequest ? (
+            <button
+              className="libraryReviewButton"
+              disabled={requesting}
+              onClick={() => void requestReview()}
+              type="button"
+            >
+              {requesting ? 'Solicitando…' : 'Gerar revisão com IA'}
+            </button>
+          ) : review && review.status === 'none' && !review.aiAvailable ? (
+            'Revisão comentada indisponível: IA não ativada.'
+          ) : (
+            `${RESULT_LABEL[game.result]} · ${total} lances`
+          )}
+        </div>
+      </aside>
     </main>
   );
 }

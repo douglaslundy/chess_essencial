@@ -20,6 +20,7 @@ import {
 import { reviewEligibility, type ReviewEligibility } from './review-eligibility';
 import { CoachCallout } from '@/components/coach/coach-callout';
 import { ChessBoard, type BoardOrientation } from '@/components/game/chess-board';
+import { ReplayPlayer } from '@/components/game/replay-player';
 import { Avatar } from '@/components/ui/avatar';
 import { api, getStoredUserId } from '@/lib/api/client';
 import { speakableSquares, toBrazilianSan } from '@/lib/notation';
@@ -82,6 +83,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
   const [eligibility, setEligibility] = useState<ReviewEligibility | null>(null);
   const [view, setView] = useState<'summary' | 'moves'>('summary');
   const [orientation, setOrientation] = useState<BoardOrientation>('white');
+  const [panelTab, setPanelTab] = useState<'moves' | 'notes'>('moves');
   const { hasFeature } = useEntitlements();
   const analysisAllowed = hasFeature('game_analysis_access');
 
@@ -369,143 +371,203 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
     );
   }
 
+  const topColor = orientation === 'white' ? 'black' : 'white';
+  const sideToMove = ply % 2 === 0 ? 'white' : 'black';
+  const playerCard = (color: 'white' | 'black') => {
+    const player = state?.players.find((candidate) => candidate.color === color);
+    return (
+      <ReplayPlayer
+        active={ply > 0 && sideToMove === color}
+        avatarUrl={player?.avatarUrl ?? null}
+        label={`${color === 'white' ? 'Brancas' : 'Pretas'}${player ? ` · ${player.ratingBefore} XE` : ''}`}
+        name={player?.displayName || (color === 'white' ? 'Brancas' : 'Pretas')}
+      />
+    );
+  };
+  const rowCount = Math.ceil(moves.length / 2);
+
+  // Same skeleton as the game page (gamePage/boardStage/historyControls/movesPanel), so the
+  // review inherits its board size, compact controls and in-frame panels.
   return (
-    <main className="reviewPage">
-      <header className="reviewHeader">
-        <div>
-          <span className="eyebrow">Revisão</span>
-          <h1>Partida lance a lance</h1>
-        </div>
-        <div className="reviewHeaderActions">
+    <main className="gamePage">
+      <aside className="playersColumn">
+        {playerCard(topColor)}
+        <div className="libraryGameInfo">
+          <strong>Revisão lance a lance</strong>
+          <span>
+            Lance {ply}/{moves.length}
+          </span>
           <button onClick={() => setView('summary')} type="button">
-            Voltar ao resumo
-          </button>
-          <button
-            onClick={() => setOrientation((current) => (current === 'white' ? 'black' : 'white'))}
-            type="button"
-          >
-            Virar tabuleiro
+            ← Resumo
           </button>
           <button onClick={exportPgn} type="button">
             Exportar PGN
           </button>
         </div>
-      </header>
-      <section className="reviewBoard">
+        {playerCard(orientation)}
+      </aside>
+
+      <section className="boardColumn" aria-label="Área do tabuleiro">
         {/* Treinador acima do tabuleiro, como na partida: o comentário fica à vista do lance. */}
         {coachText ? <CoachCallout message={coachText} /> : null}
-        <ChessBoard
-          disabled
-          fen={fen}
-          lastMove={
-            ply ? { from: moves[ply - 1]?.from ?? '', to: moves[ply - 1]?.to ?? '' } : undefined
-          }
-          onMove={() => undefined}
-          orientation={orientation}
-          pieceTheme={pieceTheme}
-        />
-        <div aria-label="Navegar pelos lances" className="reviewNavigation" role="group">
-          <button aria-label="Início" disabled={ply === 0} onClick={() => setPly(0)} type="button">
-            ⏮
-          </button>
-          <button
-            aria-label="Lance anterior"
-            disabled={ply === 0}
-            onClick={() => setPly((value) => value - 1)}
-            type="button"
-          >
-            ◀
-          </button>
-          <span>
-            Ply {ply}/{moves.length}
-          </span>
-          <button
-            aria-label="Próximo lance"
-            disabled={ply >= moves.length}
-            onClick={() => setPly((value) => value + 1)}
-            type="button"
-          >
-            ▶
-          </button>
-          <button
-            aria-label="Último lance"
-            disabled={ply >= moves.length}
-            onClick={() => setPly(moves.length)}
-            type="button"
-          >
-            ⏭
-          </button>
+        <div className="mobilePlayer">{playerCard(topColor)}</div>
+        <div className="boardStage">
+          <ChessBoard
+            disabled
+            fen={fen}
+            lastMove={
+              ply ? { from: moves[ply - 1]?.from ?? '', to: moves[ply - 1]?.to ?? '' } : undefined
+            }
+            onMove={() => undefined}
+            orientation={orientation}
+            pieceTheme={pieceTheme}
+          />
+          <div aria-label="Navegar pelos lances" className="historyControls" role="group">
+            <button
+              aria-label="Início"
+              disabled={ply === 0}
+              onClick={() => setPly(0)}
+              type="button"
+            >
+              ⏮
+            </button>
+            <button
+              aria-label="Lance anterior"
+              disabled={ply === 0}
+              onClick={() => setPly((value) => value - 1)}
+              type="button"
+            >
+              ◀
+            </button>
+            <button
+              aria-label="Próximo lance"
+              disabled={ply >= moves.length}
+              onClick={() => setPly((value) => value + 1)}
+              type="button"
+            >
+              ▶
+            </button>
+            <button
+              aria-label="Último lance"
+              disabled={ply >= moves.length}
+              onClick={() => setPly(moves.length)}
+              type="button"
+            >
+              ⏭
+            </button>
+            <button
+              aria-label={reviewNarrationEnabled ? 'Desligar narração' : 'Narrar lances por voz'}
+              aria-pressed={reviewNarrationEnabled}
+              onClick={() => setReviewNarrationEnabled(!reviewNarrationEnabled)}
+              title="Narrar lances por voz"
+              type="button"
+            >
+              {reviewNarrationEnabled ? '🔊' : '🔇'}
+            </button>
+            <button
+              aria-label="Virar tabuleiro"
+              onClick={() => setOrientation((current) => (current === 'white' ? 'black' : 'white'))}
+              title="Virar tabuleiro"
+              type="button"
+            >
+              ↻
+            </button>
+          </div>
         </div>
-        {arrowFrom && arrowTo ? (
-          <p className="annotationPreview">
-            Seta: {arrowFrom} → {arrowTo}
+        <div className="mobilePlayer">{playerCard(orientation)}</div>
+        {message ? (
+          <p className="gameMessage" role="status">
+            {message}
           </p>
         ) : null}
       </section>
-      <aside className="reviewPanel">
-        <div className="reviewMoves">
-          {moves.map((move) => (
-            <button
-              className={move.ply === ply ? 'activePly' : ''}
-              key={move.id}
-              onClick={() => setPly(move.ply)}
-              type="button"
-            >
-              {move.ply}. {toBrazilianSan(move.san)}
+
+      <aside className="movesPanel">
+        <div className="panelTabs" role="tablist" aria-label="Revisão">
+          <button
+            aria-selected={panelTab === 'moves'}
+            onClick={() => setPanelTab('moves')}
+            role="tab"
+            type="button"
+          >
+            Lances
+          </button>
+          <button
+            aria-selected={panelTab === 'notes'}
+            onClick={() => setPanelTab('notes')}
+            role="tab"
+            type="button"
+          >
+            Anotar
+          </button>
+        </div>
+        {panelTab === 'moves' ? (
+          <div className="moveList" aria-label="Lista de lances">
+            {Array.from({ length: rowCount }, (_, index) => (
+              <div className="moveRow" key={index}>
+                <span>{index + 1}.</span>
+                {[moves[index * 2], moves[index * 2 + 1]].map((move, column) =>
+                  move ? (
+                    <button
+                      aria-current={move.ply === ply}
+                      className="moveLink"
+                      key={move.id}
+                      onClick={() => setPly(move.ply)}
+                      type="button"
+                    >
+                      {toBrazilianSan(move.san)}
+                    </button>
+                  ) : (
+                    <strong key={column} />
+                  ),
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="reviewNotes">
+            <label>
+              Comentário
+              <textarea
+                maxLength={2000}
+                onChange={(event) => setComment(event.target.value)}
+                value={comment}
+              />
+            </label>
+            <div className="annotationFields">
+              <label>
+                Seta de
+                <input
+                  maxLength={2}
+                  onChange={(event) => setArrowFrom(event.target.value.toLowerCase())}
+                  placeholder="e2"
+                  value={arrowFrom}
+                />
+              </label>
+              <label>
+                Para
+                <input
+                  maxLength={2}
+                  onChange={(event) => setArrowTo(event.target.value.toLowerCase())}
+                  placeholder="e4"
+                  value={arrowTo}
+                />
+              </label>
+            </div>
+            <button className="libraryReviewButton" onClick={save} type="button">
+              Salvar anotação
             </button>
-          ))}
+          </div>
+        )}
+        <div className="connectionState">
+          {analysis?.status !== 'completed'
+            ? ANALYSIS_STATUS_LABEL[analysis?.status ?? 'pending']
+            : moveComment
+              ? 'Comentário do Treinador acima do tabuleiro.'
+              : ply > 0
+                ? 'Lance do adversário: sem narração do Treinador.'
+                : 'Use as setas para avançar lance a lance.'}
         </div>
-        <label>
-          Comentário
-          <textarea
-            maxLength={2000}
-            onChange={(event) => setComment(event.target.value)}
-            value={comment}
-          />
-        </label>
-        <div className="annotationFields">
-          <label>
-            Seta de
-            <input
-              maxLength={2}
-              onChange={(event) => setArrowFrom(event.target.value.toLowerCase())}
-              placeholder="e2"
-              value={arrowFrom}
-            />
-          </label>
-          <label>
-            Para
-            <input
-              maxLength={2}
-              onChange={(event) => setArrowTo(event.target.value.toLowerCase())}
-              placeholder="e4"
-              value={arrowTo}
-            />
-          </label>
-        </div>
-        <button onClick={save} type="button">
-          Salvar anotação
-        </button>
-        <p role="status">{message}</p>
-        <section className="futureEvaluation" aria-label="Minha avaliação">
-          <strong>Minha avaliação</strong>
-          <label className="voiceToggle">
-            <input
-              checked={reviewNarrationEnabled}
-              onChange={(event) => setReviewNarrationEnabled(event.target.checked)}
-              type="checkbox"
-            />
-            Narrar lances por voz
-          </label>
-          {moveComment ? (
-            <span>Comentário do Treinador acima do tabuleiro.</span>
-          ) : ply > 0 ? (
-            <span>Lance do adversário: sem narração do Treinador.</span>
-          ) : null}
-          {analysis?.status !== 'completed' ? (
-            <span>{ANALYSIS_STATUS_LABEL[analysis?.status ?? 'pending']}</span>
-          ) : null}
-        </section>
       </aside>
     </main>
   );
