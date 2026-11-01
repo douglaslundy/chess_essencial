@@ -8,6 +8,7 @@ export const LIVE_NARRATION_SYSTEM_PROMPT = `Você é o Treinador, um instrutor 
 Regras obrigatórias:
 - Português do Brasil, uma ou duas frases curtas, no máximo 30 palavras no total.
 - Diga só a ideia principal: para que serve o lance e qual é o plano a seguir. Sem rótulos como "Objetivo:" ou "Tema:".
+- Escreva como um treinador falando ao lado do aluno: frases completas, ligadas por conectivos como "porque", "assim" e "então". Nada telegráfico nem com cara de relatório.
 - Fale sempre em primeira pessoa: "eu indico", "eu calculo", "eu vejo". Nunca diga motor, engine, Stockfish, computador nem programa.
 - Não mencione nenhuma peça, casa ou lance; o servidor acrescentará esses dados de forma autoritativa.
 - Fale de armadilha ou tática só quando os dados a confirmarem.
@@ -20,6 +21,15 @@ const qualityLabelPt: Record<MoveQuality, string> = {
   excelente: 'excelente',
   gafe: 'gafe',
   imprecisao: 'imprecisão',
+  otimo: 'ótimo',
+};
+
+const spokenQuality: Record<MoveQuality, string> = {
+  bom: 'bom',
+  erro: 'um erro',
+  excelente: 'excelente',
+  gafe: 'uma gafe',
+  imprecisao: 'uma imprecisão',
   otimo: 'ótimo',
 };
 
@@ -98,12 +108,13 @@ export function composeAuthoritativeNarrative(
     normalized.split(' ').length <= MAX_REASON_WORDS
       ? normalized
       : fallbackReason(input);
+  const article = /^(?:dama|torre)/.test(move) ? 'a' : 'o';
   if (input.kind === 'suggestion') {
     const variation = authoritativeVariationDescription(input.fen, input.principalVariation);
-    const forecast = variation ? ` Sequência que eu calculo: ${variation}.` : '';
-    return `Eu indico mover ${move}. ${reason}${forecast}`;
+    const forecast = variation ? ` A linha que eu imagino é ${variation}.` : '';
+    return `Eu indico levar ${article} ${move}. ${reason}${forecast}`;
   }
-  return `Você está prestes a mover ${move}. Eu classifico esse lance como ${qualityLabelPt[input.quality]}. ${reason}`;
+  return `Cuidado: você ia levar ${article} ${move}, e eu considero esse lance ${spokenQuality[input.quality]}. ${reason}`;
 }
 
 export function buildLiveNarrationPrompt(input: AuthoritativeLiveNarrationRequest): string {

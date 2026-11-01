@@ -7,6 +7,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { AuthStatus } from '@/components/auth/auth-status';
 import { BoardSettingsMenu } from '@/components/navigation/board-settings-menu';
 import { api } from '@/lib/api/client';
+import { stopSpeaking } from '@/lib/speech';
 import { useEntitlements } from '@/lib/subscriptions/use-entitlements';
 
 const navigation = [
@@ -39,6 +40,9 @@ export function AppChrome({ children }: { children: ReactNode }) {
   useEffect(() => {
     queueMicrotask(() => setMenuOpen(false));
   }, [pathname]);
+
+  // Leaving a page silences its narration; the cleanup runs before the next page's effects speak.
+  useEffect(() => () => stopSpeaking(), [pathname]);
 
   useEffect(() => {
     try {

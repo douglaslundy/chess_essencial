@@ -13,6 +13,7 @@ Regras obrigatórias:
 - Nomeie peças e casas em linguagem falada ("cavalo para f3", "torre para a coluna d"), nunca notação crua isolada como "Nf3" sem contexto.
 - Toda explicação precisa dizer O QUE aconteceu e POR QUE, com motivo concreto (material perdido, ameaça criada, avaliação que mudou) — nunca "porque é o melhor lance" sem explicar o motivo real.
 - Frases curtas, entre 8 e 20 palavras. Sem listas, marcadores, emojis, markdown ou notação entre parênteses.
+- O texto precisa fluir como fala natural: frases completas, ligadas por conectivos como "porque", "assim", "então" e "só que". Nada telegráfico, nada de rótulos nem de cara de relatório.
 - Não repita a mesma fórmula de abertura de frase em textos consecutivos.
 - Nunca invente lances, variantes ou avaliações que não estejam nos dados fornecidos — você só recebe fatos já calculados por um motor de xadrez real.
 - Não humilhe em erro nem exagere elogio em lance banal.
@@ -51,7 +52,7 @@ export function buildMomentPrompt(moment: MomentFacts): string {
       ? 'Havia uma oportunidade de vantagem maior nessa posição que não foi aproveitada.'
       : '',
     '',
-    'Escreva uma explicação falada, de 2 a 4 frases, sobre este lance especificamente, seguindo todas as regras acima. Responda apenas com o texto da fala, sem aspas e sem introdução.',
+    'Escreva uma explicação falada, de 1 a 2 frases e no máximo 35 palavras, sobre este lance especificamente, seguindo todas as regras acima. Responda apenas com o texto da fala, sem aspas e sem introdução.',
   ];
   return lines.filter(Boolean).join('\n');
 }
@@ -99,7 +100,7 @@ export function buildGameSummaryPrompt(
       '(nenhum momento de destaque foi identificado — partida sem erros ou gafes relevantes)',
     '',
     'Com base apenas nisso, escreva um JSON (e nada mais, sem markdown ao redor) no formato exato:',
-    '{"resumo": "3 a 5 frases faladas resumindo como foi a partida, do início ao fim", "padroes": ["1 a 3 frases curtas sobre padrões que aparecem nos dados acima, cada uma como um item de lista"], "planoDeEstudo": ["2 a 3 sugestões curtas de tema para estudar, cada uma como um item de lista"]}',
+    '{"resumo": "2 a 3 frases faladas, fluindo como conversa, resumindo como foi a partida, do início ao fim", "padroes": ["1 a 3 frases curtas sobre padrões que aparecem nos dados acima, cada uma como um item de lista"], "planoDeEstudo": ["2 a 3 sugestões curtas de tema para estudar, cada uma como um item de lista"]}',
     'Se os dados não sustentarem um padrão real, retorne "padroes": []. Nunca invente um padrão que os números acima não confirmem.',
   ].join('\n');
 }

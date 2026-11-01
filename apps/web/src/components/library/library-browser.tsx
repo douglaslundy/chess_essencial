@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
 import { formatPlayedOn } from './format-date';
 import styles from './library.module.css';
+import { readWatchedGames } from './watched-games';
 import { api } from '@/lib/api/client';
 
 const PAGE_SIZE = 20;
@@ -40,6 +41,11 @@ export function LibraryBrowser() {
   const [total, setTotal] = useState(0);
   const [facets, setFacets] = useState<LibraryFacets | null>(null);
   const [status, setStatus] = useState('Carregando partidas…');
+  const [watched, setWatched] = useState<Set<string>>(() => new Set());
+
+  useEffect(() => {
+    queueMicrotask(() => setWatched(readWatchedGames()));
+  }, []);
 
   useEffect(() => {
     const token = window.localStorage.getItem('xadrez.access_token');
@@ -166,9 +172,15 @@ export function LibraryBrowser() {
       <ul className={styles.list}>
         {items.map((game) => (
           <li key={game.id}>
-            <Link className={styles.card} href={`/app/biblioteca/${game.id}`}>
+            <Link
+              className={watched.has(game.id) ? `${styles.card} ${styles.watched}` : styles.card}
+              href={`/app/biblioteca/${game.id}`}
+            >
               <strong>
                 {game.white} × {game.black}
+                {watched.has(game.id) ? (
+                  <span className={styles.watchedBadge}>✓ Assistida</span>
+                ) : null}
               </strong>
               <span className={styles.meta}>
                 <span>{RESULT_LABEL[game.result]}</span>

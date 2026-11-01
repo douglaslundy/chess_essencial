@@ -58,16 +58,16 @@ export function formatCoachExplanation(
   const isCentralPawnMove = move.piece === 'p' && ['d4', 'd5', 'e4', 'e5'].includes(move.to);
   const isDevelopment = ['b', 'n'].includes(move.piece) && ['1', '8'].includes(move.from.charAt(1));
 
-  let idea = 'Eu melhoro a coordenação sem assumir riscos';
+  let idea = 'melhoro a coordenação sem assumir riscos';
   if (suggestion.mate !== null)
-    idea = `Eu conduzo o ataque até o mate em ${Math.abs(suggestion.mate)}`;
-  else if (move.san.includes('x')) idea = 'Eu ganho material com uma captura calculada';
-  else if (move.san.includes('+')) idea = 'Eu ganho tempo pressionando o rei';
-  else if (move.san.startsWith('O-O')) idea = 'Eu protejo o rei e conecto as torres';
-  else if (isCentralPawnMove) idea = 'Eu disputo o centro e libero o desenvolvimento';
-  else if (isDevelopment) idea = 'Eu coloco mais uma peça em jogo';
+    idea = `conduzo o ataque até o mate em ${Math.abs(suggestion.mate)}`;
+  else if (move.san.includes('x')) idea = 'ganho material com uma captura calculada';
+  else if (move.san.includes('+')) idea = 'ganho tempo pressionando o rei';
+  else if (move.san.startsWith('O-O')) idea = 'protejo o rei e conecto as torres';
+  else if (isCentralPawnMove) idea = 'disputo o centro e libero o desenvolvimento';
+  else if (isDevelopment) idea = 'coloco mais uma peça em jogo';
 
   const line = possibleLine(fen, suggestion);
-  const forecast = line.length > 1 ? ` Sequência que eu calculo: ${line.join(', ')}.` : '';
-  return `Eu indico ${san}. ${idea}.${forecast}`;
+  const forecast = line.length > 1 ? ` A linha que eu imagino é ${line.join(', ')}.` : '';
+  return `Eu indico ${san}, porque assim eu ${idea}.${forecast}`;
 }

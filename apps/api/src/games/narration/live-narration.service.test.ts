@@ -75,7 +75,7 @@ describe('LiveNarrationService', () => {
 
     expect(result).toEqual({
       narrative:
-        'Eu indico mover peão de e2 para e4. Eu disputo o centro e desenvolvo com tempo. Sequência que eu calculo: e4, e5, Cf3.',
+        'Eu indico levar o peão de e2 para e4. Eu disputo o centro e desenvolvo com tempo. A linha que eu imagino é e4, e5, Cf3.',
     });
   });
 
@@ -103,7 +103,7 @@ describe('LiveNarrationService', () => {
 
     expect(result).toEqual({
       narrative:
-        'Você está prestes a mover peão de a2 para a3. Eu classifico esse lance como erro. Esse lance perde material à toa.',
+        'Cuidado: você ia levar o peão de a2 para a3, e eu considero esse lance um erro. Esse lance perde material à toa.',
     });
     expect(sql).toHaveBeenCalledTimes(2);
   });
@@ -131,7 +131,7 @@ describe('LiveNarrationService', () => {
 
     expect(result).toEqual({
       narrative:
-        'Você está prestes a mover peão de a2 para a3. Eu classifico esse lance como erro. Já vi essa exatamente antes.',
+        'Cuidado: você ia levar o peão de a2 para a3, e eu considero esse lance um erro. Já vi essa exatamente antes.',
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -180,7 +180,7 @@ describe('LiveNarrationService', () => {
     const result = await service.narrate(suggestionInput);
 
     expect(result.narrative).not.toMatch(/motor/i);
-    expect(result.narrative).toContain('Eu indico mover peão de e2 para e4.');
+    expect(result.narrative).toContain('Eu indico levar o peão de e2 para e4.');
   });
 
   it('never lets an LLM failure escape - a live game must never be interrupted by narration', async () => {

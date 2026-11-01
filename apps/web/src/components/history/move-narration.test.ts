@@ -47,27 +47,33 @@ describe('describeMoveQuality', () => {
 
 describe('narrateMove', () => {
   it('reads the move (translated to Brazilian notation) and its quality', () => {
-    expect(narrateMove(move({ quality: 'bom', san: 'Nf3' }))).toBe('C éfe 3: Bom.');
+    expect(narrateMove(move({ quality: 'bom', san: 'Nf3' }))).toBe(
+      'Você jogou C éfe 3, um lance bom.',
+    );
   });
 
   it('suggests, in first person, an alternative for a weak move, spelling out square letters', () => {
     const sentence = narrateMove(move({ bestMoveUci: 'd2d4', quality: 'erro', san: 'a3' }));
-    expect(sentence).toBe('á 3: Erro. Eu indico dê 2 para dê 4.');
+    expect(sentence).toBe(
+      'Você jogou á 3, e eu considero isso um erro. No seu lugar, eu jogaria dê 2 para dê 4.',
+    );
   });
 
   it('does not suggest an alternative for otimo/excelente moves even if bestMoveUci is set', () => {
     expect(narrateMove(move({ bestMoveUci: 'd2d4', quality: 'excelente' }))).toBe(
-      'é 4: Excelente.',
+      'Você jogou é 4, um lance excelente.',
     );
   });
 
   it('translates the queen to "D" (Dama), not the English "Q"', () => {
-    expect(narrateMove(move({ quality: 'otimo', san: 'Qxe4+' }))).toBe('Dx é 4+: Ótimo.');
+    expect(narrateMove(move({ quality: 'otimo', san: 'Qxe4+' }))).toBe(
+      'Você jogou Dx é 4+, um ótimo lance.',
+    );
   });
 
   it('mentions a missed winning opportunity', () => {
     expect(narrateMove(move({ missedWin: true, quality: 'gafe' }))).toContain(
-      'Havia uma oportunidade melhor',
+      'chance de ganhar uma vantagem maior',
     );
   });
 });

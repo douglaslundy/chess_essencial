@@ -52,14 +52,23 @@ export function narrationTextForPlayer(
 
 /** Full sentence read aloud by the voice narration toggle. */
 export function narrateMove(move: GameMoveAnalysis): string {
-  const label = moveQualityLabel[move.quality];
-  let sentence = `${toBrazilianSan(move.san)}: ${label}.`;
+  let sentence = `Você jogou ${toBrazilianSan(move.san)}, ${spokenQuality[move.quality]}.`;
   if (move.quality !== 'otimo' && move.quality !== 'excelente' && move.bestMoveUci) {
-    sentence += ` Eu indico ${speakableSquarePair(move.bestMoveUci)}.`;
+    sentence += ` No seu lugar, eu jogaria ${speakableSquarePair(move.bestMoveUci)}.`;
   }
-  if (move.missedWin) sentence += ' Havia uma oportunidade melhor nessa posição.';
+  if (move.missedWin) sentence += ' Aqui havia uma chance de ganhar uma vantagem maior.';
   return speakableSquares(sentence);
 }
+
+// Spoken (not label) form, so the sentence reads like a coach talking.
+const spokenQuality: Record<MoveQuality, string> = {
+  bom: 'um lance bom',
+  erro: 'e eu considero isso um erro',
+  excelente: 'um lance excelente',
+  gafe: 'e infelizmente isso foi uma gafe',
+  imprecisao: 'uma pequena imprecisão',
+  otimo: 'um ótimo lance',
+};
 
 /**
  * Treinador's comment for the reviewed ply: the AI key-moment narrative when one exists,

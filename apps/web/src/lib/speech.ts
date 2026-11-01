@@ -98,6 +98,8 @@ async function speakWithAi(text: string, voiceName: string, generation: number):
       audio!.play().catch(reject);
     });
   } catch (error) {
+    // Stopped while the clip was loading: not a failure, so no browser-voice fallback.
+    if (generation !== queueGeneration) return;
     const detail = error instanceof Error ? error.message : 'falha desconhecida';
     throw new Error(`Não foi possível gerar a voz por IA da OpenAI: ${detail}`);
   } finally {
@@ -108,7 +110,9 @@ async function speakWithAi(text: string, voiceName: string, generation: number):
 async function speakWithBrowser(text: string, options: SpeakOptions): Promise<void> {
   if (!('speechSynthesis' in window)) return;
   const synth = window.speechSynthesis;
+  const generation = queueGeneration;
   await ensureVoicesLoaded(synth);
+  if (generation !== queueGeneration) return;
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = options.lang ?? 'pt-BR';
   if (options.voiceName) {

@@ -2341,8 +2341,8 @@ input:focus-visible {
 }
 .reviewPage {
   display: grid;
-  gap: 24px;
-  grid-template-columns: minmax(320px, 720px) minmax(300px, 1fr);
+  gap: 16px 24px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
 }
 .reviewHeader {
   align-items: center;
@@ -2350,14 +2350,23 @@ input:focus-visible {
   grid-column: 1 / -1;
   justify-content: space-between;
 }
+/* Same frame as the game page: the 3D canvas fills the column and the remaining screen height. */
 .reviewBoard {
+  --board3d-width: 100%;
+  --board3d-height: calc(100dvh - 22.5rem);
+  --board3d-aspect: auto;
+  align-content: start;
   display: grid;
+  gap: 8px;
   min-width: 0;
   justify-items: center;
 }
+.reviewBoard > .coachCallout {
+  width: 100%;
+}
 /* Leaves room for the Treinador above and the move navigation below inside the screen. */
 .reviewBoard .boardWithCoordinates {
-  width: min(100%, calc(100dvh - 17rem), 46.5rem);
+  width: min(100%, calc(100dvh - 20.5rem));
 }
 .annotationPreview {
   background: rgba(216, 182, 108, 0.12);
@@ -2381,7 +2390,6 @@ input:focus-visible {
   display: flex;
   gap: 8px;
   justify-content: center;
-  margin-top: 10px;
 }
 .reviewNavigation button {
   font-size: 1.1rem;
@@ -2550,6 +2558,10 @@ input:focus-visible {
 @media (max-width: 900px) {
   .reviewPage {
     grid-template-columns: 1fr;
+  }
+  .reviewBoard {
+    --board3d-height: auto;
+    --board3d-aspect: 4 / 3;
   }
   /* Phone: the arrows stay reachable at the bottom of the screen while the board is in view. */
   .reviewNavigation {

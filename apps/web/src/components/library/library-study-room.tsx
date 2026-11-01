@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { formatPlayedOn } from './format-date';
 import styles from './library.module.css';
+import { markGameWatched } from './watched-games';
 import { ChessBoard, type BoardOrientation } from '@/components/game/chess-board';
 import { api } from '@/lib/api/client';
 import { speakableSquares, toBrazilianSan } from '@/lib/notation';
@@ -115,6 +116,12 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
   const narration = entry ? speechFor(entry) : fallbackSpeech;
   const go = useCallback((next: number) => setPly(Math.min(Math.max(next, 0), total)), [total]);
 
+  // Advancing the first move counts as watching: the library list marks the game.
+  const started = ply > 0;
+  useEffect(() => {
+    if (started) markGameWatched(gameId);
+  }, [started, gameId]);
+
   // Narration: speaks the stored summary whenever the move changes (or audio is turned on).
   useEffect(() => {
     if (!audio || ply === 0) return;
@@ -207,7 +214,7 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
 
   return (
     <main className={styles.page}>
-      <header className={styles.heading}>
+      <header className={`${styles.heading} ${styles.compact}`}>
         <span>{game.event ?? 'Partida de estudo'}</span>
         <h1>
           {game.white} × {game.black}

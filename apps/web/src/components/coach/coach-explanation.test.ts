@@ -13,7 +13,7 @@ describe('formatCoachExplanation', () => {
     });
 
     expect(result).toBe(
-      'Eu indico e4. Eu disputo o centro e libero o desenvolvimento. Sequência que eu calculo: e4, e5, Cf3.',
+      'Eu indico e4, porque assim eu disputo o centro e libero o desenvolvimento. A linha que eu imagino é e4, e5, Cf3.',
     );
     expect(result).not.toMatch(/motor/i);
   });
