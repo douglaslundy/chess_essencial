@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { findActivity } from './course-content';
+import { findActivity, isUnlocked } from './course-content';
 import { CoursePuzzle } from './course-puzzle';
 import { applyCourseMove, initialStepState, type StepState } from './course-step';
 import type { CourseStep } from './course-types';
@@ -13,14 +13,14 @@ import { ChessBoard } from '@/components/game/chess-board';
 import { api } from '@/lib/api/client';
 import { speakableSquares } from '@/lib/notation';
 import { usePieceTheme } from '@/lib/piece-theme';
-import { speak, stopSpeaking } from '@/lib/speech';
+import { getNarrationRate, speak, stopSpeaking } from '@/lib/speech';
 import { useVoicePreference } from '@/lib/voice-preference';
 
 const DONE_SAY = 'Muito bem!';
 const NO_STEPS: CourseStep[] = [];
 const NEXT_DELAY_MS = 2000;
 // shortcut: browser speech has no end event here, so explanations wait an estimated reading time.
-const readingMs = (text: string) => NEXT_DELAY_MS + text.length * 65;
+const readingMs = (text: string) => NEXT_DELAY_MS + (text.length * 65) / getNarrationRate();
 
 export function CoursePlayer({ activityId }: { activityId: string }) {
   const found = findActivity(activityId);
@@ -34,6 +34,8 @@ export function CoursePlayer({ activityId }: { activityId: string }) {
   // The lesson waits for "Iniciar aula": browsers only speak after a user gesture.
   const [started, setStarted] = useState(false);
   const [finished, setFinished] = useState(false);
+  // null while the progress loads; a direct link to a locked activity shows the lock instead.
+  const [locked, setLocked] = useState<boolean | null>(null);
   const [saveError, setSaveError] = useState('');
   const saved = useRef(false);
   // Bumped on every (re)start so a puzzle step opens a fresh training session.
@@ -88,6 +90,22 @@ export function CoursePlayer({ activityId }: { activityId: string }) {
     return () => stopSpeaking();
   }, [audio]);
 
+  useEffect(() => {
+    const token = window.localStorage.getItem('xadrez.access_token');
+    const check = token
+      ? api
+          .getCourseTrailProgress(token)
+          .then((progress) => !isUnlocked(activityId, new Set(progress.completedActivityIds)))
+          // A failed check does not block the student: the lock is a guide, not a permission.
+          .catch(() => false)
+      : Promise.resolve(!isUnlocked(activityId, new Set()));
+    let live = true;
+    void check.then((value) => live && setLocked(value));
+    return () => {
+      live = false;
+    };
+  }, [activityId]);
+
   // Finishing the last step records the activity once (idempotent on the server).
   useEffect(() => {
     if (!finished || saved.current) return;
@@ -99,6 +117,19 @@ export function CoursePlayer({ activityId }: { activityId: string }) {
       setSaveError('Não foi possível salvar o seu progresso. Verifique a conexão.');
     });
   }, [finished, activityId]);
+
+  if (found && locked) {
+    return (
+      <main className={styles.page}>
+        <p role="status">
+          🔒 Conclua a atividade anterior para abrir &quot;{found.activity.title}&quot;.
+        </p>
+        <Link className={styles.back} href="/app/curso">
+          ← Voltar ao curso
+        </Link>
+      </main>
+    );
+  }
 
   if (!found || !step || !state) {
     return (
@@ -175,7 +206,12 @@ export function CoursePlayer({ activityId }: { activityId: string }) {
                 </button>
               </>
             ) : (
-              <button className={styles.ready} onClick={() => setStarted(true)} type="button">
+              <button
+                className={styles.ready}
+                disabled={locked !== false}
+                onClick={() => setStarted(true)}
+                type="button"
+              >
                 Iniciar aula
               </button>
             )}

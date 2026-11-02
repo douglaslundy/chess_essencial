@@ -36,6 +36,28 @@ if (typeof window !== 'undefined') {
   window.addEventListener('pointerdown', unlock);
 }
 
+export const NARRATION_RATES = [1, 1.2, 1.5, 2] as const;
+const RATE_KEY = 'xadrez.narration_rate';
+
+/** Narration speed chosen in the board settings, saved on this device. */
+export function getNarrationRate(): number {
+  if (typeof window === 'undefined') return 1;
+  try {
+    const rate = Number(window.localStorage.getItem(RATE_KEY));
+    return (NARRATION_RATES as readonly number[]).includes(rate) ? rate : 1;
+  } catch {
+    return 1;
+  }
+}
+
+export function setNarrationRate(rate: number): void {
+  try {
+    window.localStorage.setItem(RATE_KEY, String(rate));
+  } catch {
+    // Storage blocked: the speed lasts only for this page.
+  }
+}
+
 function ensureVoicesLoaded(synth: SpeechSynthesis): Promise<void> {
   if (synth.getVoices().length > 0) return Promise.resolve();
   voicesReady ??= new Promise((resolve) => {
@@ -88,6 +110,7 @@ async function speakWithAi(text: string, voiceName: string, generation: number):
     url = URL.createObjectURL(blob);
     audio = audioElement();
     audio.src = url;
+    audio.playbackRate = getNarrationRate();
     currentAudio = audio;
     currentAudioUrl = url;
     await new Promise<void>((resolve, reject) => {
@@ -115,6 +138,7 @@ async function speakWithBrowser(text: string, options: SpeakOptions): Promise<vo
   if (generation !== queueGeneration) return;
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = options.lang ?? 'pt-BR';
+  utterance.rate = getNarrationRate();
   if (options.voiceName) {
     const voice = synth.getVoices().find((candidate) => candidate.name === options.voiceName);
     if (voice) utterance.voice = voice;

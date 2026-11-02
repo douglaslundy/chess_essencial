@@ -10,7 +10,6 @@ import { api } from '@/lib/api/client';
 
 const LEVELS = ['Regras', 'Iniciante', 'Básico', 'Intermediário', 'Avançado'];
 
-// shortcut: the lock lives only on the map; a direct link still opens a locked activity.
 export function CourseMap() {
   const [completed, setCompleted] = useState<Set<string>>(new Set());
 

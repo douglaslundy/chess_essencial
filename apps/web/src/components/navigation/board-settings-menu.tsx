@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 
 import { useBoardMode, type BoardEffects } from '@/lib/board-mode';
+import { getNarrationRate, NARRATION_RATES, setNarrationRate } from '@/lib/speech';
 
 const EFFECT_LABELS: Array<[keyof BoardEffects, string, string]> = [
   ['moveToast', 'Balão da jogada', 'Mostra a anotação do lance por 2 segundos.'],
@@ -23,8 +24,12 @@ const EFFECT_LABELS: Array<[keyof BoardEffects, string, string]> = [
 export function BoardSettingsMenu() {
   const { effects, mode, setEffect, setMode } = useBoardMode();
   const [place, setPlace] = useState<CSSProperties | null>(null);
+  const [rate, setRate] = useState(1);
   const open = place !== null;
-  const setOpen = (value: boolean) => setPlace(value ? placement() : null);
+  const setOpen = (value: boolean) => {
+    if (value) setRate(getNarrationRate());
+    setPlace(value ? placement() : null);
+  };
   const root = useRef<HTMLDivElement>(null);
   const panelId = useId();
 
@@ -34,22 +39,27 @@ export function BoardSettingsMenu() {
     const margin = 12;
     const width = Math.min(304, window.innerWidth - margin * 2);
     const right = rect?.right ?? window.innerWidth - margin;
+    const top = (rect?.bottom ?? 0) + 6;
     return {
       left: Math.max(margin, Math.min(right - width, window.innerWidth - width - margin)),
-      top: (rect?.bottom ?? 0) + 6,
+      // Taller than the screen: the panel scrolls inside instead of the page.
+      maxHeight: window.innerHeight - top - margin,
+      top,
       width,
     };
   }
 
   useEffect(() => {
     if (!open) return;
+    // Only a press outside the menu closes it; the toggle button is inside and closes it itself.
     const onPointer = (event: PointerEvent) => {
       if (!root.current?.contains(event.target as Node)) setPlace(null);
     };
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setPlace(null);
     };
-    const onResize = () => setPlace(null);
+    // Phones resize while scrolling (the address bar hides), so a resize re-anchors instead of closing.
+    const onResize = () => setPlace(placement());
     document.addEventListener('pointerdown', onPointer);
     document.addEventListener('keydown', onKey);
     window.addEventListener('resize', onResize);
@@ -114,6 +124,23 @@ export function BoardSettingsMenu() {
               </label>
             </fieldset>
           ) : null}
+          <fieldset className="boardStyleChoice">
+            <legend>Velocidade da narração</legend>
+            {NARRATION_RATES.map((value) => (
+              <label key={value}>
+                <input
+                  checked={rate === value}
+                  name={`${panelId}-rate`}
+                  onChange={() => {
+                    setNarrationRate(value);
+                    setRate(value);
+                  }}
+                  type="radio"
+                />
+                <span>{value === 1 ? '1x' : `${value.toFixed(1)}x`}</span>
+              </label>
+            ))}
+          </fieldset>
           {EFFECT_LABELS.map(([key, label, hint]) => (
             <label key={key}>
               <input

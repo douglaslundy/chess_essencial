@@ -1049,6 +1049,41 @@ export const COURSE_MODULES: CourseModule[] = [
     title: 'Partidas lendárias',
     activities: [
       {
+        id: 'lendaria-legal',
+        title: 'O mate de Légal (Paris, 1750)',
+        steps: [
+          {
+            kind: 'info',
+            say: 'Kermur de Légal, de brancas, mostrou numa partida de café que a dama pode valer menos que um ataque bem armado. Você faz os lances de Légal.',
+          },
+          {
+            kind: 'info',
+            say: 'Depois de 1.e4 e5 2.Cf3 d6 3.Bc4 Bg4 4.Cc3 g6, o bispo preto crava o cavalo de f3 na dama. Parece que o cavalo não pode sair.',
+            fen: 'rn1qkbnr/ppp2p1p/3p2p1/4p3/2B1P1b1/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 5',
+            show: { from: 'g4', to: 'd1' },
+          },
+          {
+            kind: 'move',
+            say: 'Saia da cravada assim mesmo: o cavalo captura o peão de e5.',
+            fen: 'rn1qkbnr/ppp2p1p/3p2p1/4p3/2B1P1b1/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 5',
+            accept: ['f3e5'],
+            reply: 'g4d1',
+          },
+          {
+            kind: 'move',
+            say: 'As pretas pegaram a dama. Agora dê xeque com o bispo em f7.',
+            fen: 'rn1qkbnr/ppp2p1p/3p2p1/4N3/2B1P3/2N5/PPPP1PPP/R1BbK2R w KQkq - 0 6',
+            accept: ['c4f7'],
+            reply: 'e8e7',
+          },
+          {
+            kind: 'mate',
+            say: 'Três peças menores contra o rei: dê o xeque-mate.',
+            fen: 'rn1q1bnr/ppp1kB1p/3p2p1/4N3/4P3/2N5/PPPP1PPP/R1BbK2R w KQ - 1 7',
+          },
+        ],
+      },
+      {
         id: 'lendaria-morphy-opera',
         title: 'Morphy na ópera (Paris, 1858)',
         steps: [
@@ -1147,6 +1182,86 @@ export const COURSE_MODULES: CourseModule[] = [
             kind: 'mate',
             say: 'Agora o bispo dá xeque-mate.',
             fen: 'r1bk3r/p2p1pNp/n2B1n2/1p1NP2P/6P1/3P4/P1P1K3/q5b1 w - - 0 23',
+          },
+        ],
+      },
+      {
+        id: 'lendaria-reti',
+        title: 'Réti contra Tartakower (Viena, 1910)',
+        steps: [
+          {
+            kind: 'info',
+            say: 'Richard Réti, de brancas, venceu em onze lances. A partida mostra o poder do xeque duplo. Você faz os lances de Réti.',
+          },
+          {
+            kind: 'info',
+            say: 'Depois de 1.e4 c6 2.d4 d5 3.Cc3 dxe4 4.Cxe4 Cf6 5.Dd3 e5 6.dxe5 Da5+ 7.Bd2 Dxe5, as brancas têm a dama e a torre prontas na coluna d.',
+            fen: 'rnb1kb1r/pp3ppp/2p2n2/4q3/4N3/3Q4/PPPB1PPP/R3KBNR w KQkq - 0 8',
+          },
+          {
+            kind: 'move',
+            say: 'Faça o roque grande e ponha a torre na coluna aberta, de frente para o rei preto.',
+            fen: 'rnb1kb1r/pp3ppp/2p2n2/4q3/4N3/3Q4/PPPB1PPP/R3KBNR w KQkq - 0 8',
+            accept: ['e1c1'],
+            reply: 'f6e4',
+          },
+          {
+            kind: 'move',
+            say: 'O cavalo preto capturou o seu. Sacrifique a dama em d8 com xeque.',
+            fen: 'rnb1kb1r/pp3ppp/2p5/4q3/4n3/3Q4/PPPB1PPP/2KR1BNR w kq - 0 9',
+            accept: ['d3d8'],
+            reply: 'e8d8',
+          },
+          {
+            kind: 'move',
+            say: 'Xeque duplo: o bispo sai para g5, dá xeque e revela o xeque da torre de d1.',
+            fen: 'rnbk1b1r/pp3ppp/2p5/4q3/4n3/8/PPPB1PPP/2KR1BNR w - - 0 10',
+            accept: ['d2g5'],
+            reply: 'd8c7',
+          },
+          {
+            kind: 'mate',
+            say: 'Termine com o bispo: xeque-mate.',
+            fen: 'rnb2b1r/ppk2ppp/2p5/4q1B1/4n3/8/PPP2PPP/2KR1BNR w - - 2 11',
+          },
+        ],
+      },
+      {
+        id: 'lendaria-lasker',
+        title: 'A caça ao rei (Londres, 1912)',
+        steps: [
+          {
+            kind: 'info',
+            say: 'Edward Lasker, de brancas, sacrificou a dama e levou o rei preto de g8 até g1 com xeques. Você faz os lances de Lasker.',
+          },
+          {
+            kind: 'info',
+            say: 'Depois de 1.d4 e6 2.Cf3 f5 3.Cc3 Cf6 4.Bg5 Be7 5.Bxf6 Bxf6 6.e4 fxe4 7.Cxe4 b6 8.Ce5 O-O 9.Bd3 Bb7 10.Dh5 De7, todas as peças brancas miram o roque preto.',
+            fen: 'rn3rk1/pbppq1pp/1p2pb2/4N2Q/3PN3/3B4/PPP2PPP/R3K2R w KQ - 6 11',
+          },
+          {
+            kind: 'move',
+            say: 'Sacrifique a dama em h7 com xeque.',
+            fen: 'rn3rk1/pbppq1pp/1p2pb2/4N2Q/3PN3/3B4/PPP2PPP/R3K2R w KQ - 6 11',
+            accept: ['h5h7'],
+            reply: 'g8h7',
+          },
+          {
+            kind: 'move',
+            say: 'Xeque descoberto: o cavalo captura em f6 e o bispo de d3 dá xeque.',
+            fen: 'rn3r2/pbppq1pk/1p2pb2/4N3/3PN3/3B4/PPP2PPP/R3K2R w KQ - 0 12',
+            accept: ['e4f6'],
+            reply: 'h7h6',
+          },
+          {
+            kind: 'info',
+            say: 'Seguiram 13.Ceg4+ Rg5 14.h4+ Rf4 15.g3+ Rf3 16.Be2+ Rg2 17.Th2+ Rg1. O rei preto atravessou o tabuleiro inteiro.',
+            fen: 'rn3r2/pbppq1p1/1p2pN2/8/3P2NP/6P1/PPP1BP1R/R3K1k1 w Q - 5 18',
+          },
+          {
+            kind: 'mate',
+            say: 'O rei preto está na sua primeira fileira. Dê o xeque-mate.',
+            fen: 'rn3r2/pbppq1p1/1p2pN2/8/3P2NP/6P1/PPP1BP1R/R3K1k1 w Q - 5 18',
           },
         ],
       },
