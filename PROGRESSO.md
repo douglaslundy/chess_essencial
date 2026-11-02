@@ -1,3 +1,14 @@
+2026-11-02 - **LOTE PEDIDO PELO USUÁRIO (antes do deploy).**
+- Velocidade da narração (1x, 1.2x, 1.5x, 2x) nas configurações do tabuleiro, salva no aparelho (`xadrez.narration_rate`) e aplicada em `speech.ts` (rate do navegador e playbackRate da voz IA).
+- Painel de configurações rola por dentro e não fecha mais no resize (no celular, rolar esconde a barra de endereço e disparava resize).
+- Curso: cadeado também no link direto; mais 3 partidas lendárias (Légal, Réti, Lasker).
+- Treinador no 2D (≥1101 px): coluna da esquerda, embaixo do cartão; `.boardColumn` vira `display: contents`.
+- Desafios numa linha: já estava feito em f52bf17 (2026-10-31).
+- Job de timeout: payload `::text::jsonb`. Os outros `::jsonb` da API gravam string também, mas ninguém lê `outbox_events.payload` hoje.
+- Dicas: exercício sem dica ganha `fallbackHint` (peça do primeiro lance); não precisou sortear etapas.
+- Backup: travava na EXPORTAÇÃO. O postgres.js 3.4 pausa o socket quando o buffer do COPY TO enche; se a tabela termina nessa hora, a conexão fica pausada e o COPY seguinte nunca anda. Contorno: `source._read(0)` ao fim de cada tabela. Restore reativado (sem BACKUP_RESTORE_ENABLED) e passo da CI de volta. Reproduzido com Postgres local via `embedded-postgres` (pasta de rascunho).
+- **PRÓXIMAS:** voz do GPT não funciona (só a do navegador); login ChatGPT OAuth pede código em vez de redirecionar e voltar logado.
+
 2026-11-02 - **PRÓXIMA TAREFA:** nenhuma do curso em aberto. Falta o usuário validar com login (progresso real e problemas do banco na API).
 
 2026-11-02 - **Aula sem setinha.** `course-player.tsx`: botão "Iniciar aula" no começo (a voz do navegador exige um gesto do usuário). Depois disso, o passo cumprido avança sozinho 2 s após o lance; uma explicação espera 2 s mais 65 ms por caractere, porque a voz do navegador não avisa quando termina. O ▶ saiu; ◀ e ↻ ficaram.

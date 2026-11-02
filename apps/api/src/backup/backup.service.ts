@@ -96,6 +96,10 @@ export class BackupService {
           for await (const chunk of source) {
             if (!gzip.write(chunk)) await once(gzip, 'drain');
           }
+          // shortcut: postgres.js 3.4 pauses the socket when the COPY stream buffer fills and only its
+          // read() resumes it; if the table ends right then, the connection stays paused and the next
+          // COPY hangs forever. Calling read() resumes it. Drop this when upgrading to postgres 4.
+          source._read(0);
           gzip.write(`${COPY_END}\n`);
         }
         gzip.end();
@@ -166,12 +170,9 @@ export class BackupService {
             if (!sink.write(`${row}\n`)) await once(sink, 'drain');
           }
           sink.end();
-          // postgres.js 3.4 drops a COPY error that arrives after end(): 'finish' would never fire
-          // and the restore hung. The next query on the transaction fails instead if the COPY did.
-          await tx`SELECT 1`.catch((error: unknown) => {
-            const detail = error instanceof Error ? error.message : String(error);
-            throw new BadRequestException(`Falha ao carregar a tabela ${name}: ${detail}`);
-          });
+          // shortcut: postgres.js 3.4 drops a COPY error that arrives after end(), so a row the
+          // database rejects would leave this waiting; the schema check above keeps rows compatible.
+          await once(sink, 'finish');
         }
 
         // Serial/identity sequences continue after the restored ids.

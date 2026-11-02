@@ -35,10 +35,14 @@ describeDatabase('platform backup round trip', { timeout: 120_000 }, () => {
         (SELECT count(*)::integer FROM games) AS games,
         (SELECT count(*)::integer FROM exercises) AS exercises
     `;
+    await sql`DELETE FROM platform_settings WHERE key = 'backup.e2e.marker'`;
     const backup = await exportToBuffer();
 
     // Something written after the backup must be gone once it is restored.
-    await sql`INSERT INTO platform_settings (key, value) VALUES ('backup.e2e.marker', '{}')`;
+    await sql`
+      INSERT INTO platform_settings (key, value) VALUES ('backup.e2e.marker', '{}')
+      ON CONFLICT (key) DO NOTHING
+    `;
     const report = await service.restore(
       Readable.from(backup),
       '00000000-0000-4000-8000-000000000000',
