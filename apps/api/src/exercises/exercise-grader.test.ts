@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { gradePlayedMoves } from './exercise-grader.js';
+import { fallbackHint, gradePlayedMoves } from './exercise-grader.js';
 
 describe('gradePlayedMoves', () => {
   it('solves a single-move line', () => {
@@ -47,5 +47,18 @@ describe('gradePlayedMoves', () => {
 
   it('is case-insensitive and trims moves', () => {
     expect(gradePlayedMoves([['E1E8']], [' e1e8 '])).toMatchObject({ status: 'solved' });
+  });
+});
+
+describe('fallbackHint', () => {
+  it('names the piece of the first solution move', () => {
+    const fen = 'r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 2 3';
+    expect(fallbackHint(fen, [['h5f7']])).toBe('Comece com a dama que está em h5.');
+    expect(fallbackHint(fen, [['c4f7', 'e8f7']])).toBe('Comece com o bispo que está em c4.');
+  });
+
+  it('gives no hint without a usable first move', () => {
+    expect(fallbackHint('8/8/8/8/8/8/8/8 w - - 0 1', [['e2e4']])).toBeNull();
+    expect(fallbackHint('8/8/8/8/8/8/8/8 w - - 0 1', [])).toBeNull();
   });
 });

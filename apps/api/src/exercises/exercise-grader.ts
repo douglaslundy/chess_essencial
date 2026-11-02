@@ -47,3 +47,29 @@ export function gradePlayedMoves(solutionLines: string[][], playedMoves: string[
     movesConfirmed: played.length,
   };
 }
+
+const PIECE_NAMES: Record<string, string> = {
+  b: 'o bispo',
+  k: 'o rei',
+  n: 'o cavalo',
+  p: 'o peão',
+  q: 'a dama',
+  r: 'a torre',
+};
+
+/** Hint for an exercise without registered hints: names the piece of the first solution move. */
+export function fallbackHint(fen: string, solutionLines: string[][]): string | null {
+  const from = solutionLines[0]?.[0]?.trim().toLowerCase().slice(0, 2);
+  if (!from || !/^[a-h][1-8]$/.test(from)) return null;
+  const rank = fen.split(' ')[0]?.split('/')[8 - Number(from[1])];
+  if (!rank) return null;
+  let file = 0;
+  for (const char of rank) {
+    if (/\d/.test(char)) file += Number(char);
+    else if (file++ === from.charCodeAt(0) - 97) {
+      const piece = PIECE_NAMES[char.toLowerCase()];
+      return piece ? `Comece com ${piece} que está em ${from}.` : null;
+    }
+  }
+  return null;
+}

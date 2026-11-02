@@ -14,7 +14,7 @@ import {
 
 import { DatabaseService } from '../database/database.service.js';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service.js';
-import { gradePlayedMoves } from './exercise-grader.js';
+import { fallbackHint, gradePlayedMoves } from './exercise-grader.js';
 
 type ExerciseRow = {
   answer_format: 'free_text' | 'move_sequence';
@@ -138,7 +138,7 @@ export class ExercisesRepository {
     const rows = await sql<ExerciseRow[]>`
       SELECT e.id, e.source_number, e.module_number, e.chapter_number, e.title, e.prompt_md,
         COALESCE(e.import_metadata->>'answerFormat', 'move_sequence') AS answer_format, e.difficulty, e.category, e.fen, e.side_to_move, e.tags, e.position_type,
-        jsonb_array_length(e.hints) AS hints_available,
+        GREATEST(jsonb_array_length(e.hints), LEAST(jsonb_array_length(e.solution_lines), 1)) AS hints_available,
         CASE WHEN e.source_pages IS NULL THEN '{}'::integer[]
           ELSE ARRAY(SELECT generate_series(lower(e.source_pages), upper(e.source_pages) - 1)) END AS source_pages
         FROM exercises e
@@ -276,7 +276,7 @@ export class ExercisesRepository {
     const [current] = await sql<ExerciseRow[]>`
       SELECT e.id, e.source_number, e.module_number, e.chapter_number, e.title, e.prompt_md,
         COALESCE(e.import_metadata->>'answerFormat', 'move_sequence') AS answer_format, e.difficulty, e.category, e.fen, e.side_to_move, e.tags, e.position_type,
-        jsonb_array_length(e.hints) AS hints_available,
+        GREATEST(jsonb_array_length(e.hints), LEAST(jsonb_array_length(e.solution_lines), 1)) AS hints_available,
         CASE WHEN e.source_pages IS NULL THEN '{}'::integer[]
           ELSE ARRAY(SELECT generate_series(lower(e.source_pages), upper(e.source_pages) - 1)) END AS source_pages
         FROM exercise_training_items i JOIN exercises e ON e.id = i.exercise_id
@@ -327,7 +327,7 @@ export class ExercisesRepository {
     const [row] = await sql<ExerciseRow[]>`
       SELECT e.id, e.source_number, e.module_number, e.chapter_number, e.title, e.prompt_md,
         COALESCE(e.import_metadata->>'answerFormat', 'move_sequence') AS answer_format, e.difficulty, e.category, e.fen, e.side_to_move, e.tags, e.position_type,
-        jsonb_array_length(e.hints) AS hints_available,
+        GREATEST(jsonb_array_length(e.hints), LEAST(jsonb_array_length(e.solution_lines), 1)) AS hints_available,
         CASE WHEN e.source_pages IS NULL THEN '{}'::integer[]
           ELSE ARRAY(SELECT generate_series(lower(e.source_pages), upper(e.source_pages) - 1)) END AS source_pages
         FROM exercises e
@@ -398,19 +398,31 @@ export class ExercisesRepository {
         'Você atingiu o limite diário de dicas do seu plano. Volte amanhã ou assine um plano com mais acesso.',
       );
     const sql = this.database.client;
-    const [row] = await sql<{ hints: string[]; hints_used: number }[]>`
+    const [row] = await sql<
+      { fen: string | null; hints: string[]; hints_used: number; solution_lines: string[][] }[]
+    >`
       UPDATE exercise_training_items i SET hints_used = i.hints_used + 1
         FROM exercise_training_sessions s, exercises e
        WHERE i.session_id = ${sessionId} AND s.id = i.session_id AND s.user_id = ${userId}
          AND s.status = 'started' AND i.position = s.current_position AND e.id = i.exercise_id
-         AND i.hints_used < jsonb_array_length(e.hints)
-       RETURNING e.hints, i.hints_used
+         AND i.hints_used < GREATEST(
+           jsonb_array_length(e.hints), LEAST(jsonb_array_length(e.solution_lines), 1)
+         )
+       RETURNING e.fen, e.hints, i.hints_used, e.solution_lines
     `;
     if (!row) throw new NotFoundException('Nenhuma dica disponível para o exercício atual');
+    // No registered hints: the one hint is generated from the first solution move.
+    const hints =
+      row.hints.length > 0
+        ? row.hints
+        : [
+            fallbackHint(row.fen ?? '', row.solution_lines) ??
+              'Procure primeiro os lances forçados: xeques, capturas e ameaças.',
+          ];
     return {
-      hint: row.hints[row.hints_used - 1]!,
+      hint: hints[row.hints_used - 1]!,
       hintNumber: row.hints_used,
-      remaining: row.hints.length - row.hints_used,
+      remaining: hints.length - row.hints_used,
     };
   }
 
