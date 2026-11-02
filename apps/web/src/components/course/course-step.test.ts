@@ -2,7 +2,7 @@ import { Chess } from 'chess.js';
 import { describe, expect, it } from 'vitest';
 
 import { COURSE_ACTIVITIES, findActivity, isUnlocked } from './course-content';
-import { applyCourseMove, initialStepState, type StepState } from './course-step';
+import { applyCourseMove, defenderReply, initialStepState, type StepState } from './course-step';
 import type { CourseStep } from './course-types';
 
 const play = (step: CourseStep, ...ucis: string[]) =>
@@ -71,6 +71,37 @@ describe('course steps', () => {
     expect(play(step, 'a1a8')!.status).toBe('done');
   });
 
+  it('checkmate: the defender answers, and the step restarts when out of moves', () => {
+    const step: CourseStep = {
+      kind: 'checkmate',
+      say: '',
+      fen: '7k/8/8/6K1/8/8/8/Q7 w - - 0 1',
+      maxMoves: 2,
+    };
+    const after = play(step, 'g5g6')!;
+    expect(after.status).toBe('playing');
+    expect(after.lastMove).toEqual({ from: 'h8', to: 'g8' });
+    expect(applyCourseMove(step, after, 'a1a8')!.status).toBe('done');
+    const reset = play(step, 'g5g6', 'a1a2')!;
+    expect(reset.fen).toBe(step.fen);
+    expect(reset.feedback).toMatch(/2 lances/);
+  });
+
+  it('checkmate: restarts on stalemate', () => {
+    const step: CourseStep = {
+      kind: 'checkmate',
+      say: '',
+      fen: 'k7/8/1K6/8/8/8/8/6Q1 w - - 0 1',
+      maxMoves: 3,
+    };
+    expect(play(step, 'g1h2')!.feedback).toMatch(/Afogou/);
+  });
+
+  it('defender grabs a loose piece before running to the center', () => {
+    const chess = new Chess('8/8/8/8/8/3k4/3R4/7K b - - 0 1');
+    expect(defenderReply(chess)).toEqual({ from: 'd3', to: 'd2' });
+  });
+
   it('mate: warns when the move stalemates', () => {
     const step: CourseStep = { kind: 'mate', say: '', fen: 'k7/8/1K6/8/8/8/8/6Q1 w - - 0 1' };
     expect(play(step, 'g1h2')!.feedback).toMatch(/Afogou/);
@@ -98,6 +129,26 @@ function minMovesForStars(fen: string, stars: string[], limit: number): number |
   }
   return null;
 }
+
+/** White moves that mate the course defender, or null (exhaustive, so keep depth small). */
+function mateLine(fen: string, depth: number): string[] | null {
+  for (const move of new Chess(fen).moves({ verbose: true })) {
+    if (move.captured === 'k') continue;
+    const chess = new Chess(move.after);
+    if (chess.isCheckmate()) return [move.lan];
+    if (depth === 1 || chess.isGameOver()) continue;
+    defenderReply(chess);
+    const rest = mateLine(chess.fen(), depth - 1);
+    if (rest) return [move.lan, ...rest];
+  }
+  return null;
+}
+
+/** Known lines for checkmate steps too deep to search in a unit test. */
+const CHECKMATE_LINES: Record<string, string[]> = {
+  '8/8/8/8/8/2k5/8/4K2Q w - - 0 1': ['h1d5', 'e1d2', 'd2c3', 'd5a8'],
+  '8/8/8/4k3/8/8/R7/1R4K1 w - - 0 1': ['a2a5', 'g1f2', 'f2e2', 'b1b4'],
+};
 
 describe('course content', () => {
   it('has unique activity ids that the API accepts', () => {
@@ -127,6 +178,12 @@ describe('course content', () => {
         }
         if (step.kind === 'move') {
           for (const uci of step.accept) expect(play(step, uci)?.status, label).toBe('done');
+        }
+        if (step.kind === 'checkmate') {
+          const line = CHECKMATE_LINES[step.fen] ?? mateLine(step.fen, Math.min(step.maxMoves, 2));
+          expect(line, label).not.toBeNull();
+          expect(line!.length, label).toBeLessThanOrEqual(step.maxMoves);
+          expect(play(step, ...line!)?.status, label).toBe('done');
         }
         if (step.kind === 'mate') {
           const chess = new Chess(step.fen);

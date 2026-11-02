@@ -468,6 +468,89 @@ export const COURSE_MODULES: CourseModule[] = [
       },
     ],
   },
+  {
+    id: 'mates-basicos',
+    level: 1,
+    title: 'Mates básicos',
+    activities: [
+      {
+        id: 'mate-dama',
+        title: 'Mate com dama e rei',
+        steps: [
+          {
+            kind: 'info',
+            say: 'Contra o rei sozinho, a dama precisa da ajuda do seu rei. A dama empurra o rei adversário para a borda, e o seu rei chega perto para fechar a saída. Cuidado para não afogar.',
+            fen: '7k/8/6K1/8/8/8/8/Q7 w - - 0 1',
+          },
+          {
+            kind: 'checkmate',
+            say: 'O rei preto já está na borda e o seu rei está perto. Dê o mate.',
+            fen: '7k/8/6K1/8/8/8/8/Q7 w - - 0 1',
+            maxMoves: 1,
+          },
+          {
+            kind: 'checkmate',
+            say: 'Primeiro aproxime o seu rei, depois dê o mate. Você tem dois lances.',
+            fen: '7k/8/8/6K1/8/8/8/Q7 w - - 0 1',
+            maxMoves: 2,
+          },
+          {
+            kind: 'checkmate',
+            say: 'Agora as pretas se defendem melhor. Feche o rei com a dama sem dar xeque à toa e traga o seu rei. Mate em até seis lances.',
+            fen: '8/8/8/8/8/2k5/8/4K2Q w - - 0 1',
+            maxMoves: 6,
+          },
+        ],
+      },
+      {
+        id: 'mate-torre',
+        title: 'Mate com torre e rei',
+        steps: [
+          {
+            kind: 'info',
+            say: 'Com a torre, o mate também é na borda. Os reis ficam frente a frente, e a torre dá o xeque pela fileira do rei adversário.',
+            fen: '7k/8/6K1/8/8/8/8/R7 w - - 0 1',
+            show: { from: 'a1', to: 'a8' },
+          },
+          {
+            kind: 'checkmate',
+            say: 'Dê o mate com a torre.',
+            fen: '7k/8/6K1/8/8/8/8/R7 w - - 0 1',
+            maxMoves: 1,
+          },
+          {
+            kind: 'checkmate',
+            say: 'O rei preto ainda tem casas. Faça um lance de espera com a torre e depois dê o mate.',
+            fen: '4k3/8/3K4/8/8/8/8/7R w - - 0 1',
+            maxMoves: 3,
+          },
+        ],
+      },
+      {
+        id: 'escadinha',
+        title: 'A escadinha',
+        steps: [
+          {
+            kind: 'info',
+            say: 'Duas torres dão mate sem ajuda do rei. Uma torre corta uma fileira e a outra dá xeque na fileira seguinte, subindo como uma escada.',
+            fen: '6k1/8/8/8/8/8/R7/1R4K1 w - - 0 1',
+          },
+          {
+            kind: 'checkmate',
+            say: 'Uma torre corta a sétima fileira, a outra dá o mate na oitava.',
+            fen: '6k1/8/8/8/8/8/R7/1R4K1 w - - 0 1',
+            maxMoves: 2,
+          },
+          {
+            kind: 'checkmate',
+            say: 'Suba a escada desde o meio do tabuleiro. Se o rei chegar perto de uma torre, leve-a para o outro lado.',
+            fen: '8/8/8/4k3/8/8/R7/1R4K1 w - - 0 1',
+            maxMoves: 6,
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 export const COURSE_ACTIVITIES: CourseActivity[] = COURSE_MODULES.flatMap(

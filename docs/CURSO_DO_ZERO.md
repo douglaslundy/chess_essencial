@@ -104,9 +104,10 @@ interface CourseModule {
 
 1. **CURSO-01:** tipos, player e o 1º módulo (torre e bispo, uns 10 passos) funcionando de ponta a ponta, com testes de validação de cada tipo de passo.
 2. **CURSO-02:** as outras etapas do nível 0: rainha, rei, cavalo, peão, posição inicial, roque, en passant, afogamento, captura, proteção, combate, valor, garfo, xeques e mate em 1.
-3. **CURSO-03:** mapa `/app/curso` com progresso (localStorage), cadeado por ordem e selo de concluído.
-4. **CURSO-04:** confirmar a licença dos estudos da "Prática". Depois, nível 1 (mates básicos e escadinha) com passos `mate`, mais o tipo `puzzle` puxando do banco por tema e rating.
-5. **CURSO-05 em diante:** níveis 2, 3 e 4, e o progresso no servidor (migração só com restic).
+3. **CURSO-03:** mapa `/app/curso` com progresso no servidor, cadeado por ordem e selo de concluído.
+4. **CURSO-04:** nível 1 (mates básicos e escadinha) com o passo `checkmate`, em que o aluno joga contra um defensor simples. Os termos da Lichess não dão licença pública para os estudos da "Prática" (o conteúdo continua dos autores), então todo o texto e as posições são próprios.
+5. **CURSO-04b:** passo `puzzle` puxando do banco por tema e rating. A correção é feita no servidor.
+6. **CURSO-05 em diante:** níveis 2, 3 e 4.
 
 Cada fase:
 

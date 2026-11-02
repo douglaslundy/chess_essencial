@@ -7,7 +7,8 @@ Plano completo: `docs/CURSO_DO_ZERO.md`. É independente do sistema antigo de cu
 - [x] **CURSO-01 (2026-11-01):** tipos `CourseStep`, `CourseActivity` e `CourseModule`, player `/app/curso/[atividade]` no esqueleto da partida, e o 1º módulo (torre e bispo) de ponta a ponta. Testes de validação de `info`, `stars`, `move` e `mate`.
 - [x] **CURSO-02:** as outras etapas do nível 0 (as 20 do "Aprenda" da Lichess, reescritas em pt-BR).
 - [x] **CURSO-03:** mapa de níveis em `/app/curso` com cadeado por ordem e selo de concluído. Já existem: lista simples, item "Curso" no menu e progresso no servidor (`/v1/course-trail/progress`).
-- [ ] **CURSO-04:** confirmar a licença dos estudos da "Prática" da Lichess. Depois, nível 1 (mates básicos e escadinha) e passo `puzzle` vindo do banco por tema e rating.
+- [x] **CURSO-04:** nível 1 com mates básicos (dama, torre e escadinha) e passo `checkmate` contra um defensor. A licença da "Prática" da Lichess não é livre, então o conteúdo é próprio.
+- [ ] **CURSO-04b:** passo `puzzle` vindo do banco por tema e rating, com correção no servidor (`/v1/exercises/:id/evaluate-line`).
 - [ ] **CURSO-05:** níveis 2, 3 e 4 (o progresso já está no servidor; backup dispensado pelo usuário).
 
 ## Correções pós-release de 2026-07-30 (concluídas)

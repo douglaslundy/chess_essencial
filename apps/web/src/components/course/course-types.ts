@@ -7,7 +7,9 @@ export type CourseStep =
   /** One accepted move (UCI); `reply` is the opponent answer played right after it. */
   | { kind: 'move'; say: string; fen: string; accept: string[]; reply?: string }
   /** Checkmate in one move. */
-  | { kind: 'mate'; say: string; fen: string };
+  | { kind: 'mate'; say: string; fen: string }
+  /** Checkmate within `maxMoves` against the course defender (course-step.ts). */
+  | { kind: 'checkmate'; say: string; fen: string; maxMoves: number };
 
 export interface CourseActivity {
   id: string;

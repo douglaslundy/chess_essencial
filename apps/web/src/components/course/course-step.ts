@@ -34,6 +34,24 @@ function sameSideToMove(fen: string, side: string): string {
   return fields.join(' ');
 }
 
+const PIECE_VALUE: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+
+/** Course defender: grabs the most valuable loose piece, otherwise runs its king to the center. */
+export function defenderReply(chess: Chess) {
+  let best = null;
+  let bestScore = -Infinity;
+  for (const move of chess.moves({ verbose: true })) {
+    const file = move.to.charCodeAt(0) - 97;
+    const rank = Number(move.to[1]) - 1;
+    const center = move.piece === 'k' ? -(Math.abs(file - 3.5) + Math.abs(rank - 3.5)) : 0;
+    const score = (move.captured ? PIECE_VALUE[move.captured]! * 100 : 0) + center;
+    if (score > bestScore) [best, bestScore] = [move, score];
+  }
+  if (!best) return null;
+  chess.move(best);
+  return { from: best.from, to: best.to };
+}
+
 /** Applies the student's move. Returns null for an illegal move (the board ignores it). */
 export function applyCourseMove(step: CourseStep, state: StepState, uci: string): StepState | null {
   if (step.kind === 'info' || state.status === 'done') return null;
@@ -82,6 +100,22 @@ export function applyCourseMove(step: CourseStep, state: StepState, uci: string)
       reply = { from: answer.from, to: answer.to };
     }
     return { ...state, fen: chess.fen(), feedback: null, lastMove: reply, moves, status: 'done' };
+  }
+
+  if (step.kind === 'checkmate') {
+    if (chess.isCheckmate()) {
+      return { ...state, fen: chess.fen(), feedback: null, lastMove, moves, status: 'done' };
+    }
+    const failure = chess.isStalemate()
+      ? 'Afogou! O rei não está em xeque e não tem lance: é empate. Recomeçando.'
+      : chess.isDraw()
+        ? 'A partida empatou. Recomeçando.'
+        : moves >= step.maxMoves
+          ? `Você tinha ${step.maxMoves} lances para dar o mate. Recomeçando.`
+          : null;
+    if (failure) return { ...initialStepState(step), feedback: failure };
+    const reply = defenderReply(chess);
+    return { ...state, fen: chess.fen(), feedback: null, lastMove: reply, moves };
   }
 
   // mate
