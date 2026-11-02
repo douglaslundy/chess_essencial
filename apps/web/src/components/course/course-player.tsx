@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { findActivity } from './course-content';
 import { CoursePuzzle } from './course-puzzle';
 import { applyCourseMove, initialStepState, type StepState } from './course-step';
+import type { CourseStep } from './course-types';
 import styles from './course.module.css';
 import { CoachCallout } from '@/components/coach/coach-callout';
 import { ChessBoard } from '@/components/game/chess-board';
@@ -15,7 +16,11 @@ import { usePieceTheme } from '@/lib/piece-theme';
 import { speak, stopSpeaking } from '@/lib/speech';
 import { useVoicePreference } from '@/lib/voice-preference';
 
-const DONE_SAY = 'Muito bem! Toque na setinha para seguir.';
+const DONE_SAY = 'Muito bem!';
+const NO_STEPS: CourseStep[] = [];
+const NEXT_DELAY_MS = 2000;
+// shortcut: browser speech has no end event here, so explanations wait an estimated reading time.
+const readingMs = (text: string) => NEXT_DELAY_MS + text.length * 65;
 
 export function CoursePlayer({ activityId }: { activityId: string }) {
   const found = findActivity(activityId);
@@ -26,6 +31,8 @@ export function CoursePlayer({ activityId }: { activityId: string }) {
     found ? initialStepState(found.activity.steps[0]!) : null,
   );
   const [audio, setAudio] = useState(true);
+  // The lesson waits for "Iniciar aula": browsers only speak after a user gesture.
+  const [started, setStarted] = useState(false);
   const [finished, setFinished] = useState(false);
   const [saveError, setSaveError] = useState('');
   const saved = useRef(false);
@@ -40,7 +47,7 @@ export function CoursePlayer({ activityId }: { activityId: string }) {
     [],
   );
 
-  const steps = found?.activity.steps ?? [];
+  const steps = found?.activity.steps ?? NO_STEPS;
   const step = steps[index];
   const last = index === steps.length - 1;
   const done = state?.status === 'done';
@@ -48,11 +55,33 @@ export function CoursePlayer({ activityId }: { activityId: string }) {
 
   // The coach speaks the current instruction only: a new step or a move cuts the previous speech.
   useEffect(() => {
-    if (!audio || !message) return;
+    if (!started || !audio || !message) return;
     void speak(speakableSquares(message), { interrupt: true, voiceName }).catch(
       () => void speak(speakableSquares(message), { interrupt: true }).catch(() => undefined),
     );
-  }, [audio, message, voiceName, index]);
+  }, [started, audio, message, voiceName, index]);
+
+  const goTo = useCallback(
+    (next: number) => {
+      const target = steps[next];
+      if (!target) return;
+      stopSpeaking();
+      setIndex(next);
+      setRound((value) => value + 1);
+      setState(initialStepState(target));
+    },
+    [steps],
+  );
+
+  // A finished step moves on by itself: 2 s after a move, or after the reading time of an explanation.
+  useEffect(() => {
+    if (!started || !done || finished || !step) return;
+    const timer = window.setTimeout(
+      () => (last ? setFinished(true) : goTo(index + 1)),
+      step.kind === 'info' ? readingMs(step.say) : NEXT_DELAY_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [started, done, finished, step, last, index, goTo]);
 
   useEffect(() => {
     if (!audio) stopSpeaking();
@@ -80,21 +109,6 @@ export function CoursePlayer({ activityId }: { activityId: string }) {
         </Link>
       </main>
     );
-  }
-
-  function goTo(next: number) {
-    const target = steps[next];
-    if (!target) return;
-    stopSpeaking();
-    setIndex(next);
-    setRound((value) => value + 1);
-    setState(initialStepState(target));
-  }
-
-  function advance() {
-    if (!done) return;
-    if (last) setFinished(true);
-    else goTo(index + 1);
   }
 
   function onMove(uci: string) {
@@ -128,7 +142,7 @@ export function CoursePlayer({ activityId }: { activityId: string }) {
             />
           ) : (
             <ChessBoard
-              disabled={done}
+              disabled={done || !started}
               fen={state.fen}
               hint={step.kind === 'info' ? step.show : undefined}
               lastMove={state.lastMove ?? undefined}
@@ -140,33 +154,31 @@ export function CoursePlayer({ activityId }: { activityId: string }) {
             />
           )}
           <div aria-label="Comandos do curso" className="historyControls" role="group">
-            <button
-              aria-label="Passo anterior"
-              disabled={index === 0}
-              onClick={() => goTo(index - 1)}
-              type="button"
-            >
-              ◀
-            </button>
-            <button
-              aria-label="Refazer o passo"
-              disabled={step.kind === 'info'}
-              onClick={() => goTo(index)}
-              title="Refazer o passo"
-              type="button"
-            >
-              ↻
-            </button>
-            <button
-              aria-label={last ? 'Concluir atividade' : 'Próximo passo'}
-              className={done ? styles.ready : undefined}
-              disabled={!done}
-              onClick={advance}
-              title={done ? 'Próximo' : 'Cumpra o passo para avançar'}
-              type="button"
-            >
-              ▶
-            </button>
+            {started ? (
+              <>
+                <button
+                  aria-label="Passo anterior"
+                  disabled={index === 0}
+                  onClick={() => goTo(index - 1)}
+                  type="button"
+                >
+                  ◀
+                </button>
+                <button
+                  aria-label="Refazer o passo"
+                  disabled={step.kind === 'info'}
+                  onClick={() => goTo(index)}
+                  title="Refazer o passo"
+                  type="button"
+                >
+                  ↻
+                </button>
+              </>
+            ) : (
+              <button className={styles.ready} onClick={() => setStarted(true)} type="button">
+                Iniciar aula
+              </button>
+            )}
             <button
               aria-label={audio ? 'Desligar voz' : 'Ligar voz'}
               aria-pressed={audio}
