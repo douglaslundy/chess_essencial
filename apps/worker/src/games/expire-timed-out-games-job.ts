@@ -148,7 +148,8 @@ async function expireGame(sql: Sql, gameId: string): Promise<boolean> {
         'game',
         ${gameId},
         'game.finished',
-        ${JSON.stringify({ gameId, result, termination: 'timeout' })}::jsonb
+        -- ::text::jsonb: a bare ::jsonb parameter is serialized again by postgres.js (stored a JSON string).
+        ${JSON.stringify({ gameId, result, termination: 'timeout' })}::text::jsonb
       )
     `;
     const pgn = rules.pgn();
