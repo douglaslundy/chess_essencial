@@ -265,7 +265,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
               <tr>
                 <th scope="col">Jogadores</th>
                 <th scope="col">
-                  <span>{summaryColumns[0]!.label}</span>
+                  <span className="reviewPlayerName">{summaryColumns[0]!.label}</span>
                   <Avatar
                     avatarUrl={summaryColumns[0]!.avatarUrl}
                     name={summaryColumns[0]!.label}
@@ -273,7 +273,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
                 </th>
                 <td aria-hidden="true" />
                 <th scope="col">
-                  <span>{summaryColumns[1]!.label}</span>
+                  <span className="reviewPlayerName">{summaryColumns[1]!.label}</span>
                   <Avatar
                     avatarUrl={summaryColumns[1]!.avatarUrl}
                     name={summaryColumns[1]!.label}

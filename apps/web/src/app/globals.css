@@ -2617,7 +2617,7 @@ a.primaryButton {
   color: var(--text);
   font-weight: 700;
 }
-.reviewQualityTable thead th > span {
+.reviewQualityTable .reviewPlayerName {
   display: block;
   margin-bottom: 0.35rem;
   overflow: hidden;
@@ -2629,7 +2629,7 @@ a.primaryButton {
   height: 4rem;
   margin: 0 auto;
   border: 3px solid var(--border-strong);
-  border-radius: 10px;
+  border-radius: 50%;
   font-size: 1rem;
 }
 .reviewQualityTable thead th:nth-child(2) .userAvatar {
