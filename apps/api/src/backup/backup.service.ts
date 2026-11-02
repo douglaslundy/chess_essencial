@@ -166,7 +166,12 @@ export class BackupService {
             if (!sink.write(`${row}\n`)) await once(sink, 'drain');
           }
           sink.end();
-          await once(sink, 'finish');
+          // postgres.js 3.4 drops a COPY error that arrives after end(): 'finish' would never fire
+          // and the restore hung. The next query on the transaction fails instead if the COPY did.
+          await tx`SELECT 1`.catch((error: unknown) => {
+            const detail = error instanceof Error ? error.message : String(error);
+            throw new BadRequestException(`Falha ao carregar a tabela ${name}: ${detail}`);
+          });
         }
 
         // Serial/identity sequences continue after the restored ids.
