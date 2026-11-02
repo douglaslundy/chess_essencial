@@ -20,6 +20,7 @@ import { useVoicePreference } from '@/lib/voice-preference';
 
 const POLL_MS = 4000;
 const AUTOPLAY_MS = 3500;
+const AUTOPLAY_AFTER_SPEECH_MS = 1000;
 const RESULT_LABEL: Record<string, string> = {
   '1-0': 'Vitória das brancas',
   '0-1': 'Vitória das pretas',
@@ -60,6 +61,8 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
   const [message, setMessage] = useState('Carregando partida…');
   const [requesting, setRequesting] = useState(false);
   const [audioNotice, setAudioNotice] = useState('');
+  // Ply whose narration finished: auto-play waits for it before the next move.
+  const [spokenPly, setSpokenPly] = useState(-1);
   const [autoRequested, setAutoRequested] = useState(false);
   const [verdictClosed, setVerdictClosed] = useState(false);
 
@@ -142,11 +145,19 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
   // Narration: speaks the stored summary whenever the move changes (or audio is turned on).
   useEffect(() => {
     if (!audio || ply === 0) return;
+    let live = true;
+    const onEnd = () => live && setSpokenPly(ply);
+    // shortcut: a voice that never reports its end would stop auto-play, so a cap moves on.
+    const cap = setTimeout(onEnd, narration.length * 200 + 10_000);
     // The AI voice can fail (no key, quota, autoplay block); the browser voice keeps the narration going.
-    speak(narration, { interrupt: true, voiceName }).catch(() => {
+    speak(narration, { interrupt: true, onEnd, voiceName }).catch(() => {
       setAudioNotice('A voz por IA falhou; usando a voz do navegador.');
-      void speak(narration, { interrupt: true }).catch(() => undefined);
+      void speak(narration, { interrupt: true, onEnd }).catch(() => undefined);
     });
+    return () => {
+      live = false;
+      clearTimeout(cap);
+    };
   }, [audio, narration, ply, voiceName]);
 
   useEffect(() => {
@@ -155,22 +166,24 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
   }, [audio]);
 
   // Auto-play: advances after the narration ends (or after a fixed pause without audio).
+  const narrationDone = !audio || ply === 0 || spokenPly === ply;
   useEffect(() => {
     if (!playing) return;
     if (ply >= total) {
       queueMicrotask(() => setPlaying(false));
       return;
     }
+    if (!narrationDone) return;
     let cancelled = false;
     const advance = () => {
       if (!cancelled) setPly((current) => Math.min(current + 1, total));
     };
-    const timer = setTimeout(advance, AUTOPLAY_MS);
+    const timer = setTimeout(advance, audio && ply > 0 ? AUTOPLAY_AFTER_SPEECH_MS : AUTOPLAY_MS);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [playing, ply, total]);
+  }, [audio, narrationDone, playing, ply, total]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {

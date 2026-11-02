@@ -113,6 +113,47 @@ describe('speak', () => {
     expect(synth.speak).toHaveBeenCalledTimes(1);
   });
 
+  it('speaks one utterance per sentence and reports the end of the last one only', async () => {
+    const synth = installFakeSynth(true);
+    const { speak } = await import('./speech');
+    const onEnd = vi.fn();
+
+    await speak('Primeira frase. Segunda frase!', { onEnd });
+
+    const utterances = synth.speak.mock.calls.map(
+      (call) => call[0] as { addEventListener: ReturnType<typeof vi.fn>; text: string },
+    );
+    expect(utterances.map((utterance) => utterance.text)).toEqual([
+      'Primeira frase.',
+      'Segunda frase!',
+    ]);
+    const fireEnd = (utterance: (typeof utterances)[number]) =>
+      utterance.addEventListener.mock.calls
+        .filter(([type]) => type === 'end')
+        .forEach(([, handler]) => (handler as () => void)());
+    fireEnd(utterances[0]!);
+    expect(onEnd).not.toHaveBeenCalled();
+    fireEnd(utterances[1]!);
+    expect(onEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not report the end of speech cut by stopSpeaking', async () => {
+    const synth = installFakeSynth(true);
+    const { speak, stopSpeaking } = await import('./speech');
+    const onEnd = vi.fn();
+
+    await speak('Frase cortada.', { onEnd });
+    stopSpeaking();
+    const utterance = synth.speak.mock.calls[0]?.[0] as {
+      addEventListener: ReturnType<typeof vi.fn>;
+    };
+    utterance.addEventListener.mock.calls
+      .filter(([type]) => type === 'end')
+      .forEach(([, handler]) => (handler as () => void)());
+
+    expect(onEnd).not.toHaveBeenCalled();
+  });
+
   it('does nothing when the Web Speech API is unavailable', async () => {
     Reflect.deleteProperty(window, 'speechSynthesis');
     const { speak } = await import('./speech');

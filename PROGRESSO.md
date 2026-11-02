@@ -1,3 +1,9 @@
+2026-11-02 - **Fala completa + mapa do curso.**
+- Fala cortada: a aula avançava por tempo estimado (65 ms/caractere) e o `goTo` cortava a fala. Agora `speak()` aceita `onEnd` (fim real; não dispara se cortada por `stopSpeaking`) e o passo só avança 2 s depois do fim da fala. Teto de segurança: 3x o tempo de leitura + 10 s.
+- Voz do navegador: uma utterance por frase (o Chrome corta uma utterance única depois de ~15 s).
+- Mesmo erro na Biblioteca (auto-play avançava a cada 3,5 s cortando a narração): agora espera o `onEnd` + 1 s. Partida com Treinador: a narração IA que chega depois entra na fila em vez de cortar a dica instantânea. Revisão e Jornada só cortam com ação do jogador: sem mudança.
+- Mapa do curso: nível/módulo concluído vira `<details>` fechado (uma linha com seta); bloco "Continuar de onde parou" no topo aponta a primeira atividade liberada e não concluída.
+
 2026-11-02 - **LOTE PEDIDO PELO USUÁRIO (antes do deploy).**
 - Velocidade da narração (1x, 1.2x, 1.5x, 2x) nas configurações do tabuleiro, salva no aparelho (`xadrez.narration_rate`) e aplicada em `speech.ts` (rate do navegador e playbackRate da voz IA).
 - Painel de configurações rola por dentro e não fecha mais no resize (no celular, rolar esconde a barra de endereço e disparava resize).

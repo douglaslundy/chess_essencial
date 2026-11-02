@@ -450,11 +450,11 @@ export function GameRoom({ gameId }: { gameId: string }) {
   // The AI voice can fail (no OpenAI key, quota, autoplay block); the browser voice keeps
   // the Treinador audible instead of silently showing only text.
   const speakCoach = useCallback(
-    (text: string) => {
+    (text: string, interrupt = true) => {
       // interrupt: the Treinador always speaks about the current position, never a queued old tip.
-      speak(text, { interrupt: true, voiceName }).catch(() => {
+      speak(text, { interrupt, voiceName }).catch(() => {
         setMessage('A voz por IA falhou; o Treinador está usando a voz do navegador.');
-        void speak(text, { interrupt: true }).catch(() => undefined);
+        void speak(text, { interrupt }).catch(() => undefined);
       });
     },
     [voiceName],
@@ -494,7 +494,8 @@ export function GameRoom({ gameId }: { gameId: string }) {
       .then((result) => {
         if (!result.narrative || narrationGenerationRef.current !== generation) return;
         setCoachLine({ fen: state.currentFen, text: result.narrative });
-        speakCoach(speakableSquares(result.narrative));
+        // Queued: the richer tip follows the instant one instead of cutting it mid-sentence.
+        speakCoach(speakableSquares(result.narrative), false);
       })
       .catch(() => undefined);
   }, [coachSuggestion, gameId, isDemo, muted, speakCoach, state.currentFen]);
@@ -526,7 +527,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
       .then((result) => {
         if (!result.narrative || narrationGenerationRef.current !== generation) return;
         setCoachLine({ fen: state.currentFen, text: result.narrative });
-        speakCoach(speakableSquares(result.narrative));
+        speakCoach(speakableSquares(result.narrative), false);
       })
       .catch(() => undefined);
   }, [coachSuggestion, gameId, isDemo, muted, pendingCoachMove, speakCoach, state.currentFen]);

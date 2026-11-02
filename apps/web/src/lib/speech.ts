@@ -82,6 +82,8 @@ export interface SpeakOptions {
   /** Cancels queued and ongoing narration before playing this message. */
   interrupt?: boolean;
   lang?: string;
+  /** Called when the message finished playing (not when it was cut by stopSpeaking). */
+  onEnd?: () => void;
   /** SpeechSynthesisVoice.name or an AI voice id. */
   voiceName?: string | null;
 }
@@ -137,18 +139,28 @@ async function speakWithBrowser(text: string, options: SpeakOptions): Promise<vo
   const generation = queueGeneration;
   await ensureVoicesLoaded(synth);
   if (generation !== queueGeneration) return;
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = options.lang ?? 'pt-BR';
-  utterance.rate = getNarrationRate();
-  if (options.voiceName) {
-    const voice = synth.getVoices().find((candidate) => candidate.name === options.voiceName);
+  const voice = options.voiceName
+    ? synth.getVoices().find((candidate) => candidate.name === options.voiceName)
+    : undefined;
+  // One utterance per sentence: Chrome silently cuts a single utterance after ~15 s.
+  const sentences = text.split(/(?<=[.!?…])\s+/).filter(Boolean);
+  sentences.forEach((sentence, position) => {
+    const utterance = new SpeechSynthesisUtterance(sentence);
+    utterance.lang = options.lang ?? 'pt-BR';
+    utterance.rate = getNarrationRate();
     if (voice) utterance.voice = voice;
-  }
-  const release = () => activeUtterances.delete(utterance);
-  utterance.addEventListener('end', release, { once: true });
-  utterance.addEventListener('error', release, { once: true });
-  activeUtterances.add(utterance);
-  synth.speak(utterance);
+    const release = () => activeUtterances.delete(utterance);
+    utterance.addEventListener('end', release, { once: true });
+    utterance.addEventListener('error', release, { once: true });
+    if (position === sentences.length - 1 && options.onEnd) {
+      const onEnd = options.onEnd;
+      utterance.addEventListener('end', () => generation === queueGeneration && onEnd(), {
+        once: true,
+      });
+    }
+    activeUtterances.add(utterance);
+    synth.speak(utterance);
+  });
 }
 
 export async function speak(text: string, options: SpeakOptions = {}): Promise<void> {
@@ -159,6 +171,7 @@ export async function speak(text: string, options: SpeakOptions = {}): Promise<v
     const queued = audioQueue.then(async () => {
       if (generation !== queueGeneration) return;
       await speakWithAi(text, options.voiceName!, generation);
+      if (generation === queueGeneration) options.onEnd?.();
     });
     audioQueue = queued.catch(() => undefined);
     return queued;

@@ -55,13 +55,26 @@ export function CoursePlayer({ activityId }: { activityId: string }) {
   const done = state?.status === 'done';
   const message = state?.feedback ?? (done && step?.kind !== 'info' ? DONE_SAY : (step?.say ?? ''));
 
+  // Key of the last message whose speech ended: a finished step waits for it before moving on.
+  const [spoken, setSpoken] = useState('');
+  const speechKey = `${round}:${message}`;
+
   // The coach speaks the current instruction only: a new step or a move cuts the previous speech.
   useEffect(() => {
     if (!started || !audio || !message) return;
-    void speak(speakableSquares(message), { interrupt: true, voiceName }).catch(
-      () => void speak(speakableSquares(message), { interrupt: true }).catch(() => undefined),
+    let live = true;
+    const onEnd = () => live && setSpoken(speechKey);
+    // shortcut: a voice that never reports its end would freeze the lesson, so a generous cap moves on.
+    const cap = window.setTimeout(onEnd, readingMs(message) * 3 + 10_000);
+    void speak(speakableSquares(message), { interrupt: true, onEnd, voiceName }).catch(
+      () =>
+        void speak(speakableSquares(message), { interrupt: true, onEnd }).catch(() => undefined),
     );
-  }, [started, audio, message, voiceName, index]);
+    return () => {
+      live = false;
+      window.clearTimeout(cap);
+    };
+  }, [started, audio, message, voiceName, speechKey]);
 
   const goTo = useCallback(
     (next: number) => {
@@ -75,15 +88,17 @@ export function CoursePlayer({ activityId }: { activityId: string }) {
     [steps],
   );
 
-  // A finished step moves on by itself: 2 s after a move, or after the reading time of an explanation.
+  // A finished step moves on by itself 2 s after the coach finished speaking; without audio,
+  // after the reading time of an explanation.
+  const speechDone = !audio || !message || spoken === speechKey;
   useEffect(() => {
-    if (!started || !done || finished || !step) return;
+    if (!started || !done || finished || !step || !speechDone) return;
     const timer = window.setTimeout(
       () => (last ? setFinished(true) : goTo(index + 1)),
-      step.kind === 'info' ? readingMs(step.say) : NEXT_DELAY_MS,
+      !audio && step.kind === 'info' ? readingMs(step.say) : NEXT_DELAY_MS,
     );
     return () => window.clearTimeout(timer);
-  }, [started, done, finished, step, last, index, goTo]);
+  }, [started, done, finished, step, last, index, goTo, speechDone, audio]);
 
   useEffect(() => {
     if (!audio) stopSpeaking();
