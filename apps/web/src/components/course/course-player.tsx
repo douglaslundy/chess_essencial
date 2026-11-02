@@ -13,7 +13,7 @@ import { ChessBoard } from '@/components/game/chess-board';
 import { api } from '@/lib/api/client';
 import { speakableSquares } from '@/lib/notation';
 import { usePieceTheme } from '@/lib/piece-theme';
-import { getNarrationRate, speak, stopSpeaking } from '@/lib/speech';
+import { getNarrationRate, prefetchSpeech, speak, stopSpeaking } from '@/lib/speech';
 import { useVoicePreference } from '@/lib/voice-preference';
 
 const DONE_SAY = 'Muito bem!';
@@ -54,6 +54,15 @@ export function CoursePlayer({ activityId }: { activityId: string }) {
   const last = index === steps.length - 1;
   const done = state?.status === 'done';
   const message = state?.feedback ?? (done && step?.kind !== 'info' ? DONE_SAY : (step?.say ?? ''));
+
+  // The AI voice takes seconds to generate a new clip: prepare every step's narration as soon as
+  // the lesson opens, in step order, so speech starts at once.
+  useEffect(() => {
+    prefetchSpeech(
+      [...steps.map((item) => speakableSquares(item.say)), speakableSquares(DONE_SAY)],
+      voiceName,
+    );
+  }, [steps, voiceName]);
 
   // Key of the last message whose speech ended: a finished step waits for it before moving on.
   const [spoken, setSpoken] = useState('');

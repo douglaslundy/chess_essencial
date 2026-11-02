@@ -3337,6 +3337,10 @@ input:focus-visible {
   padding: 0.55rem 1.4rem;
   font-weight: 700;
   cursor: pointer;
+  /* "Revisar partida" is a link beside the Fechar button. */
+  display: inline-block;
+  margin: 0.25rem;
+  text-decoration: none;
 }
 
 /* Jornada de Aprendizagem */

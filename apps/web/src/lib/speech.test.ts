@@ -219,6 +219,35 @@ describe('speak', () => {
     expect(synth.speak).not.toHaveBeenCalled();
   });
 
+  it('plays a prefetched AI clip without asking the server again', async () => {
+    installFakeSynth(true);
+    localStorage.setItem('xadrez.access_token', 'token');
+    generateAiSpeech.mockResolvedValue(new Blob(['mp3'], { type: 'audio/mpeg' }));
+    class FakeAudio {
+      onended: (() => void) | null = null;
+      pause = vi.fn();
+      src = '';
+      play = () => {
+        queueMicrotask(() => this.onended?.());
+        return Promise.resolve();
+      };
+    }
+    vi.stubGlobal('Audio', FakeAudio);
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:openai');
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const { prefetchSpeech, speak } = await import('./speech');
+
+    prefetchSpeech(['Primeiro passo.', 'Segundo passo.'], 'openai:marin');
+    await vi.advanceTimersByTimeAsync(0);
+    await speak('Segundo passo.', { voiceName: 'openai:marin' });
+
+    expect(generateAiSpeech).toHaveBeenCalledTimes(2);
+    expect(generateAiSpeech.mock.calls.map((call) => call[0].text)).toEqual([
+      'Primeiro passo.',
+      'Segundo passo.',
+    ]);
+  });
+
   it('unlocks one shared audio element on the first tap and reuses it for AI clips (iOS)', async () => {
     installFakeSynth(true);
     localStorage.setItem('xadrez.access_token', 'token');

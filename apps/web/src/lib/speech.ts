@@ -94,20 +94,48 @@ function cleanupAudio(audio: HTMLAudioElement, url: string): void {
   URL.revokeObjectURL(url);
 }
 
+// AI clips fetched or being fetched, by voice + text: a prefetched clip plays without waiting
+// for the server to generate it. Small (a few KB each) and capped.
+const clipCache = new Map<string, Promise<Blob>>();
+const CLIP_CACHE_MAX = 60;
+
+function fetchClip(text: string, voiceName: string, token: string): Promise<Blob> {
+  const key = `${voiceName}|${text}`;
+  const cached = clipCache.get(key);
+  if (cached) return cached;
+  const clip = import('./api/client').then(({ api }) =>
+    api.generateAiSpeech({ text, voice: voiceName as 'openai:marin' | 'openai:cedar' }, token),
+  );
+  clip.catch(() => clipCache.delete(key));
+  clipCache.set(key, clip);
+  if (clipCache.size > CLIP_CACHE_MAX) clipCache.delete(clipCache.keys().next().value!);
+  return clip;
+}
+
+/**
+ * Generates AI voice clips ahead of time, one after another in the given order, so narration
+ * starts at once when they are spoken. Does nothing for browser voices.
+ */
+export function prefetchSpeech(texts: string[], voiceName: string | null | undefined): void {
+  if (typeof window === 'undefined' || !voiceName?.startsWith('openai:')) return;
+  const token = window.localStorage.getItem('xadrez.access_token');
+  if (!token) return;
+  void texts.reduce<Promise<unknown>>(
+    (chain, text) => chain.then(() => fetchClip(text, voiceName, token).catch(() => undefined)),
+    Promise.resolve(),
+  );
+}
+
 async function speakWithAi(text: string, voiceName: string, generation: number): Promise<void> {
   const token = window.localStorage.getItem('xadrez.access_token');
   if (!token) {
     throw new Error('Entre na sua conta para usar a voz por IA da OpenAI.');
   }
 
-  const { api } = await import('./api/client');
   let audio: HTMLAudioElement | null = null;
   let url: string | null = null;
   try {
-    const blob = await api.generateAiSpeech(
-      { text, voice: voiceName as 'openai:marin' | 'openai:cedar' },
-      token,
-    );
+    const blob = await fetchClip(text, voiceName, token);
     if (generation !== queueGeneration) return;
     url = URL.createObjectURL(blob);
     audio = audioElement();

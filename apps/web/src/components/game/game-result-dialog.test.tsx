@@ -22,6 +22,19 @@ function Harness() {
 }
 
 describe('GameResultDialog', () => {
+  it('links to the game review when a review page is given', () => {
+    render(
+      <GameResultDialog
+        onClose={() => undefined}
+        result={result}
+        reviewHref="/app/partidas/g1/revisao"
+      />,
+    );
+    expect(screen.getByRole('link', { name: 'Revisar partida' }).getAttribute('href')).toBe(
+      '/app/partidas/g1/revisao',
+    );
+  });
+
   it('focuses its close action when opened', () => {
     render(<Harness />);
     const trigger = screen.getByRole('button', { name: 'Abrir resultado' });

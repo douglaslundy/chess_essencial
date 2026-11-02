@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useId, useRef } from 'react';
 
 import { useDialogA11y } from '@/components/ui/dialog-a11y';
@@ -12,9 +13,12 @@ export type GameResult = {
 export function GameResultDialog({
   onClose,
   result,
+  reviewHref,
 }: {
   onClose: () => void;
   result: GameResult | null;
+  /** Review page of the finished game; omitted where there is nothing to review (demo). */
+  reviewHref?: string | undefined;
 }) {
   const titleId = useId();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -49,6 +53,11 @@ export function GameResultDialog({
               ? `Derrota ${result.reason}.`
               : `Empate ${result.reason}.`}
         </p>
+        {reviewHref ? (
+          <Link className="gameResultAction" href={reviewHref}>
+            Revisar partida
+          </Link>
+        ) : null}
         <button className="gameResultAction" onClick={onClose} ref={closeButtonRef} type="button">
           Fechar
         </button>

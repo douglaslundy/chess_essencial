@@ -1060,7 +1060,11 @@ export function GameRoom({ gameId }: { gameId: string }) {
         open={pendingCoachMove !== null}
         title="Tem certeza desse lance?"
       />
-      <GameResultDialog onClose={() => setResultModal(null)} result={resultModal} />
+      <GameResultDialog
+        onClose={() => setResultModal(null)}
+        result={resultModal}
+        reviewHref={isDemo ? undefined : `/app/partidas/${gameId}/revisao`}
+      />
     </main>
   );
 }
