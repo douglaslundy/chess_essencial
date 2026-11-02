@@ -1,7 +1,7 @@
 import { Chess } from 'chess.js';
 import { describe, expect, it } from 'vitest';
 
-import { COURSE_ACTIVITIES, findActivity } from './course-content';
+import { COURSE_ACTIVITIES, findActivity, isUnlocked } from './course-content';
 import { applyCourseMove, initialStepState, type StepState } from './course-step';
 import type { CourseStep } from './course-types';
 
@@ -105,6 +105,14 @@ describe('course content', () => {
     expect(new Set(ids).size).toBe(ids.length);
     for (const id of ids) expect(id).toMatch(/^[a-z0-9-]{1,80}$/);
     expect(findActivity(ids[0]!)?.next?.id).toBe(ids[1]);
+  });
+
+  it('unlocks activities in order', () => {
+    const [first, second, third] = COURSE_ACTIVITIES.map((activity) => activity.id);
+    expect(isUnlocked(first!, new Set())).toBe(true);
+    expect(isUnlocked(second!, new Set())).toBe(false);
+    expect(isUnlocked(second!, new Set([first!]))).toBe(true);
+    expect(isUnlocked(third!, new Set([first!]))).toBe(false);
   });
 
   it('every step is valid and solvable', () => {

@@ -25,16 +25,39 @@
   border-radius: 14px;
   background: var(--surface);
 }
-.module h2 {
+.level {
   display: grid;
+  gap: 0.75rem;
+}
+.level h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
   margin: 0;
+  color: var(--red-bright);
   font-size: var(--font-section-title);
 }
-.module h2 small {
-  color: var(--red-bright);
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.level h2 small {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.level h2 small[data-done] {
+  color: var(--gold);
+  font-weight: 700;
+}
+.module h3 {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1rem;
+}
+.module h3 small {
+  color: var(--success);
+  font-size: 0.8rem;
 }
 .module ol {
   display: grid;
@@ -43,7 +66,8 @@
   padding: 0;
   list-style: none;
 }
-.module a {
+.module a,
+.locked {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
@@ -59,7 +83,12 @@
 .module a:focus-visible {
   border-color: var(--gold);
 }
-.module a small {
+.locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.module a small,
+.locked small {
   color: var(--muted);
   font-weight: 500;
 }
