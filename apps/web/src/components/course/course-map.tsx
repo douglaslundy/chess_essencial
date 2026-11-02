@@ -26,7 +26,6 @@ export function CourseMap() {
   return (
     <main className={styles.page}>
       <h1>Curso do zero ao avançado</h1>
-      <p>O Treinador explica, você faz no tabuleiro e a setinha leva ao próximo passo.</p>
       {LEVELS.map((name, level) => {
         const modules = COURSE_MODULES.filter((module) => module.level === level);
         const activities = modules.flatMap((module) => module.activities);

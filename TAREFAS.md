@@ -10,7 +10,7 @@ Plano completo: `docs/CURSO_DO_ZERO.md`. É independente do sistema antigo de cu
 - [x] **CURSO-04:** nível 1 com mates básicos (dama, torre e escadinha) e passo `checkmate` contra um defensor. A licença da "Prática" da Lichess não é livre, então o conteúdo é próprio.
 - [x] **CURSO-04b:** passo `puzzle` vindo do banco por tema e rating, com correção no servidor (`/v1/exercises/:id/evaluate-line`).
 - [x] **CURSO-05:** níveis 2, 3 e 4: princípios de abertura (conteúdo próprio), mais táticas fundamentais, táticas avançadas, peões, finais e estratégia com problemas do banco por tema e faixa (`intermediate`, `advanced`, `expert`).
-- [ ] **CURSO-06:** teoria própria que o banco não cobre: finais de peões (oposição, regra do quadrado), finais de torre (Lucena, Philidor), planos de meio de jogo, estrutura de peões e partidas lendárias comentadas (coleção `legendary` da biblioteca). Provavelmente precisa de um passo de "assistir à partida" com comentários.
+- [x] **CURSO-06:** teoria própria que o banco não cobre: finais de peões (oposição, regra do quadrado), finais de torre (Lucena, Philidor), planos de meio de jogo, estrutura de peões e partidas lendárias comentadas (coleção `legendary` da biblioteca). Provavelmente precisa de um passo de "assistir à partida" com comentários.
 
 ## Correções pós-release de 2026-07-30 (concluídas)
 

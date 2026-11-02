@@ -761,6 +761,185 @@ export const COURSE_MODULES: CourseModule[] = [
     level: 3,
     title: 'Peões e finais',
     activities: [
+      {
+        id: 'final-quadrado',
+        title: 'A regra do quadrado',
+        steps: [
+          {
+            kind: 'info',
+            say: 'Rei contra peão: desenhe um quadrado do peão até a casa de promoção. Se o rei consegue entrar nesse quadrado, ele alcança o peão. O peão de a4 tem o quadrado a4–d4–d1–a1.',
+            fen: '7k/8/8/8/p7/8/8/4K3 w - - 0 1',
+            show: { from: 'a4', to: 'a1' },
+          },
+          {
+            kind: 'info',
+            say: 'Com o rei em f1, nenhum lance entra no quadrado: o peão vence a corrida. Com o rei em e1, d2 já fica dentro do quadrado.',
+            fen: '7k/8/8/8/p7/8/8/5K2 w - - 0 1',
+          },
+          {
+            kind: 'move',
+            say: 'Entre no quadrado: leve o rei para d2.',
+            fen: '7k/8/8/8/p7/8/8/4K3 w - - 0 1',
+            accept: ['e1d2'],
+            reply: 'a4a3',
+          },
+          {
+            kind: 'move',
+            say: 'Siga atrás do peão: rei para c2.',
+            fen: '7k/8/8/8/8/p7/3K4/8 w - - 0 2',
+            accept: ['d2c2'],
+            reply: 'a3a2',
+          },
+          {
+            kind: 'move',
+            say: 'Encoste no peão: rei para b2.',
+            fen: '7k/8/8/8/8/8/p1K5/8 w - - 0 3',
+            accept: ['c2b2'],
+            reply: 'h8g8',
+          },
+          {
+            kind: 'move',
+            say: 'Capture o peão.',
+            fen: '6k1/8/8/8/8/8/pK6/8 w - - 2 4',
+            accept: ['b2a2'],
+          },
+        ],
+      },
+      {
+        id: 'final-oposicao',
+        title: 'Oposição',
+        steps: [
+          {
+            kind: 'info',
+            say: 'Oposição: os reis ficam frente a frente com uma casa entre eles. Quem precisa mover cede espaço. Quem acabou de mover "tem a oposição".',
+            fen: '4k3/8/4K3/8/8/8/8/8 w - - 0 1',
+          },
+          {
+            kind: 'move',
+            say: 'Seu rei está na frente do peão, na 6ª fileira: isso vence. Saia para o lado com o rei para d6 e abra caminho para o peão.',
+            fen: '4k3/8/4K3/4P3/8/8/8/8 w - - 0 1',
+            accept: ['e6d6'],
+            reply: 'e8d8',
+          },
+          {
+            kind: 'move',
+            say: 'O rei preto tomou a oposição, mas o peão tem um lance a mais. Avance o peão para e6.',
+            fen: '3k4/8/3K4/4P3/8/8/8/8 w - - 2 2',
+            accept: ['e5e6'],
+            reply: 'd8e8',
+          },
+          {
+            kind: 'move',
+            say: 'Avance de novo para e7. Seu rei em d6 protege o peão.',
+            fen: '4k3/8/3KP3/8/8/8/8/8 w - - 1 3',
+            accept: ['e6e7'],
+            reply: 'e8f7',
+          },
+          {
+            kind: 'move',
+            say: 'Proteja a casa de promoção: rei para d7.',
+            fen: '8/4Pk2/3K4/8/8/8/8/8 w - - 1 4',
+            accept: ['d6d7'],
+            reply: 'f7f6',
+          },
+          {
+            kind: 'move',
+            say: 'Promova o peão a dama.',
+            fen: '8/3KP3/5k2/8/8/8/8/8 w - - 3 5',
+            accept: ['e7e8q'],
+          },
+        ],
+      },
+      {
+        id: 'final-lucena',
+        title: 'Final de torre: a ponte (Lucena)',
+        steps: [
+          {
+            kind: 'info',
+            say: 'Seu rei está na casa de promoção e a torre corta o rei preto na coluna e. Se o rei sair agora, a torre preta dá xeques sem fim. A ideia é "construir a ponte": a torre vai para a 4ª fileira para bloquear os xeques depois.',
+            fen: '3K4/3P1k2/8/8/8/8/r7/4R3 w - - 0 1',
+          },
+          {
+            kind: 'move',
+            say: 'Construa a ponte: torre para e4.',
+            fen: '3K4/3P1k2/8/8/8/8/r7/4R3 w - - 0 1',
+            accept: ['e1e4'],
+            reply: 'a2a1',
+          },
+          {
+            kind: 'move',
+            say: 'Agora o rei sai pela coluna c: rei para c7.',
+            fen: '3K4/3P1k2/8/8/4R3/8/8/r7 w - - 2 2',
+            accept: ['d8c7'],
+            reply: 'a1c1',
+          },
+          {
+            kind: 'move',
+            say: 'Fuja do xeque descendo: rei para b6.',
+            fen: '8/2KP1k2/8/8/4R3/8/8/2r5 w - - 4 3',
+            accept: ['c7b6'],
+            reply: 'c1b1',
+          },
+          {
+            kind: 'move',
+            say: 'Volte para a coluna c: rei para c6.',
+            fen: '8/3P1k2/1K6/8/4R3/8/8/1r6 w - - 6 4',
+            accept: ['b6c6'],
+            reply: 'b1c1',
+          },
+          {
+            kind: 'move',
+            say: 'Desça mais uma fileira: rei para b5.',
+            fen: '8/3P1k2/2K5/8/4R3/8/8/2r5 w - - 8 5',
+            accept: ['c6b5'],
+            reply: 'c1b1',
+          },
+          {
+            kind: 'move',
+            say: 'Agora a ponte: a torre de e4 bloqueia o xeque em b4. Os xeques acabaram e o peão promove.',
+            fen: '8/3P1k2/8/1K6/4R3/8/8/1r6 w - - 10 6',
+            accept: ['e4b4'],
+          },
+        ],
+      },
+      {
+        id: 'final-philidor',
+        title: 'Final de torre: a defesa (Philidor)',
+        steps: [
+          {
+            kind: 'info',
+            say: 'Agora você defende com uma torre contra torre e peão. Seu rei está na frente do peão e sua torre segura a 3ª fileira: o rei preto não consegue avançar.',
+            fen: '8/8/8/8/3kp3/7R/r7/4K3 w - - 0 1',
+          },
+          {
+            kind: 'move',
+            say: 'Espere com a torre na 3ª fileira: torre para g3.',
+            fen: '8/8/8/8/3kp3/7R/r7/4K3 w - - 0 1',
+            accept: ['h3g3'],
+            reply: 'e4e3',
+          },
+          {
+            kind: 'move',
+            say: 'O peão avançou para a 3ª fileira e não protege mais o rei preto de xeques por trás. Leve a torre para longe: g8.',
+            fen: '8/8/8/8/3k4/4p1R1/r7/4K3 w - - 0 2',
+            accept: ['g3g8'],
+            reply: 'd4d3',
+          },
+          {
+            kind: 'move',
+            say: 'O rei preto ameaça mate. Dê xeque por trás: torre para d8.',
+            fen: '6R1/8/8/8/8/3kp3/r7/4K3 w - - 2 3',
+            accept: ['g8d8'],
+            reply: 'd3e4',
+          },
+          {
+            kind: 'move',
+            say: 'Continue com xeques: torre para e8. O rei preto não tem onde se esconder e a partida é empate.',
+            fen: '3R4/8/8/8/4k3/4p3/r7/4K3 w - - 4 4',
+            accept: ['d8e8'],
+          },
+        ],
+      },
       puzzles(
         'final-peao-avancado',
         'O peão passado avançado',
@@ -775,6 +954,58 @@ export const COURSE_MODULES: CourseModule[] = [
         'zugzwang',
         'advanced',
       ),
+    ],
+  },
+  {
+    id: 'meio-de-jogo',
+    level: 3,
+    title: 'Meio de jogo',
+    activities: [
+      {
+        id: 'estrutura-peoes',
+        title: 'Estrutura de peões',
+        steps: [
+          {
+            kind: 'info',
+            say: 'Peão isolado: não tem peões amigos nas colunas vizinhas. Nenhum peão pode protegê-lo, e a casa da frente vira um bom posto para as peças do adversário. O peão de d4 é isolado.',
+            fen: '4k3/pp3ppp/8/8/3P4/8/PP3PPP/4K3 w - - 0 1',
+          },
+          {
+            kind: 'info',
+            say: 'Peões dobrados: dois peões na mesma coluna. Um atrapalha o outro e eles não se protegem. Os peões de c2 e c3 são dobrados.',
+            fen: '4k3/pp3ppp/8/8/8/2P5/P1P2PPP/4K3 w - - 0 1',
+          },
+          {
+            kind: 'move',
+            say: 'Peão passado: nenhum peão adversário pode pará-lo. Ele é a força dos finais. Avance o peão passado de d5.',
+            fen: '6k1/5ppp/8/3P4/8/8/5PPP/6K1 w - - 0 1',
+            accept: ['d5d6'],
+          },
+        ],
+      },
+      {
+        id: 'planos-meio-jogo',
+        title: 'Planos de meio de jogo',
+        steps: [
+          {
+            kind: 'info',
+            say: 'Quando você não vê tática, faça um plano: ponha as torres nas colunas abertas, leve os cavalos para casas fortes e melhore a sua pior peça.',
+          },
+          {
+            kind: 'move',
+            say: 'A coluna d não tem peões: ela está aberta. Coloque uma torre nela.',
+            fen: 'r4rk1/pp3ppp/2p1p3/8/8/2P1P3/PP3PPP/R4RK1 w - - 0 1',
+            accept: ['f1d1', 'a1d1'],
+            reply: 'f8d8',
+          },
+          {
+            kind: 'move',
+            say: 'A casa d5 está protegida pelo peão de e4 e nenhum peão preto pode expulsar um cavalo dali. Ocupe esse posto avançado com o cavalo.',
+            fen: 'r4rk1/pp3ppp/3p4/8/4P3/2N5/PPP2PPP/R4RK1 w - - 0 1',
+            accept: ['c3d5'],
+          },
+        ],
+      },
     ],
   },
   {
@@ -810,6 +1041,115 @@ export const COURSE_MODULES: CourseModule[] = [
         'zugzwang',
         'expert',
       ),
+    ],
+  },
+  {
+    id: 'partidas-lendarias',
+    level: 4,
+    title: 'Partidas lendárias',
+    activities: [
+      {
+        id: 'lendaria-morphy-opera',
+        title: 'Morphy na ópera (Paris, 1858)',
+        steps: [
+          {
+            kind: 'info',
+            say: 'Paul Morphy, de brancas, jogou esta partida num camarote da Ópera de Paris. Ela mostra como desenvolvimento rápido e linhas abertas vencem. Você faz os lances de Morphy.',
+          },
+          {
+            kind: 'info',
+            say: 'Depois de 1.e4 e5 2.Cf3 d6 3.d4 Bg4 4.dxe5 Bxf3 5.Dxf3 dxe5 6.Bc4 Cf6, as pretas trocaram o bispo e ficaram atrasadas no desenvolvimento.',
+            fen: 'rn1qkb1r/ppp2ppp/5n2/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R w KQkq - 2 7',
+          },
+          {
+            kind: 'move',
+            say: 'Ataque duplo: a dama mira f7 e b7 ao mesmo tempo. Jogue Db3.',
+            fen: 'rn1qkb1r/ppp2ppp/5n2/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R w KQkq - 2 7',
+            accept: ['f3b3'],
+            reply: 'd8e7',
+          },
+          {
+            kind: 'info',
+            say: 'Morphy seguiu com 8.Cc3 c6 9.Bg5 b5 e sacrificou o cavalo: 10.Cxb5! cxb5 11.Bxb5+ Cbd7. Material importa menos que abrir linhas contra o rei.',
+            fen: 'r3kb1r/p2nqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/R3K2R w KQkq - 1 12',
+          },
+          {
+            kind: 'move',
+            say: 'Traga a última peça para a luta: faça o roque grande e ponha a torre na coluna d.',
+            fen: 'r3kb1r/p2nqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/R3K2R w KQkq - 1 12',
+            accept: ['e1c1'],
+            reply: 'a8d8',
+          },
+          {
+            kind: 'move',
+            say: 'O cavalo de d7 está cravado. Capture-o com a torre.',
+            fen: '3rkb1r/p2nqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/2KR3R w k - 3 13',
+            accept: ['d1d7'],
+            reply: 'd8d7',
+          },
+          {
+            kind: 'info',
+            say: 'Depois de 14.Td1 De6 15.Bxd7+ Cxd7, chega o golpe final.',
+            fen: '4kb1r/p2n1ppp/4q3/4p1B1/4P3/1Q6/PPP2PPP/2KR4 w k - 0 16',
+          },
+          {
+            kind: 'move',
+            say: 'Sacrifique a dama em b8 para desviar o cavalo que defende d8.',
+            fen: '4kb1r/p2n1ppp/4q3/4p1B1/4P3/1Q6/PPP2PPP/2KR4 w k - 0 16',
+            accept: ['b3b8'],
+            reply: 'd7b8',
+          },
+          {
+            kind: 'mate',
+            say: 'Termine como Morphy: xeque-mate.',
+            fen: '1n2kb1r/p4ppp/4q3/4p1B1/4P3/8/PPP2PPP/2KR4 w k - 0 17',
+          },
+        ],
+      },
+      {
+        id: 'lendaria-imortal',
+        title: 'A Imortal (Londres, 1851)',
+        steps: [
+          {
+            kind: 'info',
+            say: 'Adolf Anderssen, de brancas, entregou um bispo, as duas torres e a dama para dar mate com as peças menores. Você faz os lances finais.',
+          },
+          {
+            kind: 'info',
+            say: 'Depois de 1.e4 e5 2.f4 exf4 3.Bc4 Dh4+ 4.Rf1, o rei branco não pode mais rocar, mas as brancas ganham tempo atacando a dama preta.',
+            fen: 'rnb1kbnr/pppp1ppp/8/8/2B1Pp1q/8/PPPP2PP/RNBQ1KNR b kq - 3 4',
+          },
+          {
+            kind: 'info',
+            say: 'Lance 18: as brancas já entregaram um bispo e agora deixam as duas torres. Em troca, todas as peças brancas atacam o rei preto, que ainda está no centro.',
+            fen: 'rnb1k1nr/p2p1ppp/8/1pbN1N1P/4PBP1/3P1Q2/PqP5/R4KR1 w kq - 0 18',
+          },
+          {
+            kind: 'info',
+            say: 'Depois de 18.Bd6 Bxg1 19.e5 Dxa1+ 20.Re2 Ca6, as pretas têm muito mais material, mas as peças delas estão longe do rei.',
+            fen: 'r1b1k1nr/p2p1ppp/n2B4/1p1NPN1P/6P1/3P1Q2/P1P1K3/q5b1 w kq - 2 21',
+          },
+          {
+            kind: 'move',
+            say: 'Dê xeque com o cavalo capturando em g7.',
+            fen: 'r1b1k1nr/p2p1ppp/n2B4/1p1NPN1P/6P1/3P1Q2/P1P1K3/q5b1 w kq - 2 21',
+            accept: ['f5g7'],
+            reply: 'e8d8',
+          },
+          {
+            kind: 'move',
+            say: 'Sacrifique a dama com xeque em f6 para atrair o cavalo de g8.',
+            fen: 'r1bk2nr/p2p1pNp/n2B4/1p1NP2P/6P1/3P1Q2/P1P1K3/q5b1 w - - 1 22',
+            accept: ['f3f6'],
+            reply: 'g8f6',
+          },
+          {
+            kind: 'mate',
+            say: 'Agora o bispo dá xeque-mate.',
+            fen: 'r1bk3r/p2p1pNp/n2B1n2/1p1NP2P/6P1/3P4/P1P1K3/q5b1 w - - 0 23',
+          },
+        ],
+      },
     ],
   },
 ];
