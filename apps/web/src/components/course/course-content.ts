@@ -1,5 +1,30 @@
 import type { CourseActivity, CourseModule } from './course-types';
 
+/** Explanation + `count` bank puzzles of one theme (Lichess tag) and difficulty band. */
+function puzzles(
+  id: string,
+  title: string,
+  explain: string,
+  theme: string,
+  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert',
+  count = 4,
+): CourseActivity {
+  return {
+    id,
+    title,
+    steps: [
+      { kind: 'info', say: explain },
+      {
+        kind: 'puzzle',
+        say: `Resolva ${count} problemas de partidas reais.`,
+        theme,
+        difficulty,
+        count,
+      },
+    ],
+  };
+}
+
 // Own texts and positions; the order of themes follows the Lichess "Aprenda" stages (idea only).
 export const COURSE_MODULES: CourseModule[] = [
   {
@@ -583,6 +608,208 @@ export const COURSE_MODULES: CourseModule[] = [
           },
         ],
       },
+    ],
+  },
+  {
+    id: 'principios-abertura',
+    level: 2,
+    title: 'Princípios de abertura',
+    activities: [
+      {
+        id: 'abertura-principios',
+        title: 'Centro, desenvolvimento e roque',
+        steps: [
+          {
+            kind: 'info',
+            say: 'Na abertura, três ideias guiam os seus lances: ocupe o centro com peões, tire os cavalos e bispos para casas ativas e faça o roque cedo para proteger o rei.',
+          },
+          {
+            kind: 'move',
+            say: 'Ocupe o centro: avance o peão do rei ou o peão da dama duas casas.',
+            fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+            accept: ['e2e4', 'd2d4'],
+            reply: 'e7e5',
+          },
+          {
+            kind: 'move',
+            say: 'Desenvolva o cavalo do rei para f3. Ele ataca o peão de e5 e vigia o centro.',
+            fen: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2',
+            accept: ['g1f3'],
+            reply: 'b8c6',
+          },
+          {
+            kind: 'move',
+            say: 'Agora o bispo do rei. Leve-o para uma casa ativa, de onde ele mira o centro ou a casa f7.',
+            fen: 'r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3',
+            accept: ['f1c4', 'f1b5'],
+            reply: 'f8c5',
+          },
+          {
+            kind: 'move',
+            say: 'O caminho entre o rei e a torre está livre. Faça o roque.',
+            fen: 'r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4',
+            accept: ['e1g1'],
+          },
+        ],
+      },
+      {
+        id: 'abertura-f7',
+        title: 'O ponto fraco f7',
+        steps: [
+          {
+            kind: 'info',
+            say: 'No começo da partida, a casa f7 só é defendida pelo rei preto. Dama e bispo juntos podem atacá-la. Por isso, desenvolva as peças e não deixe f7 sem defesa.',
+            fen: 'r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4',
+            show: { from: 'c4', to: 'f7' },
+          },
+          {
+            kind: 'mate',
+            say: 'As pretas tiraram o cavalo e esqueceram de f7. Dê o xeque-mate.',
+            fen: 'r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'taticas-fundamentais',
+    level: 2,
+    title: 'Táticas fundamentais',
+    activities: [
+      puzzles(
+        'tatica-garfo',
+        'Garfo',
+        'Garfo: uma peça ataca duas ao mesmo tempo. Procure casas de onde o cavalo, a dama ou um peão atacam rei e dama, ou duas peças soltas.',
+        'garfo',
+        'intermediate',
+      ),
+      puzzles(
+        'tatica-cravada',
+        'Cravada',
+        'Cravada: uma peça não pode sair do lugar porque deixaria uma peça mais valiosa, ou o rei, sob ataque. Ataque a peça cravada de novo ou aproveite que ela não se mexe.',
+        'cravada',
+        'intermediate',
+      ),
+      puzzles(
+        'tatica-espeto',
+        'Espeto',
+        'Espeto é a cravada ao contrário: você ataca uma peça valiosa, ela precisa sair, e a peça de trás fica sem proteção.',
+        'espeto',
+        'intermediate',
+      ),
+      puzzles(
+        'tatica-descoberto',
+        'Ataque descoberto',
+        'Ataque descoberto: uma peça sai da frente e revela o ataque de outra que estava atrás. A peça que sai pode atacar também, criando duas ameaças.',
+        'ataque_descoberto',
+        'intermediate',
+      ),
+      puzzles(
+        'tatica-corredor',
+        'Mate do corredor',
+        'Mate do corredor: o rei está preso atrás dos próprios peões na primeira fileira. Uma torre ou a dama dá o mate pela fileira de trás.',
+        'mate_corredor',
+        'intermediate',
+      ),
+    ],
+  },
+  {
+    id: 'taticas-avancadas',
+    level: 3,
+    title: 'Táticas avançadas',
+    activities: [
+      puzzles(
+        'avancada-desvio',
+        'Desvio',
+        'Desvio: obrigue uma peça defensora a sair da sua função, muitas vezes com um sacrifício, e aproveite o que ela deixou de defender.',
+        'desvio',
+        'advanced',
+      ),
+      puzzles(
+        'avancada-atracao',
+        'Atração',
+        'Atração: puxe o rei ou uma peça para uma casa ruim, em geral com um sacrifício, onde ela sofre um garfo ou um mate.',
+        'atracao',
+        'advanced',
+      ),
+      puzzles(
+        'avancada-defensor',
+        'Eliminar o defensor',
+        'Eliminar o defensor: capture ou troque a peça que protege o ponto que você quer atacar.',
+        'capturar_defensor',
+        'advanced',
+      ),
+      puzzles(
+        'avancada-intermediario',
+        'Lance intermediário',
+        'Lance intermediário: antes de fazer o lance esperado, como uma recaptura, encaixe uma ameaça mais forte que o adversário precisa responder.',
+        'lance_intermediario',
+        'advanced',
+      ),
+      puzzles(
+        'avancada-mate-3',
+        'Mate em três',
+        'Mate em três: calcule a sequência inteira antes de jogar. Lances forçados, como xeques e capturas, reduzem as respostas do adversário.',
+        'mate_em_tres',
+        'advanced',
+        3,
+      ),
+    ],
+  },
+  {
+    id: 'finais-e-peoes',
+    level: 3,
+    title: 'Peões e finais',
+    activities: [
+      puzzles(
+        'final-peao-avancado',
+        'O peão passado avançado',
+        'Um peão perto da promoção vale quase uma peça. Abra caminho para ele, às vezes entregando material, e conte as casas até a última fileira.',
+        'peao_avancado',
+        'advanced',
+      ),
+      puzzles(
+        'final-zugzwang',
+        'Zugzwang',
+        'Zugzwang: o adversário está numa posição em que qualquer lance piora a situação dele. Às vezes o melhor lance é só esperar.',
+        'zugzwang',
+        'advanced',
+      ),
+    ],
+  },
+  {
+    id: 'estrategia-avancada',
+    level: 4,
+    title: 'Cálculo e estratégia',
+    activities: [
+      puzzles(
+        'avancado-sacrificio',
+        'Sacrifícios',
+        'Um sacrifício entrega material em troca de ataque, tempo ou uma posição melhor. Antes de sacrificar, calcule o que você ganha no fim da sequência.',
+        'sacrificio',
+        'expert',
+      ),
+      puzzles(
+        'avancado-silencioso',
+        'Lance silencioso',
+        'O lance silencioso não dá xeque nem captura, mas cria uma ameaça que não tem defesa. Ele é o mais difícil de enxergar.',
+        'lance_silencioso',
+        'expert',
+      ),
+      puzzles(
+        'avancado-peca-presa',
+        'Peça presa',
+        'Uma peça sem casas para fugir pode ser cercada e capturada. Tire as saídas dela antes de atacar.',
+        'peca_presa',
+        'expert',
+      ),
+      puzzles(
+        'avancado-zugzwang',
+        'Zugzwang de mestre',
+        'No nível de mestre, o zugzwang aparece em finais e também no meio de jogo. Procure os lances que tiram todas as boas opções do adversário.',
+        'zugzwang',
+        'expert',
+      ),
     ],
   },
 ];
