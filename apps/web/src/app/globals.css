@@ -4719,27 +4719,33 @@ textarea::placeholder {
   padding: 1rem var(--page-padding, 1rem) 2rem;
 }
 
-/* 2D no computador largo: o Treinador fica numa coluna ao lado do tabuleiro, que volta a ter a
-   altura toda (acima dele, a faixa do balão encolhia o quadrado). */
-@media (min-width: 1280px) {
+/* 2D no computador: o Treinador desce para a coluna da esquerda, embaixo do cartão, e o tabuleiro
+   volta a ter a altura toda (acima dele, a faixa do balão encolhia o quadrado). */
+@media (min-width: 1101px) {
   .gamePage:has(.coachCallout):not(:has(.board3d)) {
     --board-max: calc(100dvh - 9.25rem);
+    grid-template:
+      'players board moves' auto
+      'coach board moves' 1fr / minmax(9.5rem, 12rem) minmax(0, 1fr) minmax(10.5rem, 13rem);
   }
 
   .gamePage:not(:has(.board3d)) .boardColumn:has(> .coachCallout) {
-    grid-template-columns: clamp(12rem, 22%, 16rem) minmax(0, 1fr);
-    column-gap: 0.75rem;
-    align-items: start;
+    display: contents;
   }
 
   .gamePage:not(:has(.board3d)) .boardColumn:has(> .coachCallout) > * {
     grid-column: 2;
   }
 
+  .gamePage:not(:has(.board3d)) .boardColumn:has(> .coachCallout) > .boardStage {
+    grid-area: board;
+  }
+
   .gamePage:not(:has(.board3d)) .boardColumn > .coachCallout {
-    grid-column: 1;
-    grid-row: 1 / span 4;
+    grid-area: coach;
+    align-self: start;
     height: auto;
+    max-width: none;
     margin: 0;
   }
 
@@ -4751,6 +4757,6 @@ textarea::placeholder {
 
   .gamePage:not(:has(.board3d)) .boardColumn > .coachCallout .coachSpeechBubble p {
     padding-right: 0;
-    -webkit-line-clamp: 10;
+    -webkit-line-clamp: 12;
   }
 }
