@@ -2533,7 +2533,9 @@ a.primaryButton {
 .reviewSummaryPage {
   display: grid;
   gap: 20px;
+  width: 100%;
   max-width: 760px;
+  margin: 0 auto;
   padding: var(--page-padding);
 }
 .reviewNarration {
