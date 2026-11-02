@@ -132,6 +132,15 @@ export default function PlayPage() {
               </option>
             </select>
           </label>
+          <div className="timeControls">
+            <span className="timeControlsLabel">Controle de tempo</span>
+            <GroupedListbox
+              ariaLabel="Controle de tempo"
+              groups={controlPools}
+              onChange={setSelected}
+              value={selected}
+            />
+          </div>
           {opponent === 'bot' ? (
             <label>
               Dificuldade do bot
@@ -171,15 +180,6 @@ export default function PlayPage() {
           ) : (
             <p>A busca procura somente outra pessoa. O bot nunca será iniciado automaticamente.</p>
           )}
-        </div>
-        <div className="timeControls">
-          <span className="timeControlsLabel">Controle de tempo</span>
-          <GroupedListbox
-            ariaLabel="Controle de tempo"
-            groups={controlPools}
-            onChange={setSelected}
-            value={selected}
-          />
         </div>
         <aside className="queueCard">
           <span className="queueIcon" aria-hidden="true">

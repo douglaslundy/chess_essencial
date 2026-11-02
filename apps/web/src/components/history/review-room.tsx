@@ -40,14 +40,14 @@ const ANALYSIS_STATUS_LABEL: Record<GameAnalysis['status'], string> = {
 
 const WELCOME = 'Olá, seja bem-vindo! Vamos revisar essa partida.';
 
-const QUALITY_ROWS: Array<{ key: keyof GameAnalysisQualityCounts; label: string }> = [
-  { key: 'otimo', label: moveQualityLabel.otimo },
-  { key: 'excelente', label: moveQualityLabel.excelente },
-  { key: 'bom', label: moveQualityLabel.bom },
-  { key: 'imprecisao', label: moveQualityLabel.imprecisao },
-  { key: 'erro', label: moveQualityLabel.erro },
-  { key: 'gafe', label: moveQualityLabel.gafe },
-  { key: 'missedWin', label: 'Oportunidades perdidas' },
+const QUALITY_ROWS: Array<{ icon: string; key: keyof GameAnalysisQualityCounts; label: string }> = [
+  { icon: '★', key: 'otimo', label: moveQualityLabel.otimo },
+  { icon: '!', key: 'excelente', label: moveQualityLabel.excelente },
+  { icon: '✓', key: 'bom', label: moveQualityLabel.bom },
+  { icon: '?!', key: 'imprecisao', label: moveQualityLabel.imprecisao },
+  { icon: '?', key: 'erro', label: moveQualityLabel.erro },
+  { icon: '??', key: 'gafe', label: moveQualityLabel.gafe },
+  { icon: '✕', key: 'missedWin', label: 'Oportunidades perdidas' },
 ];
 
 /**
@@ -259,24 +259,43 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
               : ANALYSIS_STATUS_LABEL[analysis?.status ?? 'pending'])}
         </p>
         {analysis?.summary ? (
-          <section className="reviewSummaryColumns">
-            {summaryColumns.map(({ avatarUrl, color, label }) => (
-              <div className="reviewSummaryColumn" key={color}>
-                <h2>
-                  <Avatar avatarUrl={avatarUrl} name={label} />
-                  {label}
-                </h2>
-                <div className="reviewSummaryRows">
-                  {QUALITY_ROWS.map((row) => (
-                    <div className="reviewSummaryRow" key={row.key}>
-                      <span>{row.label}</span>
-                      <strong>{analysis.summary![color][row.key]}</strong>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </section>
+          // One table: label | first player | quality icon | second player.
+          <table className="reviewQualityTable">
+            <thead>
+              <tr>
+                <th scope="col">Jogadores</th>
+                <th scope="col">
+                  <span>{summaryColumns[0]!.label}</span>
+                  <Avatar
+                    avatarUrl={summaryColumns[0]!.avatarUrl}
+                    name={summaryColumns[0]!.label}
+                  />
+                </th>
+                <td aria-hidden="true" />
+                <th scope="col">
+                  <span>{summaryColumns[1]!.label}</span>
+                  <Avatar
+                    avatarUrl={summaryColumns[1]!.avatarUrl}
+                    name={summaryColumns[1]!.label}
+                  />
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {QUALITY_ROWS.map((row) => (
+                <tr data-quality={row.key} key={row.key}>
+                  <th scope="row">{row.label}</th>
+                  <td>{analysis.summary![summaryColumns[0]!.color][row.key]}</td>
+                  <td>
+                    <span aria-hidden="true" className="qualityBadge">
+                      {row.icon}
+                    </span>
+                  </td>
+                  <td>{analysis.summary![summaryColumns[1]!.color][row.key]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         ) : null}
         {learningSignals.length ? (
           <section className="reviewNarration" aria-labelledby="learning-signals-title">

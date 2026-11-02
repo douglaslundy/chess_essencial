@@ -565,8 +565,9 @@ input:focus-visible {
 
 .botPreferences {
   grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  /* Flex, not auto-fit grid: the full-width note would otherwise keep every column at the minimum. */
+  display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   padding: 1.1rem;
   border: 1px solid var(--border);
@@ -581,6 +582,12 @@ input:focus-visible {
   margin: 0;
   padding: 0;
   border: 0;
+}
+
+.botPreferences > label,
+.botPreferences > .timeControls {
+  flex: 1 1 14rem;
+  min-width: 0;
 }
 
 .botPreferences label {
@@ -606,22 +613,18 @@ input:focus-visible {
 }
 
 .botPreferences p {
-  grid-column: 1 / -1;
+  flex-basis: 100%;
   margin: 0;
   color: var(--muted);
 }
 
+/* Sits beside the opponent select inside .botPreferences, laid out like its labels. */
 .timeControls {
-  grid-column: 1 / -1;
-  padding: 1.1rem;
-  border: 1px solid var(--border);
-  border-radius: 1rem;
-  background: var(--surface);
+  display: grid;
+  gap: 0.4rem;
 }
 
 .timeControlsLabel {
-  display: block;
-  margin-bottom: 0.4rem;
   color: var(--text);
   font-weight: 700;
 }
@@ -2494,17 +2497,6 @@ input:focus-visible {
   max-width: 760px;
   padding: var(--page-padding);
 }
-.reviewSummaryColumns {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: 1fr 1fr;
-}
-.reviewSummaryColumn {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 16px;
-}
 .reviewNarration {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -2558,37 +2550,100 @@ input:focus-visible {
 .reviewNarrationSection[open] > summary {
   color: var(--gold);
 }
-.reviewSummaryColumn h2 {
-  align-items: center;
-  color: var(--gold);
-  display: flex;
-  font-size: 1.05rem;
-  gap: 0.5rem;
-  margin: 0 0 10px;
+/* Move-quality summary: label | first player | icon | second player, each quality in its color
+   (the layout the user sent as reference). */
+.reviewQualityTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  padding: 8px 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  table-layout: fixed;
 }
-.reviewSummaryRows {
-  display: grid;
-  gap: 6px;
-}
-.reviewSummaryRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  font-size: 0.92rem;
-}
-.reviewSummaryRow span {
-  text-align: left;
-}
-.reviewSummaryRow strong {
+.reviewQualityTable th,
+.reviewQualityTable td {
+  padding: 0.45rem 0.25rem;
   text-align: center;
 }
-/* Left (mine) column: labels hug the left edge. Right (opponent) column:
-   labels hug the right edge, mirroring the left column. Numbers stay
-   centered in both, per the user's explicit layout request. */
-.reviewSummaryColumn:last-child .reviewSummaryRow span {
-  text-align: right;
-}
-.reviewSummaryRow strong {
+.reviewQualityTable th:first-child {
+  width: 38%;
+  padding-left: 1rem;
   color: var(--text);
+  font-weight: 700;
+  text-align: left;
+}
+.reviewQualityTable thead th:not(:first-child) {
+  color: var(--text);
+  font-weight: 700;
+}
+.reviewQualityTable thead th > span {
+  display: block;
+  margin-bottom: 0.35rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reviewQualityTable thead .userAvatar {
+  width: 4rem;
+  height: 4rem;
+  margin: 0 auto;
+  border: 3px solid var(--border-strong);
+  border-radius: 10px;
+  font-size: 1rem;
+}
+.reviewQualityTable thead th:nth-child(2) .userAvatar {
+  border-color: #81b64c;
+}
+.reviewQualityTable thead th,
+.reviewQualityTable thead td {
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+.reviewQualityTable thead td {
+  width: 3rem;
+}
+.reviewQualityTable tbody tr:first-child > * {
+  padding-top: 0.8rem;
+}
+.reviewQualityTable tbody td {
+  color: var(--quality);
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+.qualityBadge {
+  display: inline-grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  background: var(--quality);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+}
+.reviewQualityTable [data-quality='otimo'] {
+  --quality: #81b64c;
+}
+.reviewQualityTable [data-quality='excelente'] {
+  --quality: #749bbf;
+}
+.reviewQualityTable [data-quality='bom'] {
+  --quality: #95b776;
+}
+.reviewQualityTable [data-quality='imprecisao'] {
+  --quality: #f7c631;
+}
+.reviewQualityTable [data-quality='erro'] {
+  --quality: #ffa459;
+}
+.reviewQualityTable [data-quality='gafe'] {
+  --quality: #fa412d;
+}
+.reviewQualityTable [data-quality='missedWin'] {
+  --quality: #ff7769;
 }
 .voiceToggle {
   align-items: center;
@@ -3922,7 +3977,6 @@ textarea::placeholder {
 .playerCard,
 .movesPanel,
 .botPreferences,
-.timeControls,
 .instructorBubble,
 .stageCompletionCard,
 .lessonStepCard,

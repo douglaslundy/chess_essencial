@@ -12,9 +12,10 @@ import { useEntitlements } from '@/lib/subscriptions/use-entitlements';
 
 const navigation = [
   { href: '/app', label: 'Visão geral' },
+  // Jogar always right under Visão geral (user request).
+  { href: '/app/jogar', label: 'Jogar' },
   { href: '/app/curso', label: 'Curso' },
   { href: '/app/treinamento', label: 'Treinamento' },
-  { href: '/app/jogar', label: 'Jogar' },
   { href: '/app/partidas', label: 'Partidas' },
   { href: '/app/biblioteca', label: 'Biblioteca de partidas' },
   { href: '/app/desafios', label: 'Desafios' },
