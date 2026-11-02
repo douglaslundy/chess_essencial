@@ -15,6 +15,18 @@ Plano completo: `docs/CURSO_DO_ZERO.md`. É independente do sistema antigo de cu
 - [x] **Voz do GPT não tocava (2026-11-02).** Em Meus dados, sem voz salva, a primeira opção (a voz IA) aparecia marcada mas nada era gravado (`voice_name` nulo nos 2 usuários da produção), então o site usava a voz do navegador. Agora há a opção explícita "Voz padrão do navegador" e só a voz salva aparece marcada. A geração na OpenAI pelo servidor foi testada (200, áudio mp3).
 - [ ] **Login ChatGPT OAuth sem Client ID:** o fluxo já é por redirecionamento (autoriza e volta). O campo pede o Client ID de um app OAuth registrado na OpenAI; ele fica salvo depois da primeira vez. Remover o campo exigiria embutir o Client ID do Codex, o que o usuário proibiu (não se passar pelo cliente do Codex). Depende de a OpenAI fornecer um app OAuth próprio.
 
+## App mobile (pedido de 2026-11-02)
+
+Plano completo, decisão e checklist: `docs/APP_ANDROID.md`.
+
+- [ ] **APP-00 (bloqueio):** endereço público com HTTPS. Opções: subdomínio de `dlsistemas.com.br` (já na Cloudflare) com Cloudflare Tunnel, domínio novo, ou Traefik (`deploy/docker-compose.traefik.yml`). Depende do usuário.
+- [ ] **APP-01:** trocar `PUBLIC_API_URL`, `WEB_ORIGIN` e `MINIO_PUBLIC_URL` para `https://<host>`; proxy `/v1`, `/avatars` e web; testar o cookie `__Host-` e o retorno do OAuth do ChatGPT.
+- [ ] **APP-02:** site instalável: `app/manifest.ts`, ícones (192, 512 e maskable) e `/.well-known/assetlinks.json`, sem mudar nada visível.
+- [ ] **APP-03:** app Android TWA com Bubblewrap em `apps/android/` (keystore fora do Git, com o usuário), APK para instalar direto.
+- [ ] **APP-04:** teste no 4G: partida app x navegador, voz, 3D, Stockfish, tablet e botão voltar.
+- [ ] **APP-05:** Play Store (conta do usuário, teste fechado de 14 dias).
+- [ ] **APP-06:** iOS com Capacitor (precisa de Mac ou build na nuvem e da conta Apple).
+
 ## Correções pós-release de 2026-07-30 (concluídas)
 
 - [x] Corrigir desafios do nível atual exibidos como concluídos por rank global calculado depois do filtro.

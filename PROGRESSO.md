@@ -1,3 +1,5 @@
+2026-11-02 - **PRÓXIMA TAREFA: app Android (APP-00 a APP-06 em TAREFAS.md).** Decisão: TWA com Bubblewrap (o WebView comum não tem `speechSynthesis`). Bloqueada até haver HTTPS público. Contexto necessário: `docs/APP_ANDROID.md`, `deploy/docker-compose.traefik.yml`, `deploy/remote-deploy.sh`, `.env.vps` na VPS, `apps/api/src/auth/web-session-cookie.ts`.
+
 2026-11-02 - **Fala completa + mapa do curso.**
 - Fala cortada: a aula avançava por tempo estimado (65 ms/caractere) e o `goTo` cortava a fala. Agora `speak()` aceita `onEnd` (fim real; não dispara se cortada por `stopSpeaking`) e o passo só avança 2 s depois do fim da fala. Teto de segurança: 3x o tempo de leitura + 10 s.
 - Voz do navegador: uma utterance por frase (o Chrome corta uma utterance única depois de ~15 s).
