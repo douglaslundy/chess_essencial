@@ -766,6 +766,14 @@ input:focus-visible {
   cursor: pointer;
 }
 
+/* "Entrar na partida" is a link styled as the button. */
+a.primaryButton {
+  display: block;
+  color: #fff;
+  text-align: center;
+  text-decoration: none;
+}
+
 .primaryButton {
   background: var(--red);
 }

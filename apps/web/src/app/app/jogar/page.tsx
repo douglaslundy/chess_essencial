@@ -1,9 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import type { BotDifficulty, PlayerColorPreference, TimeControlCode } from '@xadrez/contracts';
+import type {
+  BotDifficulty,
+  GameHistoryItem,
+  PlayerColorPreference,
+  TimeControlCode,
+} from '@xadrez/contracts';
 
 import { GroupedListbox } from '@/components/ui/grouped-listbox';
 import { api } from '@/lib/api/client';
@@ -47,7 +53,25 @@ export default function PlayPage() {
   const [playerColor, setPlayerColor] = useState<PlayerColorPreference>('random');
   const [status, setStatus] = useState<'idle' | 'searching' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  // undefined while loading; null when no game is in progress.
+  const [activeGame, setActiveGame] = useState<GameHistoryItem | null | undefined>(undefined);
   const { hasFeature } = useEntitlements();
+
+  useEffect(() => {
+    const token = window.localStorage.getItem('xadrez.access_token');
+    const load = token
+      ? api
+          .getHistory(new URLSearchParams({ limit: '1', status: 'active' }), token)
+          .then((page) => page.items[0] ?? null)
+          // A failed check never blocks playing: the server still owns every game.
+          .catch(() => null)
+      : Promise.resolve(null);
+    let live = true;
+    void load.then((game) => live && setActiveGame(game));
+    return () => {
+      live = false;
+    };
+  }, []);
   const coachModeAllowed = hasFeature('coach_mode_access');
 
   async function search() {
@@ -106,6 +130,37 @@ export default function PlayPage() {
     if (token) await api.leaveQueue(token).catch(() => undefined);
     setStatus('idle');
     setMessage('');
+  }
+
+  if (activeGame === undefined) {
+    return (
+      <main className="playPage">
+        <p role="status">Carregando…</p>
+      </main>
+    );
+  }
+
+  // A game still in progress blocks new ones: the player goes back to it (and can resign there).
+  if (activeGame) {
+    return (
+      <main className="playPage">
+        <section className="playGrid">
+          <aside className="queueCard">
+            <span className="queueIcon" aria-hidden="true">
+              ♞
+            </span>
+            <h2>Você está no meio de uma partida</h2>
+            <p>
+              Contra {activeGame.opponent.displayName} · {activeGame.timeControl}. Termine ou
+              desista dela para começar outra.
+            </p>
+            <Link className="primaryButton" href={`/app/partida/${activeGame.id}`}>
+              Entrar na partida
+            </Link>
+          </aside>
+        </section>
+      </main>
+    );
   }
 
   return (
@@ -176,7 +231,10 @@ export default function PlayPage() {
               dados. Partidas do Treinador nunca alteram o rating Xadrez Essencial.
             </p>
           ) : opponent === 'bot' ? (
-            <p>Partidas contra o bot não alteram o rating Xadrez Essencial.</p>
+            <p>
+              Partidas contra o bot com relógio valem rating Xadrez Essencial; partidas sem tempo
+              não valem.
+            </p>
           ) : (
             <p>A busca procura somente outra pessoa. O bot nunca será iniciado automaticamente.</p>
           )}
