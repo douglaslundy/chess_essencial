@@ -9,7 +9,9 @@ export type CourseStep =
   /** Checkmate in one move. */
   | { kind: 'mate'; say: string; fen: string }
   /** Checkmate within `maxMoves` against the course defender (course-step.ts). */
-  | { kind: 'checkmate'; say: string; fen: string; maxMoves: number };
+  | { kind: 'checkmate'; say: string; fen: string; maxMoves: number }
+  /** `count` Lichess puzzles from the bank by tag (`theme`), graded by the server. */
+  | { kind: 'puzzle'; say: string; theme: string; difficulty?: string; count: number };
 
 export interface CourseActivity {
   id: string;

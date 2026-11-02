@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { findActivity } from './course-content';
+import { CoursePuzzle } from './course-puzzle';
 import { applyCourseMove, initialStepState, type StepState } from './course-step';
 import styles from './course.module.css';
 import { CoachCallout } from '@/components/coach/coach-callout';
@@ -28,6 +29,16 @@ export function CoursePlayer({ activityId }: { activityId: string }) {
   const [finished, setFinished] = useState(false);
   const [saveError, setSaveError] = useState('');
   const saved = useRef(false);
+  // Bumped on every (re)start so a puzzle step opens a fresh training session.
+  const [round, setRound] = useState(0);
+  const onPuzzleFeedback = useCallback(
+    (feedback: string) => setState((current) => current && { ...current, feedback }),
+    [],
+  );
+  const onPuzzleDone = useCallback(
+    () => setState((current) => current && { ...current, feedback: null, status: 'done' }),
+    [],
+  );
 
   const steps = found?.activity.steps ?? [];
   const step = steps[index];
@@ -76,6 +87,7 @@ export function CoursePlayer({ activityId }: { activityId: string }) {
     if (!target) return;
     stopSpeaking();
     setIndex(next);
+    setRound((value) => value + 1);
     setState(initialStepState(target));
   }
 
@@ -106,17 +118,27 @@ export function CoursePlayer({ activityId }: { activityId: string }) {
       <section className="boardColumn" aria-label="Área do tabuleiro">
         <CoachCallout label={`Passo ${index + 1} de ${steps.length}`} message={message} />
         <div className="boardStage">
-          <ChessBoard
-            disabled={done}
-            fen={state.fen}
-            hint={step.kind === 'info' ? step.show : undefined}
-            lastMove={state.lastMove ?? undefined}
-            marks={state.stars}
-            movableColor="w"
-            onMove={onMove}
-            orientation="white"
-            pieceTheme={pieceTheme}
-          />
+          {step.kind === 'puzzle' ? (
+            <CoursePuzzle
+              key={round}
+              onDone={onPuzzleDone}
+              onFeedback={onPuzzleFeedback}
+              pieceTheme={pieceTheme}
+              step={step}
+            />
+          ) : (
+            <ChessBoard
+              disabled={done}
+              fen={state.fen}
+              hint={step.kind === 'info' ? step.show : undefined}
+              lastMove={state.lastMove ?? undefined}
+              marks={state.stars}
+              movableColor="w"
+              onMove={onMove}
+              orientation="white"
+              pieceTheme={pieceTheme}
+            />
+          )}
           <div aria-label="Comandos do curso" className="historyControls" role="group">
             <button
               aria-label="Passo anterior"

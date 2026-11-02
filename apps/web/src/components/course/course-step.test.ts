@@ -171,13 +171,18 @@ describe('course content', () => {
       expect(activity.steps.length).toBeGreaterThan(0);
       for (const step of activity.steps) {
         const label = `${activity.id}: ${step.say}`;
-        if (step.fen) expect(() => new Chess(step.fen), label).not.toThrow();
+        if ('fen' in step && step.fen) expect(() => new Chess(step.fen), label).not.toThrow();
         if (step.kind === 'stars') {
           const needed = minMovesForStars(step.fen, step.stars, step.maxMoves ?? 4);
           expect(needed, label).not.toBeNull();
         }
         if (step.kind === 'move') {
           for (const uci of step.accept) expect(play(step, uci)?.status, label).toBe('done');
+        }
+        if (step.kind === 'puzzle') {
+          expect(step.theme, label).toMatch(/^[a-z_]{1,60}$/);
+          expect(step.count, label).toBeGreaterThan(0);
+          expect(step.count, label).toBeLessThanOrEqual(50);
         }
         if (step.kind === 'checkmate') {
           const line = CHECKMATE_LINES[step.fen] ?? mateLine(step.fen, Math.min(step.maxMoves, 2));

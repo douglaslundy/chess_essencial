@@ -17,7 +17,7 @@ export interface StepState {
 
 export function initialStepState(step: CourseStep): StepState {
   return {
-    fen: step.fen ?? START_FEN,
+    fen: ('fen' in step ? step.fen : undefined) ?? START_FEN,
     moves: 0,
     stars: step.kind === 'stars' ? [...step.stars] : [],
     status: step.kind === 'info' ? 'done' : 'playing',
@@ -54,7 +54,8 @@ export function defenderReply(chess: Chess) {
 
 /** Applies the student's move. Returns null for an illegal move (the board ignores it). */
 export function applyCourseMove(step: CourseStep, state: StepState, uci: string): StepState | null {
-  if (step.kind === 'info' || state.status === 'done') return null;
+  // Puzzle moves are graded by the server (course-puzzle.tsx).
+  if (step.kind === 'info' || step.kind === 'puzzle' || state.status === 'done') return null;
   const chess = new Chess(state.fen);
   const side = chess.turn();
   let move;

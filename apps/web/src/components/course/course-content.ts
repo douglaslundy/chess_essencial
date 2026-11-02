@@ -549,6 +549,40 @@ export const COURSE_MODULES: CourseModule[] = [
           },
         ],
       },
+      {
+        id: 'mate-em-1-banco',
+        title: 'Problemas: mate em um',
+        steps: [
+          {
+            kind: 'info',
+            say: 'Agora, posições de partidas reais. Em cada uma existe um xeque-mate em um lance. Veja de que lado você joga, procure os xeques e confira se o rei consegue escapar.',
+          },
+          {
+            kind: 'puzzle',
+            say: 'Encontre o xeque-mate em um lance. São cinco problemas.',
+            theme: 'mate_em_um',
+            difficulty: 'beginner',
+            count: 5,
+          },
+        ],
+      },
+      {
+        id: 'mate-em-2-banco',
+        title: 'Problemas: mate em dois',
+        steps: [
+          {
+            kind: 'info',
+            say: 'No mate em dois, o primeiro lance prepara o mate e o adversário responde. Comece pelos lances que forçam, como os xeques.',
+          },
+          {
+            kind: 'puzzle',
+            say: 'Encontre o mate em dois lances. São três problemas.',
+            theme: 'mate_em_dois',
+            difficulty: 'beginner',
+            count: 3,
+          },
+        ],
+      },
     ],
   },
 ];
