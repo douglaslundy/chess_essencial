@@ -12,6 +12,9 @@ Plano completo: `docs/CURSO_DO_ZERO.md`. É independente do sistema antigo de cu
 - [x] **CURSO-05:** níveis 2, 3 e 4: princípios de abertura (conteúdo próprio), mais táticas fundamentais, táticas avançadas, peões, finais e estratégia com problemas do banco por tema e faixa (`intermediate`, `advanced`, `expert`).
 - [x] **CURSO-06:** teoria própria que o banco não cobre: finais de peões (oposição, regra do quadrado), finais de torre (Lucena, Philidor), planos de meio de jogo, estrutura de peões e partidas lendárias comentadas (coleção `legendary` da biblioteca). Provavelmente precisa de um passo de "assistir à partida" com comentários.
 
+- [x] **Voz do GPT não tocava (2026-11-02).** Em Meus dados, sem voz salva, a primeira opção (a voz IA) aparecia marcada mas nada era gravado (`voice_name` nulo nos 2 usuários da produção), então o site usava a voz do navegador. Agora há a opção explícita "Voz padrão do navegador" e só a voz salva aparece marcada. A geração na OpenAI pelo servidor foi testada (200, áudio mp3).
+- [ ] **Login ChatGPT OAuth sem Client ID:** o fluxo já é por redirecionamento (autoriza e volta). O campo pede o Client ID de um app OAuth registrado na OpenAI; ele fica salvo depois da primeira vez. Remover o campo exigiria embutir o Client ID do Codex, o que o usuário proibiu (não se passar pelo cliente do Codex). Depende de a OpenAI fornecer um app OAuth próprio.
+
 ## Correções pós-release de 2026-07-30 (concluídas)
 
 - [x] Corrigir desafios do nível atual exibidos como concluídos por rank global calculado depois do filtro.

@@ -337,10 +337,22 @@ export default function MyDataPage() {
             </p>
           ) : (
             <div className={styles.formGrid}>
+              {/* Nothing saved means the browser default: marking the first voice here hid that the
+                  AI voice was never chosen (it looked selected but was never stored). */}
+              <label className={styles.checkbox}>
+                <input
+                  checked={voiceName === null}
+                  disabled={voicePreferenceSaving}
+                  name="voiceName"
+                  onChange={() => void setVoiceName(null)}
+                  type="radio"
+                />{' '}
+                Voz padrão do navegador
+              </label>
               {voiceOptions.map((voice) => (
                 <label className={styles.checkbox} key={voice.name}>
                   <input
-                    checked={(voiceName ?? voiceOptions[0]?.name) === voice.name}
+                    checked={voiceName === voice.name}
                     disabled={voicePreferenceSaving}
                     name="voiceName"
                     onChange={() => void setVoiceName(voice.name)}

@@ -110,7 +110,8 @@ async function speakWithAi(text: string, voiceName: string, generation: number):
     url = URL.createObjectURL(blob);
     audio = audioElement();
     audio.src = url;
-    audio.playbackRate = getNarrationRate();
+    // A new src resets playbackRate to defaultPlaybackRate, so both are set.
+    audio.defaultPlaybackRate = audio.playbackRate = getNarrationRate();
     currentAudio = audio;
     currentAudioUrl = url;
     await new Promise<void>((resolve, reject) => {
