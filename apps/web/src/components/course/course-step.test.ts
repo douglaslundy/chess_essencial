@@ -42,6 +42,7 @@ describe('course steps', () => {
       maxMoves: 2,
     };
     expect(play(step, 'd4e5')).toBeNull();
+    expect(play(step, 'd4d8', 'd8h8')).toBeNull();
     const reset = play(step, 'd4d5', 'd5d6')!;
     expect(reset.fen).toBe(ROOK);
     expect(reset.stars).toEqual(['d7', 'g7']);
@@ -69,6 +70,12 @@ describe('course steps', () => {
     expect(play(step, 'a1a7')!.status).toBe('playing');
     expect(play(step, 'a1a8')!.status).toBe('done');
   });
+
+  it('mate: warns when the move stalemates', () => {
+    const step: CourseStep = { kind: 'mate', say: '', fen: 'k7/8/1K6/8/8/8/8/6Q1 w - - 0 1' };
+    expect(play(step, 'g1h2')!.feedback).toMatch(/Afogou/);
+    expect(play(step, 'g1g8')!.status).toBe('done');
+  });
 });
 
 /** Fewest moves for the side to move to land on every star (the side to move never changes). */
@@ -78,6 +85,7 @@ function minMovesForStars(fen: string, stars: string[], limit: number): number |
     const next: typeof frontier = [];
     for (const node of frontier) {
       for (const move of new Chess(node.fen).moves({ verbose: true })) {
+        if (move.captured === 'k') continue;
         const left = node.left.filter((square) => square !== move.to);
         if (left.length === 0) return depth;
         const after = move.after.split(' ');

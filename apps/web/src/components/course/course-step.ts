@@ -45,6 +45,8 @@ export function applyCourseMove(step: CourseStep, state: StepState, uci: string)
   } catch {
     return null;
   }
+  // Stars steps never hand the turn over, so a checked king could be "captured".
+  if (move.captured === 'k') return null;
   const lastMove = { from: move.from, to: move.to };
   const moves = state.moves + 1;
 
@@ -86,9 +88,11 @@ export function applyCourseMove(step: CourseStep, state: StepState, uci: string)
   if (!chess.isCheckmate()) {
     return {
       ...state,
-      feedback: chess.isCheck()
-        ? 'É xeque, mas o rei ainda consegue escapar. Tente de novo.'
-        : 'Ainda não é xeque-mate. Tente de novo.',
+      feedback: chess.isStalemate()
+        ? 'Afogou! O rei não está em xeque e não tem lance: isso é empate. Tente de novo.'
+        : chess.isCheck()
+          ? 'É xeque, mas o rei ainda consegue escapar. Tente de novo.'
+          : 'Ainda não é xeque-mate. Tente de novo.',
     };
   }
   return { ...state, fen: chess.fen(), feedback: null, lastMove, moves, status: 'done' };
