@@ -586,15 +586,36 @@ input:focus-visible {
 
 .botPreferences > label,
 .botPreferences > .timeControls {
-  flex: 1 1 14rem;
+  flex: 1 1 11rem;
   min-width: 0;
 }
 
 .botPreferences label {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.35rem;
   color: var(--text);
+  font-size: 0.85rem;
   font-weight: 700;
+}
+
+/* Play button closes the options row, aligned with the fields. */
+.playAction {
+  flex: 0 0 auto;
+  align-self: flex-end;
+}
+.playAction button {
+  width: auto;
+  padding: 0.6rem 1.25rem;
+  border-radius: 0.65rem;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .playAction,
+  .playAction button {
+    flex-basis: 100%;
+    width: 100%;
+  }
 }
 
 .botPreferences fieldset label {
@@ -605,27 +626,35 @@ input:focus-visible {
 
 .botPreferences select {
   width: 100%;
-  padding: 0.7rem;
+  padding: 0.55rem 0.7rem;
   border: 1px solid var(--border);
   border-radius: 0.65rem;
   background: var(--bg);
   color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .botPreferences p {
   flex-basis: 100%;
   margin: 0;
   color: var(--muted);
+  font-size: 0.85rem;
+}
+.botPreferences p[data-status='error'] {
+  color: var(--red-bright);
 }
 
 /* Sits beside the opponent select inside .botPreferences, laid out like its labels. */
 .timeControls {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.35rem;
 }
 
 .timeControlsLabel {
   color: var(--text);
+  font-size: 0.85rem;
   font-weight: 700;
 }
 
@@ -639,11 +668,14 @@ input:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
-  padding: 0.7rem 0.9rem;
+  /* Same box as the native selects beside it (.botPreferences select). */
+  padding: 0.55rem 0.7rem;
   border: 1px solid var(--border);
   border-radius: 0.65rem;
   background: var(--bg);
   color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
   cursor: pointer;
   text-align: left;
 }
@@ -652,17 +684,16 @@ input:focus-visible {
 }
 
 .groupedListboxValue {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .groupedListboxValue strong {
-  font-weight: 700;
+  font-weight: 500;
 }
+/* The detail line stays in the open list only, so the closed field is one line like a select. */
 .groupedListboxValue span {
-  color: var(--muted);
-  font-size: 0.85rem;
+  display: none;
 }
 
 .groupedListboxCaret {

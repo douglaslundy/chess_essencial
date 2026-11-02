@@ -224,7 +224,27 @@ export default function PlayPage() {
               </select>
             </label>
           ) : null}
-          {opponent === 'coach' ? (
+          {/* The play action closes the same row, so the whole choice fits in one block. */}
+          <div className="playAction">
+            {status === 'searching' ? (
+              <button className="secondaryButton" onClick={cancel} type="button">
+                Sair da fila
+              </button>
+            ) : (
+              <button className="primaryButton" onClick={search} type="button">
+                {opponent === 'coach'
+                  ? 'Jogar com o Treinador'
+                  : opponent === 'bot'
+                    ? 'Jogar contra o bot'
+                    : 'Buscar adversário'}
+              </button>
+            )}
+          </div>
+          {message ? (
+            <p data-status={status} role="status">
+              {message}
+            </p>
+          ) : opponent === 'coach' ? (
             <p>
               O bot do Treinador sempre joga no seu rating atual, avisa antes de um lance muito ruim
               (com opção de escolher outro) e pode sugerir o melhor lance, se você ativar em Meus
@@ -239,30 +259,6 @@ export default function PlayPage() {
             <p>A busca procura somente outra pessoa. O bot nunca será iniciado automaticamente.</p>
           )}
         </div>
-        <aside className="queueCard">
-          <span className="queueIcon" aria-hidden="true">
-            ♞
-          </span>
-          <h2>{status === 'searching' ? 'Preparando partida' : 'Pronto para jogar?'}</h2>
-          <p>
-            {message ||
-              'Escolha entre uma pessoa online ou o bot, depois selecione o ritmo da partida.'}
-          </p>
-          {status === 'searching' ? (
-            <button className="secondaryButton" onClick={cancel} type="button">
-              Sair da fila
-            </button>
-          ) : (
-            <button className="primaryButton" onClick={search} type="button">
-              {opponent === 'coach'
-                ? 'Jogar com o Treinador'
-                : opponent === 'bot'
-                  ? 'Jogar contra o bot'
-                  : 'Buscar adversário'}
-            </button>
-          )}
-          {status === 'searching' ? <div className="searchPulse" aria-hidden="true" /> : null}
-        </aside>
       </section>
     </main>
   );
