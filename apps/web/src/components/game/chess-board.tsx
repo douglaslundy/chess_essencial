@@ -9,6 +9,7 @@ import { MoveToast } from '@/components/game/move-toast';
 import { useDialogA11y } from '@/components/ui/dialog-a11y';
 import { useBoardMode } from '@/lib/board-mode';
 import {
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -281,7 +282,34 @@ function ChessBoard2D({
   const promotionFocusRef = useRef<HTMLButtonElement>(null);
   const walker = useRef<HTMLDivElement>(null);
   const [walkedId, setWalkedId] = useState(0);
-  const walking = walk && walk.id !== walkedId && !prefersReducedMotion() ? walk : null;
+  // A dragged piece already sits on its target: it stays there while the server confirms,
+  // and the confirmed move does not walk it again from its origin.
+  const [dropped, setDropped] = useState<{ fen: string; from: Square; to: Square } | null>(null);
+  const preview = useMemo(() => {
+    if (dropped?.fen !== fen) return null;
+    try {
+      const next = new Chess(fen);
+      next.move({ from: dropped.from, to: dropped.to });
+      return next;
+    } catch {
+      return null;
+    }
+  }, [dropped, fen]);
+  const draggedWalk =
+    walk && dropped && dropped.fen !== fen && walk.from === dropped.from && walk.to === dropped.to;
+  const walking =
+    walk && walk.id !== walkedId && !draggedWalk && !prefersReducedMotion() ? walk : null;
+
+  useEffect(() => {
+    if (draggedWalk && walk) setWalkedId(walk.id);
+  }, [draggedWalk, walk]);
+
+  // A rejected move leaves the fen unchanged: the preview gives way and the piece goes back.
+  useEffect(() => {
+    if (!dropped) return;
+    const timer = window.setTimeout(() => setDropped(null), 3000);
+    return () => window.clearTimeout(timer);
+  }, [dropped]);
 
   // The piece walks square by square (small hop on each) on a layer above the squares,
   // because each square clips its own content.
@@ -323,7 +351,7 @@ function ChessBoard2D({
     [chess, selected],
   );
 
-  function attempt(from: Square, to: Square) {
+  function attempt(from: Square, to: Square, dragged = false) {
     if (!chess) return;
     const legal = chess.moves({ square: from, verbose: true }).find((move) => move.to === to);
     if (!legal) {
@@ -335,6 +363,7 @@ function ChessBoard2D({
       return;
     }
     setSelected(null);
+    if (dragged) setDropped({ fen, from, to });
     onMove(`${from}${to}`);
   }
 
@@ -354,7 +383,7 @@ function ChessBoard2D({
   function drop(event: DragEvent<HTMLButtonElement>, to: Square) {
     event.preventDefault();
     const from = event.dataTransfer.getData('text/plain') as Square;
-    if (from) attempt(from, to);
+    if (from) attempt(from, to, true);
   }
 
   function navigate(event: KeyboardEvent<HTMLButtonElement>, index: number) {
@@ -394,7 +423,7 @@ function ChessBoard2D({
           aria-label="Tabuleiro de xadrez"
         >
           {squares.map((square, index) => {
-            const piece = chess?.get(square) ?? fallbackPieces.get(square);
+            const piece = (preview ?? chess)?.get(square) ?? fallbackPieces.get(square);
             const isLight = (square.charCodeAt(0) + Number(square[1])) % 2 === 1;
             const isLast = lastMove?.from === square || lastMove?.to === square;
             return (

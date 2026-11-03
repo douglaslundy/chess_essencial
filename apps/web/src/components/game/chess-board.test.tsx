@@ -29,6 +29,25 @@ describe('ChessBoard', () => {
     expect(onMove).toHaveBeenCalledWith('e2e4');
   });
 
+  it('keeps a dragged piece on its target and does not walk it again from the origin', () => {
+    const start = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+    const onMove = vi.fn();
+    const view = render(createElement(ChessBoard, { fen: start, onMove, orientation: 'white' }));
+    const dataTransfer = { getData: () => 'e2', setData: vi.fn() };
+    fireEvent.drop(screen.getByRole('gridcell', { name: /e4, vazia/i }), { dataTransfer });
+    expect(onMove).toHaveBeenCalledWith('e2e4');
+    // Server not answered yet: the pawn already shows on e4.
+    expect(screen.getByRole('gridcell', { name: /e4, branco peão/i })).toBeTruthy();
+    view.rerender(
+      createElement(ChessBoard, {
+        fen: 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1',
+        onMove,
+        orientation: 'white',
+      }),
+    );
+    expect(view.container.querySelector('.walkingPiece')).toBeNull();
+  });
+
   it('renders visible coordinates and vector pieces with explicit colors', () => {
     const view = render(
       createElement(ChessBoard, {
