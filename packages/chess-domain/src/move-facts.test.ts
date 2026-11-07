@@ -45,16 +45,18 @@ describe('moveFacts', () => {
     const fen = '2r1k3/8/8/8/2B5/8/8/2R1K3 w - - 0 1';
     const facts = moveFacts(fen, 'c1a1')!;
     expect(facts.leavesHanging.map((item) => item.square)).toEqual(['c4']);
-    expect(describeMoveFacts(facts).join(' ')).toContain('Deixa o bispo em c4 vulnerável a captura.');
+    expect(describeMoveFacts(facts).join(' ')).toContain(
+      'Deixa o bispo em c4 vulnerável a captura.',
+    );
   });
 
   it('recognises castling and mate', () => {
-    expect(describeMoveFacts(moveFacts('r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1', 'e1g1')!)[0]).toContain(
-      'roque pequeno',
-    );
-    expect(describeMoveFacts(moveFacts('7k/8/5KQ1/8/8/8/8/8 w - - 0 1', 'g6g7')!).join(' ')).toContain(
-      'xeque-mate',
-    );
+    expect(
+      describeMoveFacts(moveFacts('r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1', 'e1g1')!)[0],
+    ).toContain('roque pequeno');
+    expect(
+      describeMoveFacts(moveFacts('7k/8/5KQ1/8/8/8/8/8 w - - 0 1', 'g6g7')!).join(' '),
+    ).toContain('xeque-mate');
   });
 
   it('counts the recapture: taking a defended rook with a knight nets less than it looks', () => {

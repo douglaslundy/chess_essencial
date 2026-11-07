@@ -140,8 +140,7 @@ export function moveFacts(fenBefore: string, uci: string): MoveFacts | null {
       exposedPiece: ownVulnerable.some((item) => item.square === move.to),
       from: move.from,
       leavesHanging: ownVulnerable.filter(
-        (item) =>
-          item.square !== move.to && !hangingBefore.has(item.square),
+        (item) => item.square !== move.to && !hangingBefore.has(item.square),
       ),
       mate: after.isCheckmate(),
       netMaterial,
