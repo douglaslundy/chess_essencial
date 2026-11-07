@@ -17,3 +17,17 @@ export function estimatePerformanceRating(centipawnLosses: number[]): number | n
   const rating = 3100 * Math.exp(-0.01 * average);
   return Math.round(Math.min(MAX_RATING, Math.max(MIN_RATING, rating)) / 10) * 10;
 }
+
+/** A game is worth sharing in the library: long enough, clean (no error or blunder) and strong. */
+export const EXCELLENT_GAME_MIN_PLIES = 20;
+export const EXCELLENT_GAME_MIN_RATING = 1800;
+
+export function isExcellentGame(input: {
+  centipawnLosses: number[];
+  errors: number;
+  plies: number;
+}): boolean {
+  if (input.plies < EXCELLENT_GAME_MIN_PLIES || input.errors > 0) return false;
+  const rating = estimatePerformanceRating(input.centipawnLosses);
+  return rating !== null && rating >= EXCELLENT_GAME_MIN_RATING;
+}

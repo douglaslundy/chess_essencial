@@ -822,7 +822,7 @@ export default function Chess3DBoard({
   }
 
   const summary = chess
-    ? `Tabuleiro 3D. Vez das ${chess.turn() === 'w' ? 'brancas' : 'pretas'}. Use os botões para girar a visão.`
+    ? `Tabuleiro 3D. Vez das ${chess.turn() === 'w' ? 'brancas' : 'pretas'}. Clique no tabuleiro e use as setas do teclado ou os botões para girar a visão.`
     : 'Tabuleiro 3D';
 
   return (
@@ -830,8 +830,23 @@ export default function Chess3DBoard({
       <div
         aria-label={summary}
         className={`${styles.viewport} board3dViewport`}
+        onKeyDown={(event) => {
+          // Arrow keys move the view like a drag does (focus comes from clicking the board).
+          const step = event.shiftKey ? 0.3 : 0.1;
+          const moves: Record<string, [number, number]> = {
+            ArrowDown: [0, -step],
+            ArrowLeft: [step, 0],
+            ArrowRight: [-step, 0],
+            ArrowUp: [0, step],
+          };
+          const move = moves[event.key];
+          if (!move) return;
+          event.preventDefault();
+          rotate(move[0], move[1]);
+        }}
         onPointerCancel={() => (drag.current = null)}
         onPointerDown={(event) => {
+          event.currentTarget.focus({ preventScroll: true });
           drag.current = {
             startX: event.clientX,
             startY: event.clientY,
@@ -854,7 +869,8 @@ export default function Chess3DBoard({
           d.y = event.clientY;
         }}
         onPointerUp={() => (drag.current = null)}
-        role="img"
+        role="application"
+        tabIndex={0}
       >
         <Canvas
           camera={{ far: 60, fov: 38, near: 0.1, position: [0, 9, 8] }}

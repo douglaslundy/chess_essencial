@@ -114,6 +114,67 @@ export class LibraryRepository {
     return { openings, players };
   }
 
+  /** What the "share this game" check needs: the player's seat, the moves and their analysis. */
+  async sharableGame(gameId: string, userId: string) {
+    const sql = this.database.client;
+    const [game] = await sql<
+      Array<{
+        black: string;
+        finishedAt: Date | null;
+        playerColor: 'black' | 'white';
+        result: string;
+        white: string;
+      }>
+    >`
+      SELECT g.finished_at AS "finishedAt", g.result::text AS result, mine.color AS "playerColor",
+        COALESCE(white_profile.display_name, 'Brancas') AS white,
+        COALESCE(black_profile.display_name, 'Pretas') AS black
+      FROM games g
+      JOIN game_players mine ON mine.game_id = g.id AND mine.user_id = ${userId}
+      JOIN game_players white ON white.game_id = g.id AND white.color = 'white'
+      JOIN game_players black ON black.game_id = g.id AND black.color = 'black'
+      LEFT JOIN user_profiles white_profile ON white_profile.user_id = white.user_id
+      LEFT JOIN user_profiles black_profile ON black_profile.user_id = black.user_id
+      WHERE g.id = ${gameId} AND g.status = 'finished' AND g.coach_mode = false
+    `;
+    if (!game) return null;
+    const moves = await sql<Array<{ san: string }>>`
+      SELECT san FROM game_moves WHERE game_id = ${gameId} ORDER BY ply
+    `;
+    const analysis = await sql<Array<{ centipawnLoss: number; color: string; quality: string }>>`
+      SELECT gma.centipawn_loss AS "centipawnLoss", gma.color::text AS color,
+        gma.quality::text AS quality
+      FROM game_move_analyses gma
+      JOIN game_analyses ga ON ga.game_id = gma.game_id AND ga.status = 'completed'
+      WHERE gma.game_id = ${gameId}
+    `;
+    return { ...game, analysis, moves: moves.map((move) => move.san) };
+  }
+
+  /** Idempotent: the same move list is stored once (external_key is its hash). */
+  async addCommunityGame(input: {
+    black: string;
+    key: string;
+    movesSan: string[];
+    result: string;
+    white: string;
+  }) {
+    const sql = this.database.client;
+    const [row] = await sql<Array<{ id: string }>>`
+      INSERT INTO library_games (
+        external_key, white, black, event, site, played_on, played_year, result,
+        moves_san, ply_count
+      ) VALUES (
+        ${input.key}, ${input.white}, ${input.black}, 'Partida da comunidade', 'Xadrez Essencial',
+        to_char(now(), 'YYYY.MM.DD'), extract(year FROM now())::integer, ${input.result},
+        ${input.movesSan.join(' ')}, ${input.movesSan.length}
+      )
+      ON CONFLICT (external_key) DO UPDATE SET external_key = library_games.external_key
+      RETURNING id
+    `;
+    return row!.id;
+  }
+
   async getGame(id: string) {
     const [row] = await this.database.client<LibraryGameRow[]>`
       SELECT id, white, black, white_elo, black_elo, event, played_on, result, eco,

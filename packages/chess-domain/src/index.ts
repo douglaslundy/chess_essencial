@@ -7,7 +7,12 @@ export {
   hasCheckingMove,
   isPlayableStart,
 } from './mate-solver.js';
-export { estimatePerformanceRating } from './performance-rating.js';
+export {
+  estimatePerformanceRating,
+  EXCELLENT_GAME_MIN_PLIES,
+  EXCELLENT_GAME_MIN_RATING,
+  isExcellentGame,
+} from './performance-rating.js';
 export { classifyMove } from './move-quality.js';
 export {
   describeBetterMove,

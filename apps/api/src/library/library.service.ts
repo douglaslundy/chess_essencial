@@ -7,7 +7,9 @@ import type {
   LibrarySearchQuery,
   LibrarySearchResult,
 } from '@xadrez/contracts';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { isExcellentGame } from '@xadrez/chess-domain';
+import { createHash } from 'node:crypto';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { AiProvidersService } from '../ai-providers/ai-providers.service.js';
 import { callLlm } from '../games/narration/llm-client.js';
@@ -164,5 +166,39 @@ export class LibraryService {
       }
     }
     throw lastError;
+  }
+
+  /**
+   * Adds the caller's own finished game to the study library when it was excellent: long, no
+   * error or blunder from the caller, and a strong estimated rating. Checked again here, not
+   * trusted from the client.
+   */
+  async shareGame(gameId: string, userId: string): Promise<{ libraryGameId: string }> {
+    const game = await this.repository.sharableGame(gameId, userId);
+    if (!game) throw new NotFoundException('Partida não encontrada ou ainda não encerrada.');
+    const mine = game.analysis.filter((move) => move.color === game.playerColor);
+    const errors = mine.filter((move) => move.quality === 'erro' || move.quality === 'gafe').length;
+    if (
+      !isExcellentGame({
+        centipawnLosses: mine.map((move) => move.centipawnLoss),
+        errors,
+        plies: game.moves.length,
+      })
+    ) {
+      throw new ForbiddenException(
+        'Só partidas excelentes (longas, sem erros graves) entram na biblioteca.',
+      );
+    }
+    const result =
+      game.result === 'white_win' ? '1-0' : game.result === 'black_win' ? '0-1' : '1/2-1/2';
+    const key = createHash('sha1').update(game.moves.join(' ')).digest('hex');
+    const libraryGameId = await this.repository.addCommunityGame({
+      black: game.black,
+      key,
+      movesSan: game.moves,
+      result,
+      white: game.white,
+    });
+    return { libraryGameId };
   }
 }

@@ -25,18 +25,18 @@ Revisão e Treinador (IA que pensa como jogador de xadrez):
 - [~] **REV-04:** a revisão gerada pela IA deve ficar gravada no banco e ser reaproveitada ao rever a mesma partida (já existe em `game_narrations`; o prompt novo regera as antigas via migration 0050). O áudio também: nunca regerar. O cache de áudio é `voice_audio_cache` (global, por texto e voz). Feito: a revisão e a biblioteca pedem todas as falas ao abrir (prefetch).
 - [~] **REV-05:** ao entrar em revisão, mostrar o rating estimado de cada jogador naquela partida. Feito: linha "Rating estimado" na tabela (`estimatePerformanceRating`).
 - [~] **REV-06:** no lance da revisão, o narrador diz se é ponto forte ou fraco (o resumo tem esses pontos). Valer também para a biblioteca, se não prejudicar. Feito em ambas.
-- [ ] **REV-07:** na revisão, as setas do teclado ← e → voltam e avançam o lance.
+- [x] **REV-07 (2026-11-07):** na revisão, as setas do teclado ← e → voltam e avançam o lance.
 
 Tabuleiro 3D:
 
-- [ ] **3D-01:** corrigir as casas invertidas (feito em 588f73d/aa12b39).
-- [ ] **3D-02:** setas do teclado, com o foco no tabuleiro, giram a câmera para cima, baixo e lados.
-- [ ] **3D-03:** rei bem maior que as outras peças, dama a segunda maior. Verificar como o tamanho das peças é definido e ajustar também as demais.
+- [x] **3D-01:** corrigir as casas invertidas (feito em 588f73d/aa12b39).
+- [x] **3D-02 (2026-11-07):** setas do teclado, com o foco no tabuleiro, giram a câmera para cima, baixo e lados.
+- [x] **3D-03 (2026-11-07):** rei bem maior que as outras peças, dama a segunda maior (alturas em `PIECE_HEIGHT`, `piece-geometry.ts`). Verificar como o tamanho das peças é definido e ajustar também as demais.
 
 Plataforma:
 
-- [ ] **BOT-01:** o bot de 1600 ou 1800 joga muito mal (`selectBotMove` olha só 2 lances). Verificar o sistema de rating do bot e usar o Stockfish com `UCI_Elo`.
-- [ ] **BIB-01:** partida com rating excelente: ao terminar, botão para sugerir inserir a partida na biblioteca de partidas. Se o usuário aceitar, ela entra na biblioteca para estudo dos outros alunos.
+- [x] **BOT-01 (2026-11-07):** o bot de 1600 ou 1800 joga muito mal (`selectBotMove` olha só 2 lances). Verificar o sistema de rating do bot e usar o Stockfish com `UCI_Elo`. Feito: `apps/api/src/games/bot-engine.ts` (Stockfish limitado a partir de 1320; abaixo disso e em falha, a heurística antiga).
+- [x] **BIB-01 (2026-11-07):** partida com rating excelente: ao terminar, botão para sugerir inserir a partida na biblioteca de partidas (critério `isExcellentGame`: 20+ lances, sem erro nem gafe, rating estimado 1800+; botão no resumo da revisão, `POST /v1/library/share/:gameId`). Se o usuário aceitar, ela entra na biblioteca para estudo dos outros alunos.
 - [ ] **PROF-01:** perfil de professor. Botão "criar sala de aula"; o professor adiciona alunos (amigos, ID, e-mail ou nome). O aluno vê um botão em destaque para entrar na aula e vê tudo o que o professor faz. O professor tem um botão por área (curso, treinamento, partida, biblioteca, desafio, jogar) e o que ele faz é replicado, lance a lance, na tela dos alunos.
 - [ ] **PROF-02 (só relatório):** investigar custo operacional e viabilidade da réplica em tempo real da PROF-01.
 - [ ] **PROF-03 (só se viável):** canal de áudio na sala: o professor controla quem fala (abre ou fecha o microfone) e os alunos escutam como uma transmissão. Apresentar viabilidade e custo operacional. O objetivo das duas últimas é abrir a plataforma para ensinar alunos.

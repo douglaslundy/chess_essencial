@@ -11,13 +11,16 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 
 export type PieceKind = 'p' | 'r' | 'n' | 'b' | 'q' | 'k';
 
-/** Piece height (board units; one square = 1). Used to place captured pieces and highlights. */
+/**
+ * Piece height (board units; one square = 1), as in a real set: the king clearly tallest, the
+ * queen second, then bishop, knight, rook and pawn. `pieceGeometry` scales each model to this.
+ */
 export const PIECE_HEIGHT: Record<PieceKind, number> = {
-  b: 1.15,
-  k: 1.4,
-  n: 1.0,
-  p: 0.85,
-  q: 1.3,
+  b: 1.2,
+  k: 1.75,
+  n: 1.08,
+  p: 0.82,
+  q: 1.45,
   r: 0.95,
 };
 
@@ -178,6 +181,12 @@ export function pieceGeometry(kind: PieceKind): BufferGeometry {
   let geometry = cache.get(kind);
   if (!geometry) {
     geometry = builders[kind]();
+    // Taller pieces grow wider only half as much, so the big king still fits its square.
+    geometry.computeBoundingBox();
+    const height = geometry.boundingBox!.max.y;
+    const grow = PIECE_HEIGHT[kind] / height;
+    const sideways = 1 + (grow - 1) / 2;
+    geometry.scale(sideways, grow, sideways);
     geometry.computeVertexNormals();
     cache.set(kind, geometry);
   }

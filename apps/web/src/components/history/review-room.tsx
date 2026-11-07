@@ -8,7 +8,7 @@ import type {
   GameState,
   ReviewAnnotation,
 } from '@xadrez/contracts';
-import { estimatePerformanceRating } from '@xadrez/chess-domain';
+import { estimatePerformanceRating, isExcellentGame } from '@xadrez/chess-domain';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -80,6 +80,10 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
   const [arrowFrom, setArrowFrom] = useState('');
   const [arrowTo, setArrowTo] = useState('');
   const [message, setMessage] = useState('Carregando revisão…');
+  // Offer to share an excellent game with the study library: idle -> sending -> shared | failed.
+  const [shareState, setShareState] = useState<
+    { libraryGameId: string; status: 'shared' } | { status: 'failed' | 'idle' | 'sending' }
+  >({ status: 'idle' });
   const [coachMessage, setCoachMessage] = useState('');
   const [eligibility, setEligibility] = useState<ReviewEligibility | null>(null);
   const [view, setView] = useState<'summary' | 'moves'>('summary');
@@ -142,6 +146,27 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
       (analysis?.moves ?? []).filter((m) => m.color === 'white').map((m) => m.centipawnLoss),
     ),
   };
+  const myMoves = myColor ? (analysis?.moves ?? []).filter((m) => m.color === myColor) : [];
+  const excellentGame =
+    analysis?.status === 'completed' &&
+    isExcellentGame({
+      centipawnLosses: myMoves.map((m) => m.centipawnLoss),
+      errors: myMoves.filter((m) => m.quality === 'erro' || m.quality === 'gafe').length,
+      plies: moves.length,
+    });
+
+  async function shareToLibrary() {
+    const token = window.localStorage.getItem('xadrez.access_token');
+    if (!token) return;
+    setShareState({ status: 'sending' });
+    try {
+      const { libraryGameId } = await api.shareGameToLibrary(gameId, token);
+      setShareState({ libraryGameId, status: 'shared' });
+    } catch {
+      setShareState({ status: 'failed' });
+    }
+  }
+
   const avatarForColor = (color: 'white' | 'black') =>
     state?.players.find((player) => player.color === color)?.avatarUrl ?? null;
   const summaryColumns: Array<{
@@ -211,6 +236,26 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
   useEffect(() => {
     if (!reviewNarrationEnabled) stopSpeaking();
   }, [reviewNarrationEnabled]);
+
+  // ← and → step through the moves, unless the player is typing (the comment box).
+  const lastPly = moves.length;
+  useEffect(() => {
+    if (view !== 'moves') return;
+    function onKey(event: KeyboardEvent) {
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.closest('input, textarea, select, [contenteditable="true"], [role="application"]')
+      )
+        return;
+      if (event.key === 'ArrowLeft') setPly((value) => Math.max(0, value - 1));
+      else if (event.key === 'ArrowRight') setPly((value) => Math.min(lastPly, value + 1));
+      else return;
+      event.preventDefault();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lastPly, view]);
 
   function startMoveByMoveReview() {
     setPly(0);
@@ -338,6 +383,37 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
               ))}
             </tbody>
           </table>
+        ) : null}
+        {excellentGame ? (
+          <section className="reviewNarration" aria-labelledby="share-library-title">
+            <div className="reviewNarrationHeader">
+              <h2 id="share-library-title">Partida excelente!</h2>
+            </div>
+            {shareState.status === 'shared' ? (
+              <p role="status">
+                Pronto, a partida entrou na biblioteca para os outros alunos estudarem.{' '}
+                <Link href={`/app/biblioteca/${shareState.libraryGameId}`}>Ver na biblioteca</Link>
+              </p>
+            ) : (
+              <>
+                <p>
+                  Você jogou sem erros graves. Quer sugerir esta partida para a biblioteca de
+                  partidas, para outros alunos estudarem?
+                </p>
+                <button
+                  className="libraryReviewButton"
+                  disabled={shareState.status === 'sending'}
+                  onClick={shareToLibrary}
+                  type="button"
+                >
+                  {shareState.status === 'sending' ? 'Enviando…' : 'Sim, inserir na biblioteca'}
+                </button>
+                {shareState.status === 'failed' ? (
+                  <p role="alert">Não foi possível inserir agora. Tente de novo.</p>
+                ) : null}
+              </>
+            )}
+          </section>
         ) : null}
         {learningSignals.length ? (
           <section className="reviewNarration" aria-labelledby="learning-signals-title">

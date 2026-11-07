@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { estimatePerformanceRating } from './performance-rating.js';
+import { estimatePerformanceRating, isExcellentGame } from './performance-rating.js';
 
 describe('estimatePerformanceRating', () => {
   it('rates cleaner play higher', () => {
@@ -18,5 +18,19 @@ describe('estimatePerformanceRating', () => {
 
   it('stays silent on a game too short to judge', () => {
     expect(estimatePerformanceRating([10, 20, 30])).toBeNull();
+  });
+});
+
+describe('isExcellentGame', () => {
+  const clean = Array(15).fill(12);
+  it('accepts a long, clean, strong game', () => {
+    expect(isExcellentGame({ centipawnLosses: clean, errors: 0, plies: 40 })).toBe(true);
+  });
+  it('rejects a game with an error, a short game or weak play', () => {
+    expect(isExcellentGame({ centipawnLosses: clean, errors: 1, plies: 40 })).toBe(false);
+    expect(isExcellentGame({ centipawnLosses: clean, errors: 0, plies: 12 })).toBe(false);
+    expect(isExcellentGame({ centipawnLosses: Array(15).fill(80), errors: 0, plies: 40 })).toBe(
+      false,
+    );
   });
 });

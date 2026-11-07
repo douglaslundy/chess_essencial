@@ -646,6 +646,8 @@ export const api = {
     request<LibraryReview>(`/library/games/${gameId}/review`, token),
   requestLibraryReview: (gameId: string, token: string) =>
     request<LibraryReview>(`/library/games/${gameId}/review`, token, { method: 'POST' }),
+  shareGameToLibrary: (gameId: string, token: string) =>
+    request<{ libraryGameId: string }>(`/library/share/${gameId}`, token, { method: 'POST' }),
   getLiveNarration: (gameId: string, input: LiveNarrationRequest, token: string) =>
     request<LiveNarrationResult>(`/games/${gameId}/live-narration`, token, {
       body: JSON.stringify(input),

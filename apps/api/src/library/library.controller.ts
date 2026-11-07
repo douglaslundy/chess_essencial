@@ -1,8 +1,8 @@
 import { librarySearchQuerySchema } from '@xadrez/contracts';
-import { Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { z } from 'zod';
 
-import { AccessTokenGuard } from '../auth/access-token.guard.js';
+import { AccessTokenGuard, type AuthenticatedRequest } from '../auth/access-token.guard.js';
 import { parseInput } from '../common/http/parse-input.js';
 import { LibraryService } from './library.service.js';
 
@@ -37,5 +37,11 @@ export class LibraryController {
   @Post('games/:gameId/review')
   requestReview(@Param('gameId') gameId: string) {
     return this.library.requestReview(parseInput(idSchema, gameId));
+  }
+
+  /** The player offers one of their own excellent games to the study library. */
+  @Post('share/:gameId')
+  share(@Param('gameId') gameId: string, @Req() request: AuthenticatedRequest) {
+    return this.library.shareGame(parseInput(idSchema, gameId), request.auth.userId);
   }
 }

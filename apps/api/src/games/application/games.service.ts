@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto';
 
-import { selectBotMove } from '@xadrez/chess-domain';
 import type {
   CreateBotGameInput,
   CreateGameInput,
@@ -13,6 +12,7 @@ import { Injectable } from '@nestjs/common';
 
 import { RatingsService } from '../../ratings/application/ratings.service.js';
 import { sanitizeUserText } from '../../common/security/sanitize-user-text.js';
+import { selectBotMoveWithEngine } from '../bot-engine.js';
 import { GamesRepository } from '../infrastructure/games.repository.js';
 
 @Injectable()
@@ -129,7 +129,7 @@ export class GamesService {
   async commitBotMoveIfNeeded(gameId: string) {
     const turn = await this.games.botTurn(gameId);
     if (!turn) return null;
-    const uci = selectBotMove(turn.currentFen, turn.targetRating);
+    const uci = await selectBotMoveWithEngine(turn.currentFen, turn.targetRating);
     const result = await this.games.commitMove(gameId, turn.botUserId, {
       clientMoveId: randomUUID(),
       expectedVersion: turn.version,

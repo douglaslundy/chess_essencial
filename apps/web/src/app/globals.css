@@ -4866,3 +4866,8 @@ textarea::placeholder {
 .reviewQualityTable .reviewRatingRow th {
   font-weight: 700;
 }
+
+.board3dViewport:focus-visible {
+  outline: 2px solid #81b64c;
+  outline-offset: -2px;
+}
