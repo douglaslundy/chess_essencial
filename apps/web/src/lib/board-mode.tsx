@@ -19,6 +19,8 @@ export interface BoardEffects {
   rimBlack: boolean;
   /** 3D style: medieval statues on a stone board instead of the simple turned set. */
   medieval3d: boolean;
+  /** 3D style "Marfim": ivory and graphite pieces on a walnut board with studio light. */
+  ivory3d: boolean;
   /** Grey light squares in 3D so the white pieces stand out. On by default. */
   greyLight3d: boolean;
   /** Square name ("A1") written inside every empty square, 2D and 3D. Off by default. */
@@ -32,6 +34,7 @@ const DEFAULT_EFFECTS: BoardEffects = {
   coordinates3d: true,
   greyLight3d: true,
   medieval3d: false,
+  ivory3d: false,
   rimBlack: true,
   rimWhite: true,
   moveAnimation: false,

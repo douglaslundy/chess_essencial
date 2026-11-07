@@ -106,21 +106,39 @@ export function BoardSettingsMenu() {
               <legend>Estilo do tabuleiro 3D</legend>
               <label>
                 <input
-                  checked={!effects.medieval3d}
+                  checked={!effects.medieval3d && !effects.ivory3d}
                   name={`${panelId}-style`}
-                  onChange={() => setEffect('medieval3d', false)}
+                  onChange={() => {
+                    setEffect('medieval3d', false);
+                    setEffect('ivory3d', false);
+                  }}
                   type="radio"
                 />
                 <span>Simples</span>
               </label>
               <label>
                 <input
-                  checked={effects.medieval3d}
+                  checked={effects.medieval3d && !effects.ivory3d}
                   name={`${panelId}-style`}
-                  onChange={() => setEffect('medieval3d', true)}
+                  onChange={() => {
+                    setEffect('ivory3d', false);
+                    setEffect('medieval3d', true);
+                  }}
                   type="radio"
                 />
                 <span>Medieval</span>
+              </label>
+              <label>
+                <input
+                  checked={effects.ivory3d}
+                  name={`${panelId}-style`}
+                  onChange={() => {
+                    setEffect('medieval3d', false);
+                    setEffect('ivory3d', true);
+                  }}
+                  type="radio"
+                />
+                <span>Marfim</span>
               </label>
             </fieldset>
           ) : null}

@@ -1,3 +1,4 @@
+2026-11-07 - **Tabuleiro Marfim** (`board3d/ivory.tsx`, `ivory-geometry.ts`, prop `ivory` em `chess-3d-board.tsx`, opção `ivory3d` em `board-mode.tsx` e no menu). Tone mapping desligado (`flat`) para as cores do spec. Verificado em Chrome headless (desktop, celular 390px, vista de trás).
 2026-11-07 - **Ordem combinada:** próxima = novo tabuleiro (usuário passa na próxima mensagem), na `main` com deploy. Depois: tarefas que dependem de HTTPS (PROF-03 áudio, APP-00..06) na branch `feature/https`, sem mesclar na `main` até o usuário avisar que o HTTPS existe.
 2026-11-07 - Sem HTTPS: rolagem da aula replicada (`?sy=` em `classroom-sync.tsx`) e site instalável (APP-02: `app/manifest.ts`, `public/icons`). Sem teste em navegador.
 2026-11-07 - Aula: passo da lição do curso replicado (`useClassroomPly` em `course-player.tsx`) e professor adiciona aluno pela lista de amigos (`sala/[classroomId]/page.tsx`). Sem teste em navegador.

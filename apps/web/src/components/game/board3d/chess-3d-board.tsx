@@ -3,7 +3,8 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Chess, type Square } from 'chess.js';
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
-import { BackSide, type Group } from 'three';
+import { PerformanceMonitor } from '@react-three/drei';
+import { BackSide, type Group, type Texture } from 'three';
 
 import { BoardCoordinates, SquareName } from './board-coordinates';
 import styles from './chess-3d-board.module.css';
@@ -11,6 +12,8 @@ import { hintSquares, walkPath, type PlayedMove } from '@/components/game/move-p
 import { MoveToast } from '@/components/game/move-toast';
 import { useDialogA11y } from '@/components/ui/dialog-a11y';
 import { MedievalFrame, MedievalStatue, MedievalTower, useMedievalMaterials } from './medieval';
+import { IvoryEnvironment, IvoryFrame, IvoryLights, IvoryPiece, useIvoryMaps } from './ivory';
+import { IVORY_KNIGHT_YAW } from './ivory-geometry';
 import { pieceGeometry } from './piece-geometry';
 import { initialPieces, reconcile, type TrackedPiece } from './piece-tracker';
 
@@ -39,6 +42,8 @@ export interface Chess3DBoardProps {
   rims?: { b: boolean; w: boolean };
   /** Medieval set: carved statues (photographed angles) on a stone and oak board. */
   medieval?: boolean;
+  /** Ivory set ("Marfim"): turned ivory and graphite pieces on a walnut board, studio light. */
+  ivory?: boolean;
 }
 
 interface View {
@@ -95,6 +100,18 @@ const MEDIEVAL_POLAR = 1.17;
 const MEDIEVAL_MIN_POLAR = 0.65;
 // Far enough that the near corners of the board stay inside a square frame on any screen.
 const DEFAULT_DISTANCE = 17;
+/** Ivory camera presets (spec camera-presets.json): elevation above the board and nominal distance. */
+const IVORY_PRESETS = {
+  imersiva: { distance: 11, elevation: 32, label: 'Imersiva' },
+  jogo: { distance: 12, elevation: 52, label: 'Jogo' },
+  tatica: { distance: 13, elevation: 72, label: 'Tática' },
+} as const;
+type IvoryPreset = keyof typeof IVORY_PRESETS;
+const IVORY_MIN_POLAR = ((90 - 85) * Math.PI) / 180;
+const IVORY_MAX_POLAR = ((90 - 25) * Math.PI) / 180;
+/** Spec distances are for a 12-unit reference; the existing rig is tuned for 17. */
+const ivoryDistance = (nominal: number) => (DEFAULT_DISTANCE * nominal) / 12;
+const ivoryPolar = (elevation: number) => ((90 - elevation) * Math.PI) / 180;
 
 /** Board coordinates: file a..h -> x -3.5..3.5, rank 1..8 -> z 3.5..-3.5 (white side at +z). */
 function squareToXZ(square: string): [number, number] {
@@ -122,6 +139,7 @@ interface Ghost {
 function PieceMesh({
   captorXZ,
   ghost,
+  ivory = false,
   medieval = false,
   piece,
   rim = true,
@@ -130,6 +148,7 @@ function PieceMesh({
 }: {
   captorXZ?: [number, number] | null;
   ghost?: boolean;
+  ivory?: boolean;
   medieval?: boolean;
   piece: TrackedPiece;
   rim?: boolean;
@@ -221,8 +240,18 @@ function PieceMesh({
   });
 
   return (
-    <group position={home} ref={group} rotation={[0, white ? Math.PI / 2 : -Math.PI / 2, 0]}>
-      {medieval && piece.type === 'r' ? (
+    <group
+      position={home}
+      ref={group}
+      rotation={[
+        0,
+        (white ? Math.PI / 2 : -Math.PI / 2) + (ivory && piece.type === 'n' ? IVORY_KNIGHT_YAW : 0),
+        0,
+      ]}
+    >
+      {ivory ? (
+        <IvoryPiece color={piece.color} kind={piece.type} />
+      ) : medieval && piece.type === 'r' ? (
         <MedievalTower color={piece.color} />
       ) : medieval ? (
         <MedievalStatue color={piece.color} kind={piece.type} />
@@ -344,11 +373,27 @@ function CameraRig({ view }: { view: MutableRefObject<Rig> }) {
   return null;
 }
 
+/** Square textures; `*Alt` are optional grain variants picked per square so the board isn't tiled. */
+type SquareMaps = {
+  dark: Texture | null;
+  darkAlt?: Texture[];
+  light: Texture | null;
+  lightAlt?: Texture[];
+  roughness?: number;
+};
+const CHECK_RED = '#e8574a';
+
 const HINT_BLUE = '#2fa3ff';
 const STAR_GOLD = '#f5c400';
 const NO_MARKS: readonly string[] = [];
 
+function squareMap(maps: SquareMaps, light: boolean, index: number): Texture | null {
+  const variants = light ? maps.lightAlt : maps.darkAlt;
+  return variants?.length ? variants[index % variants.length]! : light ? maps.light : maps.dark;
+}
+
 function BoardSquares({
+  checkSquare = null,
   destinations,
   flip,
   greyLight,
@@ -366,7 +411,8 @@ function BoardSquares({
   greyLight: boolean;
   hint: { from: string | null; path: Set<string>; target: string | null };
   lastMove?: { from: string; to: string } | undefined;
-  maps?: ReturnType<typeof useMedievalMaterials> | undefined;
+  checkSquare?: string | null;
+  maps?: SquareMaps | undefined;
   marks: readonly string[];
   occupied: Set<string>;
   onSquare: (square: Square) => void;
@@ -399,29 +445,33 @@ function BoardSquares({
               <meshStandardMaterial
                 // Optional grey light squares so the white pieces stand out from them.
                 color={
-                  highlighted
-                    ? light
-                      ? '#f0e68a'
-                      : '#c9b04a'
-                    : light && greyLight
-                      ? '#979797'
-                      : '#ffffff'
+                  square === checkSquare
+                    ? CHECK_RED
+                    : highlighted
+                      ? light
+                        ? '#f0e68a'
+                        : '#c9b04a'
+                      : light && greyLight
+                        ? '#979797'
+                        : '#ffffff'
                 }
-                map={light ? maps.light : maps.dark}
-                roughness={0.85}
+                map={squareMap(maps, light, file * 8 + rank)}
+                roughness={maps.roughness ?? 0.85}
               />
             ) : (
               <meshStandardMaterial
                 color={
-                  highlighted
-                    ? light
-                      ? '#d9d46a'
-                      : '#b9b23a'
-                    : light
-                      ? greyLight
-                        ? '#8f8b84'
-                        : '#ead7ae'
-                      : '#8f6340'
+                  square === checkSquare
+                    ? CHECK_RED
+                    : highlighted
+                      ? light
+                        ? '#d9d46a'
+                        : '#b9b23a'
+                      : light
+                        ? greyLight
+                          ? '#8f8b84'
+                          : '#ead7ae'
+                        : '#8f6340'
                 }
                 roughness={0.7}
               />
@@ -486,6 +536,7 @@ function BoardSquares({
 }
 
 function Scene({
+  checkSquare,
   coordinates,
   rims,
   destinations,
@@ -493,9 +544,11 @@ function Scene({
   ghosts,
   greyLight,
   hint,
+  ivory,
   lastMove,
   marks,
   medieval,
+  onPerformance,
   onSquare,
   pieces,
   selected,
@@ -503,9 +556,12 @@ function Scene({
   view,
   walk,
 }: {
+  checkSquare: string | null;
   greyLight: boolean;
   hint: { from: string | null; path: Set<string>; target: string | null };
+  ivory: boolean;
   marks: readonly string[];
+  onPerformance: (low: boolean) => void;
   squareNames: boolean;
   medieval: boolean;
   coordinates: boolean;
@@ -521,9 +577,24 @@ function Scene({
   walk: boolean;
 }) {
   const maps = useMedievalMaterials();
+  const ivoryMaps = useIvoryMaps(ivory);
+  const coarse = useMemo(
+    () => typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches,
+    [],
+  );
   return (
     <>
-      <color args={[medieval ? '#0f0b09' : '#14110f']} attach="background" />
+      <color args={[ivory ? '#0d0b0b' : medieval ? '#0f0b09' : '#14110f']} attach="background" />
+      {ivory ? (
+        <>
+          <IvoryEnvironment />
+          <IvoryLights coarse={coarse} />
+          <PerformanceMonitor
+            onDecline={() => onPerformance(true)}
+            onIncline={() => onPerformance(false)}
+          />
+        </>
+      ) : null}
       {/* Torchlight from the players' sides warms the stone. */}
       {medieval ? (
         <>
@@ -543,21 +614,27 @@ function Scene({
           />
         </>
       ) : null}
-      <ambientLight intensity={0.75} />
-      <hemisphereLight args={['#fff3dc', '#3a2a20', 0.5]} />
-      <directionalLight intensity={0.9} position={[-6, 8, -5]} />
-      <directionalLight
-        castShadow
-        intensity={1.8}
-        position={[5, 10, 6]}
-        shadow-camera-bottom={-8}
-        shadow-camera-left={-8}
-        shadow-camera-right={8}
-        shadow-camera-top={8}
-        shadow-mapSize={[1024, 1024]}
-      />
+      {ivory ? null : (
+        <>
+          <ambientLight intensity={0.75} />
+          <hemisphereLight args={['#fff3dc', '#3a2a20', 0.5]} />
+          <directionalLight intensity={0.9} position={[-6, 8, -5]} />
+          <directionalLight
+            castShadow
+            intensity={1.8}
+            position={[5, 10, 6]}
+            shadow-camera-bottom={-8}
+            shadow-camera-left={-8}
+            shadow-camera-right={8}
+            shadow-camera-top={8}
+            shadow-mapSize={[1024, 1024]}
+          />
+        </>
+      )}
       <CameraRig view={view} />
-      {medieval ? (
+      {ivoryMaps ? (
+        <IvoryFrame maps={ivoryMaps} />
+      ) : medieval ? (
         <MedievalFrame maps={maps} />
       ) : (
         <mesh position={[0, -0.27, 0]} receiveShadow>
@@ -567,12 +644,13 @@ function Scene({
       )}
       {coordinates ? <BoardCoordinates flip={flip} /> : null}
       <BoardSquares
+        checkSquare={checkSquare}
         destinations={destinations}
         flip={flip}
-        greyLight={greyLight}
+        greyLight={greyLight && !ivory}
         hint={hint}
         lastMove={lastMove}
-        maps={medieval ? maps : undefined}
+        maps={ivoryMaps ?? (medieval ? maps : undefined)}
         marks={marks}
         occupied={new Set(pieces.map((piece) => piece.square))}
         onSquare={onSquare}
@@ -588,6 +666,7 @@ function Scene({
           }}
         >
           <PieceMesh
+            ivory={ivory}
             medieval={medieval}
             piece={piece}
             rim={rims[piece.color]}
@@ -601,6 +680,7 @@ function Scene({
           <PieceMesh
             captorXZ={ghost.captor}
             ghost
+            ivory={ivory}
             medieval={medieval}
             piece={ghost.piece}
             rim={rims[ghost.piece.color]}
@@ -637,6 +717,7 @@ export default function Chess3DBoard({
   coordinates = true,
   rims = DEFAULT_RIMS,
   medieval = false,
+  ivory = false,
 }: Chess3DBoardProps) {
   const hinted = useMemo(
     () => ({ from: hint?.from ?? null, ...hintSquares(fen, hint) }),
@@ -671,6 +752,13 @@ export default function Chess3DBoard({
   });
   const drag = useRef<{ startX: number; startY: number; x: number; y: number } | null>(null);
   const [locked, setLocked] = useState(false);
+  const [preset, setPreset] = useState<IvoryPreset>('jogo');
+  const [lowPerformance, setLowPerformance] = useState(false);
+  // Bumped when the browser restores a lost WebGL context, so the canvas is rebuilt.
+  const [canvasKey, setCanvasKey] = useState(0);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const pinch = useRef<number | null>(null);
   const timers = useRef<number[]>([]);
 
   useEffect(() => {
@@ -696,12 +784,20 @@ export default function Chess3DBoard({
     queueMicrotask(() => setLocked(true));
   }, [orientation]);
 
-  const defaultPolar = medieval ? MEDIEVAL_POLAR : DEFAULT_POLAR;
-  const minPolar = medieval ? MEDIEVAL_MIN_POLAR : MIN_POLAR;
+  const defaultPolar = ivory
+    ? ivoryPolar(IVORY_PRESETS.jogo.elevation)
+    : medieval
+      ? MEDIEVAL_POLAR
+      : DEFAULT_POLAR;
+  const minPolar = ivory ? IVORY_MIN_POLAR : medieval ? MEDIEVAL_MIN_POLAR : MIN_POLAR;
+  const maxPolar = ivory ? IVORY_MAX_POLAR : 1.45;
+  const minDistance = ivory ? ivoryDistance(9) : 7;
+  const maxDistance = ivory ? ivoryDistance(18) : 18;
   // Switching board style moves the camera to that style's angle; a locked view is only clamped.
   useEffect(() => {
     const target = view.current.target;
     target.polar = readStoredView()?.locked ? Math.max(target.polar, minPolar) : defaultPolar;
+    if (!readStoredView()?.locked) target.distance = DEFAULT_DISTANCE;
   }, [defaultPolar, minPolar]);
 
   function toggleLock() {
@@ -771,6 +867,16 @@ export default function Chess3DBoard({
     return map;
   }, [chess, selected]);
 
+  const checkSquare = useMemo(() => {
+    if (!chess || !chess.isCheck()) return null;
+    for (const row of chess.board()) {
+      for (const cell of row) {
+        if (cell?.type === 'k' && cell.color === chess.turn()) return cell.square;
+      }
+    }
+    return null;
+  }, [chess]);
+
   const onSquare = useCallback(
     (square: Square) => {
       if (disabled || !chess || dragged.current) return;
@@ -800,8 +906,16 @@ export default function Chess3DBoard({
     if (locked) return;
     const target = view.current.target;
     target.azimuth += dAzimuth;
-    target.polar = Math.min(Math.max(target.polar + dPolar, minPolar), 1.45);
-    target.distance = Math.min(Math.max(target.distance + dDistance, 7), 18);
+    target.polar = Math.min(Math.max(target.polar + dPolar, minPolar), maxPolar);
+    target.distance = Math.min(Math.max(target.distance + dDistance, minDistance), maxDistance);
+  }
+
+  function applyPreset(next: IvoryPreset) {
+    if (locked) return;
+    setPreset(next);
+    const target = view.current.target;
+    target.polar = ivoryPolar(IVORY_PRESETS[next].elevation);
+    target.distance = ivoryDistance(IVORY_PRESETS[next].distance);
   }
 
   function reset() {
@@ -811,7 +925,20 @@ export default function Chess3DBoard({
     target.azimuth = base + turns * 2 * Math.PI;
     target.polar = defaultPolar;
     target.distance = DEFAULT_DISTANCE;
+    setPreset('jogo');
   }
+
+  // Wheel zoom needs a non-passive native listener so the page does not scroll with it.
+  useEffect(() => {
+    const node = viewportRef.current;
+    if (!node) return;
+    function onWheel(event: WheelEvent) {
+      event.preventDefault();
+      rotate(0, 0, event.deltaY * 0.01);
+    }
+    node.addEventListener('wheel', onWheel, { passive: false });
+    return () => node.removeEventListener('wheel', onWheel);
+  });
 
   if (!supported) {
     return (
@@ -844,9 +971,14 @@ export default function Chess3DBoard({
           event.preventDefault();
           rotate(move[0], move[1]);
         }}
-        onPointerCancel={() => (drag.current = null)}
+        onPointerCancel={(event) => {
+          pointers.current.delete(event.pointerId);
+          if (pointers.current.size < 2) pinch.current = null;
+          drag.current = null;
+        }}
         onPointerDown={(event) => {
           event.currentTarget.focus({ preventScroll: true });
+          pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
           drag.current = {
             startX: event.clientX,
             startY: event.clientY,
@@ -856,6 +988,18 @@ export default function Chess3DBoard({
           dragged.current = false;
         }}
         onPointerMove={(event) => {
+          if (pointers.current.has(event.pointerId)) {
+            pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+          }
+          if (pointers.current.size >= 2) {
+            // Two fingers: pinch zooms; no square is tapped afterwards.
+            const [a, b] = [...pointers.current.values()];
+            const gap = Math.hypot(a!.x - b!.x, a!.y - b!.y);
+            if (pinch.current !== null && !locked) rotate(0, 0, (pinch.current - gap) * 0.03);
+            pinch.current = gap;
+            dragged.current = true;
+            return;
+          }
           if (!drag.current || event.buttons === 0 || locked) return;
           const d = drag.current;
           if (
@@ -868,17 +1012,31 @@ export default function Chess3DBoard({
           d.x = event.clientX;
           d.y = event.clientY;
         }}
-        onPointerUp={() => (drag.current = null)}
+        onPointerUp={(event) => {
+          pointers.current.delete(event.pointerId);
+          if (pointers.current.size < 2) pinch.current = null;
+          drag.current = null;
+        }}
+        ref={viewportRef}
         role="application"
         tabIndex={0}
       >
         <Canvas
-          camera={{ far: 60, fov: 38, near: 0.1, position: [0, 9, 8] }}
-          dpr={[1, 2]}
+          camera={{ far: 60, fov: ivory ? 35 : 38, near: 0.1, position: [0, 9, 8] }}
+          dpr={lowPerformance ? [1, 1] : [1, 2]}
+          flat={ivory}
           gl={{ antialias: true }}
+          key={canvasKey}
+          onCreated={({ gl }) => {
+            gl.domElement.addEventListener('webglcontextlost', (event) => event.preventDefault());
+            gl.domElement.addEventListener('webglcontextrestored', () =>
+              setCanvasKey((value) => value + 1),
+            );
+          }}
           shadows
         >
           <Scene
+            checkSquare={checkSquare}
             coordinates={coordinates}
             rims={rims}
             destinations={destinations}
@@ -886,9 +1044,11 @@ export default function Chess3DBoard({
             ghosts={ghosts}
             greyLight={greyLightSquares}
             hint={hinted}
+            ivory={ivory}
             lastMove={lastMove}
             marks={marks}
             medieval={medieval}
+            onPerformance={setLowPerformance}
             onSquare={onSquare}
             pieces={pieces}
             selected={selected}
@@ -995,6 +1155,34 @@ export default function Chess3DBoard({
         >
           －
         </button>
+        {ivory ? (
+          <>
+            <button
+              aria-pressed={preset === 'imersiva'}
+              disabled={locked}
+              onClick={() => applyPreset('imersiva')}
+              type="button"
+            >
+              Imersiva
+            </button>
+            <button
+              aria-pressed={preset === 'jogo'}
+              disabled={locked}
+              onClick={() => applyPreset('jogo')}
+              type="button"
+            >
+              Jogo
+            </button>
+            <button
+              aria-pressed={preset === 'tatica'}
+              disabled={locked}
+              onClick={() => applyPreset('tatica')}
+              type="button"
+            >
+              Tática
+            </button>
+          </>
+        ) : null}
         <button aria-label="Restaurar visão" disabled={locked} onClick={reset} type="button">
           Restaurar
         </button>

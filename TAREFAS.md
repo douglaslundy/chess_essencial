@@ -15,6 +15,11 @@ Plano completo: `docs/CURSO_DO_ZERO.md`. É independente do sistema antigo de cu
 - [x] **Voz do GPT não tocava (2026-11-02).** Em Meus dados, sem voz salva, a primeira opção (a voz IA) aparecia marcada mas nada era gravado (`voice_name` nulo nos 2 usuários da produção), então o site usava a voz do navegador. Agora há a opção explícita "Voz padrão do navegador" e só a voz salva aparece marcada. A geração na OpenAI pelo servidor foi testada (200, áudio mp3).
 - [ ] **Login ChatGPT OAuth sem Client ID:** o fluxo já é por redirecionamento (autoriza e volta). O campo pede o Client ID de um app OAuth registrado na OpenAI; ele fica salvo depois da primeira vez. Remover o campo exigiria embutir o Client ID do Codex, o que o usuário proibiu (não se passar pelo cliente do Codex). Depende de a OpenAI fornecer um app OAuth próprio.
 
+## Tabuleiro 3D Marfim (2026-11-07, pacote `PACOTE_XADREZ_3D_MARFIM_CLAUDE_CODE.zip`)
+
+- [x] Estilo "Marfim" no menu Tabuleiro (3D): peças torneadas em código (6 malhas), madeira procedural, luz de estúdio, sombras, câmera 3 presets (Jogo 52°, Tática 72°, Imersiva 32°), pinça e roda para zoom, xeque em vermelho, recuperação de contexto WebGL, DPR adaptativo. Rei 12% mais alto que a dama.
+- [ ] Limites: peças são geometria procedural, não GLB esculpidos (cavalo e coroa aproximados); fotorrealismo exato da imagem exige modelos externos; sem toque duplo para restaurar; sem teste de 60 fps em aparelho real.
+
 ## Pedido de 2026-11-07: revisão, tabuleiro 3D, bot, biblioteca e sala de aula (registro fiel do que o usuário pediu)
 
 > **Ordem combinada (2026-11-07):** 1) a próxima tarefa que o usuário passar (novo tabuleiro) vai na `main` e sobe para deploy; 2) depois, PROF-03 (áudio) e APP-00..06 e o que depender de HTTPS são desenvolvidos na branch `feature/https`, sem subir para a `main`; 3) quando o HTTPS existir, o usuário manda mesclar na `main`.

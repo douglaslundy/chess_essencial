@@ -576,7 +576,8 @@ export function ChessBoard(props: ChessBoardProps) {
           movableColor={props.movableColor}
           onMove={props.onMove}
           coordinates={effects.coordinates3d}
-          medieval={effects.medieval3d}
+          medieval={effects.medieval3d && !effects.ivory3d}
+          ivory={effects.ivory3d}
           greyLightSquares={effects.greyLight3d}
           rims={{ b: effects.rimBlack, w: effects.rimWhite }}
           orientation={props.orientation}
