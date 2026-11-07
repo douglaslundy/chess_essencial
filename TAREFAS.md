@@ -38,7 +38,7 @@ Plataforma:
 - [x] **BOT-01 (2026-11-07):** o bot de 1600 ou 1800 joga muito mal (`selectBotMove` olha só 2 lances). Verificar o sistema de rating do bot e usar o Stockfish com `UCI_Elo`. Feito: `apps/api/src/games/bot-engine.ts` (Stockfish limitado a partir de 1320; abaixo disso e em falha, a heurística antiga).
 - [x] **BIB-01 (2026-11-07):** partida com rating excelente: ao terminar, botão para sugerir inserir a partida na biblioteca de partidas (critério `isExcellentGame`: 20+ lances, sem erro nem gafe, rating estimado 1800+; botão no resumo da revisão, `POST /v1/library/share/:gameId`). Se o usuário aceitar, ela entra na biblioteca para estudo dos outros alunos.
 - [x] **PROF-01:** perfil de professor. Botão "criar sala de aula"; o professor adiciona alunos (amigos, ID, e-mail ou nome). O aluno vê um botão em destaque para entrar na aula e vê tudo o que o professor faz. O professor tem um botão por área (curso, treinamento, partida, biblioteca, desafio, jogar) e o que ele faz é replicado, lance a lance, na tela dos alunos. **Feito (2026-11-07, v1):** salas, alunos (usuário/e-mail/ID), botão "Entrar na aula", botões de área e réplica da página do professor (polling 2 s, migration 0050; dispensa de backup autorizada pelo usuário para esta tarefa).
-- [x] **PROF-01b (parcial, 2026-11-07):** lance a lance na revisão e na biblioteca via `?ply=N` na URL (`useClassroomPly`). Passo da lição do curso também replicado. Faltam: partida ao vivo, treinamento, rolagem.
+- [x] **PROF-01b (parcial, 2026-11-07):** lance a lance na revisão e na biblioteca via `?ply=N` na URL (`useClassroomPly`). Passo da lição do curso também replicado. Rolagem replicada (`?sy=`). Faltam: partida ao vivo, treinamento.
 - [x] **PROF-02 (só relatório, 2026-11-07):** viável, custo extra de servidor ~R$ 0 (relatório no artifact "Sala de aula do Xadrez Essencial"). investigar custo operacional e viabilidade da réplica em tempo real da PROF-01.
 - [ ] **PROF-03 (viável, depende de HTTPS/APP-00; Cloudflare Realtime ou LiveKit Cloud; custo ~R$ 0 a R$ 5 por aula):** canal de áudio na sala: o professor controla quem fala (abre ou fecha o microfone) e os alunos escutam como uma transmissão. Apresentar viabilidade e custo operacional. O objetivo das duas últimas é abrir a plataforma para ensinar alunos.
 
@@ -48,7 +48,8 @@ Plano completo, decisão e checklist: `docs/APP_ANDROID.md`.
 
 - [ ] **APP-00 (bloqueio):** endereço público com HTTPS. Opções: subdomínio de `dlsistemas.com.br` (já na Cloudflare) com Cloudflare Tunnel, domínio novo, ou Traefik (`deploy/docker-compose.traefik.yml`). Depende do usuário.
 - [ ] **APP-01:** trocar `PUBLIC_API_URL`, `WEB_ORIGIN` e `MINIO_PUBLIC_URL` para `https://<host>`; proxy `/v1`, `/avatars` e web; testar o cookie `__Host-` e o retorno do OAuth do ChatGPT.
-- [ ] **APP-02:** site instalável: `app/manifest.ts`, ícones (192, 512 e maskable) e `/.well-known/assetlinks.json`, sem mudar nada visível.
+- [x] **APP-02 (parcial, 2026-11-07):** `app/manifest.ts` e ícones em `public/icons` feitos. Falta só `/.well-known/assetlinks.json` (precisa da impressão digital do keystore, APP-03).
+- [ ] **APP-02b:** site instalável: `app/manifest.ts`, ícones (192, 512 e maskable) e `/.well-known/assetlinks.json`, sem mudar nada visível.
 - [ ] **APP-03:** app Android TWA com Bubblewrap em `apps/android/` (keystore fora do Git, com o usuário), APK para instalar direto.
 - [ ] **APP-04:** teste no 4G: partida app x navegador, voz, 3D, Stockfish, tablet e botão voltar.
 - [ ] **APP-05:** Play Store (conta do usuário, teste fechado de 14 dias).

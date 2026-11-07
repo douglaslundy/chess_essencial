@@ -60,6 +60,31 @@ export function ClassroomSync() {
     return () => clearInterval(interval);
   }, [classroomId, role, pathname]);
 
+  // The teacher's scroll position (percent of the page) travels in the URL as ?sy=N.
+  useEffect(() => {
+    if (!classroomId || role !== 'teacher') return;
+    let last = -1;
+    let timer: number | undefined;
+    function write() {
+      timer = undefined;
+      const room = document.documentElement.scrollHeight - window.innerHeight;
+      const percent = room > 0 ? Math.round((window.scrollY / room) * 100) : 0;
+      if (Math.abs(percent - last) < 5) return;
+      last = percent;
+      const url = new URL(window.location.href);
+      url.searchParams.set('sy', String(percent));
+      window.history.replaceState(window.history.state, '', url);
+    }
+    function onScroll() {
+      timer ??= window.setTimeout(write, 800);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.clearTimeout(timer);
+    };
+  }, [classroomId, role, pathname]);
+
   useEffect(() => {
     if (!classroomId || role !== 'student') return;
     let lastSeq = -1;
@@ -73,6 +98,14 @@ export function ClassroomSync() {
         lastSeq = live.seq;
         const current = window.location.pathname + window.location.search;
         if (live.path !== current) router.push(live.path);
+        const rawSy = new URL(live.path, window.location.origin).searchParams.get('sy');
+        const sy = Number(rawSy);
+        if (rawSy !== null && Number.isFinite(sy)) {
+          window.setTimeout(() => {
+            const room = document.documentElement.scrollHeight - window.innerHeight;
+            window.scrollTo({ top: (room * Math.min(sy, 100)) / 100, behavior: 'smooth' });
+          }, 700);
+        }
       } catch {
         // Offline or class deleted: try again on the next tick.
       }
