@@ -1,6 +1,6 @@
 'use client';
 
-import type { ClassroomDetail } from '@xadrez/contracts';
+import type { ClassroomDetail, Friend } from '@xadrez/contracts';
 import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
@@ -15,6 +15,7 @@ export default function ClassroomPage() {
   const router = useRouter();
   const classroomId = String(useParams<{ classroomId: string }>().classroomId);
   const [room, setRoom] = useState<ClassroomDetail | null>(null);
+  const [friends, setFriends] = useState<Friend[]>([]);
   const [identifier, setIdentifier] = useState('');
   const [message, setMessage] = useState('Carregando a sala…');
   const [busy, setBusy] = useState(false);
@@ -28,6 +29,8 @@ export default function ClassroomPage() {
     try {
       setRoom(await api.getClassroom(classroomId, token));
       setMessage('');
+      // Friends are optional (social plan): the picker just stays empty if the list is denied.
+      setFriends(await api.listFriends(token).catch(() => []));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Não foi possível carregar a sala.');
     }
@@ -117,6 +120,23 @@ export default function ClassroomPage() {
                 Adicionar aluno
               </button>
             </form>
+            {friends
+              .filter((friend) => !room.members.some((m) => m.userId === friend.userId))
+              .map((friend) => (
+                <button
+                  disabled={busy}
+                  key={friend.userId}
+                  onClick={() =>
+                    void run(
+                      (token) => api.addClassroomMember(classroomId, friend.userId, token),
+                      'Não foi possível adicionar o aluno.',
+                    )
+                  }
+                  type="button"
+                >
+                  Adicionar amigo {friend.displayName}
+                </button>
+              ))}
             <div className="adminUserTable" role="table">
               {room.members.map((member) => (
                 <div className="adminUserRow" key={member.userId} role="row">

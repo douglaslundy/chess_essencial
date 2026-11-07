@@ -1,5 +1,6 @@
 'use client';
 
+import { useClassroomPly } from '@/lib/use-classroom-ply';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -96,6 +97,7 @@ export function CoursePlayer({ activityId }: { activityId: string }) {
     },
     [steps],
   );
+  useClassroomPly(index, goTo, steps.length - 1);
 
   // A finished step moves on by itself 2 s after the coach finished speaking; without audio,
   // after the reading time of an explanation.
