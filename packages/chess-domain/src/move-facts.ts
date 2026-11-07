@@ -209,8 +209,6 @@ export function describeMoveFacts(facts: MoveFacts): string[] {
 
 const signed = (points: number) => (points > 0 ? `+${points}` : `${points}`);
 
-/** Centipawns as pawns with sign, the way the review shows an evaluation ("+1,2"). */
-const pawns = (cp: number) => `${cp > 0 ? '+' : ''}${(cp / 100).toFixed(1).replace('.', ',')}`;
 
 const lowerFirst = (text: string) => `${text.charAt(0).toLowerCase()}${text.slice(1)}`;
 
@@ -229,7 +227,6 @@ function joinClauses(items: string[]): string {
 export function describeBetterMove(
   played: MoveFacts | null,
   best: MoveFacts | null,
-  evaluation: { after: number | null; before: number | null; loss: number },
 ): string[] {
   const sentences: string[] = [];
   const gains = best
@@ -248,11 +245,6 @@ export function describeBetterMove(
         'No material os dois lances se parecem; a diferença está na posição que fica depois deles.',
       );
     }
-  }
-  if (evaluation.before !== null && evaluation.after !== null && evaluation.loss >= 30) {
-    sentences.push(
-      `Pela análise, sua avaliação passa de ${pawns(evaluation.before)} para ${pawns(evaluation.after)}; com a sugestão ela ficaria perto de ${pawns(evaluation.before)}.`,
-    );
   }
   return sentences;
 }

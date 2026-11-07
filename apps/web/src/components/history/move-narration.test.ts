@@ -76,10 +76,10 @@ describe('explainMove', () => {
     expect(sentence).toContain('infelizmente isso foi uma gafe');
   });
 
-  it('mentions a missed winning opportunity', () => {
-    expect(explainMove(nf3, move({ missedWin: true, quality: 'imprecisao' }), 'text')).toContain(
-      'chance de ganhar uma vantagem maior',
-    );
+  it('does not read out the evaluation or the missed-advantage sentence', () => {
+    const text = explainMove(nf3, move({ missedWin: true, quality: 'imprecisao' }), 'text');
+    expect(text).not.toContain('chance de ganhar uma vantagem maior');
+    expect(text).not.toContain('Pela análise');
   });
 
   it('still names the move when there is no analysis yet', () => {

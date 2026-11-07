@@ -4908,3 +4908,46 @@ textarea::placeholder {
   text-decoration: none;
   cursor: pointer;
 }
+
+/* Contador e barra de pontos da revisão: dentro do cartão do jogador, nada sobre o tabuleiro. */
+.pointsCounter {
+  font-size: 0.78rem;
+}
+.pointsPositive {
+  color: #4ade80;
+}
+.pointsNegative {
+  color: #f87171;
+}
+.pointsBar {
+  position: relative;
+  width: 100%;
+  height: 6px;
+  margin-top: 0.2rem;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.pointsBar::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -1px;
+  bottom: -1px;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.55);
+}
+.pointsBarFill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  border-radius: 0 3px 3px 0;
+  background: #22c55e;
+  transition: width 0.25s ease;
+}
+.pointsBarNegative {
+  left: auto;
+  right: 50%;
+  border-radius: 3px 0 0 3px;
+  background: #ef4444;
+}

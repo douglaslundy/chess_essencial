@@ -1,5 +1,6 @@
 'use client';
 
+import { pointsThrough } from '@/lib/move-points';
 import { useClassroomPly } from '@/lib/use-classroom-ply';
 import type {
   GameAnalysis,
@@ -520,6 +521,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
         avatarUrl={player?.avatarUrl ?? null}
         label={`${color === 'white' ? 'Brancas' : 'Pretas'}${player ? ` · ${player.ratingBefore} XE` : ''}`}
         name={player?.displayName || (color === 'white' ? 'Brancas' : 'Pretas')}
+        {...(analysis?.moves.length ? { points: pointsThrough(analysis.moves, ply, color) } : {})}
       />
     );
   };

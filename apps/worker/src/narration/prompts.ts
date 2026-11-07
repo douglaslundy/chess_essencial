@@ -24,7 +24,7 @@ Regras obrigatórias:
 - Português do Brasil, tom de conversa, como um treinador ao lado do aluno. Fale com o aluno em segunda pessoa ("você") sobre os lances dele.
 - Diga o nome da peça e a casa por extenso ("o cavalo de g1 para f3", "a dama de d1 captura em e5"), sempre peça, casa de origem e casa de destino, nunca notação crua como "Nf3".
 - Use apenas os fatos fornecidos e o que a posição FEN mostra de forma evidente. Nunca invente lances, variantes, ameaças ou avaliações. Na dúvida, diga menos.
-- Quando o lance foi fraco, diga por que o lance melhor é melhor: o que ele faz e como se compara ao jogado (material depois das trocas, ameaças, avaliação). Use a "Comparação medida" fornecida. Se ela mostrar que o material é parecido, diga que a diferença está na posição; nunca afirme que um lance ganha mais material do que os fatos indicam. Se o lance do aluno capturou uma peça maior, reconheça isso e explique o que torna o outro melhor (por exemplo, a peça recapturada).
+- Quando o lance foi fraco, diga por que o lance melhor é melhor: o que ele faz e como se compara ao jogado (material depois das trocas e ameaças; não cite números de avaliação). Use a "Comparação medida" fornecida. Se ela mostrar que o material é parecido, diga que a diferença está na posição; nunca afirme que um lance ganha mais material do que os fatos indicam. Se o lance do aluno capturou uma peça maior, reconheça isso e explique o que torna o outro melhor (por exemplo, a peça recapturada).
 - Cada explicação traz O QUE aconteceu e POR QUE, com motivo concreto do tabuleiro. Nunca "porque é o melhor lance" sem motivo.
 - Frases curtas, de 8 a 20 palavras, ligadas por conectivos naturais. Sem listas, emojis, markdown ou notação entre parênteses.
 - Não repita a mesma abertura de frase em textos consecutivos. Não humilhe em erro nem exagere elogio em lance banal.
@@ -54,13 +54,13 @@ export interface MomentFacts {
 }
 
 /** Bumped whenever the prompts change, so cached narrations from the old prompt are not reused. */
-export const NARRATION_PROMPT_VERSION = 4;
+export const NARRATION_PROMPT_VERSION = 5;
 
 /**
  * Narrations completed before this instant were written with an older prompt and are redone by
  * the worker. Set it to the deploy time whenever NARRATION_PROMPT_VERSION changes.
  */
-export const NARRATION_PROMPT_EPOCH = '2026-11-07T17:56:00Z';
+export const NARRATION_PROMPT_EPOCH = '2026-11-07T19:30:00Z';
 
 function movePhrase(fen: string, uci: string): string {
   const facts = moveFacts(fen, uci);
@@ -72,11 +72,7 @@ export function buildMomentPrompt(moment: MomentFacts): string {
   const played = moveFacts(moment.fenBefore, moment.uci);
   const playedLines = played ? describeMoveFacts(played) : [];
   const best = moment.bestMoveUci ? moveFacts(moment.fenBefore, moment.bestMoveUci) : null;
-  const comparison = describeBetterMove(played, best, {
-    after: moment.scoreAfterCp ?? null,
-    before: moment.scoreBeforeCp ?? null,
-    loss: moment.centipawnLoss,
-  });
+  const comparison = describeBetterMove(played, best);
   const lines = [
     `Posição antes do lance (FEN): ${moment.fenBefore}`,
     `Lance ${moment.ply} (${moment.color === 'white' ? 'brancas' : 'pretas'}), jogado pelo aluno: ${movePhrase(moment.fenBefore, moment.uci)} (${moment.san}).`,
@@ -86,9 +82,6 @@ export function buildMomentPrompt(moment: MomentFacts): string {
     `Classificação: ${qualityLabelPt[moment.quality]}. Perda em relação ao melhor lance: ${moment.centipawnLoss} centipawns.`,
     moment.bestMoveUci && best && moment.quality !== 'otimo' && moment.quality !== 'excelente'
       ? `Melhor lance: ${movePhrase(moment.fenBefore, moment.bestMoveUci)}. Comparação medida com o lance do aluno: ${comparison.join(' ') || 'sem diferença tática evidente; a diferença está na posição.'}`
-      : '',
-    moment.missedWin
-      ? 'Havia uma oportunidade de vantagem maior nessa posição que não foi aproveitada.'
       : '',
     '',
     'Escreva a explicação falada deste lance, de 2 a 3 frases e no máximo 55 palavras, pensando como jogador de xadrez conforme as regras acima. Se o lance for um ponto forte ou um ponto fraco do aluno, diga isso de forma explícita, começando a frase por "Ponto forte:" ou "Ponto fraco:". Responda apenas com o texto da fala, sem aspas e sem introdução.',

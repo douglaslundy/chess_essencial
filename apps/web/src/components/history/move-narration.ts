@@ -112,17 +112,12 @@ export function explainMove(
     const best = bestUci ? sanOfUci(played.fenBefore, bestUci) : null;
     if (best && bestUci) {
       sentences.push(`No seu lugar, eu jogaria ${name(best, bestUci)}.`);
-      // Why it is better: what it does, the material once exchanges play out, the evaluation.
+      // Why it is better: what it does, the material once exchanges play out.
       sentences.push(
-        ...describeBetterMove(facts, moveFacts(played.fenBefore, bestUci), {
-          after: analysis.scoreAfterCp,
-          before: analysis.scoreBeforeCp,
-          loss: analysis.centipawnLoss,
-        }),
+        ...describeBetterMove(facts, moveFacts(played.fenBefore, bestUci)),
       );
     }
   }
-  if (analysis?.missedWin) sentences.push('Aqui havia uma chance de ganhar uma vantagem maior.');
   // Names the move as one of the game's strong or weak points, the same labels as the review summary.
   const goal = facts ? describeMoveGoal(facts) : null;
   if (weak) {

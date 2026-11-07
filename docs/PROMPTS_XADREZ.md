@@ -10,7 +10,7 @@ A IA recebia só o lance (`Nf3`), a classificação e o melhor lance do motor. S
 
 1. **A IA nunca calcula xadrez.** Tudo o que for verdade do tabuleiro sai do `chess.js` em `packages/chess-domain/src/move-facts.ts` e do motor (Stockfish). A IA só transforma fatos em fala.
 2. **Dar o tabuleiro e os fatos.** Todo prompt leva a posição (FEN) e os "fatos do tabuleiro" do lance: o que captura, ameaça, defende, desenvolve, quais peças ficam sem proteção e o saldo de material depois das recapturas (`netMaterial`).
-3. **Comparar o lance jogado com o melhor, em números.** `describeBetterMove` entrega: o que a sugestão faz, o saldo de material dos dois lances e a avaliação antes e depois (em peões). Se o material é parecido, o texto diz que a diferença está na posição, sem inventar motivo.
+3. **Comparar o lance jogado com o melhor, em números.** `describeBetterMove` entrega: o que a sugestão faz, o saldo de material dos dois lances (a avaliação em peões não é falada na revisão). Se o material é parecido, o texto diz que a diferença está na posição, sem inventar motivo.
 4. **Pensar como jogador.** A ordem de raciocínio do prompt é: o que o lance faz; o que deixa vulnerável; se foi bom ou ruim e por quê; qual é a melhor alternativa e o plano seguinte.
 5. **Lance fraco sempre explica o porquê.** Formato: "Você jogou X, uma imprecisão, porque [o que cede]. No seu lugar, eu jogaria Y: ele [o que faz]. No saldo de material, Y rende +3 e o seu lance, +2."
 6. **Ponto forte e ponto fraco.** O lance que for um dos dois diz isso começando a frase por "Ponto forte:" ou "Ponto fraco:", com os mesmos termos do resumo.

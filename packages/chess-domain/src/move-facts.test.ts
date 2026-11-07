@@ -79,9 +79,9 @@ describe('moveFacts', () => {
     const knight = moveFacts('4k3/4r3/8/3N4/2P5/8/8/4K3 w - - 0 1', 'd5e7')!;
     const pawn = moveFacts('4k3/8/3n4/2P5/8/8/8/4K3 w - - 0 1', 'c5d6')!;
     expect(pawn.netMaterial).toBe(3);
-    const lines = describeBetterMove(knight, pawn, { after: 20, before: 250, loss: 230 });
+    const lines = describeBetterMove(knight, pawn);
     expect(lines.join(' ')).toContain('a sugestão rende +3 e o seu lance, +2');
-    expect(lines.join(' ')).toContain('passa de +2,5 para +0,2');
+    expect(lines.join(' ')).not.toContain('avaliação');
   });
 
   it('returns null for an illegal move', () => {
