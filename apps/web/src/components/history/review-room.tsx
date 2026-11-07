@@ -1,5 +1,6 @@
 'use client';
 
+import { StudyPlanSection } from '@/components/study/study-plan-section';
 import { pointsThrough } from '@/lib/move-points';
 import { useClassroomPly } from '@/lib/use-classroom-ply';
 import type {
@@ -418,6 +419,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
             )}
           </section>
         ) : null}
+        <StudyPlanSection gameId={gameId} />
         {learningSignals.length ? (
           <section className="reviewNarration" aria-labelledby="learning-signals-title">
             <div className="reviewNarrationHeader">

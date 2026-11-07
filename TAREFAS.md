@@ -20,6 +20,12 @@ Plano completo: `docs/CURSO_DO_ZERO.md`. É independente do sistema antigo de cu
 - [x] Estilo "Marfim" no menu Tabuleiro (3D): peças torneadas em código (6 malhas), madeira procedural, luz de estúdio, sombras, câmera 3 presets (Jogo 52°, Tática 72°, Imersiva 32°), pinça e roda para zoom, xeque em vermelho, recuperação de contexto WebGL, DPR adaptativo. Rei 12% mais alto que a dama.
 - [ ] Limites: peças são geometria procedural, não GLB esculpidos (cavalo e coroa aproximados); fotorrealismo exato da imagem exige modelos externos; sem toque duplo para restaurar; sem teste de 60 fps em aparelho real.
 
+## Plano de estudo e métricas (2026-11-07)
+
+- [x] ESTUDO-01: na página de revisão, seção "O que estudar para melhorar" (`GET /v1/games/{gameId}/study-plan`): temas pelos lances do jogador, 3 partidas da biblioteca com foco, 5 exercícios; cada item abre num modal sobre a mesma página e é marcado ✓ (exercício resolvido; partida ao chegar ao último lance). Marcação fica no navegador (sem migration).
+- [x] ESTUDO-02: prompt do resumo da IA com heurísticas de xadrez (segurança tática, tática, abertura, meio-jogo, finais, tempo); `NARRATION_PROMPT_VERSION=6`.
+- [ ] METRICAS-01: página `/app/metricas` (dashboard): tempo jogado, partidas, rating com gráfico de linha, pontos fortes, pontos fracos e resumo geral.
+
 ## Pedido de 2026-11-07: revisão, tabuleiro 3D, bot, biblioteca e sala de aula (registro fiel do que o usuário pediu)
 
 > **Ordem combinada (2026-11-07):** 1) a próxima tarefa que o usuário passar (novo tabuleiro) vai na `main` e sobe para deploy; 2) depois, PROF-03 (áudio) e APP-00..06 e o que depender de HTTPS são desenvolvidos na branch `feature/https`, sem subir para a `main`; 3) quando o HTTPS existir, o usuário manda mesclar na `main`.

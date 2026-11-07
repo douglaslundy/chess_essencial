@@ -1302,6 +1302,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/games/{gameId}/study-plan': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Plano de estudo da partida (temas, 5 exercícios e 3 partidas da biblioteca) */
+    get: operations['getGameStudyPlan'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/games/{gameId}/narration': {
     parameters: {
       query?: never;
@@ -2208,6 +2225,26 @@ export interface components {
     ClassroomLive: {
       path: string;
       seq: number;
+    };
+    GameStudyPlan: {
+      themes: {
+        key: string;
+        label: string;
+        reason: string;
+      }[];
+      exercises: {
+        /** Format: uuid */
+        id: string;
+        title: string;
+        difficulty: string | null;
+        theme: string;
+      }[];
+      libraryGames: {
+        /** Format: uuid */
+        id: string;
+        title: string;
+        focus: string;
+      }[];
     };
     CourseTrailProgress: {
       completedActivityIds: string[];
@@ -5796,6 +5833,30 @@ export interface operations {
       };
       401: components['responses']['Problem'];
       403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  getGameStudyPlan: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        gameId: components['parameters']['GameId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Plano de estudo do jogador nesta partida */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GameStudyPlan'];
+        };
+      };
+      401: components['responses']['Problem'];
       404: components['responses']['Problem'];
     };
   };

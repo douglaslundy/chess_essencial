@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module.js';
 import { validateApiEnv } from './config/env.js';
 import { ClassroomModule } from './classroom/classroom.module.js';
 import { CourseModule } from './course/course.module.js';
+import { StudyPlanModule } from './study-plan/study-plan.module.js';
 import { CoursesModule } from './courses/courses.module.js';
 import { DatabaseModule } from './database/database.module.js';
 import { ExercisesModule } from './exercises/exercises.module.js';
@@ -38,6 +39,7 @@ import { VoiceModule } from './voice/voice.module.js';
     AuthModule,
     ClassroomModule,
     CourseModule,
+    StudyPlanModule,
     CoursesModule,
     DatabaseModule,
     ExercisesModule,

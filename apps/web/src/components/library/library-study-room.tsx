@@ -54,7 +54,14 @@ function speechFor(entry: LibraryReviewEntry) {
   return speakableSquares(parts.join(' '));
 }
 
-export function LibraryStudyRoom({ gameId }: { gameId: string }) {
+export function LibraryStudyRoom({
+  gameId,
+  onFinished,
+}: {
+  gameId: string;
+  /** Called once the student reaches the last move (the study dialog marks the game as done). */
+  onFinished?: () => void;
+}) {
   const { theme: pieceTheme } = usePieceTheme();
   const { voiceName } = useVoicePreference();
   const [game, setGame] = useState<LibraryGame | null>(null);
@@ -137,6 +144,9 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
     [built, game],
   );
   const atEnd = total > 0 && ply === total;
+  useEffect(() => {
+    if (atEnd) onFinished?.();
+  }, [atEnd, onFinished]);
 
   const mover = ply % 2 === 1 ? 'Brancas' : 'Pretas';
   const fallbackSpeech = `${mover} jogam ${speakableSquares(frame ? spokenSan(frame.san, frame) : '')}.`;

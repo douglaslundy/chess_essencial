@@ -54,13 +54,13 @@ export interface MomentFacts {
 }
 
 /** Bumped whenever the prompts change, so cached narrations from the old prompt are not reused. */
-export const NARRATION_PROMPT_VERSION = 5;
+export const NARRATION_PROMPT_VERSION = 6;
 
 /**
  * Narrations completed before this instant were written with an older prompt and are redone by
  * the worker. Set it to the deploy time whenever NARRATION_PROMPT_VERSION changes.
  */
-export const NARRATION_PROMPT_EPOCH = '2026-11-07T19:30:00Z';
+export const NARRATION_PROMPT_EPOCH = '2026-11-07T21:00:00Z';
 
 function movePhrase(fen: string, uci: string): string {
   const facts = moveFacts(fen, uci);
@@ -131,8 +131,17 @@ export function buildGameSummaryPrompt(
     momentsText ||
       '(nenhum momento de destaque foi identificado — partida sem erros ou gafes relevantes)',
     '',
+    'Como um treinador de xadrez, avalie a partida pelas heurísticas clássicas e nomeie o assunto a estudar no vocabulário do jogo:',
+    '- Segurança tática (blunder check): antes de cada lance, ver capturas, xeques e ameaças do adversário. Muitos erros e gafes apontam para isto.',
+    '- Tática: garfos, cravadas, ataques duplos, mates. Oportunidades perdidas apontam para isto.',
+    '- Abertura: desenvolver peças, controlar o centro, rocar cedo, não mover a mesma peça duas vezes, não sair com a dama cedo.',
+    '- Meio-jogo: atividade das peças, segurança do rei, estrutura de peões, casas fracas, plano claro.',
+    '- Finais: atividade do rei, peões passados, oposição, torre atrás do peão passado, conversão de vantagem.',
+    '- Gestão de tempo: só mencione se o controle de tempo e o resultado sugerirem isso.',
+    'Use só os conceitos que os números e os momentos acima sustentam. Cada item do plano de estudo deve ser um tema concreto desta lista, dito em uma frase curta (por exemplo: "Segurança tática: confira capturas e xeques do adversário antes de jogar").',
+    '',
     'Com base apenas nisso, escreva um JSON (e nada mais, sem markdown ao redor) no formato exato:',
-    '{"resumo": "2 a 3 frases faladas, fluindo como conversa, resumindo como foi a partida, do início ao fim", "padroes": ["1 a 4 frases curtas sobre os pontos fortes e fracos do aluno que aparecem nos dados acima; cada item começa por "Ponto forte:" ou "Ponto fraco:""], "planoDeEstudo": ["2 a 3 sugestões curtas de tema para estudar, cada uma como um item de lista"]}',
+    '{"resumo": "2 a 3 frases faladas, fluindo como conversa, resumindo como foi a partida, do início ao fim", "padroes": ["1 a 4 frases curtas sobre os pontos fortes e fracos do aluno que aparecem nos dados acima; cada item começa por "Ponto forte:" ou "Ponto fraco:""], "planoDeEstudo": ["2 a 4 temas concretos para estudar, cada um como um item de lista"]}',
     'Se os dados não sustentarem um padrão real, retorne "padroes": []. Nunca invente um padrão que os números acima não confirmem.',
   ].join('\n');
 }

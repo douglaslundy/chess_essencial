@@ -1354,6 +1354,20 @@ paths:
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
+  /games/{gameId}/study-plan:
+    get:
+      summary: Plano de estudo da partida (temas, 5 exercícios e 3 partidas da biblioteca)
+      operationId: getGameStudyPlan
+      parameters:
+        - {$ref: '#/components/parameters/GameId'}
+      responses:
+        '200':
+          description: Plano de estudo do jogador nesta partida
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GameStudyPlan'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
   /games/{gameId}/narration:
     parameters:
       - $ref: '#/components/parameters/GameId'
@@ -2274,6 +2288,38 @@ components:
       properties:
         path: {type: string, maxLength: 300}
         seq: {type: integer}
+    GameStudyPlan:
+      type: object
+      required: [themes, exercises, libraryGames]
+      properties:
+        themes:
+          type: array
+          items:
+            type: object
+            required: [key, label, reason]
+            properties:
+              key: {type: string}
+              label: {type: string}
+              reason: {type: string}
+        exercises:
+          type: array
+          items:
+            type: object
+            required: [id, title, difficulty, theme]
+            properties:
+              id: {type: string, format: uuid}
+              title: {type: string}
+              difficulty: {type: string, nullable: true}
+              theme: {type: string}
+        libraryGames:
+          type: array
+          items:
+            type: object
+            required: [id, title, focus]
+            properties:
+              id: {type: string, format: uuid}
+              title: {type: string}
+              focus: {type: string}
     CourseTrailProgress:
       type: object
       required: [completedActivityIds]

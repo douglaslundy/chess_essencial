@@ -1,4 +1,5 @@
 import type {
+  GameStudyPlan,
   ClassroomDetail,
   ClassroomLive,
   ClassroomSummary,
@@ -665,6 +666,8 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify({ path }),
     }),
+  getGameStudyPlan: (gameId: string, token: string) =>
+    request<GameStudyPlan>(`/games/${gameId}/study-plan`, token),
   getCourseTrailProgress: (token: string) =>
     request<CourseTrailProgress>('/course-trail/progress', token),
   completeCourseTrailActivity: (activityId: string, token: string) =>

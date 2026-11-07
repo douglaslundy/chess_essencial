@@ -4951,3 +4951,41 @@ textarea::placeholder {
   border-radius: 3px 0 0 3px;
   background: #ef4444;
 }
+
+/* Plano de estudo: modais de exercício e de partida sobre a página de revisão. */
+.studyDialog {
+  width: min(100%, 34rem);
+  max-height: 94vh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 1.1rem;
+  background: var(--surface);
+  padding: 1rem;
+  box-shadow: 0 2rem 6rem #000;
+}
+.studyDialogWide {
+  width: min(100%, 72rem);
+}
+.studyDialogHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.studyDialogBoard {
+  max-width: 30rem;
+  margin: 0.5rem auto 0;
+}
+.studyLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent, #7cc4ff);
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.studyList li,
+.studyThemes li {
+  margin-bottom: 0.45rem;
+}

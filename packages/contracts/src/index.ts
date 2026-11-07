@@ -418,3 +418,11 @@ export {
   type ClassroomMember,
   type ClassroomSummary,
 } from './classroom.js';
+export {
+  gameStudyPlanSchema,
+  studyExerciseSchema,
+  studyLibraryGameSchema,
+  studyThemeSchema,
+  type GameStudyPlan,
+  type StudyTheme,
+} from './study-plan.js';
