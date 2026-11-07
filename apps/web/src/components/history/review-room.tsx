@@ -1,5 +1,6 @@
 'use client';
 
+import { useClassroomPly } from '@/lib/use-classroom-ply';
 import type {
   GameAnalysis,
   GameAnalysisQualityCounts,
@@ -239,6 +240,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
 
   // ← and → step through the moves, unless the player is typing (the comment box).
   const lastPly = moves.length;
+  useClassroomPly(ply, setPly, lastPly);
   useEffect(() => {
     if (view !== 'moves') return;
     function onKey(event: KeyboardEvent) {

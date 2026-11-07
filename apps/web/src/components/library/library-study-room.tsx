@@ -1,5 +1,6 @@
 'use client';
 
+import { useClassroomPly } from '@/lib/use-classroom-ply';
 import type { LibraryGame, LibraryReview, LibraryReviewEntry } from '@xadrez/contracts';
 import { Chess } from 'chess.js';
 import Link from 'next/link';
@@ -149,6 +150,7 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
     },
     [total],
   );
+  useClassroomPly(ply, go, total);
 
   // Advancing the first move counts as watching: the library list marks the game.
   const started = ply > 0;
