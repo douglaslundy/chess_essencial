@@ -54,6 +54,7 @@ Plataforma:
 - [x] **PROF-01b (parcial, 2026-11-07):** lance a lance na revisão e na biblioteca via `?ply=N` na URL (`useClassroomPly`). Passo da lição do curso também replicado. Rolagem replicada (`?sy=`). Faltam: partida ao vivo, treinamento.
 - [x] **PROF-02 (só relatório, 2026-11-07):** viável, custo extra de servidor ~R$ 0 (relatório no artifact "Sala de aula do Xadrez Essencial"). investigar custo operacional e viabilidade da réplica em tempo real da PROF-01.
 - [ ] **PROF-03 (viável, depende de HTTPS/APP-00; Cloudflare Realtime ou LiveKit Cloud; custo ~R$ 0 a R$ 5 por aula):** canal de áudio na sala: o professor controla quem fala (abre ou fecha o microfone) e os alunos escutam como uma transmissão. Apresentar viabilidade e custo operacional. O objetivo das duas últimas é abrir a plataforma para ensinar alunos.
+- [x] **PROF-03 (código pronto na branch `feature/https`, 2026-11-07):** ver `docs/AUDIO_SALA.md`. Falta: HTTPS, chaves do LiveKit e teste com dois navegadores.
 
 ## App mobile (pedido de 2026-11-02)
 

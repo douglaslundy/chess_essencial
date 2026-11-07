@@ -2183,6 +2183,68 @@ paths:
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
+  /classrooms/{classroomId}/voice:
+    get:
+      summary: Informar se o áudio da aula está ativado neste servidor
+      operationId: getClassroomVoiceStatus
+      parameters:
+        - {name: classroomId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Estado do áudio
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [enabled]
+                properties:
+                  enabled: {type: boolean}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /classrooms/{classroomId}/voice/token:
+    post:
+      summary: Obter o token para entrar no áudio da aula (professor fala, alunos escutam)
+      operationId: createClassroomVoiceToken
+      parameters:
+        - {name: classroomId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '201':
+          description: Token de entrada na sala de voz
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url, token, canSpeak]
+                properties:
+                  url: {type: string}
+                  token: {type: string}
+                  canSpeak: {type: boolean}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '503': {$ref: '#/components/responses/Problem'}
+  /classrooms/{classroomId}/voice/speakers/{userId}:
+    put:
+      summary: Abrir ou fechar o microfone de um aluno (somente o professor)
+      operationId: setClassroomSpeaker
+      parameters:
+        - {name: classroomId, in: path, required: true, schema: {type: string, format: uuid}}
+        - {name: userId, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [speaking]
+              properties:
+                speaking: {type: boolean}
+      responses:
+        '204': {description: Microfone atualizado}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '503': {$ref: '#/components/responses/Problem'}
   /classrooms/{classroomId}/live:
     get:
       summary: Página em que o professor está agora (os alunos consultam e acompanham)

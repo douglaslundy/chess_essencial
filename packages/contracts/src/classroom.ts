@@ -11,6 +11,7 @@ export const addClassroomMemberInputSchema = z.object({
   /** Username, e-mail or user id of the student. */
   identifier: z.string().trim().min(1).max(254),
 });
+export const classroomSpeakerInputSchema = z.object({ speaking: z.boolean() });
 export const classroomLiveInputSchema = z.object({ path: classroomLivePathSchema });
 
 export const classroomSummarySchema = z.object({

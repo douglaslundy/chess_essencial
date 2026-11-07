@@ -2191,6 +2191,57 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/classrooms/{classroomId}/voice': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Informar se o áudio da aula está ativado neste servidor */
+    get: operations['getClassroomVoiceStatus'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/classrooms/{classroomId}/voice/token': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Obter o token para entrar no áudio da aula (professor fala, alunos escutam) */
+    post: operations['createClassroomVoiceToken'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/classrooms/{classroomId}/voice/speakers/{userId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** Abrir ou fechar o microfone de um aluno (somente o professor) */
+    put: operations['setClassroomSpeaker'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/classrooms/{classroomId}/live': {
     parameters: {
       query?: never;
@@ -7259,6 +7310,93 @@ export interface operations {
       401: components['responses']['Problem'];
       403: components['responses']['Problem'];
       404: components['responses']['Problem'];
+    };
+  };
+  getClassroomVoiceStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        classroomId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Estado do áudio */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            enabled: boolean;
+          };
+        };
+      };
+      401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  createClassroomVoiceToken: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        classroomId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Token de entrada na sala de voz */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            url: string;
+            token: string;
+            canSpeak: boolean;
+          };
+        };
+      };
+      401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+      503: components['responses']['Problem'];
+    };
+  };
+  setClassroomSpeaker: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        classroomId: string;
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          speaking: boolean;
+        };
+      };
+    };
+    responses: {
+      /** @description Microfone atualizado */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+      503: components['responses']['Problem'];
     };
   };
   getClassroomLive: {

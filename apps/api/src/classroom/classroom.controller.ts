@@ -1,6 +1,7 @@
 import {
   addClassroomMemberInputSchema,
   classroomLiveInputSchema,
+  classroomSpeakerInputSchema,
   createClassroomInputSchema,
   type ClassroomDetail,
   type ClassroomLive,
@@ -24,12 +25,16 @@ import {
 
 import { AccessTokenGuard, type AuthenticatedRequest } from '../auth/access-token.guard.js';
 import { parseInput } from '../common/http/parse-input.js';
+import { ClassroomVoiceService } from './classroom-voice.service.js';
 import { ClassroomRepository } from './classroom.repository.js';
 
 @UseGuards(AccessTokenGuard)
 @Controller('classrooms')
 export class ClassroomController {
-  constructor(private readonly classrooms: ClassroomRepository) {}
+  constructor(
+    private readonly classrooms: ClassroomRepository,
+    private readonly voice: ClassroomVoiceService,
+  ) {}
 
   /** Loads the room and the caller's role; 404 for strangers so rooms stay private. */
   private async access(classroomId: string, userId: string) {
@@ -125,6 +130,40 @@ export class ClassroomController {
   ) {
     const room = await this.teacherOnly(id, request.auth.userId);
     await this.classrooms.publish(room.id, parseInput(classroomLiveInputSchema, body).path);
+  }
+
+  /** Whether the classroom audio is configured on this server. */
+  @Get(':classroomId/voice')
+  async voiceStatus(
+    @Req() request: AuthenticatedRequest,
+    @Param('classroomId') id: string,
+  ): Promise<{ enabled: boolean }> {
+    await this.access(id, request.auth.userId);
+    return { enabled: this.voice.enabled };
+  }
+
+  /** Token to join the classroom's voice room: the teacher may speak, students only listen. */
+  @Post(':classroomId/voice/token')
+  async voiceToken(@Req() request: AuthenticatedRequest, @Param('classroomId') id: string) {
+    const { room, isTeacher } = await this.access(id, request.auth.userId);
+    return this.voice.joinToken(room.id, request.auth.userId, isTeacher);
+  }
+
+  /** The teacher opens or closes a student's microphone. */
+  @Put(':classroomId/voice/speakers/:userId')
+  @HttpCode(204)
+  async setSpeaker(
+    @Req() request: AuthenticatedRequest,
+    @Param('classroomId') id: string,
+    @Param('userId') userId: string,
+    @Body() body: unknown,
+  ) {
+    const room = await this.teacherOnly(id, request.auth.userId);
+    const { speaking } = parseInput(classroomSpeakerInputSchema, body);
+    if (!(await this.classrooms.isMember(room.id, userId))) {
+      throw new NotFoundException('Aluno não encontrado na sala.');
+    }
+    await this.voice.setSpeaking(room.id, userId, speaking);
   }
 
   @Get(':classroomId/live')

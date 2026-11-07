@@ -649,6 +649,19 @@ export const api = {
   getLibraryFacets: (token: string) => request<LibraryFacets>('/library/facets', token),
   getLibraryGame: (gameId: string, token: string) =>
     request<LibraryGame>(`/library/games/${gameId}`, token),
+  getClassroomVoiceStatus: (classroomId: string, token: string) =>
+    request<{ enabled: boolean }>(`/classrooms/${classroomId}/voice`, token),
+  createClassroomVoiceToken: (classroomId: string, token: string) =>
+    request<{ canSpeak: boolean; token: string; url: string }>(
+      `/classrooms/${classroomId}/voice/token`,
+      token,
+      { method: 'POST' },
+    ),
+  setClassroomSpeaker: (classroomId: string, userId: string, speaking: boolean, token: string) =>
+    request<void>(`/classrooms/${classroomId}/voice/speakers/${userId}`, token, {
+      body: JSON.stringify({ speaking }),
+      method: 'PUT',
+    }),
   listClassrooms: (token: string) => request<ClassroomSummary[]>('/classrooms', token),
   createClassroom: (name: string, token: string) =>
     request<ClassroomSummary>('/classrooms', token, {

@@ -21,6 +21,10 @@ export const apiEnvSchema = z.object({
   AUTH_VERIFICATION_SECRET: optionalSecret,
   AUTH_VERIFICATION_TTL_SECONDS: z.coerce.number().int().min(300).max(604_800).default(86_400),
   DATABASE_URL: z.string().url().default('postgresql://chess:chess@localhost:5432/chess'),
+  // Classroom audio (LiveKit). The feature stays off unless all three are set.
+  LIVEKIT_API_KEY: z.string().min(1).optional(),
+  LIVEKIT_API_SECRET: z.string().min(16).optional(),
+  LIVEKIT_URL: z.string().url().optional(),
   METRICS_TOKEN: z.string().min(24).optional(),
   MINIO_ACCESS_KEY: z.string().min(1).optional(),
   MINIO_BUCKET: z.string().min(1).default('avatars'),

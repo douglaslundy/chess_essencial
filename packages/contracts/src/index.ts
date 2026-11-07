@@ -408,6 +408,7 @@ export {
   addClassroomMemberInputSchema,
   classroomDetailSchema,
   classroomLiveInputSchema,
+  classroomSpeakerInputSchema,
   classroomLivePathSchema,
   classroomLiveSchema,
   classroomMemberSchema,

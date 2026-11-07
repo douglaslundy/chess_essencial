@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { ClassroomVoice } from './classroom-voice';
 import { api } from '@/lib/api/client';
 import {
   CLASSROOM_AREAS,
@@ -139,6 +140,7 @@ export function ClassroomSync() {
           ))}
         </nav>
       ) : null}
+      <ClassroomVoice classroomId={session.id} role={session.role} />
       <Link href={`/app/sala/${session.id}`}>Sala</Link>
       <button onClick={() => writeClassroomSession(null)} type="button">
         {session.role === 'teacher' ? 'Encerrar aula' : 'Sair da aula'}
