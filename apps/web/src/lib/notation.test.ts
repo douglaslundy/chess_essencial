@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatUciSquares, speakableSquares, toBrazilianSan } from './notation';
+import {
+  formatUciSquares,
+  speakableSquares,
+  spokenMove,
+  spokenSan,
+  toBrazilianSan,
+} from './notation';
 
 describe('toBrazilianSan', () => {
   it('translates each piece letter except the bishop', () => {
@@ -53,5 +59,33 @@ describe('speakableSquares', () => {
     );
     expect(speakableSquares('Você jogou 0-0+')).toBe('Você jogou roque pequeno+');
     expect(speakableSquares('Resultado 1-0')).toBe('Resultado 1-0');
+  });
+});
+
+describe('spokenSan', () => {
+  it('names the piece and the action instead of reading the letters', () => {
+    expect(spokenSan('Nf3')).toBe('Cavalo para f3');
+    expect(spokenSan('Qxe4+')).toBe('Dama captura em e4, xeque');
+    expect(spokenSan('Rad1')).toBe('Torre da coluna á para d1');
+    expect(spokenSan('e4')).toBe('Peão para e4');
+    expect(spokenSan('exd5')).toBe('Peão de é captura em d5');
+    expect(spokenSan('e8=Q#')).toBe('Peão para e8 e promove a dama, xeque-mate');
+    expect(spokenSan('O-O-O')).toBe('Roque grande');
+    expect(spokenSan('O-O+')).toBe('Roque pequeno, xeque');
+  });
+
+  it('says the piece and both squares when the squares are known', () => {
+    expect(spokenSan('Bh6', { from: 'b1', to: 'h6' })).toBe('o bispo de b1 para h6');
+    expect(spokenSan('Nxe5+', { from: 'c4', to: 'e5' })).toBe(
+      'o cavalo de c4 captura em e5, xeque',
+    );
+    expect(spokenSan('exd5', { from: 'e4', to: 'd5' })).toBe('o peão de e4 captura em d5');
+    const start = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+    expect(spokenMove(start, 'b1c3')).toBe('o cavalo de b1 para c3');
+    expect(speakableSquares(spokenMove(start, 'b1c3'))).toBe('o cavalo de bê 1 para cê 3');
+  });
+
+  it('reads aloud as piece, preposition and spelled square once squares are expanded', () => {
+    expect(speakableSquares(spokenSan('Nc3'))).toBe('Cavalo para cê 3');
   });
 });

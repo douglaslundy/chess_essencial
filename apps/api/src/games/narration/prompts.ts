@@ -1,4 +1,4 @@
-import { ChessJsRules } from '@xadrez/chess-domain';
+import { ChessJsRules, describeMoveFacts, moveFacts } from '@xadrez/chess-domain';
 import type { LiveNarrationRequest, MoveQuality } from '@xadrez/contracts';
 
 export type AuthoritativeLiveNarrationRequest = LiveNarrationRequest & { fen: string };
@@ -7,7 +7,7 @@ export const LIVE_NARRATION_SYSTEM_PROMPT = `Você é o Treinador, um instrutor 
 
 Regras obrigatórias:
 - Português do Brasil, uma ou duas frases curtas, no máximo 30 palavras no total.
-- Diga só a ideia principal: para que serve o lance e qual é o plano a seguir. Sem rótulos como "Objetivo:" ou "Tema:".
+- Pense como um jogador de xadrez. Diga a ideia principal: o que o lance ataca, defende ou deixa vulnerável e qual é o plano a seguir. Sem rótulos como "Objetivo:" ou "Tema:".
 - Escreva como um treinador falando ao lado do aluno: frases completas, ligadas por conectivos como "porque", "assim" e "então". Nada telegráfico nem com cara de relatório.
 - Fale sempre em primeira pessoa: "eu indico", "eu calculo", "eu vejo". Nunca diga motor, engine, Stockfish, computador nem programa.
 - Não mencione nenhuma peça, casa ou lance; o servidor acrescentará esses dados de forma autoritativa.
@@ -117,11 +117,21 @@ export function composeAuthoritativeNarrative(
   return `Cuidado: você ia levar ${article} ${move}, e eu considero esse lance ${spokenQuality[input.quality]}. ${reason}`;
 }
 
+/** Board facts about the move being explained, so the reason is about the position, not generic. */
+function boardFactsLine(fen: string, uci: string | null): string {
+  const facts = uci ? moveFacts(fen, uci) : null;
+  const lines = facts ? describeMoveFacts(facts) : [];
+  return lines.length > 0
+    ? `Fatos do tabuleiro sobre esse lance (para você entender, sem citar peças ou casas): ${lines.join(' ')}`
+    : '';
+}
+
 export function buildLiveNarrationPrompt(input: AuthoritativeLiveNarrationRequest): string {
   if (input.kind === 'suggestion') {
     return [
       'O servidor já descreverá de modo autoritativo qual peça vai para qual casa e a linha possível.',
       `Posição FEN para análise interna: ${input.fen}`,
+      boardFactsLine(input.fen, input.bestMoveUci),
       `Minha análise encontrou ${formatEval(input.mate, input.scoreCp)} para a sugestão.`,
       `Variação calculada, limitada a três respostas do adversário: ${input.principalVariation.join(' ') || 'indisponível'}.`,
       'Explique em uma ou duas frases curtas a ideia do lance, sem citar peças, casas ou lances.',
@@ -130,6 +140,7 @@ export function buildLiveNarrationPrompt(input: AuthoritativeLiveNarrationReques
   return [
     'O servidor já descreverá de modo autoritativo qual peça vai para qual casa.',
     `Posição FEN para análise interna: ${input.fen}`,
+    boardFactsLine(input.fen, input.uci),
     `Minha análise classificou a tentativa como ${qualityLabelPt[input.quality]}, com perda de ${input.centipawnLoss} centipawns.`,
     input.missedWin ? 'A tentativa também deixa escapar uma vantagem maior.' : '',
     'Explique em uma ou duas frases curtas a ideia do lance, sem citar peças, casas ou lances.',

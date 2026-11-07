@@ -4859,3 +4859,10 @@ textarea::placeholder {
     -webkit-line-clamp: 12;
   }
 }
+
+.reviewQualityTable .reviewRatingRow td {
+  color: var(--fg);
+}
+.reviewQualityTable .reviewRatingRow th {
+  font-weight: 700;
+}

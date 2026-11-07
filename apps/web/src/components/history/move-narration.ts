@@ -7,7 +7,15 @@ import type {
   MoveQuality,
 } from '@xadrez/contracts';
 
-import { formatUciSquares, speakableSquares, toBrazilianSan } from '@/lib/notation';
+import {
+  describeBetterMove,
+  describeMoveFacts,
+  describeMoveGoal,
+  moveFacts,
+} from '@xadrez/chess-domain';
+import { Chess } from 'chess.js';
+
+import { formatUciSquares, speakableSquares, spokenMove, toBrazilianSan } from '@/lib/notation';
 
 export const moveQualityLabel: Record<MoveQuality, string> = {
   bom: 'Bom',
@@ -17,12 +25,6 @@ export const moveQualityLabel: Record<MoveQuality, string> = {
   imprecisao: 'Imprecisão',
   otimo: 'Ótimo',
 };
-
-function speakableSquarePair(uci: string): string {
-  const from = uci.slice(0, 2);
-  const to = uci.slice(2, 4);
-  return `${from} para ${to}`;
-}
 
 /** Short label shown in the move's speech-bubble panel, e.g. "Bom · -35cp". */
 export function describeMoveQuality(move: GameMoveAnalysis): string {
@@ -50,16 +52,6 @@ export function narrationTextForPlayer(
     .join(' ');
 }
 
-/** Full sentence read aloud by the voice narration toggle. */
-export function narrateMove(move: GameMoveAnalysis): string {
-  let sentence = `Você jogou ${toBrazilianSan(move.san)}, ${spokenQuality[move.quality]}.`;
-  if (move.quality !== 'otimo' && move.quality !== 'excelente' && move.bestMoveUci) {
-    sentence += ` No seu lugar, eu jogaria ${speakableSquarePair(move.bestMoveUci)}.`;
-  }
-  if (move.missedWin) sentence += ' Aqui havia uma chance de ganhar uma vantagem maior.';
-  return speakableSquares(sentence);
-}
-
 // Spoken (not label) form, so the sentence reads like a coach talking.
 const spokenQuality: Record<MoveQuality, string> = {
   bom: 'um lance bom',
@@ -70,22 +62,108 @@ const spokenQuality: Record<MoveQuality, string> = {
   otimo: 'um ótimo lance',
 };
 
+type MoveToExplain = Pick<GameMove, 'fenBefore' | 'san' | 'uci'>;
+
+function sanOfUci(fenBefore: string, uci: string): string | null {
+  try {
+    return new Chess(fenBefore).move({
+      from: uci.slice(0, 2),
+      to: uci.slice(2, 4),
+      ...(uci[4] ? { promotion: uci[4] } : {}),
+    }).san;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * What a chess coach would say about a move, built from facts read off the board
+ * (`moveFacts`, shared with the server prompts) and from the engine verdict: what the move does,
+ * what it leaves exposed, and, for a weak move, what to play instead and why.
+ * `speech` spells the move out ("Cavalo para c3"); `text` keeps the notation ("Cc3").
+ */
+export function explainMove(
+  played: MoveToExplain,
+  analysis: GameMoveAnalysis | null,
+  mode: 'text' | 'speech',
+): string {
+  const name = (san: string, uci: string) =>
+    mode === 'speech' ? spokenMove(played.fenBefore, uci) : toBrazilianSan(san);
+  const quality = analysis?.quality ?? null;
+  const weak = quality === 'imprecisao' || quality === 'erro' || quality === 'gafe';
+  const sentences = [
+    quality
+      ? `Você jogou ${name(played.san, played.uci)}, ${spokenQuality[quality]}.`
+      : `Você jogou ${name(played.san, played.uci)}.`,
+  ];
+
+  const facts = moveFacts(played.fenBefore, played.uci);
+  const lines = facts ? describeMoveFacts(facts) : [];
+  // A weak move is explained by what it gives away first; a good one by what it achieves.
+  if (weak) lines.sort((a, b) => Number(b.startsWith('Deixa')) - Number(a.startsWith('Deixa')));
+  sentences.push(...lines.slice(0, 3));
+
+  if (analysis && weak) {
+    const giveaway = lines.some((line) => line.startsWith('Deixa'));
+    if (!giveaway && analysis.centipawnLoss >= 150) {
+      sentences.push('Com ele você entrega boa parte da vantagem que tinha na posição.');
+    }
+    const bestUci = analysis.bestMoveUci;
+    const best = bestUci ? sanOfUci(played.fenBefore, bestUci) : null;
+    if (best && bestUci) {
+      sentences.push(`No seu lugar, eu jogaria ${name(best, bestUci)}.`);
+      // Why it is better: what it does, the material once exchanges play out, the evaluation.
+      sentences.push(
+        ...describeBetterMove(facts, moveFacts(played.fenBefore, bestUci), {
+          after: analysis.scoreAfterCp,
+          before: analysis.scoreBeforeCp,
+          loss: analysis.centipawnLoss,
+        }),
+      );
+    }
+  }
+  if (analysis?.missedWin) sentences.push('Aqui havia uma chance de ganhar uma vantagem maior.');
+  // Names the move as one of the game's strong or weak points, the same labels as the review summary.
+  const goal = facts ? describeMoveGoal(facts) : null;
+  if (weak) {
+    const reason = lines.find((line) => line.startsWith('Deixa'));
+    sentences.push(
+      reason
+        ? `Ponto fraco: ${reason.charAt(0).toLowerCase()}${reason.slice(1)}`
+        : 'Ponto fraco: lance que cede parte da vantagem.',
+    );
+  } else if ((quality === 'otimo' || quality === 'excelente') && goal) {
+    sentences.push(`Ponto forte: ${goal}.`);
+  }
+  return sentences.join(' ');
+}
+
+export interface ReviewComment {
+  /** Shown in the Treinador's bubble. */
+  text: string;
+  /** Read aloud by the voice. */
+  speech: string;
+}
+
 /**
  * Treinador's comment for the reviewed ply: the AI key-moment narrative when one exists,
- * else the engine-based sentence, else (analysis missing or still running) just the move,
- * so the bubble never shows an "unavailable" message. Null for the opponent's moves.
+ * else the board-based explanation, so every move of the player gets a real comment, even
+ * while the analysis is still running. Null for the opponent's moves.
  */
 export function reviewMoveComment(
-  move: Pick<GameMove, 'color' | 'ply' | 'san'> | null,
+  move: Pick<GameMove, 'color' | 'fenBefore' | 'ply' | 'san' | 'uci'> | null,
   analysis: GameMoveAnalysis | null,
   keyMoments: GameNarrationKeyMoment[],
   myColor: 'white' | 'black' | null,
-): string | null {
+): ReviewComment | null {
   if (!move || !myColor || move.color !== myColor) return null;
   const moment = keyMoments.find((item) => item.ply === move.ply && item.color === myColor);
-  if (moment?.narrative) return speakableSquares(moment.narrative);
-  if (analysis) return narrateMove(analysis);
-  return speakableSquares(`Você jogou ${toBrazilianSan(move.san)}.`);
+  if (moment?.narrative)
+    return { speech: speakableSquares(moment.narrative), text: moment.narrative };
+  return {
+    speech: speakableSquares(explainMove(move, analysis, 'speech')),
+    text: explainMove(move, analysis, 'text'),
+  };
 }
 
 /**
@@ -99,6 +177,7 @@ export function reviewMoveComment(
 export function buildFallbackNarration(
   analysis: GameAnalysis,
   myColor: 'white' | 'black' | null,
+  moves: Array<Pick<GameMove, 'fenBefore' | 'ply' | 'san' | 'uci'>> = [],
 ): GameNarration | null {
   if (!analysis.summary || analysis.moves.length === 0) return null;
   const perspective = myColor ?? 'white';
@@ -119,16 +198,21 @@ export function buildFallbackNarration(
   const candidates = analysis.moves.filter((move) => !myColor || move.color === myColor);
   const worst = [...candidates].sort((a, b) => b.centipawnLoss - a.centipawnLoss)[0];
 
+  const worstPlayed = worst ? moves.find((item) => item.ply === worst.ply) : undefined;
   const keyMoments: GameNarrationKeyMoment[] =
     worst && worst.centipawnLoss > 0
       ? [
           {
             color: worst.color,
-            narrative: speakableSquares(
-              `No lance ${worst.ply}, ${toBrazilianSan(worst.san)} foi classificado como ${moveQualityLabel[worst.quality].toLowerCase()}` +
-                (worst.bestMoveUci ? `; eu indicaria ${formatUciSquares(worst.bestMoveUci)}` : '') +
-                '.',
-            ),
+            narrative: worstPlayed
+              ? `O momento mais importante foi o lance ${worst.ply}. ${explainMove(worstPlayed, worst, 'speech')}`
+              : speakableSquares(
+                  `No lance ${worst.ply}, ${toBrazilianSan(worst.san)} foi classificado como ${moveQualityLabel[worst.quality].toLowerCase()}` +
+                    (worst.bestMoveUci
+                      ? `; eu indicaria ${formatUciSquares(worst.bestMoveUci)}`
+                      : '') +
+                    '.',
+                ),
             ply: worst.ply,
             quality: worst.quality,
             san: worst.san,

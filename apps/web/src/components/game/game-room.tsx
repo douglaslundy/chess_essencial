@@ -10,7 +10,7 @@ import { GameResultDialog, type GameResult } from './game-result-dialog';
 import { MoveAnnouncement, describeImportantMove, type Announcement } from './move-announcement';
 import { useStageFullscreen } from './use-stage-fullscreen';
 import { CoachCallout } from '@/components/coach/coach-callout';
-import { formatCoachExplanation } from '@/components/coach/coach-explanation';
+import { formatCoachExplanation, formatCoachWarning } from '@/components/coach/coach-explanation';
 import { moveQualityLabel } from '@/components/history/move-narration';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { api, getRealtimeAccessToken, getStoredUserId } from '@/lib/api/client';
@@ -475,7 +475,11 @@ export function GameRoom({ gameId }: { gameId: string }) {
     const spokenText = formatCoachExplanation(state.currentFen, coachSuggestion);
     if (!spokenText) return;
     queueMicrotask(() => setCoachLine({ fen: state.currentFen, text: spokenText }));
-    speakCoach(speakableSquares(spokenText));
+    speakCoach(
+      speakableSquares(
+        formatCoachExplanation(state.currentFen, coachSuggestion, 'speech') ?? spokenText,
+      ),
+    );
 
     // AI narration enriches the instant template above once it arrives -
     // never blocks or delays it. Skipped in demo mode (no real game row on
@@ -503,9 +507,17 @@ export function GameRoom({ gameId }: { gameId: string }) {
   useEffect(() => {
     if (muted || !pendingCoachMove) return;
     const { quality, uci } = pendingCoachMove;
-    const spokenText = `Atenção: eu acho que esse lance é ${moveQualityLabel[quality.quality].toLowerCase()}, com perda de ${quality.centipawnLoss} centipawns.${quality.missedWin ? ' Havia uma posição melhor.' : ''}`;
+    const verdict = {
+      centipawnLoss: quality.centipawnLoss,
+      label: moveQualityLabel[quality.quality].toLowerCase(),
+      missedWin: quality.missedWin,
+    };
+    const bestUci = coachSuggestion?.bestMoveUci ?? null;
+    const spokenText = formatCoachWarning(state.currentFen, uci, verdict, bestUci);
     queueMicrotask(() => setCoachLine({ fen: state.currentFen, text: spokenText }));
-    speakCoach(spokenText);
+    speakCoach(
+      speakableSquares(formatCoachWarning(state.currentFen, uci, verdict, bestUci, 'speech')),
+    );
 
     if (isDemo) return;
     const generation = ++narrationGenerationRef.current;

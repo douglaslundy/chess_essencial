@@ -1,3 +1,5 @@
+import { Chess } from 'chess.js';
+
 // chess.js always generates SAN with English piece letters (K,Q,R,B,N).
 // Brazilian Portuguese chess notation uses different letters for every
 // piece except the bishop: Rei(R), Dama(D), Torre(T), Bispo(B), Cavalo(C).
@@ -31,6 +33,68 @@ const FILE_NAME_PT: Record<string, string> = {
   g: 'gê',
   h: 'agá',
 };
+
+const PIECE_NAME_SPOKEN: Record<string, string> = {
+  B: 'Bispo',
+  K: 'Rei',
+  N: 'Cavalo',
+  Q: 'Dama',
+  R: 'Torre',
+};
+
+/**
+ * Reads a chess.js SAN move the way a coach says it, e.g. "Nf3" → "Cavalo para f3",
+ * "exd5" → "Peão de e captura em d5", "O-O" → "roque pequeno". Squares stay plain
+ * ("f3"): run the result through `speakableSquares` before speaking it.
+ */
+export function spokenSan(san: string, squares?: { from: string; to: string }): string {
+  const castling = /^[O0]-[O0](-[O0])?/.exec(san);
+  if (castling) return `${castling[1] ? 'Roque grande' : 'Roque pequeno'}${checkSuffix(san)}`;
+  const match = /^([KQRBN])?([a-h])?([1-8])?(x)?([a-h][1-8])(?:=([KQRBN]))?[+#]?$/.exec(san);
+  if (!match) return san;
+  const [, piece, file, rank, capture, square, promotion] = match;
+  let sentence: string;
+  if (squares) {
+    // "o bispo de b1 para h6": the piece and both squares, which is how a coach says it.
+    const who = piece ? PIECE_PHRASE[piece] : 'o peão';
+    sentence = `${who} de ${squares.from} ${capture ? 'captura em' : 'para'} ${squares.to}`;
+  } else if (piece) {
+    const from = file ? ` da coluna ${FILE_NAME_PT[file]}` : rank ? ` da linha ${rank}` : '';
+    sentence = `${PIECE_NAME_SPOKEN[piece]}${from} ${capture ? 'captura em' : 'para'} ${square}`;
+  } else if (capture) {
+    sentence = `Peão de ${FILE_NAME_PT[file ?? 'a']} captura em ${square}`;
+  } else {
+    sentence = `Peão para ${square}`;
+  }
+  if (promotion) sentence += ` e promove a ${PIECE_NAME_SPOKEN[promotion]!.toLowerCase()}`;
+  return `${sentence}${checkSuffix(san)}`;
+}
+
+const PIECE_PHRASE: Record<string, string> = {
+  B: 'o bispo',
+  K: 'o rei',
+  N: 'o cavalo',
+  Q: 'a dama',
+  R: 'a torre',
+};
+
+/** Spoken form of the UCI move played from `fenBefore` ("o bispo de b1 para h6"); the SAN when illegal. */
+export function spokenMove(fenBefore: string, uci: string): string {
+  try {
+    const move = new Chess(fenBefore).move({
+      from: uci.slice(0, 2),
+      to: uci.slice(2, 4),
+      ...(uci[4] ? { promotion: uci[4] } : {}),
+    });
+    return spokenSan(move.san, { from: move.from, to: move.to });
+  } catch {
+    return uci;
+  }
+}
+
+function checkSuffix(san: string): string {
+  return san.endsWith('#') ? ', xeque-mate' : san.endsWith('+') ? ', xeque' : '';
+}
 
 /** Rewrites any square references in speech-bound text into a phonetically
  * safe, spelled-out form, e.g. "g6" → "gê 6". Use for any string passed to

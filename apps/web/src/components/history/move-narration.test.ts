@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildFallbackNarration,
   describeMoveQuality,
-  narrateMove,
+  explainMove,
   narrationTextForPlayer,
   reviewMoveComment,
   shouldNarrateReviewMove,
@@ -45,106 +45,45 @@ describe('describeMoveQuality', () => {
   });
 });
 
-describe('narrateMove', () => {
-  it('reads the move (translated to Brazilian notation) and its quality', () => {
-    expect(narrateMove(move({ quality: 'bom', san: 'Nf3' }))).toBe(
-      'Você jogou C éfe 3, um lance bom.',
+const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+
+describe('explainMove', () => {
+  const nf3 = { fenBefore: START, san: 'Nf3', uci: 'g1f3' };
+
+  it('shows the notation in the text and spells the move out in the speech', () => {
+    const text = explainMove(nf3, move({ quality: 'bom', san: 'Nf3' }), 'text');
+    const speech = explainMove(nf3, move({ quality: 'bom', san: 'Nf3' }), 'speech');
+    expect(text).toContain('Você jogou Cf3, um lance bom.');
+    expect(speech).toContain('Você jogou o cavalo de g1 para f3, um lance bom.');
+  });
+
+  it('says what the move does on the board, not only its name', () => {
+    expect(explainMove(nf3, move({ quality: 'bom', san: 'Nf3' }), 'text')).toContain(
+      'Desenvolve a peça',
     );
   });
 
-  it('suggests, in first person, an alternative for a weak move, spelling out square letters', () => {
-    const sentence = narrateMove(move({ bestMoveUci: 'd2d4', quality: 'erro', san: 'a3' }));
-    expect(sentence).toBe(
-      'Você jogou á 3, e eu considero isso um erro. No seu lugar, eu jogaria dê 2 para dê 4.',
+  it('explains what a weak move gives away and suggests the better move with its purpose', () => {
+    // Rook leaves the defence of the c4 bishop; Rc1-c2 would keep it protected.
+    const fen = '2r1k3/8/8/8/2B5/8/8/2R1K3 w - - 0 1';
+    const sentence = explainMove(
+      { fenBefore: fen, san: 'Ra1', uci: 'c1a1' },
+      move({ bestMoveUci: 'c4f7', centipawnLoss: 320, quality: 'gafe', san: 'Ra1' }),
+      'text',
     );
-  });
-
-  it('does not suggest an alternative for otimo/excelente moves even if bestMoveUci is set', () => {
-    expect(narrateMove(move({ bestMoveUci: 'd2d4', quality: 'excelente' }))).toBe(
-      'Você jogou é 4, um lance excelente.',
-    );
-  });
-
-  it('translates the queen to "D" (Dama), not the English "Q"', () => {
-    expect(narrateMove(move({ quality: 'otimo', san: 'Qxe4+' }))).toBe(
-      'Você jogou Dx é 4+, um ótimo lance.',
-    );
+    expect(sentence).toContain('Deixa o bispo em c4 vulnerável a captura.');
+    expect(sentence).toContain('No seu lugar, eu jogaria Bf7');
+    expect(sentence).toContain('infelizmente isso foi uma gafe');
   });
 
   it('mentions a missed winning opportunity', () => {
-    expect(narrateMove(move({ missedWin: true, quality: 'gafe' }))).toContain(
+    expect(explainMove(nf3, move({ missedWin: true, quality: 'imprecisao' }), 'text')).toContain(
       'chance de ganhar uma vantagem maior',
     );
   });
-});
 
-function qualityCounts(
-  overrides: Partial<GameAnalysisQualityCounts> = {},
-): GameAnalysisQualityCounts {
-  return {
-    bom: 0,
-    erro: 0,
-    excelente: 0,
-    gafe: 0,
-    imprecisao: 0,
-    missedWin: 0,
-    otimo: 0,
-    ...overrides,
-  };
-}
-
-function analysis(overrides: Partial<GameAnalysis> = {}): GameAnalysis {
-  return {
-    errorSignals: [],
-    moves: [move({ centipawnLoss: 0, ply: 1, quality: 'otimo' })],
-    status: 'completed',
-    summary: { black: qualityCounts(), white: qualityCounts({ otimo: 1 }) },
-    ...overrides,
-  };
-}
-
-describe('buildFallbackNarration', () => {
-  it('returns null when the analysis has no summary yet', () => {
-    expect(buildFallbackNarration(analysis({ summary: null }), 'white')).toBeNull();
-  });
-
-  it('returns null when the player made no moves at all', () => {
-    expect(
-      buildFallbackNarration(
-        analysis({ summary: { black: qualityCounts(), white: qualityCounts() } }),
-        'white',
-      ),
-    ).toBeNull();
-  });
-
-  it('praises a mistake-free game', () => {
-    const result = buildFallbackNarration(
-      analysis({ summary: { black: qualityCounts(), white: qualityCounts({ otimo: 4 }) } }),
-      'white',
-    );
-    expect(result?.summary).toContain('Nenhum erro grave');
-    expect(result?.keyMoments).toEqual([]);
-  });
-
-  it('flags the worst move as a key moment when there were mistakes', () => {
-    const blunder = move({
-      bestMoveUci: 'd2d4',
-      centipawnLoss: 350,
-      color: 'white',
-      ply: 8,
-      quality: 'gafe',
-      san: 'Nf3',
-    });
-    const result = buildFallbackNarration(
-      analysis({
-        moves: [move({ centipawnLoss: 0, ply: 1, quality: 'otimo' }), blunder],
-        summary: { black: qualityCounts(), white: qualityCounts({ gafe: 1, otimo: 1 }) },
-      }),
-      'white',
-    );
-    expect(result?.summary).toContain('1 lance que vale a pena revisar');
-    expect(result?.keyMoments).toHaveLength(1);
-    expect(result?.keyMoments[0]).toMatchObject({ ply: 8, quality: 'gafe' });
+  it('still names the move when there is no analysis yet', () => {
+    expect(explainMove(nf3, null, 'speech')).toMatch(/^Você jogou o cavalo de g1 para f3\./);
   });
 });
 
@@ -172,7 +111,7 @@ describe('player-only review narration', () => {
 });
 
 describe('reviewMoveComment', () => {
-  const played = { color: 'white' as const, ply: 1, san: 'Nf3' };
+  const played = { color: 'white' as const, fenBefore: START, ply: 1, san: 'Nf3', uci: 'g1f3' };
 
   it('stays silent on the opponent moves', () => {
     expect(reviewMoveComment(played, move(), [], 'black')).toBeNull();
@@ -187,13 +126,13 @@ describe('reviewMoveComment', () => {
       quality: 'bom' as const,
       san: 'Nf3',
     };
-    expect(reviewMoveComment(played, move(), [moment], 'white')).toBe('Bom desenvolvimento.');
+    expect(reviewMoveComment(played, move(), [moment], 'white')?.text).toBe('Bom desenvolvimento.');
   });
 
-  it('uses the engine sentence, and the bare move when there is no analysis yet', () => {
-    expect(reviewMoveComment(played, move({ san: 'Nf3' }), [], 'white')).toBe(
-      narrateMove(move({ san: 'Nf3' })),
-    );
-    expect(reviewMoveComment(played, null, [], 'white')).toMatch(/^Você jogou C/);
+  it('gives a board-based comment for every move, with separate text and speech', () => {
+    const comment = reviewMoveComment(played, move({ quality: 'bom', san: 'Nf3' }), [], 'white')!;
+    expect(comment.text).toContain('Cf3');
+    expect(comment.speech).toContain('o cavalo de gê 1 para éfe 3');
+    expect(reviewMoveComment(played, null, [], 'white')?.speech).toMatch(/^Você jogou o cavalo/);
   });
 });

@@ -8,6 +8,7 @@ import type {
   GameState,
   ReviewAnnotation,
 } from '@xadrez/contracts';
+import { estimatePerformanceRating } from '@xadrez/chess-domain';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -25,7 +26,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { api, getStoredUserId } from '@/lib/api/client';
 import { speakableSquares, toBrazilianSan } from '@/lib/notation';
 import { usePieceTheme } from '@/lib/piece-theme';
-import { speak, stopSpeaking } from '@/lib/speech';
+import { prefetchSpeech, speak, stopSpeaking } from '@/lib/speech';
 import { useEntitlements } from '@/lib/subscriptions/use-entitlements';
 import { useVoicePreference } from '@/lib/voice-preference';
 
@@ -132,6 +133,15 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
   const learningSignals = analysis
     ? Array.from(new Map(analysis.errorSignals.map((signal) => [signal.skillKey, signal])).values())
     : [];
+  // Rough rating each side showed in this game, from the average loss per move.
+  const ratingByColor = {
+    black: estimatePerformanceRating(
+      (analysis?.moves ?? []).filter((m) => m.color === 'black').map((m) => m.centipawnLoss),
+    ),
+    white: estimatePerformanceRating(
+      (analysis?.moves ?? []).filter((m) => m.color === 'white').map((m) => m.centipawnLoss),
+    ),
+  };
   const avatarForColor = (color: 'white' | 'black') =>
     state?.players.find((player) => player.color === color)?.avatarUrl ?? null;
   const summaryColumns: Array<{
@@ -154,7 +164,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
     narration?.status === 'completed' && narration.summary
       ? narration
       : analysis
-        ? buildFallbackNarration(analysis, myColor)
+        ? buildFallbackNarration(analysis, myColor, moves)
         : null;
 
   const { voiceName, reviewNarrationEnabled, setReviewNarrationEnabled } = useVoicePreference();
@@ -164,13 +174,39 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
     effectiveNarration?.keyMoments ?? [],
     myColor,
   );
-  const coachText = ply === 0 ? WELCOME : moveComment;
+  const coachText = ply === 0 ? WELCOME : (moveComment?.text ?? null);
+  const coachSpeech = ply === 0 ? WELCOME : (moveComment?.speech ?? null);
+
+  // Every spoken line of this review is generated once and kept in the database (voice cache,
+  // shared by all students): opening the review asks for them all, in order, so later listeners
+  // (and the next move) just play the stored audio. Waits for a final narration so no throw-away
+  // text is generated.
+  const reviewSpeeches = useMemo(() => {
+    if (!myColor || analysis?.status !== 'completed') return [];
+    if (narration?.status === 'pending' || narration?.status === 'processing') return [];
+    return moves
+      .map(
+        (move) =>
+          reviewMoveComment(
+            move,
+            analysis.moves.find((item) => item.ply === move.ply) ?? null,
+            effectiveNarration?.keyMoments ?? [],
+            myColor,
+          )?.speech,
+      )
+      .filter((speech): speech is string => Boolean(speech));
+  }, [analysis, effectiveNarration, moves, myColor, narration?.status]);
+  useEffect(() => {
+    if (reviewNarrationEnabled && reviewSpeeches.length > 0) {
+      prefetchSpeech([WELCOME, ...reviewSpeeches], voiceName);
+    }
+  }, [reviewNarrationEnabled, reviewSpeeches, voiceName]);
 
   // Navigating with the buttons is the user gesture iOS needs (speech.ts unlocks on first tap).
   useEffect(() => {
-    if (view !== 'moves' || !reviewNarrationEnabled || !coachText) return;
-    speakCoach(coachText, voiceName, setMessage);
-  }, [coachText, ply, reviewNarrationEnabled, view, voiceName]);
+    if (view !== 'moves' || !reviewNarrationEnabled || !coachSpeech) return;
+    speakCoach(coachSpeech, voiceName, setMessage);
+  }, [coachSpeech, ply, reviewNarrationEnabled, view, voiceName]);
 
   useEffect(() => {
     if (!reviewNarrationEnabled) stopSpeaking();
@@ -282,6 +318,12 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
               </tr>
             </thead>
             <tbody>
+              <tr className="reviewRatingRow">
+                <th scope="row">Rating estimado</th>
+                <td>{ratingByColor[summaryColumns[0]!.color] ?? '—'}</td>
+                <td aria-hidden="true" />
+                <td>{ratingByColor[summaryColumns[1]!.color] ?? '—'}</td>
+              </tr>
               {QUALITY_ROWS.map((row) => (
                 <tr data-quality={row.key} key={row.key}>
                   <th scope="row">{row.label}</th>

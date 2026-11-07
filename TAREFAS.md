@@ -15,6 +15,29 @@ Plano completo: `docs/CURSO_DO_ZERO.md`. É independente do sistema antigo de cu
 - [x] **Voz do GPT não tocava (2026-11-02).** Em Meus dados, sem voz salva, a primeira opção (a voz IA) aparecia marcada mas nada era gravado (`voice_name` nulo nos 2 usuários da produção), então o site usava a voz do navegador. Agora há a opção explícita "Voz padrão do navegador" e só a voz salva aparece marcada. A geração na OpenAI pelo servidor foi testada (200, áudio mp3).
 - [ ] **Login ChatGPT OAuth sem Client ID:** o fluxo já é por redirecionamento (autoriza e volta). O campo pede o Client ID de um app OAuth registrado na OpenAI; ele fica salvo depois da primeira vez. Remover o campo exigiria embutir o Client ID do Codex, o que o usuário proibiu (não se passar pelo cliente do Codex). Depende de a OpenAI fornecer um app OAuth próprio.
 
+## Pedido de 2026-11-07: revisão, tabuleiro 3D, bot, biblioteca e sala de aula (registro fiel do que o usuário pediu)
+
+Revisão e Treinador (IA que pensa como jogador de xadrez):
+- [~] **REV-01:** o Treinador dizia "Você jogou C cê 3" e só narrava o lance, sem dizer se foi bom ou ruim, o que ataca, o que deixa vulnerável. Corrigir em todas as telas com anotação ou Treinador (revisão, Treinador ao vivo, biblioteca, curso). Prompt claro e objetivo, a IA sempre pensando como jogador. Feito: fatos do tabuleiro em `packages/chess-domain/src/move-facts.ts`, usados pela revisão, pelo Treinador ao vivo e pelos prompts do worker e da API.
+- [~] **REV-02:** narrar o nome da peça e as casas: "você jogou o bispo de b1 para h6; seria melhor o cavalo de c1 para b3". Feito na revisão, no Treinador e na biblioteca (`spokenSan` e `spokenMove` em `apps/web/src/lib/notation.ts`).
+- [~] **REV-03:** a análise disse que cavalo comendo torre foi imprecisão e que o certo era peão comendo cavalo. Alinhar e refinar o prompt de TODAS as avaliações e revisões (engenharia de prompt para xadrez). Quando um lance for imprecisão, explicar o porquê: o que o lance sugerido faz e por que é melhor. Feito: saldo de material com recapturas (`netMaterial`) e `describeBetterMove`. Falta: guia em `docs/PROMPTS_XADREZ.md` e ajustar o prompt da revisão da biblioteca.
+- [~] **REV-04:** a revisão gerada pela IA deve ficar gravada no banco e ser reaproveitada ao rever a mesma partida (já existe em `game_narrations`; o prompt novo regera as antigas via migration 0050). O áudio também: nunca regerar. O cache de áudio é `voice_audio_cache` (global, por texto e voz). Feito: a revisão e a biblioteca pedem todas as falas ao abrir (prefetch).
+- [~] **REV-05:** ao entrar em revisão, mostrar o rating estimado de cada jogador naquela partida. Feito: linha "Rating estimado" na tabela (`estimatePerformanceRating`).
+- [~] **REV-06:** no lance da revisão, o narrador diz se é ponto forte ou fraco (o resumo tem esses pontos). Valer também para a biblioteca, se não prejudicar. Feito em ambas.
+- [ ] **REV-07:** na revisão, as setas do teclado ← e → voltam e avançam o lance.
+
+Tabuleiro 3D:
+- [ ] **3D-01:** corrigir as casas invertidas (feito em 588f73d/aa12b39).
+- [ ] **3D-02:** setas do teclado, com o foco no tabuleiro, giram a câmera para cima, baixo e lados.
+- [ ] **3D-03:** rei bem maior que as outras peças, dama a segunda maior. Verificar como o tamanho das peças é definido e ajustar também as demais.
+
+Plataforma:
+- [ ] **BOT-01:** o bot de 1600 ou 1800 joga muito mal (`selectBotMove` olha só 2 lances). Verificar o sistema de rating do bot e usar o Stockfish com `UCI_Elo`.
+- [ ] **BIB-01:** partida com rating excelente: ao terminar, botão para sugerir inserir a partida na biblioteca de partidas. Se o usuário aceitar, ela entra na biblioteca para estudo dos outros alunos.
+- [ ] **PROF-01:** perfil de professor. Botão "criar sala de aula"; o professor adiciona alunos (amigos, ID, e-mail ou nome). O aluno vê um botão em destaque para entrar na aula e vê tudo o que o professor faz. O professor tem um botão por área (curso, treinamento, partida, biblioteca, desafio, jogar) e o que ele faz é replicado, lance a lance, na tela dos alunos.
+- [ ] **PROF-02 (só relatório):** investigar custo operacional e viabilidade da réplica em tempo real da PROF-01.
+- [ ] **PROF-03 (só se viável):** canal de áudio na sala: o professor controla quem fala (abre ou fecha o microfone) e os alunos escutam como uma transmissão. Apresentar viabilidade e custo operacional. O objetivo das duas últimas é abrir a plataforma para ensinar alunos.
+
 ## App mobile (pedido de 2026-11-02)
 
 Plano completo, decisão e checklist: `docs/APP_ANDROID.md`.

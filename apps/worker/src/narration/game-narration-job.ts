@@ -10,6 +10,7 @@ import { callLlm, type LlmConfig } from './llm-client.js';
 import {
   buildGameSummaryPrompt,
   buildMomentPrompt,
+  NARRATION_PROMPT_VERSION,
   NARRATION_SYSTEM_PROMPT,
   type MomentFacts,
   type NarratedMoment,
@@ -20,7 +21,9 @@ const NARRATION_FEATURE_KEY = 'ai_narrations_per_day';
 // Paid generation deliberately fails closed when no effective plan exists,
 // even though interactive entitlement checks fail open on plan misconfiguration.
 // The deterministic browser narration remains available without any LLM cost.
-const MAX_KEY_MOMENTS = 6;
+const MAX_KEY_MOMENTS = 10;
+// Brilliant moves worth praising in the review, besides the costly ones.
+const MAX_PRAISED_MOMENTS = 2;
 const NARRATION_LEASE_MINUTES = 15;
 const MAX_NARRATION_ATTEMPTS = 3;
 
@@ -39,6 +42,8 @@ interface MoveAnalysisRow {
   ply: number;
   quality: MoveQuality;
   san: string;
+  scoreAfterCp: number | null;
+  scoreBeforeCp: number | null;
   uci: string;
 }
 
@@ -75,6 +80,7 @@ export async function runGameNarrationJob(
     if (!config) return { narratedGameId: null };
 
     await queuePendingNarrations(sql);
+    await requeueStaleNarrations(sql);
     const claimed = await claimNextNarration(sql);
     if (!claimed) return { narratedGameId: null };
 
@@ -125,6 +131,24 @@ async function resolveNarrationAiConfig(
     model: row.model,
     provider: row.provider,
   };
+}
+
+// Narrations from an older prompt are redone, one per tick and only for recent games.
+async function requeueStaleNarrations(sql: Sql): Promise<void> {
+  await sql`
+    UPDATE game_narrations
+    SET attempt_count = 0, status = 'pending', next_attempt_at = now(), completed_at = NULL,
+        error = NULL, lease_expires_at = NULL
+    WHERE game_id = (
+      SELECT stale.game_id
+      FROM game_narrations stale
+      WHERE stale.status = 'completed'
+        AND stale.prompt_version < ${NARRATION_PROMPT_VERSION}
+        AND stale.created_at > now() - interval '30 days'
+      ORDER BY stale.created_at DESC
+      LIMIT 1
+    )
+  `;
 }
 
 async function queuePendingNarrations(sql: Sql): Promise<void> {
@@ -326,15 +350,19 @@ async function scheduleNarrationRetry(
 
 function cacheKeyFor(moment: MomentFacts, fenBefore: string): string {
   return createHash('sha256')
-    .update(`${fenBefore}|${moment.uci}|${moment.bestMoveUci ?? ''}|${moment.quality}`)
+    .update(
+      `v${NARRATION_PROMPT_VERSION}|${fenBefore}|${moment.uci}|${moment.bestMoveUci ?? ''}|${moment.quality}`,
+    )
     .digest('hex');
 }
 
 function selectKeyMoments(rows: MoveAnalysisRow[]): MoveAnalysisRow[] {
-  return [...rows]
+  const costly = [...rows]
+    .filter((row) => row.centipawnLoss > 0 || row.missedWin)
     .sort((a, b) => b.centipawnLoss - a.centipawnLoss || Number(b.missedWin) - Number(a.missedWin))
-    .slice(0, MAX_KEY_MOMENTS)
-    .sort((a, b) => a.ply - b.ply);
+    .slice(0, MAX_KEY_MOMENTS - MAX_PRAISED_MOMENTS);
+  const praised = rows.filter((row) => row.quality === 'otimo').slice(0, MAX_PRAISED_MOMENTS);
+  return [...costly, ...praised].sort((a, b) => a.ply - b.ply);
 }
 
 async function narrateMomentWithCache(
@@ -346,10 +374,13 @@ async function narrateMomentWithCache(
     bestMoveUci: row.bestMoveUci,
     centipawnLoss: row.centipawnLoss,
     color: row.color,
+    fenBefore: row.fenBefore,
     missedWin: row.missedWin,
     ply: row.ply,
     quality: row.quality,
     san: row.san,
+    scoreAfterCp: row.scoreAfterCp,
+    scoreBeforeCp: row.scoreBeforeCp,
     uci: row.uci,
   };
   const cacheKey = cacheKeyFor(facts, row.fenBefore);
@@ -429,7 +460,8 @@ async function narrateGame(sql: Sql, gameId: string, config: LlmConfig): Promise
     SELECT
       gm.ply::integer, gm.color, gm.san, gm.uci, gm.fen_before AS "fenBefore",
       gma.best_move_uci AS "bestMoveUci", gma.centipawn_loss AS "centipawnLoss",
-      gma.quality, gma.missed_win AS "missedWin"
+      gma.quality, gma.missed_win AS "missedWin",
+      gma.score_before_cp AS "scoreBeforeCp", gma.score_after_cp AS "scoreAfterCp"
     FROM game_move_analyses gma
     JOIN game_moves gm ON gm.game_id = gma.game_id AND gm.ply = gma.ply
     WHERE gma.game_id = ${gameId}
@@ -475,7 +507,8 @@ async function narrateGame(sql: Sql, gameId: string, config: LlmConfig): Promise
     SET summary = ${summary},
         key_moments = ${JSON.stringify(keyMomentsJson)}::text::jsonb,
         patterns = ${JSON.stringify(patterns)}::text::jsonb,
-        study_plan = ${JSON.stringify(studyPlan)}::text::jsonb
+        study_plan = ${JSON.stringify(studyPlan)}::text::jsonb,
+        prompt_version = ${NARRATION_PROMPT_VERSION}
     WHERE game_id = ${gameId}
   `;
 }

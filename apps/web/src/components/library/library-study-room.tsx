@@ -13,9 +13,9 @@ import { CoachCallout } from '@/components/coach/coach-callout';
 import { ChessBoard, type BoardOrientation } from '@/components/game/chess-board';
 import { ReplayPlayer } from '@/components/game/replay-player';
 import { api } from '@/lib/api/client';
-import { speakableSquares, toBrazilianSan } from '@/lib/notation';
+import { speakableSquares, spokenSan, toBrazilianSan } from '@/lib/notation';
 import { usePieceTheme } from '@/lib/piece-theme';
-import { speak, stopSpeaking } from '@/lib/speech';
+import { prefetchSpeech, speak, stopSpeaking } from '@/lib/speech';
 import { useVoicePreference } from '@/lib/voice-preference';
 
 const POLL_MS = 4000;
@@ -45,8 +45,12 @@ function buildFrames(movesSan: string[]): { final: Chess; frames: Frame[]; start
   return { final: chess, frames, startFen };
 }
 
+// The move's summary, then the review's strong and weak point for it, when it has them.
 function speechFor(entry: LibraryReviewEntry) {
-  return speakableSquares(entry.summary);
+  const parts = [entry.summary];
+  if (entry.strength) parts.push(`Ponto forte: ${entry.strength}`);
+  if (entry.weakness) parts.push(`Ponto fraco: ${entry.weakness}`);
+  return speakableSquares(parts.join(' '));
 }
 
 export function LibraryStudyRoom({ gameId }: { gameId: string }) {
@@ -112,6 +116,16 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
   }, [game]);
 
   const total = built?.frames.length ?? 0;
+
+  // The review's lines are stored once in the database voice cache: the first student to open the
+  // game generates them (in order, ahead of playback) and every later student only listens.
+  useEffect(() => {
+    if (!audio || !review?.entries.length) return;
+    prefetchSpeech(
+      review.entries.map((item) => speechFor(item)),
+      voiceName,
+    );
+  }, [audio, review, voiceName]);
   const frame = ply > 0 ? built?.frames[ply - 1] : undefined;
   const entry = review?.entries.find((candidate) => candidate.ply === ply) ?? null;
   const fen =
@@ -124,7 +138,7 @@ export function LibraryStudyRoom({ gameId }: { gameId: string }) {
   const atEnd = total > 0 && ply === total;
 
   const mover = ply % 2 === 1 ? 'Brancas' : 'Pretas';
-  const fallbackSpeech = `${mover} jogam ${speakableSquares(toBrazilianSan(frame?.san ?? ''))}.`;
+  const fallbackSpeech = `${mover} jogam ${speakableSquares(frame ? spokenSan(frame.san, frame) : '')}.`;
   // A string (not the entry object) so review polling does not restart the narration.
   const moveNarration = entry ? speechFor(entry) : fallbackSpeech;
   const narration = atEnd && verdict ? `${moveNarration} ${verdict.detail}` : moveNarration;

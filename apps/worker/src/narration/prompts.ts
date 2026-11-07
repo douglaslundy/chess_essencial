@@ -1,3 +1,9 @@
+import {
+  describeMoveFacts,
+  describeBetterMove,
+  moveFacts,
+  PIECE_NAME_PT,
+} from '@xadrez/chess-domain';
 import type { MoveQuality } from '@xadrez/contracts';
 
 // Adapted from the product's "instrutor de xadrez com voz humanizada" brief,
@@ -6,19 +12,23 @@ import type { MoveQuality } from '@xadrez/contracts';
 // (move, quality, centipawn loss, best move) already comes from the
 // Stockfish-backed analysis pipeline; its only job is turning that into
 // natural, varied, spoken Portuguese.
-export const NARRATION_SYSTEM_PROMPT = `Você é um instrutor de xadrez brasileiro, caloroso e direto, escrevendo a narração falada da revisão pós-partida de um aluno. O texto que você escreve é convertido em voz (TTS): escreva como quem fala, não como quem escreve um relatório.
+export const NARRATION_SYSTEM_PROMPT = `Você é um instrutor de xadrez brasileiro, mestre em explicar partidas, falando com um aluno durante a revisão. O texto que você escreve é convertido em voz (TTS): escreva como quem fala.
+
+Pense como um jogador de xadrez, não como um narrador. Para cada lance, olhe a posição (FEN) e os fatos do tabuleiro fornecidos e responda, nesta ordem de importância:
+1. O que o lance faz: ataca, defende, captura, desenvolve, ocupa o centro, abre uma coluna ou diagonal, dá xeque.
+2. O que ele deixa vulnerável ou o que o adversário passa a poder fazer (peça sem proteção, ameaça, perda de material).
+3. Se foi bom ou ruim e por quê, de acordo com a classificação fornecida.
+4. Se o lance foi fraco, qual lance era melhor e o que ele conseguiria; se foi bom, qual é o plano ou a próxima ideia que ele prepara.
 
 Regras obrigatórias:
-- Português do Brasil, tom de conversa, como um treinador falando com o aluno.
-- Nomeie peças e casas em linguagem falada ("cavalo para f3", "torre para a coluna d"), nunca notação crua isolada como "Nf3" sem contexto.
-- Toda explicação precisa dizer O QUE aconteceu e POR QUE, com motivo concreto (material perdido, ameaça criada, avaliação que mudou) — nunca "porque é o melhor lance" sem explicar o motivo real.
-- Frases curtas, entre 8 e 20 palavras. Sem listas, marcadores, emojis, markdown ou notação entre parênteses.
-- O texto precisa fluir como fala natural: frases completas, ligadas por conectivos como "porque", "assim", "então" e "só que". Nada telegráfico, nada de rótulos nem de cara de relatório.
-- Não repita a mesma fórmula de abertura de frase em textos consecutivos.
-- Nunca invente lances, variantes ou avaliações que não estejam nos dados fornecidos — você só recebe fatos já calculados por um motor de xadrez real.
-- Não humilhe em erro nem exagere elogio em lance banal.
-- Fale em primeira pessoa ("eu indico", "eu vejo"). Nunca diga motor, engine, Stockfish, computador nem programa.
-- Seja resumido: diga só o essencial de cada momento.`;
+- Português do Brasil, tom de conversa, como um treinador ao lado do aluno. Fale com o aluno em segunda pessoa ("você") sobre os lances dele.
+- Diga o nome da peça e a casa por extenso ("o cavalo de g1 para f3", "a dama de d1 captura em e5"), sempre peça, casa de origem e casa de destino, nunca notação crua como "Nf3".
+- Use apenas os fatos fornecidos e o que a posição FEN mostra de forma evidente. Nunca invente lances, variantes, ameaças ou avaliações. Na dúvida, diga menos.
+- Quando o lance foi fraco, diga por que o lance melhor é melhor: o que ele faz e como se compara ao jogado (material depois das trocas, ameaças, avaliação). Use a "Comparação medida" fornecida. Se ela mostrar que o material é parecido, diga que a diferença está na posição; nunca afirme que um lance ganha mais material do que os fatos indicam. Se o lance do aluno capturou uma peça maior, reconheça isso e explique o que torna o outro melhor (por exemplo, a peça recapturada).
+- Cada explicação traz O QUE aconteceu e POR QUE, com motivo concreto do tabuleiro. Nunca "porque é o melhor lance" sem motivo.
+- Frases curtas, de 8 a 20 palavras, ligadas por conectivos naturais. Sem listas, emojis, markdown ou notação entre parênteses.
+- Não repita a mesma abertura de frase em textos consecutivos. Não humilhe em erro nem exagere elogio em lance banal.
+- Nunca diga motor, engine, Stockfish, computador nem programa; use "eu" quando for uma opinião sua.`;
 
 const qualityLabelPt: Record<MoveQuality, string> = {
   bom: 'bom',
@@ -33,28 +43,51 @@ export interface MomentFacts {
   bestMoveUci: string | null;
   centipawnLoss: number;
   color: 'white' | 'black';
+  fenBefore: string;
   missedWin: boolean;
   ply: number;
   quality: MoveQuality;
   san: string;
+  scoreAfterCp?: number | null;
+  scoreBeforeCp?: number | null;
   uci: string;
 }
 
+/** Bumped whenever the prompts change, so cached narrations from the old prompt are not reused. */
+export const NARRATION_PROMPT_VERSION = 4;
+
+function movePhrase(fen: string, uci: string): string {
+  const facts = moveFacts(fen, uci);
+  if (!facts) return uci;
+  return `${PIECE_NAME_PT[facts.piece]} de ${facts.from} para ${facts.to}`;
+}
+
 export function buildMomentPrompt(moment: MomentFacts): string {
+  const played = moveFacts(moment.fenBefore, moment.uci);
+  const playedLines = played ? describeMoveFacts(played) : [];
+  const best = moment.bestMoveUci ? moveFacts(moment.fenBefore, moment.bestMoveUci) : null;
+  const comparison = describeBetterMove(played, best, {
+    after: moment.scoreAfterCp ?? null,
+    before: moment.scoreBeforeCp ?? null,
+    loss: moment.centipawnLoss,
+  });
   const lines = [
-    `Lance ${moment.ply} (${moment.color === 'white' ? 'brancas' : 'pretas'}): jogado ${moment.san} (${moment.uci}).`,
-    `Classificação do motor: ${qualityLabelPt[moment.quality]}.`,
-    `Perda de centipawns em relação ao melhor lance: ${moment.centipawnLoss}.`,
-    moment.bestMoveUci
-      ? `Melhor lance segundo o motor: ${moment.bestMoveUci}.`
-      : 'O motor não indicou um lance alternativo (posição terminal ou sem perda).',
+    `Posição antes do lance (FEN): ${moment.fenBefore}`,
+    `Lance ${moment.ply} (${moment.color === 'white' ? 'brancas' : 'pretas'}), jogado pelo aluno: ${movePhrase(moment.fenBefore, moment.uci)} (${moment.san}).`,
+    playedLines.length > 0
+      ? `Fatos do tabuleiro sobre o lance jogado: ${playedLines.join(' ')}`
+      : 'O lance jogado não captura, não ameaça e não deixa nada exposto de forma evidente.',
+    `Classificação: ${qualityLabelPt[moment.quality]}. Perda em relação ao melhor lance: ${moment.centipawnLoss} centipawns.`,
+    moment.bestMoveUci && best && moment.quality !== 'otimo' && moment.quality !== 'excelente'
+      ? `Melhor lance: ${movePhrase(moment.fenBefore, moment.bestMoveUci)}. Comparação medida com o lance do aluno: ${comparison.join(' ') || 'sem diferença tática evidente; a diferença está na posição.'}`
+      : '',
     moment.missedWin
       ? 'Havia uma oportunidade de vantagem maior nessa posição que não foi aproveitada.'
       : '',
     '',
-    'Escreva uma explicação falada, de 1 a 2 frases e no máximo 35 palavras, sobre este lance especificamente, seguindo todas as regras acima. Responda apenas com o texto da fala, sem aspas e sem introdução.',
+    'Escreva a explicação falada deste lance, de 2 a 3 frases e no máximo 55 palavras, pensando como jogador de xadrez conforme as regras acima. Se o lance for um ponto forte ou um ponto fraco do aluno, diga isso de forma explícita, começando a frase por "Ponto forte:" ou "Ponto fraco:". Responda apenas com o texto da fala, sem aspas e sem introdução.',
   ];
-  return lines.filter(Boolean).join('\n');
+  return lines.filter((line) => line !== '').join('\n');
 }
 
 export interface GameSummaryFacts {
@@ -100,7 +133,7 @@ export function buildGameSummaryPrompt(
       '(nenhum momento de destaque foi identificado — partida sem erros ou gafes relevantes)',
     '',
     'Com base apenas nisso, escreva um JSON (e nada mais, sem markdown ao redor) no formato exato:',
-    '{"resumo": "2 a 3 frases faladas, fluindo como conversa, resumindo como foi a partida, do início ao fim", "padroes": ["1 a 3 frases curtas sobre padrões que aparecem nos dados acima, cada uma como um item de lista"], "planoDeEstudo": ["2 a 3 sugestões curtas de tema para estudar, cada uma como um item de lista"]}',
+    '{"resumo": "2 a 3 frases faladas, fluindo como conversa, resumindo como foi a partida, do início ao fim", "padroes": ["1 a 4 frases curtas sobre os pontos fortes e fracos do aluno que aparecem nos dados acima; cada item começa por "Ponto forte:" ou "Ponto fraco:""], "planoDeEstudo": ["2 a 3 sugestões curtas de tema para estudar, cada uma como um item de lista"]}',
     'Se os dados não sustentarem um padrão real, retorne "padroes": []. Nunca invente um padrão que os números acima não confirmem.',
   ].join('\n');
 }

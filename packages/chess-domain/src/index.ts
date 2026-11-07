@@ -7,7 +7,18 @@ export {
   hasCheckingMove,
   isPlayableStart,
 } from './mate-solver.js';
+export { estimatePerformanceRating } from './performance-rating.js';
 export { classifyMove } from './move-quality.js';
+export {
+  describeBetterMove,
+  describeMoveFacts,
+  describeMoveGoal,
+  moveFacts,
+  PIECE_NAME_PT,
+  sanOfUci,
+  withArticle,
+} from './move-facts.js';
+export type { MoveFacts, PieceOnSquare } from './move-facts.js';
 export { IllegalMoveError, InvalidFenError, InvalidUciError } from './errors.js';
 export type {
   AppliedMove,

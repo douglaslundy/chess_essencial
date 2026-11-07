@@ -1,6 +1,7 @@
+import { describeMoveFacts, describeMoveGoal, moveFacts } from '@xadrez/chess-domain';
 import { Chess } from 'chess.js';
 
-import { formatUciSquares, toBrazilianSan } from '@/lib/notation';
+import { formatUciSquares, spokenSan, toBrazilianSan } from '@/lib/notation';
 
 export interface CoachPlanSuggestion {
   bestMoveUci: string | null;
@@ -19,7 +20,7 @@ function playUci(chess: Chess, uci: string) {
   });
 }
 
-function possibleLine(fen: string, suggestion: CoachPlanSuggestion): string[] {
+function possibleLine(fen: string, suggestion: CoachPlanSuggestion, mode: Mode): string[] {
   if (!suggestion.bestMoveUci) return [];
   const line =
     suggestion.principalVariation[0] === suggestion.bestMoveUci
@@ -31,7 +32,7 @@ function possibleLine(fen: string, suggestion: CoachPlanSuggestion): string[] {
     try {
       const move = playUci(chess, uci);
       if (!move) break;
-      moves.push(toBrazilianSan(move.san));
+      moves.push(nameOf(move, mode));
     } catch {
       break;
     }
@@ -39,9 +40,15 @@ function possibleLine(fen: string, suggestion: CoachPlanSuggestion): string[] {
   return moves;
 }
 
+type Mode = 'speech' | 'text';
+
+const nameOf = (move: { from: string; san: string; to: string }, mode: Mode) =>
+  mode === 'speech' ? spokenSan(move.san, move) : toBrazilianSan(move.san);
+
 export function formatCoachExplanation(
   fen: string,
   suggestion: CoachPlanSuggestion,
+  mode: Mode = 'text',
 ): string | null {
   if (!suggestion.bestMoveUci) return null;
   const chess = new Chess(fen);
@@ -54,20 +61,53 @@ export function formatCoachExplanation(
   if (!move) return null;
 
   // Short on purpose: it is read aloud during the game. The Treinador speaks for itself ("eu").
-  const san = toBrazilianSan(move.san);
-  const isCentralPawnMove = move.piece === 'p' && ['d4', 'd5', 'e4', 'e5'].includes(move.to);
-  const isDevelopment = ['b', 'n'].includes(move.piece) && ['1', '8'].includes(move.from.charAt(1));
+  const san = nameOf(move, mode);
+  const facts = moveFacts(fen, suggestion.bestMoveUci);
+  const goal =
+    suggestion.mate !== null
+      ? `conduzir o ataque até o mate em ${Math.abs(suggestion.mate)}`
+      : facts
+        ? describeMoveGoal(facts)
+        : null;
+  // Beyond the main goal, one more concrete thing the move does (what it attacks).
+  const extra =
+    facts && suggestion.mate === null
+      ? describeMoveFacts(facts).find((line) => /^(Ataca|Ameaça)/.test(line))
+      : undefined;
 
-  let idea = 'melhoro a coordenação sem assumir riscos';
-  if (suggestion.mate !== null)
-    idea = `conduzo o ataque até o mate em ${Math.abs(suggestion.mate)}`;
-  else if (move.san.includes('x')) idea = 'ganho material com uma captura calculada';
-  else if (move.san.includes('+')) idea = 'ganho tempo pressionando o rei';
-  else if (move.san.startsWith('O-O')) idea = 'protejo o rei e conecto as torres';
-  else if (isCentralPawnMove) idea = 'disputo o centro e libero o desenvolvimento';
-  else if (isDevelopment) idea = 'coloco mais uma peça em jogo';
-
-  const line = possibleLine(fen, suggestion);
+  const line = possibleLine(fen, suggestion, mode);
   const forecast = line.length > 1 ? ` A linha que eu imagino é ${line.join(', ')}.` : '';
-  return `Eu indico ${san}, porque assim eu ${idea}.${forecast}`;
+  return `Eu indico ${san}${goal ? `, para ${goal}` : ''}.${extra && !goal?.startsWith('ameaçar') ? ` ${extra}` : ''}${forecast}`;
+}
+
+/**
+ * The Treinador's warning before a weak move is sent: what the move gives away, in board
+ * terms, and what to play instead. Facts come from `moveFacts`, so nothing here is invented.
+ */
+export function formatCoachWarning(
+  fen: string,
+  uci: string,
+  verdict: { centipawnLoss: number; label: string; missedWin: boolean },
+  bestMoveUci: string | null,
+  mode: Mode = 'text',
+): string {
+  const facts = moveFacts(fen, uci);
+  const lines = facts ? describeMoveFacts(facts) : [];
+  const giveaway = lines.filter((line) => line.startsWith('Deixa'));
+  const parts = [`Atenção: eu acho que esse lance é ${verdict.label}.`];
+  if (giveaway.length > 0) parts.push(...giveaway);
+  else if (verdict.centipawnLoss >= 150) parts.push('Ele entrega boa parte da sua vantagem.');
+  if (verdict.missedWin) parts.push('Havia uma posição melhor.');
+  if (bestMoveUci) {
+    try {
+      const best = playUci(new Chess(fen), bestMoveUci);
+      const goal = describeMoveGoal(moveFacts(fen, bestMoveUci)!);
+      if (best) {
+        parts.push(`Eu jogaria ${nameOf(best, mode)}${goal ? `, para ${goal}` : ''}.`);
+      }
+    } catch {
+      // The suggestion no longer matches this position: the warning stands without it.
+    }
+  }
+  return parts.join(' ');
 }
