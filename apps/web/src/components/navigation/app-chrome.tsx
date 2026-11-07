@@ -18,6 +18,7 @@ const navigation = [
   { href: '/app/curso', label: 'Curso' },
   { href: '/app/treinamento', label: 'Treinamento' },
   { href: '/app/partidas', label: 'Partidas' },
+  { href: '/app/metricas', label: 'Métricas' },
   { href: '/app/biblioteca', label: 'Biblioteca de partidas' },
   { href: '/app/desafios', label: 'Desafios' },
   { href: '/app/sala', label: 'Sala de aula' },

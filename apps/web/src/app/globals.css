@@ -4989,3 +4989,48 @@ textarea::placeholder {
 .studyThemes li {
   margin-bottom: 0.45rem;
 }
+
+/* Página de métricas (dashboard do jogador). */
+.metricsBlock {
+  margin: 1rem 0;
+  padding: 1rem 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+.metricsCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.8rem;
+  margin: 1rem 0;
+}
+.metricsCards article {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+.metricsCards strong {
+  font-size: 1.6rem;
+}
+.metricsColumns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 0.8rem;
+}
+.metricsStrong {
+  border-color: #22c55e;
+}
+.metricsWeak {
+  border-color: #ef4444;
+}
+.ratingChart {
+  margin: 0.5rem 0 0;
+  color: inherit;
+}
+.ratingChart svg {
+  width: 100%;
+  height: auto;
+}

@@ -192,6 +192,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/me/metrics': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Métricas de desempenho do jogador (partidas, tempo, qualidade dos lances, pontos fortes e fracos) */
+    get: operations['getMyMetrics'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/me/subscription': {
     parameters: {
       query?: never;
@@ -2226,6 +2243,26 @@ export interface components {
       path: string;
       seq: number;
     };
+    PlayerMetrics: {
+      gamesPlayed: number;
+      wins: number;
+      draws: number;
+      losses: number;
+      timePlayedSeconds: number;
+      analyzedGames: number;
+      quality: {
+        bom: number;
+        erro: number;
+        excelente: number;
+        gafe: number;
+        imprecisao: number;
+        missedWin: number;
+        otimo: number;
+      };
+      strengths: string[];
+      weaknesses: string[];
+      summary: string;
+    };
     GameStudyPlan: {
       themes: {
         key: string;
@@ -3918,6 +3955,27 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['SubscriptionPlanList'];
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  getMyMetrics: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Métricas do jogador */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlayerMetrics'];
         };
       };
       401: components['responses']['Problem'];

@@ -418,6 +418,7 @@ export {
   type ClassroomMember,
   type ClassroomSummary,
 } from './classroom.js';
+export { playerMetricsSchema, type PlayerMetrics } from './player-metrics.js';
 export {
   gameStudyPlanSchema,
   studyExerciseSchema,

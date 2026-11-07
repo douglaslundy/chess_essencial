@@ -1,5 +1,7 @@
 import type {
   GameStudyPlan,
+  PlayerMetrics,
+  RatingHistoryEntry,
   ClassroomDetail,
   ClassroomLive,
   ClassroomSummary,
@@ -409,6 +411,9 @@ export const api = {
   getLeaderboard: (pool: RatingPool, token: string) =>
     request<LeaderboardEntry[]>(`/ratings/${pool}/leaderboard?limit=100`, token),
   getRatings: (token: string) => request<RatingProfile[]>('/ratings/me', token),
+  getMyMetrics: (token: string) => request<PlayerMetrics>('/me/metrics', token),
+  getMyRatingHistory: (token: string) =>
+    request<RatingHistoryEntry[]>('/ratings/me/history', token),
   listCourses: () => request<CourseSummary[]>('/courses'),
   getCourse: (slug: string) => request<CourseDetail>(`/courses/${encodeURIComponent(slug)}`),
   getCourseProgress: (slug: string, token: string) =>

@@ -224,6 +224,17 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/SubscriptionPlanList'}
         '401': {$ref: '#/components/responses/Problem'}
+  /me/metrics:
+    get:
+      summary: Métricas de desempenho do jogador (partidas, tempo, qualidade dos lances, pontos fortes e fracos)
+      operationId: getMyMetrics
+      responses:
+        '200':
+          description: Métricas do jogador
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PlayerMetrics'}
+        '401': {$ref: '#/components/responses/Problem'}
   /me/subscription:
     get:
       summary: Get the current user's active subscription, if any
@@ -2288,6 +2299,34 @@ components:
       properties:
         path: {type: string, maxLength: 300}
         seq: {type: integer}
+    PlayerMetrics:
+      type: object
+      required: [gamesPlayed, wins, draws, losses, timePlayedSeconds, analyzedGames, quality, strengths, weaknesses, summary]
+      properties:
+        gamesPlayed: {type: integer, minimum: 0}
+        wins: {type: integer, minimum: 0}
+        draws: {type: integer, minimum: 0}
+        losses: {type: integer, minimum: 0}
+        timePlayedSeconds: {type: integer, minimum: 0}
+        analyzedGames: {type: integer, minimum: 0}
+        quality:
+          type: object
+          required: [bom, erro, excelente, gafe, imprecisao, missedWin, otimo]
+          properties:
+            bom: {type: integer, minimum: 0}
+            erro: {type: integer, minimum: 0}
+            excelente: {type: integer, minimum: 0}
+            gafe: {type: integer, minimum: 0}
+            imprecisao: {type: integer, minimum: 0}
+            missedWin: {type: integer, minimum: 0}
+            otimo: {type: integer, minimum: 0}
+        strengths:
+          type: array
+          items: {type: string}
+        weaknesses:
+          type: array
+          items: {type: string}
+        summary: {type: string}
     GameStudyPlan:
       type: object
       required: [themes, exercises, libraryGames]
