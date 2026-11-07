@@ -300,9 +300,7 @@ function ChessBoard2D({
   const walking =
     walk && walk.id !== walkedId && !draggedWalk && !prefersReducedMotion() ? walk : null;
 
-  useEffect(() => {
-    if (draggedWalk && walk) setWalkedId(walk.id);
-  }, [draggedWalk, walk]);
+  if (draggedWalk && walk.id !== walkedId) setWalkedId(walk.id);
 
   // A rejected move leaves the fen unchanged: the preview gives way and the piece goes back.
   useEffect(() => {
