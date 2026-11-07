@@ -56,6 +56,12 @@ export interface MomentFacts {
 /** Bumped whenever the prompts change, so cached narrations from the old prompt are not reused. */
 export const NARRATION_PROMPT_VERSION = 4;
 
+/**
+ * Narrations completed before this instant were written with an older prompt and are redone by
+ * the worker. Set it to the deploy time whenever NARRATION_PROMPT_VERSION changes.
+ */
+export const NARRATION_PROMPT_EPOCH = '2026-11-07T17:56:00Z';
+
 function movePhrase(fen: string, uci: string): string {
   const facts = moveFacts(fen, uci);
   if (!facts) return uci;

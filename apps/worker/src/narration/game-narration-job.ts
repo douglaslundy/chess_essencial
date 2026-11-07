@@ -10,6 +10,7 @@ import { callLlm, type LlmConfig } from './llm-client.js';
 import {
   buildGameSummaryPrompt,
   buildMomentPrompt,
+  NARRATION_PROMPT_EPOCH,
   NARRATION_PROMPT_VERSION,
   NARRATION_SYSTEM_PROMPT,
   type MomentFacts,
@@ -143,7 +144,7 @@ async function requeueStaleNarrations(sql: Sql): Promise<void> {
       SELECT stale.game_id
       FROM game_narrations stale
       WHERE stale.status = 'completed'
-        AND stale.prompt_version < ${NARRATION_PROMPT_VERSION}
+        AND stale.completed_at < ${NARRATION_PROMPT_EPOCH}::timestamptz
         AND stale.created_at > now() - interval '30 days'
       ORDER BY stale.created_at DESC
       LIMIT 1
@@ -507,8 +508,7 @@ async function narrateGame(sql: Sql, gameId: string, config: LlmConfig): Promise
     SET summary = ${summary},
         key_moments = ${JSON.stringify(keyMomentsJson)}::text::jsonb,
         patterns = ${JSON.stringify(patterns)}::text::jsonb,
-        study_plan = ${JSON.stringify(studyPlan)}::text::jsonb,
-        prompt_version = ${NARRATION_PROMPT_VERSION}
+        study_plan = ${JSON.stringify(studyPlan)}::text::jsonb
     WHERE game_id = ${gameId}
   `;
 }

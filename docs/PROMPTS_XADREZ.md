@@ -21,7 +21,7 @@ A IA recebia só o lance (`Nf3`), a classificação e o melhor lance do motor. S
 
 ## Versão e cache
 
-- A narração das partidas guarda `prompt_version` (`NARRATION_PROMPT_VERSION`). Ao mudar o prompt, suba o número: o worker refaz as narrações recentes, uma por vez, e a chave de cache de lances inclui a versão.
+- Ao mudar o prompt de revisão, suba `NARRATION_PROMPT_VERSION` e ponha `NARRATION_PROMPT_EPOCH` (`apps/worker/src/narration/prompts.ts`) na hora do deploy: o worker refaz as narrações concluídas antes dessa data, uma por vez, nas partidas recentes. A chave do cache de lances inclui a versão. Isso não usa migration.
 - O áudio (`voice_audio_cache`) é global por texto e voz. A primeira pessoa a abrir a revisão gera as falas; as seguintes só ouvem.
 
 ## Como testar uma mudança de prompt
