@@ -17,6 +17,8 @@ Plano completo: `docs/CURSO_DO_ZERO.md`. É independente do sistema antigo de cu
 
 ## Pedido de 2026-11-07: revisão, tabuleiro 3D, bot, biblioteca e sala de aula (registro fiel do que o usuário pediu)
 
+> **Ordem combinada (2026-11-07):** 1) a próxima tarefa que o usuário passar (novo tabuleiro) vai na `main` e sobe para deploy; 2) depois, PROF-03 (áudio) e APP-00..06 e o que depender de HTTPS são desenvolvidos na branch `feature/https`, sem subir para a `main`; 3) quando o HTTPS existir, o usuário manda mesclar na `main`.
+
 Revisão e Treinador (IA que pensa como jogador de xadrez):
 
 - [~] **REV-01:** o Treinador dizia "Você jogou C cê 3" e só narrava o lance, sem dizer se foi bom ou ruim, o que ataca, o que deixa vulnerável. Corrigir em todas as telas com anotação ou Treinador (revisão, Treinador ao vivo, biblioteca, curso). Prompt claro e objetivo, a IA sempre pensando como jogador. Feito: fatos do tabuleiro em `packages/chess-domain/src/move-facts.ts`, usados pela revisão, pelo Treinador ao vivo e pelos prompts do worker e da API.
