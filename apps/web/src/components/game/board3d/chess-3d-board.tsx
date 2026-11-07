@@ -378,7 +378,8 @@ function BoardSquares({
     for (let rank = 1; rank <= 8; rank += 1) {
       const square = `${FILES[file]}${rank}` as Square;
       const [x, z] = squareToXZ(square);
-      const light = (file + rank) % 2 === 1;
+      // file is 0-based and rank 1-based: a1 (0 + 1) is a dark square.
+      const light = (file + rank) % 2 === 0;
       const highlighted =
         square === selected || square === lastMove?.from || square === lastMove?.to;
       const destination = destinations.get(square);
