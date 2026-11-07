@@ -113,9 +113,7 @@ export function explainMove(
     if (best && bestUci) {
       sentences.push(`No seu lugar, eu jogaria ${name(best, bestUci)}.`);
       // Why it is better: what it does, the material once exchanges play out.
-      sentences.push(
-        ...describeBetterMove(facts, moveFacts(played.fenBefore, bestUci)),
-      );
+      sentences.push(...describeBetterMove(facts, moveFacts(played.fenBefore, bestUci)));
     }
   }
   // Names the move as one of the game's strong or weak points, the same labels as the review summary.

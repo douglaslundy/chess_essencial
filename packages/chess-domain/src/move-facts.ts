@@ -209,7 +209,6 @@ export function describeMoveFacts(facts: MoveFacts): string[] {
 
 const signed = (points: number) => (points > 0 ? `+${points}` : `${points}`);
 
-
 const lowerFirst = (text: string) => `${text.charAt(0).toLowerCase()}${text.slice(1)}`;
 
 function joinClauses(items: string[]): string {
@@ -224,10 +223,7 @@ function joinClauses(items: string[]): string {
  * the material compares once exchanges play out, and how the evaluation moves. Only measured
  * facts; when material alone does not explain it, it says the difference is in the position.
  */
-export function describeBetterMove(
-  played: MoveFacts | null,
-  best: MoveFacts | null,
-): string[] {
+export function describeBetterMove(played: MoveFacts | null, best: MoveFacts | null): string[] {
   const sentences: string[] = [];
   const gains = best
     ? describeMoveFacts(best)
