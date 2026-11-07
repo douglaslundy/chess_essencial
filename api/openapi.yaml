@@ -2011,6 +2011,26 @@ paths:
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
+  /library/share/{gameId}:
+    parameters:
+      - {name: gameId, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      summary: Inserir na biblioteca uma partida excelente do próprio jogador (idempotente)
+      operationId: shareGameToLibrary
+      responses:
+        '200':
+          description: Partida disponível na biblioteca para estudo
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [libraryGameId]
+                properties:
+                  libraryGameId: {type: string, format: uuid}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
   /course-trail/progress:
     get:
       summary: Listar as atividades do curso do zero concluídas pelo aluno

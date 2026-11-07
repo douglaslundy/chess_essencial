@@ -2017,6 +2017,25 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/library/share/{gameId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        gameId: string;
+      };
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Inserir na biblioteca uma partida excelente do próprio jogador (idempotente) */
+    post: operations['shareGameToLibrary'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/course-trail/progress': {
     parameters: {
       query?: never;
@@ -6742,6 +6761,35 @@ export interface operations {
       };
       400: components['responses']['Problem'];
       401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  shareGameToLibrary: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        gameId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Partida disponível na biblioteca para estudo */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            /** Format: uuid */
+            libraryGameId: string;
+          };
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
       404: components['responses']['Problem'];
     };
   };
