@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 
 import { AuthStatus } from '@/components/auth/auth-status';
+import { ClassroomSync } from '@/components/classroom/classroom-sync';
 import { BoardSettingsMenu } from '@/components/navigation/board-settings-menu';
 import { api } from '@/lib/api/client';
 import { stopSpeaking } from '@/lib/speech';
@@ -19,6 +20,7 @@ const navigation = [
   { href: '/app/partidas', label: 'Partidas' },
   { href: '/app/biblioteca', label: 'Biblioteca de partidas' },
   { href: '/app/desafios', label: 'Desafios' },
+  { href: '/app/sala', label: 'Sala de aula' },
   { href: '/app/ranking', label: 'Ranking', requiresFeature: 'social_access' },
   { href: '/app/amigos', label: 'Amigos', requiresFeature: 'social_access' },
   { href: '/app/mensagens', label: 'Mensagens', requiresFeature: 'social_access' },
@@ -166,6 +168,7 @@ export function AppChrome({ children }: { children: ReactNode }) {
           <BoardSettingsMenu />
           <AuthStatus />
         </header>
+        <ClassroomSync />
         {children}
       </div>
     </div>

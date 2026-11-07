@@ -2070,6 +2070,94 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/classrooms': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Listar as salas de aula em que o usuário é professor ou aluno */
+    get: operations['listClassrooms'];
+    put?: never;
+    /** Criar uma sala de aula (quem cria é o professor) */
+    post: operations['createClassroom'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/classrooms/{classroomId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Detalhar uma sala (professor, nome e alunos) */
+    get: operations['getClassroom'];
+    put?: never;
+    post?: never;
+    /** Apagar a sala (somente o professor) */
+    delete: operations['deleteClassroom'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/classrooms/{classroomId}/members': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Adicionar um aluno por usuário, e-mail ou id (somente o professor) */
+    post: operations['addClassroomMember'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/classrooms/{classroomId}/members/{userId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Remover um aluno da sala (somente o professor) */
+    delete: operations['removeClassroomMember'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/classrooms/{classroomId}/live': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Página em que o professor está agora (os alunos consultam e acompanham) */
+    get: operations['getClassroomLive'];
+    /** Publicar a página atual do professor (somente o professor) */
+    put: operations['publishClassroomLive'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2098,6 +2186,28 @@ export interface components {
     LibrarySearchResult: {
       items: components['schemas']['LibraryGameSummary'][];
       total: number;
+    };
+    ClassroomSummary: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      /** @enum {string} */
+      role: 'teacher' | 'student';
+      teacherName: string;
+      studentCount: number;
+    };
+    ClassroomMember: {
+      /** Format: uuid */
+      userId: string;
+      username: string;
+      displayName: string;
+    };
+    ClassroomDetail: components['schemas']['ClassroomSummary'] & {
+      members: components['schemas']['ClassroomMember'][];
+    };
+    ClassroomLive: {
+      path: string;
+      seq: number;
     };
     CourseTrailProgress: {
       completedActivityIds: string[];
@@ -6836,6 +6946,211 @@ export interface operations {
       };
       400: components['responses']['Problem'];
       401: components['responses']['Problem'];
+    };
+  };
+  listClassrooms: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Salas do usuário */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ClassroomSummary'][];
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  createClassroom: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          name: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Sala criada */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ClassroomSummary'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+    };
+  };
+  getClassroom: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        classroomId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Sala */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ClassroomDetail'];
+        };
+      };
+      401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  deleteClassroom: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        classroomId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Sala apagada */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  addClassroomMember: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        classroomId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          identifier: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Aluno adicionado */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+      422: components['responses']['Problem'];
+    };
+  };
+  removeClassroomMember: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        classroomId: string;
+        userId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Aluno removido */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  getClassroomLive: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        classroomId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Página atual do professor */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ClassroomLive'];
+        };
+      };
+      401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  publishClassroomLive: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        classroomId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          path: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Página publicada */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
     };
   };
 }

@@ -1,4 +1,7 @@
 import type {
+  ClassroomDetail,
+  ClassroomLive,
+  ClassroomSummary,
   ChatgptOAuthStartInput,
   ChatgptOAuthStartResult,
   CourseTrailProgress,
@@ -638,6 +641,30 @@ export const api = {
   getLibraryFacets: (token: string) => request<LibraryFacets>('/library/facets', token),
   getLibraryGame: (gameId: string, token: string) =>
     request<LibraryGame>(`/library/games/${gameId}`, token),
+  listClassrooms: (token: string) => request<ClassroomSummary[]>('/classrooms', token),
+  createClassroom: (name: string, token: string) =>
+    request<ClassroomSummary>('/classrooms', token, {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    }),
+  getClassroom: (classroomId: string, token: string) =>
+    request<ClassroomDetail>(`/classrooms/${classroomId}`, token),
+  deleteClassroom: (classroomId: string, token: string) =>
+    request<void>(`/classrooms/${classroomId}`, token, { method: 'DELETE' }),
+  addClassroomMember: (classroomId: string, identifier: string, token: string) =>
+    request<void>(`/classrooms/${classroomId}/members`, token, {
+      method: 'POST',
+      body: JSON.stringify({ identifier }),
+    }),
+  removeClassroomMember: (classroomId: string, userId: string, token: string) =>
+    request<void>(`/classrooms/${classroomId}/members/${userId}`, token, { method: 'DELETE' }),
+  getClassroomLive: (classroomId: string, token: string) =>
+    request<ClassroomLive>(`/classrooms/${classroomId}/live`, token),
+  publishClassroomLive: (classroomId: string, path: string, token: string) =>
+    request<void>(`/classrooms/${classroomId}/live`, token, {
+      method: 'PUT',
+      body: JSON.stringify({ path }),
+    }),
   getCourseTrailProgress: (token: string) =>
     request<CourseTrailProgress>('/course-trail/progress', token),
   completeCourseTrailActivity: (activityId: string, token: string) =>

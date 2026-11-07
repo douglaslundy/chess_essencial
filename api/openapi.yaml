@@ -2056,6 +2056,131 @@ paths:
               schema: {$ref: '#/components/schemas/CourseTrailProgress'}
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
+  /classrooms:
+    get:
+      summary: Listar as salas de aula em que o usuário é professor ou aluno
+      operationId: listClassrooms
+      responses:
+        '200':
+          description: Salas do usuário
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ClassroomSummary'}
+        '401': {$ref: '#/components/responses/Problem'}
+    post:
+      summary: Criar uma sala de aula (quem cria é o professor)
+      operationId: createClassroom
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: {type: string, minLength: 1, maxLength: 80}
+      responses:
+        '201':
+          description: Sala criada
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ClassroomSummary'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /classrooms/{classroomId}:
+    get:
+      summary: Detalhar uma sala (professor, nome e alunos)
+      operationId: getClassroom
+      parameters:
+        - {name: classroomId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Sala
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ClassroomDetail'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+    delete:
+      summary: Apagar a sala (somente o professor)
+      operationId: deleteClassroom
+      parameters:
+        - {name: classroomId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '204': {description: Sala apagada}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /classrooms/{classroomId}/members:
+    post:
+      summary: Adicionar um aluno por usuário, e-mail ou id (somente o professor)
+      operationId: addClassroomMember
+      parameters:
+        - {name: classroomId, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [identifier]
+              properties:
+                identifier: {type: string, minLength: 1, maxLength: 254}
+      responses:
+        '204': {description: Aluno adicionado}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
+  /classrooms/{classroomId}/members/{userId}:
+    delete:
+      summary: Remover um aluno da sala (somente o professor)
+      operationId: removeClassroomMember
+      parameters:
+        - {name: classroomId, in: path, required: true, schema: {type: string, format: uuid}}
+        - {name: userId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '204': {description: Aluno removido}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /classrooms/{classroomId}/live:
+    get:
+      summary: Página em que o professor está agora (os alunos consultam e acompanham)
+      operationId: getClassroomLive
+      parameters:
+        - {name: classroomId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Página atual do professor
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ClassroomLive'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+    put:
+      summary: Publicar a página atual do professor (somente o professor)
+      operationId: publishClassroomLive
+      parameters:
+        - {name: classroomId, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path]
+              properties:
+                path: {type: string, maxLength: 300, pattern: '^/app(/[A-Za-z0-9._~%-]+)*(\?[A-Za-z0-9._~%=&-]*)?$'}
+      responses:
+        '204': {description: Página publicada}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
 components:
   parameters:
     GameId:
@@ -2118,6 +2243,37 @@ components:
       properties:
         items: {type: array, items: {$ref: '#/components/schemas/LibraryGameSummary'}}
         total: {type: integer}
+    ClassroomSummary:
+      type: object
+      required: [id, name, role, teacherName, studentCount]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        role: {type: string, enum: [teacher, student]}
+        teacherName: {type: string}
+        studentCount: {type: integer, minimum: 0}
+    ClassroomMember:
+      type: object
+      required: [userId, username, displayName]
+      properties:
+        userId: {type: string, format: uuid}
+        username: {type: string}
+        displayName: {type: string}
+    ClassroomDetail:
+      allOf:
+        - $ref: '#/components/schemas/ClassroomSummary'
+        - type: object
+          required: [members]
+          properties:
+            members:
+              type: array
+              items: {$ref: '#/components/schemas/ClassroomMember'}
+    ClassroomLive:
+      type: object
+      required: [path, seq]
+      properties:
+        path: {type: string, maxLength: 300}
+        seq: {type: integer}
     CourseTrailProgress:
       type: object
       required: [completedActivityIds]

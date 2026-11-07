@@ -404,3 +404,17 @@ export {
   type LibrarySearchQuery,
   type LibrarySearchResult,
 } from './library.js';
+export {
+  addClassroomMemberInputSchema,
+  classroomDetailSchema,
+  classroomLiveInputSchema,
+  classroomLivePathSchema,
+  classroomLiveSchema,
+  classroomMemberSchema,
+  classroomSummarySchema,
+  createClassroomInputSchema,
+  type ClassroomDetail,
+  type ClassroomLive,
+  type ClassroomMember,
+  type ClassroomSummary,
+} from './classroom.js';

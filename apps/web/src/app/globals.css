@@ -4871,3 +4871,40 @@ textarea::placeholder {
   outline: 2px solid #81b64c;
   outline-offset: -2px;
 }
+
+/* Faixa da aula ao vivo (professor e aluno) e botão de entrada do aluno. */
+.classroomBanner {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: #14532d;
+  color: #fff;
+}
+.classroomBanner a,
+.classroomBanner button {
+  color: inherit;
+}
+.classroomAreas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.classroomEnter {
+  display: block;
+  margin: 0.75rem 0;
+  padding: 1.1rem 1.5rem;
+  border: 0;
+  border-radius: 12px;
+  background: #15803d;
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
