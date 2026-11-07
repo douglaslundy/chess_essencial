@@ -18,6 +18,7 @@ import {
 } from './prompts.js';
 
 const MAX_NEWLY_QUEUED_PER_TICK = 1;
+const MAX_PROMPT_EXERCISE_THEMES = 40;
 const NARRATION_FEATURE_KEY = 'ai_narrations_per_day';
 // Paid generation deliberately fails closed when no effective plan exists,
 // even though interactive entitlement checks fail open on plan misconfiguration.
@@ -480,6 +481,17 @@ async function narrateGame(sql: Sql, gameId: string, config: LlmConfig): Promise
     white: tallyQuality(rows, 'white'),
   };
 
+  // Registered exercise themes (most used first, capped to keep the prompt small): the study plan
+  // may only point to practice for a theme the platform really has.
+  const themeRows = await sql<Array<{ tag: string }>>`
+    SELECT t.tag
+      FROM exercises e, unnest(e.tags) AS t(tag)
+     WHERE e.status = 'published' AND e.fen IS NOT NULL
+     GROUP BY t.tag
+     ORDER BY count(*) DESC, t.tag
+     LIMIT ${MAX_PROMPT_EXERCISE_THEMES}
+  `;
+
   const summaryResponse = await callLlm(
     config,
     NARRATION_SYSTEM_PROMPT,
@@ -490,6 +502,7 @@ async function narrateGame(sql: Sql, gameId: string, config: LlmConfig): Promise
       rows.length,
       qualityCounts,
       narratedMoments,
+      themeRows.map((row) => row.tag),
     ),
   );
   const { patterns, studyPlan, summary } = parseGameSummaryResponse(summaryResponse);

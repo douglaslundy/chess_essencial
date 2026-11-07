@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildMomentPrompt, NARRATION_SYSTEM_PROMPT } from './prompts.js';
+import { buildGameSummaryPrompt, buildMomentPrompt, NARRATION_SYSTEM_PROMPT } from './prompts.js';
 
 describe('buildMomentPrompt', () => {
   it('gives the model the position and what the move really does, plus the better move', () => {
@@ -39,5 +39,34 @@ describe('buildMomentPrompt', () => {
   it('tells the model to think like a chess player and never name the engine', () => {
     expect(NARRATION_SYSTEM_PROMPT).toContain('Pense como um jogador de xadrez');
     expect(NARRATION_SYSTEM_PROMPT).toContain('Nunca diga motor');
+  });
+});
+
+describe('game summary prompt', () => {
+  const counts = { bom: 0, erro: 0, excelente: 0, gafe: 0, imprecisao: 0, missedWin: 0, otimo: 0 };
+
+  it('lists the registered exercise themes so the plan only points to existing practice', () => {
+    const prompt = buildGameSummaryPrompt(
+      '1-0',
+      'checkmate',
+      '10+0',
+      40,
+      { black: counts, white: counts },
+      [],
+      ['fork', 'pin'],
+    );
+    expect(prompt).toContain('Temas de exercício cadastrados na plataforma: fork, pin.');
+  });
+
+  it('forbids citing exercises when none are registered', () => {
+    const prompt = buildGameSummaryPrompt(
+      '1-0',
+      'checkmate',
+      '10+0',
+      40,
+      { black: counts, white: counts },
+      [],
+    );
+    expect(prompt).toContain('não cite exercícios práticos');
   });
 });

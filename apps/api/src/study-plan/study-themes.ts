@@ -1,5 +1,8 @@
 import type { StudyTheme } from '@xadrez/contracts';
 
+/** A theme before the database says whether exercises exist for it. */
+export type ThemeDraft = Omit<StudyTheme, 'hasExercises'>;
+
 export interface MoveStat {
   color: 'black' | 'white';
   missedWin: boolean;
@@ -13,28 +16,70 @@ export const THEME_CATALOG = {
     focus: 'Veja como a vantagem é convertida com técnica nos finais.',
     label: 'Finais de partida',
     library: { maxPly: 400, minPly: 80 },
-    tags: ['final', 'finais', 'promocao', 'oposicao'],
+    tags: [
+      'final',
+      'finais',
+      'endgame',
+      'pawnEndgame',
+      'rookEndgame',
+      'promocao',
+      'promotion',
+      'oposicao',
+    ],
   },
   opening: {
     focus: 'Observe o desenvolvimento rápido e a luta pelo centro nos primeiros lances.',
     label: 'Princípios da abertura',
     library: { maxPly: 60, minPly: 30 },
-    tags: ['abertura', 'desenvolvimento', 'centro'],
+    tags: ['abertura', 'opening', 'desenvolvimento', 'centro'],
   },
   safety: {
     focus: 'Repare como cada lance é checado contra a resposta do adversário.',
     label: 'Segurança do lance (evitar gafes)',
     library: { maxPly: 60, minPly: 24 },
-    tags: ['defesa', 'peca_pendurada', 'salvar_o_rei', 'interposicao'],
+    tags: [
+      'defesa',
+      'defensiveMove',
+      'peca_pendurada',
+      'hangingPiece',
+      'salvar_o_rei',
+      'interposicao',
+      'capturingDefender',
+    ],
   },
   tactics: {
     focus: 'Procure o golpe tático que decide a partida e veja como ele foi preparado.',
     label: 'Percepção tática',
     library: { maxPly: 50, minPly: 24 },
-    tags: ['garfo', 'cravada', 'espeto', 'ataque_duplo', 'mate', 'sacrificio'],
+    tags: [
+      'garfo',
+      'fork',
+      'cravada',
+      'pin',
+      'espeto',
+      'skewer',
+      'ataque_duplo',
+      'discoveredAttack',
+      'mate',
+      'mateIn1',
+      'mateIn2',
+      'sacrificio',
+      'sacrifice',
+    ],
   },
 } as const;
 export type ThemeKey = keyof typeof THEME_CATALOG;
+
+const normalize = (tag: string) => tag.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+/**
+ * The registered exercise tags (from the database) that train a theme: a tag matches when it
+ * equals a candidate once case and separators are ignored. Empty means no exercise exists for it.
+ */
+export function matchTags(candidates: readonly string[], available: readonly string[]): string[] {
+  const wanted = new Set(candidates.map(normalize));
+  return available.filter((tag) => wanted.has(normalize(tag)));
+}
 
 const phaseOf = (ply: number): 'endgame' | 'middlegame' | 'opening' =>
   ply <= 20 ? 'opening' : ply <= 60 ? 'middlegame' : 'endgame';
@@ -43,12 +88,12 @@ const phaseOf = (ply: number): 'endgame' | 'middlegame' | 'opening' =>
  * Picks up to three study themes from the player's own moves: unsafe moves (erro/gafe), missed
  * wins (tactics) and the phase where most of the mistakes happened. Only counts the player's side.
  */
-export function pickThemes(moves: readonly MoveStat[], color: 'black' | 'white'): StudyTheme[] {
+export function pickThemes(moves: readonly MoveStat[], color: 'black' | 'white'): ThemeDraft[] {
   const mine = moves.filter((move) => move.color === color);
   const bad = mine.filter((move) => ['erro', 'gafe', 'imprecisao'].includes(move.quality));
   const serious = mine.filter((move) => move.quality === 'erro' || move.quality === 'gafe');
   const missed = mine.filter((move) => move.missedWin);
-  const themes: StudyTheme[] = [];
+  const themes: ThemeDraft[] = [];
 
   if (serious.length > 0) {
     themes.push({

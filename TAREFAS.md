@@ -22,7 +22,7 @@ Plano completo: `docs/CURSO_DO_ZERO.md`. É independente do sistema antigo de cu
 
 ## Plano de estudo e métricas (2026-11-07)
 
-- [x] ESTUDO-01: na página de revisão, seção "O que estudar para melhorar" (`GET /v1/games/{gameId}/study-plan`): temas pelos lances do jogador, 3 partidas da biblioteca com foco, 5 exercícios; cada item abre num modal sobre a mesma página e é marcado ✓ (exercício resolvido; partida ao chegar ao último lance). Marcação fica no navegador (sem migration).
+- [x] ESTUDO-01: na página de revisão, seção "O que estudar para melhorar" (`GET /v1/games/{gameId}/study-plan`): temas pelos lances do jogador, 3 partidas da biblioteca com foco, 5 exercícios; cada item abre num modal sobre a mesma página e é marcado ✓ (exercício resolvido; partida ao chegar ao último lance). Marcações e o plano ficam no banco (migration 0051, backup dispensado pelo usuário), iguais em qualquer computador. Exercícios só de temas com exercício cadastrado (nunca de tema aleatório); a lista de temas do banco entra no prompt da IA (`NARRATION_PROMPT_VERSION=7`).
 - [x] ESTUDO-02: prompt do resumo da IA com heurísticas de xadrez (segurança tática, tática, abertura, meio-jogo, finais, tempo); `NARRATION_PROMPT_VERSION=6`.
 - [x] METRICAS-01: página `/app/metricas` (menu "Métricas"): partidas V/E/D, tempo jogado, rating e pico, gráfico de linha do rating (SVG), pontos fortes, pontos fracos e resumo geral (`GET /v1/me/metrics`, texto montado pelos números, sem IA).
 

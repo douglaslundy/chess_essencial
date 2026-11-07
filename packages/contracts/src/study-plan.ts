@@ -5,6 +5,8 @@ export const studyThemeSchema = z.object({
   label: z.string(),
   /** Why this theme was picked, from the player's own moves in the game. */
   reason: z.string(),
+  /** False when no registered exercise trains this theme (none is suggested then). */
+  hasExercises: z.boolean(),
 });
 
 export const studyExerciseSchema = z.object({
@@ -12,6 +14,8 @@ export const studyExerciseSchema = z.object({
   title: z.string(),
   difficulty: z.string().nullable(),
   theme: z.string(),
+  /** Solved by this player (saved in the database, so it shows on any device). */
+  done: z.boolean(),
 });
 
 export const studyLibraryGameSchema = z.object({
@@ -19,6 +23,8 @@ export const studyLibraryGameSchema = z.object({
   title: z.string(),
   /** One short line: what to watch for in this game. */
   focus: z.string(),
+  /** Watched to the last move by this player. */
+  done: z.boolean(),
 });
 
 export const gameStudyPlanSchema = z.object({

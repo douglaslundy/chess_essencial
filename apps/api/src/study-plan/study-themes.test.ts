@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { pickThemes, type MoveStat } from './study-themes.js';
+import { matchTags, pickThemes, type MoveStat } from './study-themes.js';
 
 const move = (ply: number, quality: MoveStat['quality'], missedWin = false): MoveStat => ({
   color: ply % 2 === 1 ? 'white' : 'black',
@@ -23,5 +23,17 @@ describe('pickThemes', () => {
 
   it('still suggests something for a clean game', () => {
     expect(pickThemes([move(1, 'otimo')], 'white')).toHaveLength(1);
+  });
+});
+
+describe('matchTags', () => {
+  it('matches registered tags ignoring case and separators, and nothing else', () => {
+    const available = ['fork', 'mateIn2', 'hanging_piece', 'advantage'];
+    expect(matchTags(['fork', 'garfo', 'hangingPiece', 'mateIn2'], available)).toEqual([
+      'fork',
+      'mateIn2',
+      'hanging_piece',
+    ]);
+    expect(matchTags(['endgame'], available)).toEqual([]);
   });
 });

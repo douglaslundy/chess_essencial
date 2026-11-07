@@ -54,13 +54,13 @@ export interface MomentFacts {
 }
 
 /** Bumped whenever the prompts change, so cached narrations from the old prompt are not reused. */
-export const NARRATION_PROMPT_VERSION = 6;
+export const NARRATION_PROMPT_VERSION = 7;
 
 /**
  * Narrations completed before this instant were written with an older prompt and are redone by
  * the worker. Set it to the deploy time whenever NARRATION_PROMPT_VERSION changes.
  */
-export const NARRATION_PROMPT_EPOCH = '2026-11-07T21:00:00Z';
+export const NARRATION_PROMPT_EPOCH = '2026-11-07T22:00:00Z';
 
 function movePhrase(fen: string, uci: string): string {
   const facts = moveFacts(fen, uci);
@@ -109,6 +109,7 @@ export function buildGameSummaryPrompt(
     black: Record<MoveQuality | 'missedWin', number>;
   },
   narratedMoments: NarratedMoment[],
+  exerciseThemes: readonly string[] = [],
 ): string {
   const countsLine = (
     color: 'white' | 'black',
@@ -138,6 +139,9 @@ export function buildGameSummaryPrompt(
     '- Meio-jogo: atividade das peças, segurança do rei, estrutura de peões, casas fracas, plano claro.',
     '- Finais: atividade do rei, peões passados, oposição, torre atrás do peão passado, conversão de vantagem.',
     '- Gestão de tempo: só mencione se o controle de tempo e o resultado sugerirem isso.',
+    exerciseThemes.length > 0
+      ? `Temas de exercício cadastrados na plataforma: ${exerciseThemes.join(', ')}. Só indique treino prático para um ponto fraco que corresponda a um destes temas; se nenhum servir, diga o assunto a estudar sem citar exercício.`
+      : 'Não há temas de exercício cadastrados: não cite exercícios práticos.',
     'Use só os conceitos que os números e os momentos acima sustentam. Cada item do plano de estudo deve ser um tema concreto desta lista, dito em uma frase curta (por exemplo: "Segurança tática: confira capturas e xeques do adversário antes de jogar").',
     '',
     'Com base apenas nisso, escreva um JSON (e nada mais, sem markdown ao redor) no formato exato:',

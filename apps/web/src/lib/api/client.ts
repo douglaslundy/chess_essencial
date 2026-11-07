@@ -411,6 +411,8 @@ export const api = {
   getLeaderboard: (pool: RatingPool, token: string) =>
     request<LeaderboardEntry[]>(`/ratings/${pool}/leaderboard?limit=100`, token),
   getRatings: (token: string) => request<RatingProfile[]>('/ratings/me', token),
+  markStudyItemDone: (kind: 'exercise' | 'game', itemId: string, token: string) =>
+    request<void>(`/me/study-progress/${kind}/${itemId}`, token, { method: 'PUT' }),
   getMyMetrics: (token: string) => request<PlayerMetrics>('/me/metrics', token),
   getMyRatingHistory: (token: string) =>
     request<RatingHistoryEntry[]>('/ratings/me/history', token),

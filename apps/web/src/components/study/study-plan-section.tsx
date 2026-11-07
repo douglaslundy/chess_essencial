@@ -5,35 +5,45 @@ import { useEffect, useState } from 'react';
 
 import { ExerciseDialog } from './exercise-dialog';
 import { LibraryGameDialog } from './library-game-dialog';
-import { api, getStoredUserId } from '@/lib/api/client';
-import { markStudyDone, readStudyDone } from '@/lib/study-progress';
+import { api } from '@/lib/api/client';
 
 type Open = { id: string; kind: 'exercise' | 'game'; title: string } | null;
 
-/** What to study after a game: themes, 5 exercises and 3 library games, each opened in a modal. */
+/** What to study after a game: themes, exercises and 3 library games, each opened in a modal. */
 export function StudyPlanSection({ gameId }: { gameId: string }) {
-  const userId = getStoredUserId();
   const [plan, setPlan] = useState<GameStudyPlan | null>(null);
-  const [failed, setFailed] = useState(false);
   const [open, setOpen] = useState<Open>(null);
-  const [doneExercises, setDoneExercises] = useState<Set<string>>(new Set());
-  const [doneGames, setDoneGames] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const token = window.localStorage.getItem('xadrez.access_token');
     if (!token) return;
-    queueMicrotask(() => {
-      setDoneExercises(readStudyDone(userId, 'exercise'));
-      setDoneGames(readStudyDone(userId, 'game'));
-    });
     api
       .getGameStudyPlan(gameId, token)
       .then(setPlan)
-      .catch(() => setFailed(true));
-  }, [gameId, userId]);
+      .catch(() => setPlan(null));
+  }, [gameId]);
 
-  if (failed) return null;
+  // Saved in the database first, so the checkmark shows on any computer the student logs in from.
+  function markDone(kind: 'exercise' | 'game', id: string) {
+    setPlan((current) =>
+      current
+        ? {
+            ...current,
+            exercises: current.exercises.map((item) =>
+              kind === 'exercise' && item.id === id ? { ...item, done: true } : item,
+            ),
+            libraryGames: current.libraryGames.map((item) =>
+              kind === 'game' && item.id === id ? { ...item, done: true } : item,
+            ),
+          }
+        : current,
+    );
+    const token = window.localStorage.getItem('xadrez.access_token');
+    if (token) void api.markStudyItemDone(kind, id, token).catch(() => undefined);
+  }
+
   if (!plan) return null;
+  const untrainable = plan.themes.filter((theme) => !theme.hasExercises);
 
   return (
     <section aria-labelledby="study-plan-title" className="reviewNarration">
@@ -44,13 +54,14 @@ export function StudyPlanSection({ gameId }: { gameId: string }) {
         {plan.themes.map((theme) => (
           <li key={theme.key}>
             <strong>{theme.label}:</strong> {theme.reason}
+            {theme.hasExercises ? '' : ' (ainda não há exercícios cadastrados para este tema)'}
           </li>
         ))}
       </ul>
 
       {plan.libraryGames.length > 0 ? (
         <>
-          <h3>3 partidas para estudar</h3>
+          <h3>{plan.libraryGames.length} partidas para estudar</h3>
           <ol className="studyList">
             {plan.libraryGames.map((game) => (
               <li key={game.id}>
@@ -59,7 +70,7 @@ export function StudyPlanSection({ gameId }: { gameId: string }) {
                   onClick={() => setOpen({ id: game.id, kind: 'game', title: game.title })}
                   type="button"
                 >
-                  {doneGames.has(game.id) ? '✓ ' : ''}
+                  {game.done ? '✓ ' : ''}
                   {game.title}
                 </button>
                 <span> — {game.focus}</span>
@@ -71,7 +82,7 @@ export function StudyPlanSection({ gameId }: { gameId: string }) {
 
       {plan.exercises.length > 0 ? (
         <>
-          <h3>5 exercícios para praticar</h3>
+          <h3>{plan.exercises.length} exercícios para praticar</h3>
           <ol className="studyList">
             {plan.exercises.map((exercise) => (
               <li key={exercise.id}>
@@ -82,7 +93,7 @@ export function StudyPlanSection({ gameId }: { gameId: string }) {
                   }
                   type="button"
                 >
-                  {doneExercises.has(exercise.id) ? '✓ ' : ''}
+                  {exercise.done ? '✓ ' : ''}
                   {exercise.title}
                 </button>
                 <span>
@@ -94,13 +105,15 @@ export function StudyPlanSection({ gameId }: { gameId: string }) {
             ))}
           </ol>
         </>
+      ) : untrainable.length === plan.themes.length ? (
+        <p>Não há exercícios cadastrados para os temas desta partida.</p>
       ) : null}
 
       {open?.kind === 'exercise' ? (
         <ExerciseDialog
           exerciseId={open.id}
           onClose={() => setOpen(null)}
-          onSolved={() => setDoneExercises(markStudyDone(userId, 'exercise', open.id))}
+          onSolved={() => markDone('exercise', open.id)}
           title={open.title}
         />
       ) : null}
@@ -108,7 +121,7 @@ export function StudyPlanSection({ gameId }: { gameId: string }) {
         <LibraryGameDialog
           gameId={open.id}
           onClose={() => setOpen(null)}
-          onFinished={() => setDoneGames(markStudyDone(userId, 'game', open.id))}
+          onFinished={() => markDone('game', open.id)}
           title={open.title}
         />
       ) : null}

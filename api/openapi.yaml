@@ -235,6 +235,17 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/PlayerMetrics'}
         '401': {$ref: '#/components/responses/Problem'}
+  /me/study-progress/{kind}/{itemId}:
+    put:
+      summary: Marcar um exercício como resolvido ou uma partida da biblioteca como assistida (idempotente)
+      operationId: markStudyItemDone
+      parameters:
+        - {name: kind, in: path, required: true, schema: {type: string, enum: [exercise, game]}}
+        - {name: itemId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '204': {description: Marcado}
+        '401': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
   /me/subscription:
     get:
       summary: Get the current user's active subscription, if any
@@ -2335,30 +2346,33 @@ components:
           type: array
           items:
             type: object
-            required: [key, label, reason]
+            required: [key, label, reason, hasExercises]
             properties:
               key: {type: string}
               label: {type: string}
               reason: {type: string}
+              hasExercises: {type: boolean}
         exercises:
           type: array
           items:
             type: object
-            required: [id, title, difficulty, theme]
+            required: [id, title, difficulty, theme, done]
             properties:
               id: {type: string, format: uuid}
               title: {type: string}
               difficulty: {type: string, nullable: true}
               theme: {type: string}
+              done: {type: boolean}
         libraryGames:
           type: array
           items:
             type: object
-            required: [id, title, focus]
+            required: [id, title, focus, done]
             properties:
               id: {type: string, format: uuid}
               title: {type: string}
               focus: {type: string}
+              done: {type: boolean}
     CourseTrailProgress:
       type: object
       required: [completedActivityIds]

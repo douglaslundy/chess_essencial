@@ -209,6 +209,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/me/study-progress/{kind}/{itemId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** Marcar um exercício como resolvido ou uma partida da biblioteca como assistida (idempotente) */
+    put: operations['markStudyItemDone'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/me/subscription': {
     parameters: {
       query?: never;
@@ -2268,6 +2285,7 @@ export interface components {
         key: string;
         label: string;
         reason: string;
+        hasExercises: boolean;
       }[];
       exercises: {
         /** Format: uuid */
@@ -2275,12 +2293,14 @@ export interface components {
         title: string;
         difficulty: string | null;
         theme: string;
+        done: boolean;
       }[];
       libraryGames: {
         /** Format: uuid */
         id: string;
         title: string;
         focus: string;
+        done: boolean;
       }[];
     };
     CourseTrailProgress: {
@@ -3979,6 +3999,29 @@ export interface operations {
         };
       };
       401: components['responses']['Problem'];
+    };
+  };
+  markStudyItemDone: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        kind: 'exercise' | 'game';
+        itemId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Marcado */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      401: components['responses']['Problem'];
+      422: components['responses']['Problem'];
     };
   };
   getMySubscription: {
