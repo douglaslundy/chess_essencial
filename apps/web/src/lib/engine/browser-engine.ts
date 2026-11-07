@@ -1,3 +1,5 @@
+import { Chess } from 'chess.js';
+
 export interface EngineEvaluation {
   bestMove: string | null;
   mate: number | null;
@@ -9,6 +11,8 @@ export interface EvaluateOptions {
   depth?: number;
 }
 
+/** Centipawn extreme for a checkmated side (same value the server-side analysis uses). */
+const MATED_SCORE_CP = 100_000;
 const ENGINE_URL = '/engine/stockfish-18-lite-single.js';
 const DEFAULT_DEPTH = 10;
 const EVALUATE_TIMEOUT_MS = 15_000;
@@ -62,6 +66,18 @@ export function evaluatePosition(
   fen: string,
   options: EvaluateOptions = {},
 ): Promise<EngineEvaluation> {
+  // A position with no legal moves has nothing to search: Stockfish prints no score for it, which
+  // would read as an even position and make the mating move look like a blunder. Report the
+  // terminal result instead, from the side to move's view (the caller negates it for the mover).
+  const terminal = new Chess(fen);
+  if (terminal.moves().length === 0) {
+    return Promise.resolve({
+      bestMove: null,
+      mate: null,
+      principalVariation: [],
+      scoreCp: terminal.isCheckmate() ? -MATED_SCORE_CP : 0,
+    });
+  }
   const depth = options.depth ?? DEFAULT_DEPTH;
   const task = queue.then(() => runEvaluation(fen, depth));
   queue = task.catch(() => undefined);
