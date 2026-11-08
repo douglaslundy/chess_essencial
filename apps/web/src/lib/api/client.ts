@@ -107,6 +107,8 @@ import type {
   SendTestEmailInput,
   SmtpSettings,
   TokenPair,
+  TutorKind,
+  TutorLesson,
   UpdateAssistedGameSettingsInput,
   UpdateMercadoPagoSettingsInput,
   UpdateSmtpSettingsInput,
@@ -673,6 +675,14 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify({ path }),
     }),
+  getTutorAccess: (token: string) => request<{ allowed: boolean }>('/tutor/access', token),
+  getTutorLesson: (kind: TutorKind, contentId: string, token: string) =>
+    request<TutorLesson>(`/tutor/lessons/${kind}/${encodeURIComponent(contentId)}`, token),
+  requestTutorLesson: (
+    input: { contentId: string; kind: TutorKind; steps?: Array<{ say: string }> },
+    token: string,
+  ) =>
+    request<TutorLesson>('/tutor/lessons', token, { method: 'POST', body: JSON.stringify(input) }),
   getGameStudyPlan: (gameId: string, token: string) =>
     request<GameStudyPlan>(`/games/${gameId}/study-plan`, token),
   getCourseTrailProgress: (token: string) =>

@@ -97,7 +97,14 @@ export function CoursePlayer({ activityId }: { activityId: string }) {
     },
     [steps],
   );
-  useClassroomPly(index, goTo, steps.length - 1);
+  useClassroomPly(index, goTo, steps.length - 1, {
+    content: {
+      contentId: activityId,
+      kind: 'lesson',
+      steps: steps.map((item) => ({ say: item.say || 'Passo sem texto.' })),
+    },
+    frameOffset: 1,
+  });
 
   // A finished step moves on by itself 2 s after the coach finished speaking; without audio,
   // after the reading time of an explanation.

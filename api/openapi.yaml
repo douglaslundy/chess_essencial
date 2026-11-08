@@ -2106,6 +2106,69 @@ paths:
               schema: {$ref: '#/components/schemas/CourseTrailProgress'}
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
+  /tutor/access:
+    get:
+      summary: Informar se o usuário tem o perfil de professor (o admin tem todos os perfis)
+      operationId: getTutorAccess
+      responses:
+        '200':
+          description: Acesso ao Tutor de IA
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [allowed]
+                properties:
+                  allowed: {type: boolean}
+        '401': {$ref: '#/components/responses/Problem'}
+  /tutor/lessons/{kind}/{contentId}:
+    get:
+      summary: Ler a aula do Tutor de IA já gerada para um conteúdo (somente professor)
+      operationId: getTutorLesson
+      parameters:
+        - {name: kind, in: path, required: true, schema: {type: string, enum: [library, exercise, review, lesson]}}
+        - {name: contentId, in: path, required: true, schema: {type: string}}
+      responses:
+        '200':
+          description: Aula (status none quando ainda não existe)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorLesson'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /tutor/lessons:
+    post:
+      summary: Gerar (uma única vez por conteúdo) a aula quadro a quadro do Tutor de IA (somente professor)
+      operationId: requestTutorLesson
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind, contentId]
+              properties:
+                kind: {type: string, enum: [library, exercise, review, lesson]}
+                contentId: {type: string}
+                steps:
+                  type: array
+                  maxItems: 80
+                  items:
+                    type: object
+                    required: [say]
+                    properties:
+                      say: {type: string, maxLength: 600}
+      responses:
+        '201':
+          description: Estado atual da aula
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorLesson'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
   /classrooms:
     get:
       summary: Listar as salas de aula em que o usuário é professor ou aluno
@@ -2318,6 +2381,21 @@ components:
             members:
               type: array
               items: {$ref: '#/components/schemas/ClassroomMember'}
+    TutorLesson:
+      type: object
+      required: [status, frames, totalSteps]
+      properties:
+        status: {type: string, enum: [none, generating, completed, failed]}
+        totalSteps: {type: integer}
+        frames:
+          type: array
+          items:
+            type: object
+            required: [index, label, text]
+            properties:
+              index: {type: integer}
+              label: {type: string}
+              text: {type: string}
     ClassroomLive:
       type: object
       required: [path, seq]
@@ -2988,7 +3066,7 @@ components:
         avatarUrl: {type: [string, 'null']}
         status: {type: string, enum: [pending, active, suspended, deleted]}
         isAdmin: {type: boolean}
-        roles: {type: array, items: {type: string, enum: [admin, content_editor]}}
+        roles: {type: array, items: {type: string, enum: [admin, content_editor, teacher]}}
         planId: {type: [string, 'null'], format: uuid}
         planName: {type: [string, 'null']}
         createdAt: {type: string, format: date-time}
@@ -3057,7 +3135,7 @@ components:
         displayName: {type: string}
         email: {type: string}
         status: {type: string, enum: [active, suspended, deleted]}
-        roles: {type: array, items: {type: string, enum: [admin, content_editor]}}
+        roles: {type: array, items: {type: string, enum: [admin, content_editor, teacher]}}
         planId: {type: [string, 'null'], format: uuid}
     SmtpSettings:
       type: object

@@ -18,6 +18,7 @@ const statusLabels: Record<string, string> = {
 const roleLabels: Record<AdminUserRole, string> = {
   admin: 'Administrador',
   content_editor: 'Editor de conteúdo',
+  teacher: 'Professor',
 };
 
 type PendingAction = { status: 'active' | 'suspended' | 'deleted'; user: AdminUser };

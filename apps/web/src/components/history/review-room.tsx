@@ -2,6 +2,7 @@
 
 import { StudyPlanSection } from '@/components/study/study-plan-section';
 import { pointsThrough } from '@/lib/move-points';
+import { useTutorActive } from '@/lib/tutor-store';
 import { useClassroomPly } from '@/lib/use-classroom-ply';
 import type {
   GameAnalysis,
@@ -202,8 +203,10 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
     effectiveNarration?.keyMoments ?? [],
     myColor,
   );
-  const coachText = ply === 0 ? WELCOME : (moveComment?.text ?? null);
-  const coachSpeech = ply === 0 ? WELCOME : (moveComment?.speech ?? null);
+  // The AI tutor and the normal review are one or the other: with the tutor on, no review comment.
+  const tutorOn = useTutorActive();
+  const coachText = tutorOn ? null : ply === 0 ? WELCOME : (moveComment?.text ?? null);
+  const coachSpeech = tutorOn ? null : ply === 0 ? WELCOME : (moveComment?.speech ?? null);
 
   // Every spoken line of this review is generated once and kept in the database (voice cache,
   // shared by all students): opening the review asks for them all, in order, so later listeners
@@ -242,7 +245,7 @@ export function ReviewRoom({ gameId }: { gameId: string }) {
 
   // ← and → step through the moves, unless the player is typing (the comment box).
   const lastPly = moves.length;
-  useClassroomPly(ply, setPly, lastPly);
+  useClassroomPly(ply, setPly, lastPly, { content: { contentId: gameId, kind: 'review' } });
   useEffect(() => {
     if (view !== 'moves') return;
     function onKey(event: KeyboardEvent) {

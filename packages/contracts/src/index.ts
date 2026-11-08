@@ -427,3 +427,13 @@ export {
   type GameStudyPlan,
   type StudyTheme,
 } from './study-plan.js';
+export {
+  requestTutorLessonInputSchema,
+  tutorContentIdSchema,
+  tutorFrameSchema,
+  tutorKindSchema,
+  tutorLessonSchema,
+  type TutorFrame,
+  type TutorKind,
+  type TutorLesson,
+} from './tutor.js';

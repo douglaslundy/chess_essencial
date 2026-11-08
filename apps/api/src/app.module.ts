@@ -5,6 +5,7 @@ import { AdminModule } from './admin/admin.module.js';
 import { AiProvidersModule } from './ai-providers/ai-providers.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { validateApiEnv } from './config/env.js';
+import { TutorModule } from './tutor/tutor.module.js';
 import { ClassroomModule } from './classroom/classroom.module.js';
 import { CourseModule } from './course/course.module.js';
 import { PlayerMetricsModule } from './player-metrics/player-metrics.module.js';
@@ -39,6 +40,7 @@ import { VoiceModule } from './voice/voice.module.js';
     AiProvidersModule,
     AuthModule,
     ClassroomModule,
+    TutorModule,
     CourseModule,
     PlayerMetricsModule,
     StudyPlanModule,

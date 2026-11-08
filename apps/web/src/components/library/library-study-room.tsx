@@ -1,5 +1,6 @@
 'use client';
 
+import { useTutorActive } from '@/lib/tutor-store';
 import { useClassroomPly } from '@/lib/use-classroom-ply';
 import type { LibraryGame, LibraryReview, LibraryReviewEntry } from '@xadrez/contracts';
 import { Chess } from 'chess.js';
@@ -160,7 +161,7 @@ export function LibraryStudyRoom({
     },
     [total],
   );
-  useClassroomPly(ply, go, total);
+  useClassroomPly(ply, go, total, { content: { contentId: gameId, kind: 'library' } });
 
   // Advancing the first move counts as watching: the library list marks the game.
   const started = ply > 0;
@@ -222,7 +223,10 @@ export function LibraryStudyRoom({
     return () => window.removeEventListener('keydown', onKey);
   }, [go, ply]);
 
+  // The AI tutor and the normal review are one or the other: with the tutor on, no review.
+  const tutorOn = useTutorActive();
   const wantsReview =
+    !tutorOn &&
     review !== null &&
     review.aiAvailable &&
     (review.status === 'none' || review.status === 'failed');
@@ -273,20 +277,24 @@ export function LibraryStudyRoom({
   const coachMessage =
     ply === 0
       ? `${game.white} (brancas) contra ${game.black} (pretas). Use as setas para avançar lance a lance.`
-      : entry
-        ? [
-            entry.summary,
-            entry.why,
-            entry.better ? `Melhor seria ${toBrazilianSan(entry.better)}: ${entry.betterWhy}` : '',
-            entry.expect ?? '',
-          ]
-            .filter(Boolean)
-            .join(' ')
-        : generating || requesting || wantsReview
-          ? 'A IA está preparando a revisão desta partida; os comentários aparecem aqui assim que ficarem prontos.'
-          : review && !review.aiAvailable
-            ? 'A IA não está ativada na plataforma, por isso esta partida ainda não tem comentários.'
-            : `${mover} jogam ${moveSan}.`;
+      : tutorOn
+        ? `${mover} jogam ${moveSan}.`
+        : entry
+          ? [
+              entry.summary,
+              entry.why,
+              entry.better
+                ? `Melhor seria ${toBrazilianSan(entry.better)}: ${entry.betterWhy}`
+                : '',
+              entry.expect ?? '',
+            ]
+              .filter(Boolean)
+              .join(' ')
+          : generating || requesting || wantsReview
+            ? 'A IA está preparando a revisão desta partida; os comentários aparecem aqui assim que ficarem prontos.'
+            : review && !review.aiAvailable
+              ? 'A IA não está ativada na plataforma, por isso esta partida ainda não tem comentários.'
+              : `${mover} jogam ${moveSan}.`;
   const topColor = orientation === 'white' ? 'black' : 'white';
   const sideToMove = ply % 2 === 0 ? 'white' : 'black';
   const playerCard = (color: 'white' | 'black') => (

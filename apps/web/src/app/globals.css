@@ -4909,6 +4909,81 @@ textarea::placeholder {
   cursor: pointer;
 }
 
+/* Tutor de IA: só o professor vê. Balão pequeno e translúcido sobre o canto da tela. */
+.tutorToggle {
+  padding: 0.2rem 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+}
+.tutorToggleOn {
+  background: #fff;
+  color: #14532d !important;
+  font-weight: 700;
+}
+.tutorCard {
+  position: fixed;
+  bottom: 1rem;
+  z-index: 30;
+  width: min(16rem, 44vw);
+  max-height: 55vh;
+  overflow-y: auto;
+  padding: 0.5rem 0.65rem;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.82);
+  color: #f8fafc;
+  font-size: 0.74rem;
+  line-height: 1.35;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(3px);
+}
+.tutorCard-right {
+  right: 0.75rem;
+}
+.tutorCard-left {
+  left: 0.75rem;
+}
+.tutorCardCollapsed {
+  width: auto;
+}
+.tutorCard header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+.tutorCard header button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.tutorCard p {
+  margin: 0 0 0.35rem;
+}
+.tutorCard b {
+  display: block;
+  font-size: 0.7rem;
+}
+.tutorPrev,
+.tutorNext {
+  opacity: 0.6;
+}
+.tutorPrev {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.tutorNow {
+  padding: 0.3rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: 0.8rem;
+}
+
 /* Contador e barra de pontos da revisão: dentro do cartão do jogador, nada sobre o tabuleiro. */
 .pointsCounter {
   font-size: 0.78rem;

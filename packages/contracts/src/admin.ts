@@ -6,7 +6,7 @@ export const adminUserStatusSchema = z.enum(['pending', 'active', 'suspended', '
 // (user_roles), not tiered levels. "Cannot edit another admin" (enforced in
 // admin.repository.ts) is the entire hierarchy rule; there is no separate
 // superadmin tier to model here.
-export const adminUserRoleSchema = z.enum(['admin', 'content_editor']);
+export const adminUserRoleSchema = z.enum(['admin', 'content_editor', 'teacher']);
 
 export const adminUserSchema = z.object({
   avatarUrl: z.string().nullable(),

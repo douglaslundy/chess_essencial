@@ -40,7 +40,7 @@ export function chunkEnd(totalPlies: number, from: number) {
 }
 
 /** " | Fatos do tabuleiro: ..." for the move about to be played from `fen`, or "". */
-function factsFor(fen: string, san: string): string {
+export function factsFor(fen: string, san: string): string {
   try {
     const trial = new Chess(fen);
     const move = trial.move(san);

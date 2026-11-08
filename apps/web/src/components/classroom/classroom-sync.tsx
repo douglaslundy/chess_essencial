@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { TutorButton, TutorCard } from './tutor-panel';
 import { api } from '@/lib/api/client';
 import {
   CLASSROOM_AREAS,
@@ -120,29 +121,33 @@ export function ClassroomSync() {
 
   if (!session) return null;
   return (
-    <div aria-label="Aula ao vivo" className="classroomBanner" role="region">
-      <strong>
-        {session.role === 'teacher'
-          ? `Você está dando a aula “${session.name}”`
-          : `Você está na aula “${session.name}”: acompanhando o professor`}
-      </strong>
-      {session.role === 'teacher' ? (
-        <nav aria-label="Áreas da aula" className="classroomAreas">
-          {CLASSROOM_AREAS.map((area) => (
-            <Link
-              className={pathname.startsWith(area.href) ? 'activeNav' : undefined}
-              href={area.href}
-              key={area.href}
-            >
-              {area.label}
-            </Link>
-          ))}
-        </nav>
-      ) : null}
-      <Link href={`/app/sala/${session.id}`}>Sala</Link>
-      <button onClick={() => writeClassroomSession(null)} type="button">
-        {session.role === 'teacher' ? 'Encerrar aula' : 'Sair da aula'}
-      </button>
-    </div>
+    <>
+      <div aria-label="Aula ao vivo" className="classroomBanner" role="region">
+        <strong>
+          {session.role === 'teacher'
+            ? `Você está dando a aula “${session.name}”`
+            : `Você está na aula “${session.name}”: acompanhando o professor`}
+        </strong>
+        {session.role === 'teacher' ? (
+          <nav aria-label="Áreas da aula" className="classroomAreas">
+            {CLASSROOM_AREAS.map((area) => (
+              <Link
+                className={pathname.startsWith(area.href) ? 'activeNav' : undefined}
+                href={area.href}
+                key={area.href}
+              >
+                {area.label}
+              </Link>
+            ))}
+          </nav>
+        ) : null}
+        <TutorButton isTeacher={session.role === 'teacher'} />
+        <Link href={`/app/sala/${session.id}`}>Sala</Link>
+        <button onClick={() => writeClassroomSession(null)} type="button">
+          {session.role === 'teacher' ? 'Encerrar aula' : 'Sair da aula'}
+        </button>
+      </div>
+      {session.role === 'teacher' ? <TutorCard /> : null}
+    </>
   );
 }

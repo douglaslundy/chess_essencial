@@ -2138,6 +2138,57 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/tutor/access': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Informar se o usuário tem o perfil de professor (o admin tem todos os perfis) */
+    get: operations['getTutorAccess'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/tutor/lessons/{kind}/{contentId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Ler a aula do Tutor de IA já gerada para um conteúdo (somente professor) */
+    get: operations['getTutorLesson'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/tutor/lessons': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Gerar (uma única vez por conteúdo) a aula quadro a quadro do Tutor de IA (somente professor) */
+    post: operations['requestTutorLesson'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/classrooms': {
     parameters: {
       query?: never;
@@ -2272,6 +2323,16 @@ export interface components {
     };
     ClassroomDetail: components['schemas']['ClassroomSummary'] & {
       members: components['schemas']['ClassroomMember'][];
+    };
+    TutorLesson: {
+      /** @enum {string} */
+      status: 'none' | 'generating' | 'completed' | 'failed';
+      totalSteps: number;
+      frames: {
+        index: number;
+        label: string;
+        text: string;
+      }[];
     };
     ClassroomLive: {
       path: string;
@@ -2797,7 +2858,7 @@ export interface components {
       /** @enum {string} */
       status: 'pending' | 'active' | 'suspended' | 'deleted';
       isAdmin: boolean;
-      roles: ('admin' | 'content_editor')[];
+      roles: ('admin' | 'content_editor' | 'teacher')[];
       /** Format: uuid */
       planId: string | null;
       planName: string | null;
@@ -2845,7 +2906,7 @@ export interface components {
       email?: string;
       /** @enum {string} */
       status?: 'active' | 'suspended' | 'deleted';
-      roles?: ('admin' | 'content_editor')[];
+      roles?: ('admin' | 'content_editor' | 'teacher')[];
       /** Format: uuid */
       planId?: string | null;
     };
@@ -7150,6 +7211,90 @@ export interface operations {
       };
       400: components['responses']['Problem'];
       401: components['responses']['Problem'];
+    };
+  };
+  getTutorAccess: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Acesso ao Tutor de IA */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            allowed: boolean;
+          };
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  getTutorLesson: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        kind: 'library' | 'exercise' | 'review' | 'lesson';
+        contentId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Aula (status none quando ainda não existe) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TutorLesson'];
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  requestTutorLesson: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          /** @enum {string} */
+          kind: 'library' | 'exercise' | 'review' | 'lesson';
+          contentId: string;
+          steps?: {
+            say: string;
+          }[];
+        };
+      };
+    };
+    responses: {
+      /** @description Estado atual da aula */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TutorLesson'];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+      422: components['responses']['Problem'];
     };
   };
   listClassrooms: {

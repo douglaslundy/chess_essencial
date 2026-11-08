@@ -9,6 +9,8 @@ import type {
   ExerciseTrainingView,
 } from '@xadrez/contracts';
 import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { useTutorContent } from '@/lib/tutor-store';
 import { Chess } from 'chess.js';
 
 import { ChessBoard } from '@/components/game/chess-board';
@@ -133,6 +135,13 @@ export function ExerciseTrainer({
   const opponentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingEvaluationRef = useRef<Parameters<typeof evaluatePlayedLine> | null>(null);
   const [evaluationFailed, setEvaluationFailed] = useState(false);
+  // The AI tutor teaches the open exercise: its frame is the move the solver has to find now
+  // (the solution alternates the solver's move and the opponent's reply).
+  const tutorExerciseId = training?.currentExercise?.id ?? null;
+  useTutorContent(
+    tutorExerciseId ? { contentId: tutorExerciseId, kind: 'exercise' } : null,
+    playerMoves.length * 2 + 1,
+  );
   const boardStageRef = useRef<HTMLDivElement>(null);
   const { active: boardFullscreen, toggle: toggleBoardFullscreen } =
     useStageFullscreen(boardStageRef);
