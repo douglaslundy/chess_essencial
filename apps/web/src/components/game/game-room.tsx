@@ -11,10 +11,11 @@ import { MoveAnnouncement, describeImportantMove, type Announcement } from './mo
 import { useStageFullscreen } from './use-stage-fullscreen';
 import { CoachCallout } from '@/components/coach/coach-callout';
 import { formatCoachExplanation, formatCoachWarning } from '@/components/coach/coach-explanation';
-import { moveQualityLabel } from '@/components/history/move-narration';
+import { explainMove, moveQualityLabel } from '@/components/history/move-narration';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { api, getRealtimeAccessToken, getStoredUserId } from '@/lib/api/client';
 import { useCoachEngine } from '@/lib/engine/use-coach-engine';
+import { useOpponentReview } from '@/lib/engine/use-opponent-review';
 import { speakableSquares, toBrazilianSan } from '@/lib/notation';
 import { usePieceTheme } from '@/lib/piece-theme';
 import { GameSocket } from '@/lib/realtime/game-socket';
@@ -441,6 +442,24 @@ export function GameRoom({ gameId }: { gameId: string }) {
     }),
   });
 
+  // The Treinador's own moves are graded and narrated too, like the player's.
+  const opponentReview = useOpponentReview({
+    enabled:
+      state.coachMode &&
+      !isDemo &&
+      myColor !== null &&
+      state.status === 'active' &&
+      lastMove !== undefined &&
+      lastMove.color !== myColor,
+    move: lastMove ?? null,
+  });
+  // The note about the Treinador's last move, shown and spoken before the tip for the new position.
+  const opponentNoteRef = useRef<{ fen: string; text: string } | null>(null);
+  const withOpponentNote = useCallback((fen: string, text: string) => {
+    const note = opponentNoteRef.current;
+    return note?.fen === fen ? `${note.text} ${text}` : text;
+  }, []);
+
   const { voiceName } = useVoicePreference();
   // Bumped by every new narration-worthy moment (suggestion or quality
   // warning); a pending AI reply only gets spoken if it's still the one
@@ -464,6 +483,27 @@ export function GameRoom({ gameId }: { gameId: string }) {
     if (!coachEnabled) narrationGenerationRef.current += 1;
   }, [coachEnabled]);
 
+  useEffect(() => {
+    if (!opponentReview || !lastMove || opponentReview.ply !== lastMove.ply) return;
+    const verdict = {
+      bestMoveUci: opponentReview.bestMoveUci,
+      centipawnLoss: opponentReview.quality.centipawnLoss,
+      quality: opponentReview.quality.quality,
+    };
+    const text = explainMove(lastMove, verdict, 'text', 'opponent', 'O Treinador');
+    const speech = explainMove(lastMove, verdict, 'speech', 'opponent', 'O Treinador');
+    const fen = state.currentFen;
+    opponentNoteRef.current = { fen, text };
+    queueMicrotask(() =>
+      setCoachLine((current) => ({
+        fen,
+        text: current?.fen === fen ? `${text} ${current.text}` : text,
+      })),
+    );
+    // Queued: the tip for the new position follows it instead of cutting it.
+    speakCoach(speakableSquares(speech), false);
+  }, [lastMove, opponentReview, speakCoach, state.currentFen]);
+
   // Any move cuts the tip being spoken; the next position's tip starts fresh.
   useEffect(() => {
     narrationGenerationRef.current += 1;
@@ -474,11 +514,14 @@ export function GameRoom({ gameId }: { gameId: string }) {
     if (muted || !coachSuggestion || !coachSuggestion.bestMoveUci) return;
     const spokenText = formatCoachExplanation(state.currentFen, coachSuggestion);
     if (!spokenText) return;
-    queueMicrotask(() => setCoachLine({ fen: state.currentFen, text: spokenText }));
+    queueMicrotask(() =>
+      setCoachLine({ fen: state.currentFen, text: withOpponentNote(state.currentFen, spokenText) }),
+    );
     speakCoach(
       speakableSquares(
         formatCoachExplanation(state.currentFen, coachSuggestion, 'speech') ?? spokenText,
       ),
+      opponentNoteRef.current?.fen !== state.currentFen,
     );
 
     // AI narration enriches the instant template above once it arrives -
@@ -502,7 +545,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
         speakCoach(speakableSquares(result.narrative), false);
       })
       .catch(() => undefined);
-  }, [coachSuggestion, gameId, isDemo, muted, speakCoach, state.currentFen]);
+  }, [coachSuggestion, gameId, isDemo, muted, speakCoach, state.currentFen, withOpponentNote]);
 
   useEffect(() => {
     if (muted || !pendingCoachMove) return;

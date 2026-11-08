@@ -84,17 +84,21 @@ function sanOfUci(fenBefore: string, uci: string): string | null {
  */
 export function explainMove(
   played: MoveToExplain,
-  analysis: GameMoveAnalysis | null,
+  analysis: Pick<GameMoveAnalysis, 'bestMoveUci' | 'centipawnLoss' | 'quality'> | null,
   mode: 'text' | 'speech',
+  /** Who played it: the reviewer ("você") or the other side, named by `subject`. */
+  side: 'player' | 'opponent' = 'player',
+  subject = 'O adversário',
 ): string {
+  const mine = side === 'player';
   const name = (san: string, uci: string) =>
     mode === 'speech' ? spokenMove(played.fenBefore, uci) : toBrazilianSan(san);
   const quality = analysis?.quality ?? null;
   const weak = quality === 'imprecisao' || quality === 'erro' || quality === 'gafe';
   const sentences = [
     quality
-      ? `Você jogou ${name(played.san, played.uci)}, ${spokenQuality[quality]}.`
-      : `Você jogou ${name(played.san, played.uci)}.`,
+      ? `${mine ? 'Você' : subject} jogou ${name(played.san, played.uci)}, ${spokenQuality[quality]}.`
+      : `${mine ? 'Você' : subject} jogou ${name(played.san, played.uci)}.`,
   ];
 
   const facts = moveFacts(played.fenBefore, played.uci);
@@ -106,12 +110,16 @@ export function explainMove(
   if (analysis && weak) {
     const giveaway = lines.some((line) => line.startsWith('Deixa'));
     if (!giveaway && analysis.centipawnLoss >= 150) {
-      sentences.push('Com ele você entrega boa parte da vantagem que tinha na posição.');
+      sentences.push(
+        `Com ele ${mine ? 'você entrega' : 'entrega-se'} boa parte da vantagem que ${mine ? 'tinha' : 'havia'} na posição.`,
+      );
     }
     const bestUci = analysis.bestMoveUci;
     const best = bestUci ? sanOfUci(played.fenBefore, bestUci) : null;
     if (best && bestUci) {
-      sentences.push(`No seu lugar, eu jogaria ${name(best, bestUci)}.`);
+      sentences.push(
+        `${mine ? 'No seu lugar' : 'No lugar dele'}, eu jogaria ${name(best, bestUci)}.`,
+      );
       // Why it is better: what it does, the material once exchanges play out.
       sentences.push(...describeBetterMove(facts, moveFacts(played.fenBefore, bestUci)));
     }
@@ -141,7 +149,8 @@ export interface ReviewComment {
 /**
  * Treinador's comment for the reviewed ply: the AI key-moment narrative when one exists,
  * else the board-based explanation, so every move of the player gets a real comment, even
- * while the analysis is still running. Null for the opponent's moves.
+ * while the analysis is still running. The other side's moves get the same board-based
+ * evaluation (good move, blunder, strong and weak points), worded about the opponent.
  */
 export function reviewMoveComment(
   move: Pick<GameMove, 'color' | 'fenBefore' | 'ply' | 'san' | 'uci'> | null,
@@ -149,13 +158,18 @@ export function reviewMoveComment(
   keyMoments: GameNarrationKeyMoment[],
   myColor: 'white' | 'black' | null,
 ): ReviewComment | null {
-  if (!move || !myColor || move.color !== myColor) return null;
-  const moment = keyMoments.find((item) => item.ply === move.ply && item.color === myColor);
+  if (!move || !myColor) return null;
+  const mine = move.color === myColor;
+  // The AI key moments are written about the student's own moves.
+  const moment = mine
+    ? keyMoments.find((item) => item.ply === move.ply && item.color === myColor)
+    : undefined;
   if (moment?.narrative)
     return { speech: speakableSquares(moment.narrative), text: moment.narrative };
+  const side = mine ? 'player' : 'opponent';
   return {
-    speech: speakableSquares(explainMove(move, analysis, 'speech')),
-    text: explainMove(move, analysis, 'text'),
+    speech: speakableSquares(explainMove(move, analysis, 'speech', side)),
+    text: explainMove(move, analysis, 'text', side),
   };
 }
 

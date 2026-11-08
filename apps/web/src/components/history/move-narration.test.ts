@@ -113,9 +113,22 @@ describe('player-only review narration', () => {
 describe('reviewMoveComment', () => {
   const played = { color: 'white' as const, fenBefore: START, ply: 1, san: 'Nf3', uci: 'g1f3' };
 
-  it('stays silent on the opponent moves', () => {
-    expect(reviewMoveComment(played, move(), [], 'black')).toBeNull();
+  it('stays silent without a move or without a side', () => {
     expect(reviewMoveComment(null, null, [], 'white')).toBeNull();
+    expect(reviewMoveComment(played, move(), [], null)).toBeNull();
+  });
+
+  it('evaluates the opponent move too, worded about the opponent', () => {
+    const comment = reviewMoveComment(
+      played,
+      move({ bestMoveUci: 'e2e4', centipawnLoss: 320, quality: 'gafe' }),
+      [],
+      'black',
+    )!;
+    expect(comment.text).toMatch(/^O adversário jogou Cf3, e infelizmente isso foi uma gafe\./);
+    expect(comment.text).toContain('No lugar dele, eu jogaria');
+    expect(comment.text).not.toContain('Você');
+    expect(comment.text).toContain('Ponto fraco');
   });
 
   it('prefers the AI key-moment narrative for this ply', () => {
