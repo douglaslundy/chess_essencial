@@ -33,14 +33,14 @@ Pedido fiel (resumo sem perder nada):
 - Backup (`apps/api/src/backup`): opção selecionável para incluir vozes geradas e arquivos (fotos de avatar).
 
 Sub-itens:
-- [ ] TUTOR-00: brainstorm/perguntas ao usuário (perfil professor/admin, local do slide, conteúdos, migration + dispensa de backup).
-- [ ] TUTOR-01: perfil de professor (role/flag; admin herda) e visibilidade do botão só para ele.
-- [ ] TUTOR-02: tabela de aulas do tutor (tipo de conteúdo + id + versão do prompt) e API de gerar/ler com cache.
-- [ ] TUTOR-03: prompts (biblioteca, exercício, curso, revisão) com fatos do motor (`moveFacts`).
-- [ ] TUTOR-04: slide flutuante só do professor (anterior/atual/próximo), atualizado a cada lance, não replicado ao aluno.
-- [ ] TUTOR-05: exclusão tutor x revisão normal; tutor ligado => sem voz.
-- [ ] VOZ-01: auditoria de todos os pontos de voz; áudio desligado => nunca gerar; reuso de `voice_audio_cache` por lance.
-- [ ] BKP-01: backup com opção de vozes e avatares.
+- [x] TUTOR-00: respostas do usuário: papel novo de professor (admin herda), balão flutuante, todos os conteúdos, backup dispensado.
+- [x] TUTOR-01 (papel `teacher` em `user_roles`, atribuído em Admin > Usuários; `GET /v1/tutor/access`): perfil de professor (role/flag; admin herda) e visibilidade do botão só para ele.
+- [x] TUTOR-02 (`tutor_lessons`, migration 0052; `POST /v1/tutor/lessons`, `GET /v1/tutor/lessons/{kind}/{id}`): tabela de aulas do tutor (tipo de conteúdo + id + versão do prompt) e API de gerar/ler com cache.
+- [x] TUTOR-03 (`apps/api/src/tutor`, `TUTOR_PROMPT_VERSION`): prompts (biblioteca, exercício, curso, revisão) com fatos do motor (`moveFacts`).
+- [x] TUTOR-04 (`components/classroom/tutor-panel.tsx`, `lib/tutor-store.ts`): slide flutuante só do professor (anterior/atual/próximo), atualizado a cada lance, não replicado ao aluno.
+- [x] TUTOR-05: exclusão tutor x revisão normal; tutor ligado => sem voz.
+- [x] VOZ-01 (regra central em `lib/speech.ts`: `isVoiceBlocked`; a voz gerada já fica em `voice_audio_cache` e é reusada): auditoria de todos os pontos de voz; áudio desligado => nunca gerar; reuso de `voice_audio_cache` por lance.
+- [x] BKP-01 (`GET /admin/backup?voices=true` e `GET /admin/backup/files` em `.xefiles`; só download, sem restauração dos arquivos): backup com opção de vozes e avatares.
 
 ## Plano de estudo e métricas (2026-11-07)
 
