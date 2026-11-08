@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act, render } from '@testing-library/react';
+import { useEffect } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { isVoiceBlocked } from './speech';
@@ -9,7 +10,10 @@ let seen: ReturnType<typeof useTutorState> | null = null;
 
 function Page({ frame, id }: { frame: number; id: string | null }) {
   useTutorContent(id ? { contentId: id, kind: 'library' } : null, frame);
-  seen = useTutorState();
+  const state = useTutorState();
+  useEffect(() => {
+    seen = state;
+  });
   return null;
 }
 
