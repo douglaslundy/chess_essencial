@@ -1,7 +1,7 @@
 import { Chess } from 'chess.js';
 import { describe, expect, it } from 'vitest';
 
-import { selectBotMoveWithEngine } from './bot-engine.js';
+import { blunderRate, selectBotMoveWithEngine } from './bot-engine.js';
 
 const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 const legal = (fen: string, uci: string) =>
@@ -25,7 +25,23 @@ describe('selectBotMoveWithEngine', () => {
     expect(legal(START, move)).toBe(true);
   }, 15_000);
 
-  it('keeps the heuristic bot for weak levels', async () => {
+  it('plays a legal move for weak levels too', async () => {
     expect(legal(START, await selectBotMoveWithEngine(START, 800))).toBe(true);
+  }, 15_000);
+
+  it('plays a random legal move at the blunder rate for a weak bot, without the engine', async () => {
+    const move = await selectBotMoveWithEngine(START, 400, 'nao-existe.cjs', () => 0);
+    expect(legal(START, move)).toBe(true);
+  });
+});
+
+describe('blunderRate', () => {
+  it('is zero from the engine floor up and grows as the bot gets weaker', () => {
+    expect(blunderRate(1320)).toBe(0);
+    expect(blunderRate(2000)).toBe(0);
+    expect(blunderRate(1000)).toBeCloseTo(0.11);
+    expect(blunderRate(1160)).toBeCloseTo(0.055);
+    expect(blunderRate(850)).toBeGreaterThan(blunderRate(1000));
+    expect(blunderRate(100)).toBe(0.3);
   });
 });

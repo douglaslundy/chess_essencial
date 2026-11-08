@@ -24,7 +24,7 @@ Plano completo: `docs/CURSO_DO_ZERO.md`. É independente do sistema antigo de cu
 
 Regra geral do usuário: todo conteúdo gerado por IA fica gravado em banco e é reaproveitado (nunca gerar de novo).
 
-- [ ] BOT-02: auditar se o rating escolhido do bot muda a força de verdade (usuário acha o bot 1300 fácil demais); corrigir se for só ilustrativo.
+- [x] BOT-02: auditado e corrigido (2026-11-08). Achado: abaixo de 1320 jogava a heurística de 2 lances (bot 1300 perdia 0-8 para o Stockfish 1320, uns -800 Elo, ou seja, ~500 de verdade). Medido com `botmatch.mjs` (partidas bot x bot, 400 ms/lance): Stockfish 1320 x 1800 e 1320 x 2200 = -800 (a escala acima de 1320 separa bem); 1800 x 2200 = -470; Stockfish 1320 com 10% de lances aleatórios = -280 e com 25% ou mais = -800. Correção em `apps/api/src/games/bot-engine.ts`: Stockfish no Elo pedido (mínimo 1320) e, abaixo de 1320, Stockfish 1320 com chance de lance aleatório (`blunderRate`: 1000 -> 11%, 700 -> 20%, 400 -> 30%). Limite: o Elo do Stockfish é da escala CCRL, não do Lichess/Chess.com, então '1300' pode seguir parecendo diferente de outro app; ajustar `BLUNDER_CURVE`/`MIN_ENGINE_ELO` conforme o seu feedback.
 - [ ] ASSIST-01: assistente de partida (sugere o lance e o porquê) só contra bot; indisponível contra humano (UI e servidor).
 - [ ] ABERT-01: árvore de aberturas (lichess chess-openings, CC0), migration, importador.
 - [ ] ABERT-02: aula por variante gerada pela IA a partir de fatos do motor, gravada em banco (piloto: Siciliana).

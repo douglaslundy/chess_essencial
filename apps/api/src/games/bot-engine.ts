@@ -1,4 +1,5 @@
 import { selectBotMove } from '@xadrez/chess-domain';
+import { Chess } from 'chess.js';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
@@ -6,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const DEFAULT_ENGINE_PATH = fileURLToPath(
   new URL('../../../worker/vendor/stockfish/stockfish-18-lite-single.cjs', import.meta.url),
 );
-/** Stockfish only plays weaker than full strength from this Elo up; below it the heuristic bot plays. */
+/** Stockfish cannot be limited below this Elo; weaker bots add random moves to it (see blunderRate). */
 const MIN_ENGINE_ELO = 1320;
 const MAX_ENGINE_ELO = 3190;
 const MOVE_TIME_MS = 400;
@@ -74,17 +75,51 @@ function askEngine(enginePath: string, fen: string, elo: number): Promise<string
   });
 }
 
+// Measured in bot-vs-bot matches against Stockfish at 1320 (400 ms a move): the old two-ply
+// heuristic labelled 1300 lost 0-8 (about -800 Elo), while Stockfish 1320 with 10% random moves
+// lost about -280 and with 25% or more lost everything. The scale is steep, so the rate stays small.
+const BLUNDER_CURVE: ReadonlyArray<readonly [number, number]> = [
+  [1320, 0],
+  [1000, 0.11],
+  [700, 0.2],
+  [400, 0.3],
+];
+
+/** Chance that a bot below the engine's floor plays a random legal move instead of the engine's. */
+export function blunderRate(strength: number): number {
+  const first = BLUNDER_CURVE[0]!;
+  const last = BLUNDER_CURVE[BLUNDER_CURVE.length - 1]!;
+  if (strength >= first[0]) return 0;
+  if (strength <= last[0]) return last[1];
+  for (let i = 1; i < BLUNDER_CURVE.length; i += 1) {
+    const [highElo, highRate] = BLUNDER_CURVE[i - 1]!;
+    const [lowElo, lowRate] = BLUNDER_CURVE[i]!;
+    if (strength >= lowElo) {
+      return highRate + ((highElo - strength) / (highElo - lowElo)) * (lowRate - highRate);
+    }
+  }
+  return last[1];
+}
+
+function randomLegalMove(fen: string, random: () => number): string {
+  const legal = new Chess(fen).moves({ verbose: true });
+  const move = legal[Math.min(legal.length - 1, Math.floor(random() * legal.length))]!;
+  return `${move.from}${move.to}${move.promotion ?? ''}`;
+}
+
 /**
- * The bot's move. From 1320 Elo up it is Stockfish limited to that Elo (the old two-ply
- * heuristic played far below its label); weaker bots, or any engine failure, use the heuristic.
+ * The bot's move. Stockfish limited to the bot's Elo (at least 1320); weaker bots are Stockfish
+ * at 1320 that sometimes plays a random move. Only an engine failure uses the old two-ply
+ * heuristic, which plays far below its label.
  */
 export async function selectBotMoveWithEngine(
   fen: string,
   strength: number,
   enginePath = DEFAULT_ENGINE_PATH,
+  random: () => number = Math.random,
 ): Promise<string> {
-  if (strength < MIN_ENGINE_ELO) return selectBotMove(fen, strength);
-  const elo = Math.min(Math.round(strength), MAX_ENGINE_ELO);
+  if (random() < blunderRate(strength)) return randomLegalMove(fen, random);
+  const elo = Math.min(Math.max(Math.round(strength), MIN_ENGINE_ELO), MAX_ENGINE_ELO);
   await acquire();
   try {
     return await askEngine(enginePath, fen, elo);
