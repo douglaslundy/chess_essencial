@@ -6,7 +6,7 @@ deploy_script="deploy/remote-deploy.sh"
 grep --quiet 'PROJECT_NAME="xadrez-essencial"' "$deploy_script"
 grep --quiet 'docker compose --project-name "$PROJECT_NAME"' "$deploy_script"
 grep --quiet 'XADREZ_MIN_FREE_DISK_KB' "$deploy_script"
-grep --quiet 'ONE_TIME_LOCAL_BACKUP_CEILING="0049_course_progress.up.sql"' "$deploy_script"
+grep --quiet 'ONE_TIME_LOCAL_BACKUP_CEILING="0052_tutor.up.sql"' "$deploy_script"
 grep --quiet 'XADREZ_BACKUP_MODE=local-only bash deploy/backup-database.sh' "$deploy_script"
 grep --quiet 'bash deploy/backup-database.sh' "$deploy_script"
 grep --quiet 'BACKUP_MODE="${XADREZ_BACKUP_MODE:-offsite}"' deploy/backup-database.sh
