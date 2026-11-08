@@ -42,6 +42,60 @@ function possibleLine(fen: string, suggestion: CoachPlanSuggestion, mode: Mode):
 
 type Mode = 'speech' | 'text';
 
+const PIECE_VALUE: Record<string, number> = { b: 3, k: 0, n: 3, p: 1, q: 9, r: 5 };
+const PIECE_NAME: Record<string, string> = {
+  b: 'o bispo',
+  k: 'o rei',
+  n: 'o cavalo',
+  p: 'o peão',
+  q: 'a dama',
+  r: 'a torre',
+};
+
+/** Squares of `victim`'s pieces the opponent could win right now (free, or for a cheaper piece). */
+function threatenedSquares(fen: string, victim: 'b' | 'w'): Map<string, string> {
+  const parts = fen.split(' ');
+  parts[1] = victim === 'w' ? 'b' : 'w';
+  parts[3] = '-';
+  const threatened = new Map<string, string>();
+  try {
+    const chess = new Chess(parts.join(' '));
+    for (const move of chess.moves({ verbose: true })) {
+      if (!move.captured || move.captured === 'k') continue;
+      const defended = chess.isAttacked(move.to, victim);
+      if (!defended || PIECE_VALUE[move.captured]! > PIECE_VALUE[move.piece]!) {
+        threatened.set(move.to, move.captured);
+      }
+    }
+  } catch {
+    // A position that cannot be flipped (for example the side to move is in check): no threat list.
+  }
+  return threatened;
+}
+
+/** What the move does about the opponent's threats: saves the piece that was attacked, if any. */
+function describeThreatAnswer(fen: string, uci: string): string | null {
+  const chess = new Chess(fen);
+  const me = chess.turn();
+  const before = threatenedSquares(fen, me);
+  if (before.size === 0) return null;
+  let played;
+  try {
+    played = playUci(chess, uci);
+  } catch {
+    return null;
+  }
+  const after = threatenedSquares(chess.fen(), me);
+  for (const [square, type] of before) {
+    const stillThreatened = after.has(square === played.from ? played.to : square);
+    if (stillThreatened) continue;
+    return square === played.from
+      ? `Também tira ${PIECE_NAME[type]} de ${square} do ataque do adversário.`
+      : `Também resolve a ameaça do adversário a ${PIECE_NAME[type]} em ${square}.`;
+  }
+  return null;
+}
+
 const nameOf = (move: { from: string; san: string; to: string }, mode: Mode) =>
   mode === 'speech' ? spokenSan(move.san, move) : toBrazilianSan(move.san);
 
@@ -75,9 +129,10 @@ export function formatCoachExplanation(
       ? describeMoveFacts(facts).find((line) => /^(Ataca|Ameaça)/.test(line))
       : undefined;
 
+  const answer = describeThreatAnswer(fen, suggestion.bestMoveUci);
   const line = possibleLine(fen, suggestion, mode);
   const forecast = line.length > 1 ? ` A linha que eu imagino é ${line.join(', ')}.` : '';
-  return `Eu indico ${san}${goal ? `, para ${goal}` : ''}.${extra && !goal?.startsWith('ameaçar') ? ` ${extra}` : ''}${forecast}`;
+  return `Eu indico ${san}${goal ? `, para ${goal}` : ''}.${extra && !goal?.startsWith('ameaçar') ? ` ${extra}` : ''}${answer ? ` ${answer}` : ''}${forecast}`;
 }
 
 /**

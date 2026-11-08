@@ -19,6 +19,25 @@ describe('formatCoachExplanation', () => {
   });
 });
 
+describe('formatCoachExplanation, answering a threat', () => {
+  it('says when the suggested move saves the piece the opponent was attacking', () => {
+    // The black rook on a8 attacks the undefended white rook on a1; taking it removes the danger.
+    const fen = 'r3k3/8/8/8/8/8/8/R3K3 w - - 0 1';
+    const text = formatCoachExplanation(fen, {
+      bestMoveUci: 'a1a8',
+      mate: null,
+      principalVariation: ['a1a8'],
+    });
+    expect(text).toContain('Também tira a torre de a1 do ataque do adversário.');
+  });
+
+  it('adds nothing when no piece was under threat', () => {
+    expect(
+      formatCoachExplanation(START, { bestMoveUci: 'e2e4', mate: null, principalVariation: [] }),
+    ).not.toContain('Também');
+  });
+});
+
 describe('formatCoachWarning', () => {
   it('says what the weak move gives away and what to play instead', () => {
     const fen = '2r1k3/8/8/8/2B5/8/8/2R1K3 w - - 0 1';

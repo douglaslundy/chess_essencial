@@ -727,6 +727,8 @@ export const api = {
   cancelDirectChallenge: (challengeId: string, token: string) =>
     request<void>(`/matchmaking/challenges/${challengeId}`, token, { method: 'DELETE' }),
   leaveQueue: (token: string) => request<void>('/matchmaking/queues', token, { method: 'DELETE' }),
+  enableGameAssistant: (gameId: string, token: string) =>
+    request<GameState>(`/games/${gameId}/assistant`, token, { method: 'POST' }),
   resign: (gameId: string, token: string) =>
     request<GameState>(`/games/${gameId}/resign`, token, { method: 'POST' }),
   offerDraw: (gameId: string, token: string) =>

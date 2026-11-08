@@ -225,6 +225,8 @@ export function GameRoom({ gameId }: { gameId: string }) {
   const [myColor, setMyColor] = useState<BoardOrientation | null>(null);
   const [serverOffset, setServerOffset] = useState(0);
   const [resignDialogOpen, setResignDialogOpen] = useState(false);
+  const [assistantDialogOpen, setAssistantDialogOpen] = useState(false);
+  const [enablingAssistant, setEnablingAssistant] = useState(false);
   const [resigning, setResigning] = useState(false);
   const [viewIndex, setViewIndex] = useState<number | null>(null);
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
@@ -599,6 +601,27 @@ export function GameRoom({ gameId }: { gameId: string }) {
     return rows;
   }, [moves]);
 
+  // The assistant (Treinador) can be turned on in a game against the bot, never against a person.
+  const canEnableAssistant =
+    !isDemo && state.opponentIsBot === true && !state.coachMode && state.status === 'active';
+
+  async function confirmAssistant() {
+    const token = window.localStorage.getItem('xadrez.access_token');
+    if (!token) return;
+    setEnablingAssistant(true);
+    try {
+      setState(await api.enableGameAssistant(gameId, token));
+      setMessage(
+        'Assistente ligado: ele sugere o lance e explica o porquê. A partida não vale mais rating.',
+      );
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Não foi possível ligar o assistente.');
+    } finally {
+      setEnablingAssistant(false);
+      setAssistantDialogOpen(false);
+    }
+  }
+
   async function action(kind: 'draw' | 'resign') {
     const token = window.localStorage.getItem('xadrez.access_token');
     if (!token) {
@@ -777,6 +800,11 @@ export function GameRoom({ gameId }: { gameId: string }) {
             <button className="dangerAction" onClick={() => action('resign')} type="button">
               ⚑ Desistir
             </button>
+            {canEnableAssistant ? (
+              <button onClick={() => setAssistantDialogOpen(true)} type="button">
+                🎓 Assistente
+              </button>
+            ) : null}
             <button
               onClick={() => {
                 const next = !muted;
@@ -1084,8 +1112,23 @@ export function GameRoom({ gameId }: { gameId: string }) {
           <button className="dangerAction" onClick={() => action('resign')} type="button">
             ⚑ Desistir
           </button>
+          {canEnableAssistant ? (
+            <button onClick={() => setAssistantDialogOpen(true)} type="button">
+              🎓 Assistente
+            </button>
+          ) : null}
         </div>
       ) : null}
+      <ConfirmDialog
+        busy={enablingAssistant}
+        confirmLabel="Ligar o assistente"
+        description="O assistente sugere o melhor lance, explica o porquê e avalia cada lance do bot. Como é uma ajuda, esta partida deixa de valer rating."
+        eyebrow="Partida contra o bot"
+        onCancel={() => setAssistantDialogOpen(false)}
+        onConfirm={() => void confirmAssistant()}
+        open={assistantDialogOpen}
+        title="Ligar o assistente?"
+      />
       <ConfirmDialog
         busy={resigning}
         confirmLabel="Sim, desistir"

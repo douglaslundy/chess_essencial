@@ -1515,6 +1515,20 @@ paths:
             application/x-chess-pgn:
               schema: {type: string}
         '404': {$ref: '#/components/responses/Problem'}
+  /games/{gameId}/assistant:
+    post:
+      summary: Ligar o assistente (Treinador) numa partida contra o bot; a partida deixa de valer rating
+      operationId: enableGameAssistant
+      parameters:
+        - $ref: '#/components/parameters/GameId'
+      responses:
+        '200':
+          description: Estado da partida com o assistente ligado
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GameState'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
   /games/{gameId}/resign:
     post:
       summary: Abandonar partida
@@ -3878,6 +3892,7 @@ components:
         currentFen: {type: string}
         sideToMove: {type: string, enum: [white, black]}
         coachMode: {type: boolean}
+        opponentIsBot: {type: boolean}
         version: {type: integer, minimum: 0}
         whiteClockMs: {type: integer, minimum: 0}
         blackClockMs: {type: integer, minimum: 0}

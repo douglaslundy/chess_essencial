@@ -38,6 +38,8 @@ export const gameStateSchema = z.object({
   currentFen: z.string(),
   sideToMove: z.enum(['white', 'black']),
   coachMode: z.boolean(),
+  /** True in a game against the bot: the only kind of game where the assistant can be turned on. */
+  opponentIsBot: z.boolean().optional(),
   version: z.number().int().nonnegative(),
   whiteClockMs: z.number().int().nonnegative(),
   blackClockMs: z.number().int().nonnegative(),

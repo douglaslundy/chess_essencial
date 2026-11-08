@@ -779,6 +779,32 @@ export class GamesRepository {
     });
   }
 
+  /**
+   * Turns the Treinador (assistant) on for a game against a bot already in progress. Only against
+   * a bot, never against a person; the game stops counting for the rating from then on.
+   */
+  async enableAssistant(gameId: string, userId: string): Promise<GameState> {
+    await this.assertPlayer(gameId, userId);
+    const [game] = await this.database.client<{ bot: boolean; status: string }[]>`
+      SELECT g.status, EXISTS (SELECT 1 FROM game_bots b WHERE b.game_id = g.id) AS bot
+        FROM games g WHERE g.id = ${gameId}
+    `;
+    if (!game?.bot) {
+      throw new ForbiddenException('O assistente só está disponível em partidas contra o bot.');
+    }
+    if (game.status !== 'active') throw new ConflictException('A partida não está em andamento.');
+    const entitlement = await this.subscriptions.checkEntitlement(userId, 'coach_mode_access');
+    if (!entitlement.allowed) {
+      throw new ForbiddenException(
+        'O assistente não está disponível no seu plano atual. Assine um plano com esse recurso.',
+      );
+    }
+    await this.database.client`
+      UPDATE games SET coach_mode = true, rated = false WHERE id = ${gameId}
+    `;
+    return this.getState(gameId, userId);
+  }
+
   async resign(gameId: string, userId: string): Promise<GameState> {
     return this.database.client.begin(async (transaction) => {
       await transaction`SELECT pg_advisory_xact_lock(hashtextextended(${gameId}, 0))`;
@@ -1317,10 +1343,14 @@ export class GamesRepository {
       WHERE game_id = ${gameId} AND status = 'pending'
     `;
 
+    const [bot] = await query<{ present: boolean }[]>`
+      SELECT true AS present FROM game_bots WHERE game_id = ${gameId}
+    `;
     return {
       activeClockStartedAt: this.toIso(game.activeClockStartedAt),
       blackClockMs: game.blackClockMs,
       coachMode: game.coachMode,
+      opponentIsBot: Boolean(bot),
       currentFen: game.currentFen,
       finishedAt: this.toIso(game.finishedAt),
       id: game.id,

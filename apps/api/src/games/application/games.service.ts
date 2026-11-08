@@ -84,6 +84,10 @@ export class GamesService {
     return this.games.getPgn(gameId, userId);
   }
 
+  enableAssistant(gameId: string, userId: string) {
+    return this.games.enableAssistant(gameId, userId);
+  }
+
   async resign(gameId: string, userId: string) {
     const state = await this.games.resign(gameId, userId);
     await this.ratings.processFinishedGame(gameId);

@@ -1470,6 +1470,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/games/{gameId}/assistant': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Ligar o assistente (Treinador) numa partida contra o bot; a partida deixa de valer rating */
+    post: operations['enableGameAssistant'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/games/{gameId}/resign': {
     parameters: {
       query?: never;
@@ -3568,6 +3585,7 @@ export interface components {
       /** @enum {string} */
       sideToMove: 'white' | 'black';
       coachMode: boolean;
+      opponentIsBot?: boolean;
       version: number;
       whiteClockMs: number;
       blackClockMs: number;
@@ -6240,6 +6258,30 @@ export interface operations {
         };
       };
       404: components['responses']['Problem'];
+    };
+  };
+  enableGameAssistant: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        gameId: components['parameters']['GameId'];
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Estado da partida com o assistente ligado */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GameState'];
+        };
+      };
+      403: components['responses']['Problem'];
+      409: components['responses']['Problem'];
     };
   };
   resignGame: {

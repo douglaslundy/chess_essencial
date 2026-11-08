@@ -96,6 +96,13 @@ export class GamesController {
     );
   }
 
+  /** Treinador on demand, only in a game against the bot (403 against a person). */
+  @Post(':gameId/assistant')
+  @HttpCode(200)
+  enableAssistant(@Req() request: AuthenticatedRequest, @Param('gameId') gameId: string) {
+    return this.gamesService.enableAssistant(parseInput(gameIdSchema, gameId), request.auth.userId);
+  }
+
   @Post(':gameId/resign')
   @HttpCode(200)
   async resign(@Req() request: AuthenticatedRequest, @Param('gameId') gameId: string) {
