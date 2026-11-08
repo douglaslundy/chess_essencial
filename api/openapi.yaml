@@ -2120,6 +2120,108 @@ paths:
               schema: {$ref: '#/components/schemas/CourseTrailProgress'}
         '400': {$ref: '#/components/responses/Problem'}
         '401': {$ref: '#/components/responses/Problem'}
+  /openings/families:
+    get:
+      summary: Listar as famílias de abertura (Siciliana, Italiana...) com a quantidade de linhas
+      operationId: listOpeningFamilies
+      parameters:
+        - {name: side, in: query, required: false, schema: {type: string, enum: [white, black]}}
+      responses:
+        '200':
+          description: Famílias de abertura
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/OpeningFamily'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /openings/due:
+    get:
+      summary: Aberturas treinadas que já estão na hora de repetir
+      operationId: listDueOpenings
+      responses:
+        '200':
+          description: Linhas a repetir
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/OpeningLine'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /openings:
+    get:
+      summary: Buscar linhas de abertura por família ou nome
+      operationId: searchOpenings
+      parameters:
+        - {name: family, in: query, required: false, schema: {type: string}}
+        - {name: q, in: query, required: false, schema: {type: string}}
+      responses:
+        '200':
+          description: Linhas encontradas (no máximo 200)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/OpeningLine'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /openings/{openingId}:
+    get:
+      summary: Ler uma linha de abertura com a aula já gerada
+      operationId: getOpening
+      parameters:
+        - {name: openingId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Linha, aula e próxima revisão
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OpeningDetail'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /openings/{openingId}/lesson:
+    post:
+      summary: Gerar a aula da abertura (uma vez; depois é reaproveitada)
+      operationId: requestOpeningLesson
+      parameters:
+        - {name: openingId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '201':
+          description: Estado atual da aula
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OpeningDetail'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
+  /openings/{openingId}/practice:
+    post:
+      summary: Registrar o resultado do treino da abertura e agendar a próxima repetição
+      operationId: practiceOpening
+      parameters:
+        - {name: openingId, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [correct]
+              properties:
+                correct: {type: boolean}
+      responses:
+        '200':
+          description: Data da próxima repetição
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [dueAt]
+                properties:
+                  dueAt: {type: string, format: date-time}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
   /tutor/access:
     get:
       summary: Informar se o usuário tem o perfil de professor (o admin tem todos os perfis)
@@ -2395,6 +2497,47 @@ components:
             members:
               type: array
               items: {$ref: '#/components/schemas/ClassroomMember'}
+    OpeningFamily:
+      type: object
+      required: [family, lines, side]
+      properties:
+        family: {type: string}
+        lines: {type: integer}
+        side: {type: string, enum: [white, black]}
+    OpeningLine:
+      type: object
+      required: [id, eco, name, family, pgn, plyCount, side, moves]
+      properties:
+        id: {type: string, format: uuid}
+        eco: {type: string}
+        name: {type: string}
+        family: {type: string}
+        pgn: {type: string}
+        plyCount: {type: integer}
+        side: {type: string, enum: [white, black]}
+        moves: {type: array, items: {type: string}}
+    OpeningDetail:
+      type: object
+      required: [aiAvailable, dueAt, lesson, line]
+      properties:
+        aiAvailable: {type: boolean}
+        dueAt: {type: string, format: date-time, nullable: true}
+        line: {$ref: '#/components/schemas/OpeningLine'}
+        lesson:
+          type: object
+          required: [status, overview, frames]
+          properties:
+            status: {type: string, enum: [none, generating, completed, failed]}
+            overview: {type: string}
+            frames:
+              type: array
+              items:
+                type: object
+                required: [index, label, text]
+                properties:
+                  index: {type: integer}
+                  label: {type: string}
+                  text: {type: string}
     TutorLesson:
       type: object
       required: [status, frames, totalSteps]

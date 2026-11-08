@@ -14,7 +14,9 @@ PROJECT_NAME="xadrez-essencial"
 # One-time exception, authorized by the user (restic still not installed): 0049 on 2026-11-01,
 # and 0050 (classrooms), 0051 (study progress) and 0052 (tutor) on 2026-11-07/08. They run with the
 # local dump only. The next migration requires the offsite backup again.
-ONE_TIME_LOCAL_BACKUP_CEILING="0052_tutor.up.sql"
+# 2026-11-08: the user waived the offsite backup for the openings feature and "whenever needed",
+# so the ceiling follows the openings migration (0053).
+ONE_TIME_LOCAL_BACKUP_CEILING="0053_openings.up.sql"
 IMAGE_TAG="$(git rev-parse --short=12 HEAD)"
 export IMAGE_TAG
 
@@ -141,6 +143,7 @@ fi
 "${compose[@]}" run --rm api pnpm --filter @xadrez/api db:seed
 "${compose[@]}" run --rm api pnpm --filter @xadrez/api db:import-exercises database/content/Xadrez_Essencial_Exercicios_1_a_1298.json --strict
 "${compose[@]}" run --rm api pnpm --filter @xadrez/api db:import-library database/content/library/games.jsonl.gz
+"${compose[@]}" run --rm api pnpm --filter @xadrez/api db:import-openings
 "${compose[@]}" run --rm api pnpm --filter @xadrez/api db:seed-learning-path
 "${compose[@]}" run --rm api pnpm --filter @xadrez/api db:audit-learning-path
 

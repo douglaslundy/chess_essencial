@@ -42,6 +42,7 @@ export const CLASSROOM_AREAS = [
   { href: '/app/treinamento', label: 'Treinamento' },
   { href: '/app/partidas', label: 'Partida' },
   { href: '/app/biblioteca', label: 'Biblioteca' },
+  { href: '/app/aberturas', label: 'Aberturas' },
   { href: '/app/desafios', label: 'Desafio' },
   { href: '/app/jogar', label: 'Jogar' },
 ] as const;

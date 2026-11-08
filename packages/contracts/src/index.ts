@@ -437,3 +437,15 @@ export {
   type TutorKind,
   type TutorLesson,
 } from './tutor.js';
+export {
+  openingDetailSchema,
+  openingFamilySchema,
+  openingLessonSchema,
+  openingLineSchema,
+  openingPracticeInputSchema,
+  openingSideSchema,
+  type OpeningDetail,
+  type OpeningFamily,
+  type OpeningLesson,
+  type OpeningLine,
+} from './openings.js';

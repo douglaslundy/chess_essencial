@@ -2155,6 +2155,108 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/openings/families': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Listar as famílias de abertura (Siciliana, Italiana...) com a quantidade de linhas */
+    get: operations['listOpeningFamilies'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/openings/due': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Aberturas treinadas que já estão na hora de repetir */
+    get: operations['listDueOpenings'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/openings': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Buscar linhas de abertura por família ou nome */
+    get: operations['searchOpenings'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/openings/{openingId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Ler uma linha de abertura com a aula já gerada */
+    get: operations['getOpening'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/openings/{openingId}/lesson': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Gerar a aula da abertura (uma vez; depois é reaproveitada) */
+    post: operations['requestOpeningLesson'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/openings/{openingId}/practice': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Registrar o resultado do treino da abertura e agendar a próxima repetição */
+    post: operations['practiceOpening'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/tutor/access': {
     parameters: {
       query?: never;
@@ -2340,6 +2442,40 @@ export interface components {
     };
     ClassroomDetail: components['schemas']['ClassroomSummary'] & {
       members: components['schemas']['ClassroomMember'][];
+    };
+    OpeningFamily: {
+      family: string;
+      lines: number;
+      /** @enum {string} */
+      side: 'white' | 'black';
+    };
+    OpeningLine: {
+      /** Format: uuid */
+      id: string;
+      eco: string;
+      name: string;
+      family: string;
+      pgn: string;
+      plyCount: number;
+      /** @enum {string} */
+      side: 'white' | 'black';
+      moves: string[];
+    };
+    OpeningDetail: {
+      aiAvailable: boolean;
+      /** Format: date-time */
+      dueAt: string | null;
+      line: components['schemas']['OpeningLine'];
+      lesson: {
+        /** @enum {string} */
+        status: 'none' | 'generating' | 'completed' | 'failed';
+        overview: string;
+        frames: {
+          index: number;
+          label: string;
+          text: string;
+        }[];
+      };
     };
     TutorLesson: {
       /** @enum {string} */
@@ -7253,6 +7389,158 @@ export interface operations {
       };
       400: components['responses']['Problem'];
       401: components['responses']['Problem'];
+    };
+  };
+  listOpeningFamilies: {
+    parameters: {
+      query?: {
+        side?: 'white' | 'black';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Famílias de abertura */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OpeningFamily'][];
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  listDueOpenings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Linhas a repetir */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OpeningLine'][];
+        };
+      };
+      401: components['responses']['Problem'];
+    };
+  };
+  searchOpenings: {
+    parameters: {
+      query?: {
+        family?: string;
+        q?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Linhas encontradas (no máximo 200) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OpeningLine'][];
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+    };
+  };
+  getOpening: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        openingId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Linha, aula e próxima revisão */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OpeningDetail'];
+        };
+      };
+      401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  requestOpeningLesson: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        openingId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Estado atual da aula */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OpeningDetail'];
+        };
+      };
+      401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+      422: components['responses']['Problem'];
+    };
+  };
+  practiceOpening: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        openingId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          correct: boolean;
+        };
+      };
+    };
+    responses: {
+      /** @description Data da próxima repetição */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            /** Format: date-time */
+            dueAt: string;
+          };
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      404: components['responses']['Problem'];
     };
   };
   getTutorAccess: {

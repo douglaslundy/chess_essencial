@@ -16,6 +16,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "db:seed-demo": "tsx src/database/seed-demo.ts",
     "db:import-library": "tsx src/database/import-library.ts",
+    "db:import-openings": "tsx src/database/import-openings.ts",
     "db:import-lessons": "tsx src/database/import-lessons.ts",
     "db:seed-bot-personas": "tsx src/database/seed-bot-personas.ts",
     "db:seed-learning-path": "tsx src/database/seed-learning-path.ts",

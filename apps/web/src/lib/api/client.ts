@@ -106,6 +106,9 @@ import type {
   SendMessageInput,
   SendTestEmailInput,
   SmtpSettings,
+  OpeningDetail,
+  OpeningFamily,
+  OpeningLine,
   TokenPair,
   TutorKind,
   TutorLesson,
@@ -674,6 +677,27 @@ export const api = {
     request<void>(`/classrooms/${classroomId}/live`, token, {
       method: 'PUT',
       body: JSON.stringify({ path }),
+    }),
+  listOpeningFamilies: (side: 'black' | 'white', token: string) =>
+    request<OpeningFamily[]>(`/openings/families?side=${side}`, token),
+  listDueOpenings: (token: string) => request<OpeningLine[]>('/openings/due', token),
+  searchOpenings: (
+    query: { family?: string | undefined; q?: string | undefined },
+    token: string,
+  ) => {
+    const params = new URLSearchParams();
+    if (query.family) params.set('family', query.family);
+    if (query.q) params.set('q', query.q);
+    return request<OpeningLine[]>(`/openings?${params.toString()}`, token);
+  },
+  getOpening: (openingId: string, token: string) =>
+    request<OpeningDetail>(`/openings/${openingId}`, token),
+  requestOpeningLesson: (openingId: string, token: string) =>
+    request<OpeningDetail>(`/openings/${openingId}/lesson`, token, { method: 'POST' }),
+  practiceOpening: (openingId: string, correct: boolean, token: string) =>
+    request<{ dueAt: string }>(`/openings/${openingId}/practice`, token, {
+      method: 'POST',
+      body: JSON.stringify({ correct }),
     }),
   getTutorAccess: (token: string) => request<{ allowed: boolean }>('/tutor/access', token),
   getTutorLesson: (kind: TutorKind, contentId: string, token: string) =>
