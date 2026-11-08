@@ -23,6 +23,7 @@ Plano completo: `docs/CURSO_DO_ZERO.md`. É independente do sistema antigo de cu
 ## Tutor de IA da sala de aula (pedido de 2026-11-07, PRÓXIMA GRANDE TAREFA, fazer na `main`)
 
 Pedido fiel (resumo sem perder nada):
+
 - Botão "Tutor de IA" dentro da sala de aula, só para quem tem perfil de professor; admin tem perfil completo (inclui professor). Só aparece depois que o professor abre um conteúdo (exercício, aula do curso, partida da biblioteca, revisão de partida...). Ao clicar, a IA gera uma aula quadro a quadro sobre o conteúdo aberto. Em revisão de partida: tutor e revisão normal são excludentes (um ou outro).
 - Partida da biblioteca: 1º frame = do que trata a partida, tema de estudo, pontos fortes e fracos (objetivo, direto, entendível para leigo). Depois um frame por lance: "peão branco para E4" (com nome do jogador se houver), que abertura é, se é comum/forte; resposta das pretas: abertura, se foi gafe, o que poderia ter jogado; instrutivo. Sempre nome da peça + casa ("torre de E4").
 - Exercício: narra o exercício (ex.: mate em escadinha, o tema), "mova a torre de X para Y", adversário responde, novo slide, até o mate.
@@ -33,6 +34,7 @@ Pedido fiel (resumo sem perder nada):
 - Backup (`apps/api/src/backup`): opção selecionável para incluir vozes geradas e arquivos (fotos de avatar).
 
 Sub-itens:
+
 - [x] TUTOR-00: respostas do usuário: papel novo de professor (admin herda), balão flutuante, todos os conteúdos, backup dispensado.
 - [x] TUTOR-01 (papel `teacher` em `user_roles`, atribuído em Admin > Usuários; `GET /v1/tutor/access`): perfil de professor (role/flag; admin herda) e visibilidade do botão só para ele.
 - [x] TUTOR-02 (`tutor_lessons`, migration 0052; `POST /v1/tutor/lessons`, `GET /v1/tutor/lessons/{kind}/{id}`): tabela de aulas do tutor (tipo de conteúdo + id + versão do prompt) e API de gerar/ler com cache.
