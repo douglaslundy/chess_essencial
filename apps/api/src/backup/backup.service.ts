@@ -5,6 +5,7 @@ import { PassThrough, type Readable } from 'node:stream';
 import { createGunzip, createGzip } from 'node:zlib';
 
 import { DatabaseService } from '../database/database.service.js';
+import { StorageService } from '../storage/storage.service.js';
 import { AuditService } from '../observability/audit.service.js';
 import {
   BACKUP_MAGIC,
@@ -12,6 +13,7 @@ import {
   COPY_END,
   EXCLUDED_TABLES,
   loadOrder,
+  OPTIONAL_TABLES,
   TABLE_MARKER,
   type BackupHeader,
 } from './backup-format.js';
@@ -26,6 +28,7 @@ export interface RestoreReport {
 export class BackupService {
   constructor(
     private readonly database: DatabaseService,
+    private readonly storage: StorageService,
     @Optional() private readonly audit?: AuditService,
   ) {}
 
@@ -72,9 +75,14 @@ export class BackupService {
   }
 
   /** Streams the whole platform database as a gzip .xebak file. */
-  async export(actorUserId: string): Promise<{ filename: string; stream: Readable }> {
+  async export(
+    actorUserId: string,
+    options: { voices?: boolean } = {},
+  ): Promise<{ filename: string; stream: Readable }> {
     const columns = await this.currentColumns();
-    const tables = await this.orderedTables(columns);
+    const tables = (await this.orderedTables(columns)).filter(
+      (name) => options.voices || !OPTIONAL_TABLES.has(name),
+    );
     const header: BackupHeader = {
       createdAt: new Date().toISOString(),
       migration: await this.currentMigration(),
@@ -114,6 +122,27 @@ export class BackupService {
     });
     const stamp = header.createdAt.slice(0, 19).replace(/[:T]/g, '-');
     return { filename: `xadrez-backup-${stamp}.xebak`, stream: out };
+  }
+
+  /** Streams the stored image files (avatars and post photos) as gzip JSON lines: {name, contentType, data(base64)}. */
+  async exportFiles(actorUserId: string): Promise<{ filename: string; stream: Readable }> {
+    const gzip = createGzip();
+    const storage = this.storage;
+    void (async () => {
+      try {
+        for await (const file of storage.listFiles()) {
+          const line = `${JSON.stringify({ ...file, data: file.data.toString('base64') })}
+`;
+          if (!gzip.write(line)) await once(gzip, 'drain');
+        }
+        gzip.end();
+      } catch (error) {
+        gzip.destroy(error instanceof Error ? error : new Error('Falha ao gerar o backup.'));
+      }
+    })();
+    await this.audit?.record(actorUserId, 'admin.backup_files_exported', 'platform', 'files', {});
+    const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+    return { filename: `xadrez-arquivos-${stamp}.xefiles`, stream: gzip };
   }
 
   /**

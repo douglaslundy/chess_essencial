@@ -28,26 +28,34 @@ export default function AdminBackupPage() {
   const [message, setMessage] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [confirmation, setConfirmation] = useState('');
+  const [withVoices, setWithVoices] = useState(false);
+  const [withFiles, setWithFiles] = useState(false);
+
+  async function save(path: string, fallbackName: string): Promise<string> {
+    const response = await fetch(`${webEnv.NEXT_PUBLIC_API_URL}${path}`, {
+      headers: authHeader(),
+    });
+    if (!response.ok) throw new Error(await problemMessage(response, 'Falha ao gerar o backup'));
+    const blob = await response.blob();
+    const name =
+      /filename="([^"]+)"/.exec(response.headers.get('content-disposition') ?? '')?.[1] ??
+      fallbackName;
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    link.click();
+    URL.revokeObjectURL(url);
+    return `${name} (${(blob.size / 1024 / 1024).toFixed(1)} MB)`;
+  }
 
   async function download() {
     setBusy(true);
     setMessage('Gerando o backup…');
     try {
-      const response = await fetch(`${webEnv.NEXT_PUBLIC_API_URL}/admin/backup`, {
-        headers: authHeader(),
-      });
-      if (!response.ok) throw new Error(await problemMessage(response, 'Falha ao gerar o backup'));
-      const blob = await response.blob();
-      const name =
-        /filename="([^"]+)"/.exec(response.headers.get('content-disposition') ?? '')?.[1] ??
-        'xadrez-backup.xebak';
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = name;
-      link.click();
-      URL.revokeObjectURL(url);
-      setMessage(`Backup baixado: ${name} (${(blob.size / 1024 / 1024).toFixed(1)} MB).`);
+      const saved = [await save(`/admin/backup?voices=${withVoices}`, 'xadrez-backup.xebak')];
+      if (withFiles) saved.push(await save('/admin/backup/files', 'xadrez-arquivos.xefiles'));
+      setMessage(`Backup baixado: ${saved.join(' e ')}.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Falha ao gerar o backup.');
     } finally {
@@ -102,6 +110,26 @@ export default function AdminBackupPage() {
           Gera e baixa um arquivo .xebak compactado. A plataforma continua funcionando durante o
           backup.
         </p>
+        <label className={styles.field}>
+          <span>
+            <input
+              checked={withVoices}
+              onChange={(event) => setWithVoices(event.target.checked)}
+              type="checkbox"
+            />{' '}
+            Incluir as vozes geradas (arquivo maior)
+          </span>
+        </label>
+        <label className={styles.field}>
+          <span>
+            <input
+              checked={withFiles}
+              onChange={(event) => setWithFiles(event.target.checked)}
+              type="checkbox"
+            />{' '}
+            Baixar também os arquivos de fotos (avatares e fotos do feed), num arquivo à parte
+          </span>
+        </label>
         <button
           className={styles.primaryButton}
           disabled={busy}

@@ -3,6 +3,8 @@
 // sentence currently being played. stopSpeaking() is the explicit cancellation
 // boundary used when narration is muted, the screen is left, or a preview asks
 // to interrupt.
+import { isSoundMuted } from './sound';
+
 const activeUtterances = new Set<SpeechSynthesisUtterance>();
 let currentAudio: HTMLAudioElement | null = null;
 let currentAudioUrl: string | null = null;
@@ -34,6 +36,19 @@ if (typeof window !== 'undefined') {
     }
   };
   window.addEventListener('pointerdown', unlock);
+}
+
+let tutorActive = false;
+
+/** The classroom AI tutor replaces the voice: while it is on, no narration is played or generated. */
+export function setTutorActive(active: boolean): void {
+  tutorActive = active;
+  if (active) stopSpeaking();
+}
+
+/** Single rule for the whole platform: sound off or tutor on => no voice is generated or played. */
+export function isVoiceBlocked(): boolean {
+  return tutorActive || isSoundMuted();
 }
 
 export const NARRATION_RATES = [1, 1.2, 1.5, 2] as const;
@@ -117,7 +132,8 @@ function fetchClip(text: string, voiceName: string, token: string): Promise<Blob
  * starts at once when they are spoken. Does nothing for browser voices.
  */
 export function prefetchSpeech(texts: string[], voiceName: string | null | undefined): void {
-  if (typeof window === 'undefined' || !voiceName?.startsWith('openai:')) return;
+  if (typeof window === 'undefined' || isVoiceBlocked() || !voiceName?.startsWith('openai:'))
+    return;
   const token = window.localStorage.getItem('xadrez.access_token');
   if (!token) return;
   void texts.reduce<Promise<unknown>>(
@@ -192,7 +208,7 @@ async function speakWithBrowser(text: string, options: SpeakOptions): Promise<vo
 }
 
 export async function speak(text: string, options: SpeakOptions = {}): Promise<void> {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || isVoiceBlocked()) return;
   if (options.interrupt) stopSpeaking();
   if (options.voiceName?.startsWith('openai:')) {
     const generation = queueGeneration;

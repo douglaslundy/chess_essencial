@@ -21,11 +21,11 @@ export interface BackupHeader {
   tables: BackupTable[];
 }
 
-/**
- * Tables left out of a backup: the migration ledger (the target database keeps its own and
- * the header pins the version instead) and the TTS audio cache (large, regenerated on demand).
- */
-export const EXCLUDED_TABLES = new Set(['_xadrez_migrations', 'voice_audio_cache']);
+/** Tables left out of a backup: the migration ledger (the target database keeps its own and the header pins the version instead). */
+export const EXCLUDED_TABLES = new Set(['_xadrez_migrations']);
+
+/** Tables saved only when the admin asks for them: the generated TTS voices (large, regenerable). */
+export const OPTIONAL_TABLES = new Set(['voice_audio_cache']);
 
 /** Orders tables so every foreign-key parent loads before its children (cycles keep input order). */
 export function loadOrder(

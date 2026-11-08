@@ -944,9 +944,23 @@ paths:
     get:
       summary: Download a full platform backup (.xebak, gzip) - admin only
       operationId: adminDownloadBackup
+      parameters:
+        - {name: voices, in: query, required: false, schema: {type: boolean}, description: Include the generated TTS voices}
       responses:
         '200':
           description: Backup file stream
+          content:
+            application/gzip:
+              schema: {type: string, format: binary}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /admin/backup/files:
+    get:
+      summary: Download the stored avatar and post photo files (.xefiles, gzip JSON lines) - admin only
+      operationId: adminDownloadBackupFiles
+      responses:
+        '200':
+          description: Files stream
           content:
             application/gzip:
               schema: {type: string, format: binary}

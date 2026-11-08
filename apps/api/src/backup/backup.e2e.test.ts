@@ -15,7 +15,7 @@ describeDatabase('platform backup round trip', { timeout: 120_000 }, () => {
 
   beforeAll(() => {
     sql = postgres(process.env.DATABASE_URL!, { max: 2, prepare: false });
-    service = new BackupService({ client: sql } as unknown as DatabaseService);
+    service = new BackupService({ client: sql } as unknown as DatabaseService, {} as never);
   });
 
   afterAll(async () => {

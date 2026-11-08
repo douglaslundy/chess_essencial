@@ -967,6 +967,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/admin/backup/files': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Download the stored avatar and post photo files (.xefiles, gzip JSON lines) - admin only */
+    get: operations['adminDownloadBackupFiles'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/admin/backup/restore': {
     parameters: {
       query?: never;
@@ -5229,7 +5246,10 @@ export interface operations {
   };
   adminDownloadBackup: {
     parameters: {
-      query?: never;
+      query?: {
+        /** @description Include the generated TTS voices */
+        voices?: boolean;
+      };
       header?: never;
       path?: never;
       cookie?: never;
@@ -5237,6 +5257,28 @@ export interface operations {
     requestBody?: never;
     responses: {
       /** @description Backup file stream */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/gzip': string;
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  adminDownloadBackupFiles: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Files stream */
       200: {
         headers: {
           [name: string]: unknown;

@@ -41,6 +41,23 @@ export class StorageService {
     return this.client !== null && this.publicUrl !== null;
   }
 
+  /** Every stored image (avatars and post photos), read one at a time. */
+  async *listFiles(): AsyncGenerator<{ contentType: string; data: Buffer; name: string }> {
+    if (!this.client) return;
+    for await (const object of this.client.listObjectsV2(this.bucket, '', true)) {
+      if (!object.name) continue;
+      const stat = await this.client.statObject(this.bucket, object.name);
+      const stream = await this.client.getObject(this.bucket, object.name);
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) chunks.push(chunk as Buffer);
+      yield {
+        contentType: String(stat.metaData?.['content-type'] ?? 'application/octet-stream'),
+        data: Buffer.concat(chunks),
+        name: object.name,
+      };
+    }
+  }
+
   /** Store an avatar image and return its public URL. */
   async putAvatar(ownerId: string, contentType: string, data: Buffer): Promise<string> {
     if (!this.client || !this.publicUrl) throw new Error('Object storage is not configured');

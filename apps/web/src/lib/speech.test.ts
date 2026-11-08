@@ -64,6 +64,24 @@ describe('speak', () => {
     expect(synth.speak.mock.calls[0]?.[0]).toMatchObject({ lang: 'pt-BR', text: 'Ótimo lance' });
   });
 
+  it('plays and generates nothing while the sound is muted or the tutor is on', async () => {
+    const synth = installFakeSynth(true);
+    const { prefetchSpeech, setTutorActive, speak } = await import('./speech');
+    localStorage.setItem('xadrez.access_token', 't');
+
+    localStorage.setItem('xadrez.sound_muted', 'true');
+    await speak('Ótimo lance');
+    prefetchSpeech(['Ótimo lance'], 'openai:marin');
+
+    localStorage.setItem('xadrez.sound_muted', 'false');
+    setTutorActive(true);
+    await speak('Ótimo lance');
+    prefetchSpeech(['Ótimo lance'], 'openai:marin');
+
+    expect(synth.speak).not.toHaveBeenCalled();
+    expect(generateAiSpeech).not.toHaveBeenCalled();
+  });
+
   it('waits for the async voice list before speaking (the silent-drop bug this fixes)', async () => {
     const synth = installFakeSynth(false);
     const { speak } = await import('./speech');

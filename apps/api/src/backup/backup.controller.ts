@@ -4,6 +4,7 @@ import {
   Get,
   Headers,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -24,8 +25,25 @@ export class BackupController {
   constructor(private readonly backup: BackupService) {}
 
   @Get()
-  async download(@Req() request: AuthenticatedRequest, @Res() reply: FastifyReply) {
-    const { filename, stream } = await this.backup.export(request.auth.userId);
+  async download(
+    @Req() request: AuthenticatedRequest,
+    @Res() reply: FastifyReply,
+    @Query('voices') voices?: string,
+  ) {
+    const { filename, stream } = await this.backup.export(request.auth.userId, {
+      voices: voices === 'true',
+    });
+    return reply
+      .header('content-type', 'application/gzip')
+      .header('content-disposition', `attachment; filename="${filename}"`)
+      .header('cache-control', 'no-store')
+      .send(stream);
+  }
+
+  /** Avatar and post photo files, as a separate download. */
+  @Get('files')
+  async downloadFiles(@Req() request: AuthenticatedRequest, @Res() reply: FastifyReply) {
+    const { filename, stream } = await this.backup.exportFiles(request.auth.userId);
     return reply
       .header('content-type', 'application/gzip')
       .header('content-disposition', `attachment; filename="${filename}"`)
