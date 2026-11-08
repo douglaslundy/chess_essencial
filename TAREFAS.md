@@ -20,6 +20,28 @@ Plano completo: `docs/CURSO_DO_ZERO.md`. É independente do sistema antigo de cu
 - [x] Estilo "Marfim" no menu Tabuleiro (3D): peças torneadas em código (6 malhas), madeira procedural, luz de estúdio, sombras, câmera 3 presets (Jogo 52°, Tática 72°, Imersiva 32°), pinça e roda para zoom, xeque em vermelho, recuperação de contexto WebGL, DPR adaptativo. Rei 12% mais alto que a dama.
 - [ ] Limites: peças são geometria procedural, não GLB esculpidos (cavalo e coroa aproximados); fotorrealismo exato da imagem exige modelos externos; sem toque duplo para restaurar; sem teste de 60 fps em aparelho real.
 
+## Tutor de IA da sala de aula (pedido de 2026-11-07, PRÓXIMA GRANDE TAREFA, fazer na `main`)
+
+Pedido fiel (resumo sem perder nada):
+- Botão "Tutor de IA" dentro da sala de aula, só para quem tem perfil de professor; admin tem perfil completo (inclui professor). Só aparece depois que o professor abre um conteúdo (exercício, aula do curso, partida da biblioteca, revisão de partida...). Ao clicar, a IA gera uma aula quadro a quadro sobre o conteúdo aberto. Em revisão de partida: tutor e revisão normal são excludentes (um ou outro).
+- Partida da biblioteca: 1º frame = do que trata a partida, tema de estudo, pontos fortes e fracos (objetivo, direto, entendível para leigo). Depois um frame por lance: "peão branco para E4" (com nome do jogador se houver), que abertura é, se é comum/forte; resposta das pretas: abertura, se foi gafe, o que poderia ter jogado; instrutivo. Sempre nome da peça + casa ("torre de E4").
+- Exercício: narra o exercício (ex.: mate em escadinha, o tema), "mova a torre de X para Y", adversário responde, novo slide, até o mate.
+- Slide só para o professor (canto esquerdo ou direito), nunca para os alunos (devem achar que o professor sabe tudo). Card/slide; cada lance atualiza o slide; sempre jogada anterior em cima, atual no meio, próxima embaixo. Fonte pequena; pode ser balão flutuante semitransparente legível, pode cobrir parte do tabuleiro se não atrapalhar; se couber sem cobrir, melhor. Dúvida: brainstorm e perguntar.
+- Todo conteúdo gerado pelo tutor é gravado em banco e reaproveitado por outras aulas (sem gerar de novo).
+- Tutor habilitado => geração de áudio desabilitada.
+- Regra geral da plataforma: auditar todo lugar com narração por voz gerada; áudio/alto-falante desabilitado => não gera voz. Voz já gerada fica no servidor e é reusada nas próximas aulas, casando com cada lance (começa mais rápido).
+- Backup (`apps/api/src/backup`): opção selecionável para incluir vozes geradas e arquivos (fotos de avatar).
+
+Sub-itens:
+- [ ] TUTOR-00: brainstorm/perguntas ao usuário (perfil professor/admin, local do slide, conteúdos, migration + dispensa de backup).
+- [ ] TUTOR-01: perfil de professor (role/flag; admin herda) e visibilidade do botão só para ele.
+- [ ] TUTOR-02: tabela de aulas do tutor (tipo de conteúdo + id + versão do prompt) e API de gerar/ler com cache.
+- [ ] TUTOR-03: prompts (biblioteca, exercício, curso, revisão) com fatos do motor (`moveFacts`).
+- [ ] TUTOR-04: slide flutuante só do professor (anterior/atual/próximo), atualizado a cada lance, não replicado ao aluno.
+- [ ] TUTOR-05: exclusão tutor x revisão normal; tutor ligado => sem voz.
+- [ ] VOZ-01: auditoria de todos os pontos de voz; áudio desligado => nunca gerar; reuso de `voice_audio_cache` por lance.
+- [ ] BKP-01: backup com opção de vozes e avatares.
+
 ## Plano de estudo e métricas (2026-11-07)
 
 - [x] ESTUDO-01: na página de revisão, seção "O que estudar para melhorar" (`GET /v1/games/{gameId}/study-plan`): temas pelos lances do jogador, 3 partidas da biblioteca com foco, 5 exercícios; cada item abre num modal sobre a mesma página e é marcado ✓ (exercício resolvido; partida ao chegar ao último lance). Marcações e o plano ficam no banco (migration 0051, backup dispensado pelo usuário), iguais em qualquer computador. Exercícios só de temas com exercício cadastrado (nunca de tema aleatório); a lista de temas do banco entra no prompt da IA (`NARRATION_PROMPT_VERSION=7`).
