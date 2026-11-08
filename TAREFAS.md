@@ -20,6 +20,26 @@ Plano completo: `docs/CURSO_DO_ZERO.md`. É independente do sistema antigo de cu
 - [x] Estilo "Marfim" no menu Tabuleiro (3D): peças torneadas em código (6 malhas), madeira procedural, luz de estúdio, sombras, câmera 3 presets (Jogo 52°, Tática 72°, Imersiva 32°), pinça e roda para zoom, xeque em vermelho, recuperação de contexto WebGL, DPR adaptativo. Rei 12% mais alto que a dama.
 - [ ] Limites: peças são geometria procedural, não GLB esculpidos (cavalo e coroa aproximados); fotorrealismo exato da imagem exige modelos externos; sem toque duplo para restaurar; sem teste de 60 fps em aparelho real.
 
+## Aberturas, assistente de partida e força dos bots (pedido de 2026-11-08)
+
+Regra geral do usuário: todo conteúdo gerado por IA fica gravado em banco e é reaproveitado (nunca gerar de novo).
+
+- [ ] BOT-02: auditar se o rating escolhido do bot muda a força de verdade (usuário acha o bot 1300 fácil demais); corrigir se for só ilustrativo.
+- [ ] ASSIST-01: assistente de partida (sugere o lance e o porquê) só contra bot; indisponível contra humano (UI e servidor).
+- [ ] ABERT-01: árvore de aberturas (lichess chess-openings, CC0), migration, importador.
+- [ ] ABERT-02: aula por variante gerada pela IA a partir de fatos do motor, gravada em banco (piloto: Siciliana).
+- [ ] ABERT-03: treino com repetição espaçada por nó.
+- [ ] ABERT-04: jogar contra o bot seguindo o livro; explicar desvios e adaptação.
+- [ ] ABERT-05: ampliar o catálogo (brancas e pretas).
+
+Contexto da pesquisa (2026-11-08):
+
+- BOT-02, achado até agora: `apps/api/src/games/bot-engine.ts` usa Stockfish com `UCI_LimitStrength` + `UCI_Elo` só a partir de 1320 (`MIN_ENGINE_ELO`), `go movetime 400` (0,4 s), máximo 3190; abaixo de 1320 (ou se o motor falhar) cai em `packages/chess-domain/src/bot-move.ts`, uma busca de 2 lances só com material (abaixo de 900 joga lance aleatório; 900-1299 sorteia entre 1/3 dos melhores; 1300-1699 entre 2; >=1700 sempre o melhor, sem variação). Hipótese: a escala `UCI_Elo` do Stockfish (calibrada em CCRL) não equivale ao rating do Lichess/Chess.com, e 0,4 s por lance pode deixar o bot mais fraco ou mais regular que o rótulo. PRÓXIMO: medir de verdade (partidas bot x bot e bot x Stockfish pleno em vários Elos) e recalibrar o mapeamento rating -> Elo/tempo/profundidade; o rating mostrado deve corresponder à força. Também ver `apps/worker/src/bots` (jogador-bot online) e `games.service.ts:132` (`selectBotMoveWithEngine(turn.currentFen, turn.targetRating)`).
+- ASSIST-01: a base existe (Treinador: `lib/engine/use-coach-engine.ts`, `components/coach/*`, avaliação do lance do adversário em `lib/engine/use-opponent-review.ts`, `shouldSuggestCoachMode` no `game-room.tsx`). Falta o porquê do lance sugerido (moveFacts + linha principal do motor) e travar o assistente contra humano na UI e no servidor (`coach_mode` em `games`, migration 0029).
+- ABERT-*: fonte da árvore = https://github.com/lichess-org/chess-openings (CC0; TSV a-e com eco, name, pgn, uci, epd; sem explicações). Wikibooks Chess Opening Theory é CC BY-SA (exige atribuição); o explorer do Lichess (lila-openingexplorer) teve relato de outage em 2026, não depender dele. Explicações: IA gera a partir de fatos do motor (moveFacts, Stockfish, ECO), gravadas em banco por nó e versão do prompt (padrão de `tutor_lessons`, migration 0052). Piloto: Siciliana, uma aula por resposta das pretas. Repetição espaçada por nó (tipo SM-2). Migration nova exige perguntar dispensa de backup ao usuário (a exceção atual vai até a 0052 em `deploy/remote-deploy.sh`).
+- Ordem combinada: BOT-02 (auditoria e correção), ASSIST-01, ABERT-01..05. Nenhum código dessas três tarefas foi escrito ainda.
+- Estado do deploy: `main` em 4466a5a com CI verde e `deploy/approved` igual; a VPS (SSH `lundy@192.168.0.233`, diagnóstico) estava construindo; conferir `.deploy/last-successful-commit`.
+
 ## Tutor de IA da sala de aula (pedido de 2026-11-07, PRÓXIMA GRANDE TAREFA, fazer na `main`)
 
 Pedido fiel (resumo sem perder nada):
