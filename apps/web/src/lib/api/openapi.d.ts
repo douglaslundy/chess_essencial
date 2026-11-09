@@ -2530,6 +2530,9 @@ export interface components {
     };
     OpeningFamily: {
       family: string;
+      games: number;
+      /** Format: uuid */
+      startId: string;
       lines: number;
       /** @enum {string} */
       side: 'white' | 'black';
@@ -2553,6 +2556,7 @@ export interface components {
       openingId: string;
     };
     OpeningLine: {
+      games?: number;
       /** Format: uuid */
       id: string;
       eco: string;

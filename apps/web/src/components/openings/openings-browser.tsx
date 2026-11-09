@@ -4,7 +4,7 @@ import type { OpeningFamily, OpeningLine } from '@xadrez/contracts';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-import styles from '@/components/portal/portal-pages.module.css';
+import styles from '@/components/library/library.module.css';
 import { api } from '@/lib/api/client';
 
 const token = () => window.localStorage.getItem('xadrez.access_token') ?? '';
@@ -12,11 +12,10 @@ const token = () => window.localStorage.getItem('xadrez.access_token') ?? '';
 export function OpeningsBrowser() {
   const [side, setSide] = useState<'black' | 'white'>('white');
   const [families, setFamilies] = useState<OpeningFamily[]>([]);
-  const [family, setFamily] = useState<string | null>(null);
   const [query, setQuery] = useState('');
-  const [lines, setLines] = useState<OpeningLine[]>([]);
+  const [found, setFound] = useState<OpeningLine[]>([]);
   const [due, setDue] = useState<OpeningLine[]>([]);
-  const [message, setMessage] = useState('');
+  const [status, setStatus] = useState('Carregando as aberturas…');
 
   useEffect(() => {
     api
@@ -28,25 +27,29 @@ export function OpeningsBrowser() {
   useEffect(() => {
     api
       .listOpeningFamilies(side, token())
-      .then(setFamilies)
+      .then((items) => {
+        setFamilies(items);
+        setStatus('');
+      })
       .catch((error: unknown) =>
-        setMessage(error instanceof Error ? error.message : 'Falha ao carregar as aberturas.'),
+        setStatus(error instanceof Error ? error.message : 'Falha ao carregar as aberturas.'),
       );
   }, [side]);
 
   useEffect(() => {
-    if (!family && !query.trim()) {
-      queueMicrotask(() => setLines([]));
+    const text = query.trim();
+    if (text.length < 2) {
+      queueMicrotask(() => setFound([]));
       return;
     }
     const timer = setTimeout(() => {
       api
-        .searchOpenings({ family: family ?? undefined, q: query.trim() || undefined }, token())
-        .then(setLines)
-        .catch(() => setLines([]));
+        .searchOpenings({ q: text }, token())
+        .then(setFound)
+        .catch(() => setFound([]));
     }, 250);
     return () => clearTimeout(timer);
-  }, [family, query]);
+  }, [query]);
 
   return (
     <main className={styles.page}>
@@ -54,80 +57,85 @@ export function OpeningsBrowser() {
         <span>Estudo</span>
         <h1>Aberturas</h1>
         <p>
-          Escolha uma abertura, estude cada lance com a explicação do porquê e depois treine de
-          memória. Os treinos voltam na hora certa para fixar o que você aprendeu.
+          Escolha uma abertura e entre nela: você estuda cada lance, treina de memória e joga contra
+          o bot. As mais jogadas aparecem primeiro.
         </p>
       </header>
 
       {due.length > 0 ? (
-        <section className={styles.card}>
-          <h2>Para repetir hoje</h2>
-          <ul>
-            {due.map((line) => (
-              <li key={line.id}>
-                <Link href={`/app/aberturas/${line.id}?modo=treino`}>{line.name}</Link>
-              </li>
-            ))}
-          </ul>
+        <section className={styles.filters} aria-label="Para repetir hoje">
+          <strong>Para repetir hoje</strong>
+          {due.map((line) => (
+            <Link href={`/app/aberturas/${line.id}?modo=treino`} key={line.id}>
+              {line.name}
+            </Link>
+          ))}
         </section>
       ) : null}
 
-      <section className={styles.card}>
+      <div className={styles.filters}>
         <div role="group" aria-label="Lado">
           <button
             aria-pressed={side === 'white'}
-            className={styles.primaryButton}
-            onClick={() => {
-              setSide('white');
-              setFamily(null);
-            }}
+            className={side === 'white' ? `${styles.button} ${styles.primary}` : styles.button}
+            onClick={() => setSide('white')}
             type="button"
           >
             Brancas
           </button>{' '}
           <button
             aria-pressed={side === 'black'}
-            className={styles.primaryButton}
-            onClick={() => {
-              setSide('black');
-              setFamily(null);
-            }}
+            className={side === 'black' ? `${styles.button} ${styles.primary}` : styles.button}
+            onClick={() => setSide('black')}
             type="button"
           >
             Pretas
           </button>
         </div>
-        <label className={styles.field}>
-          Buscar pelo nome
-          <input onChange={(event) => setQuery(event.target.value)} value={query} />
+        <label>
+          Buscar uma variação pelo nome
+          <input
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Ex.: Najdorf"
+            value={query}
+          />
         </label>
-        {message ? <p role="status">{message}</p> : null}
-        <ul>
-          {families.map((item) => (
-            <li key={item.family}>
-              <button onClick={() => setFamily(item.family)} type="button">
-                {item.family} ({item.lines})
-              </button>
+      </div>
+
+      <p aria-live="polite" className={styles.status}>
+        {status}
+      </p>
+
+      {found.length > 0 ? (
+        <ul className={styles.list}>
+          {found.map((line) => (
+            <li className={styles.card} key={line.id}>
+              <Link href={`/app/aberturas/${line.id}`}>
+                <strong>{line.name}</strong>
+              </Link>
+              <span className={styles.meta}>
+                {line.eco} · {line.pgn}
+                {line.games ? ` · ${line.games.toLocaleString('pt-BR')} partidas` : ''}
+              </span>
             </li>
           ))}
         </ul>
-      </section>
-
-      {lines.length > 0 ? (
-        <section className={styles.card}>
-          <h2>{family ?? 'Resultados'}</h2>
-          <ul>
-            {lines.map((line) => (
-              <li key={line.id}>
-                <Link href={`/app/aberturas/${line.id}`}>
-                  {line.eco} · {line.name}
-                </Link>{' '}
-                <small>{line.pgn}</small>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      ) : (
+        <ul className={styles.list}>
+          {families.map((family, position) => (
+            <li className={styles.card} key={family.family}>
+              <Link href={`/app/aberturas/${family.startId}`}>
+                <strong>
+                  {position + 1}. {family.family}
+                </strong>
+              </Link>
+              <span className={styles.meta}>
+                {family.games.toLocaleString('pt-BR')} partidas · {family.lines} variações
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }

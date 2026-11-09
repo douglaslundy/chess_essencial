@@ -2605,9 +2605,11 @@ components:
               items: {$ref: '#/components/schemas/ClassroomMember'}
     OpeningFamily:
       type: object
-      required: [family, lines, side]
+      required: [family, lines, side, games, startId]
       properties:
         family: {type: string}
+        games: {type: integer}
+        startId: {type: string, format: uuid}
         lines: {type: integer}
         side: {type: string, enum: [white, black]}
     AdminOpeningLesson:
@@ -2633,6 +2635,7 @@ components:
       type: object
       required: [id, eco, name, family, pgn, plyCount, side, moves]
       properties:
+        games: {type: integer}
         id: {type: string, format: uuid}
         eco: {type: string}
         name: {type: string}

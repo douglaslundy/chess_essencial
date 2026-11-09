@@ -71,28 +71,49 @@ export class OpeningsService {
   }
 
   async families(side?: 'black' | 'white'): Promise<OpeningFamily[]> {
-    const rows = await this.sql<{ family: string; lines: number; side: 'black' | 'white' }[]>`
-      SELECT family, count(*)::int AS lines, min(side) AS side
-        FROM opening_lines
-       WHERE ${side ? this.sql`side = ${side}` : this.sql`true`}
-       GROUP BY family
-       ORDER BY count(*) DESC, family
+    const rows = await this.sql<
+      { family: string; games: number; lines: number; side: 'black' | 'white'; start_id: string }[]
+    >`
+      SELECT o.family, count(*)::int AS lines, min(o.side) AS side,
+             (array_agg(o.id ORDER BY o.ply_count, o.name))[1] AS start_id,
+             COALESCE((SELECT count(*) FROM library_games g WHERE g.opening_family = o.family), 0)::int AS games
+        FROM opening_lines o
+       WHERE ${side ? this.sql`o.side = ${side}` : this.sql`true`}
+       GROUP BY o.family
+       ORDER BY games DESC, count(*) DESC, o.family
     `;
-    return rows;
+    return rows.map((row) => ({
+      family: row.family,
+      games: row.games,
+      lines: row.lines,
+      side: row.side,
+      startId: row.start_id,
+    }));
   }
 
   async search(input: {
     family?: string | undefined;
     q?: string | undefined;
   }): Promise<OpeningLine[]> {
-    const rows = await this.sql<LineRow[]>`
-      SELECT id, eco, name, family, pgn, ply_count, side FROM opening_lines
-       WHERE ${input.family ? this.sql`family = ${input.family}` : this.sql`true`}
-         AND ${input.q ? this.sql`name ILIKE ${`%${input.q}%`}` : this.sql`true`}
-       ORDER BY eco, ply_count, name
+    // Played often = games of the study library that reached the line or any of its sub-variations.
+    const rows = await this.sql<(LineRow & { games: number })[]>`
+      WITH played AS (
+        SELECT opening_name AS name, count(*)::int AS n FROM library_games
+         WHERE ${input.family ? this.sql`opening_family = ${input.family}` : this.sql`true`}
+         GROUP BY opening_name
+      )
+      SELECT l.id, l.eco, l.name, l.family, l.pgn, l.ply_count, l.side,
+             COALESCE((SELECT sum(p.n) FROM played p
+                        WHERE p.name = l.name
+                           OR starts_with(p.name, l.name || ':')
+                           OR starts_with(p.name, l.name || ',')), 0)::int AS games
+        FROM opening_lines l
+       WHERE ${input.family ? this.sql`l.family = ${input.family}` : this.sql`true`}
+         AND ${input.q ? this.sql`l.name ILIKE ${`%${input.q}%`}` : this.sql`true`}
+       ORDER BY games DESC, l.ply_count, l.name
        LIMIT ${MAX_RESULTS}
     `;
-    return rows.map(toLine);
+    return rows.map((row) => ({ ...toLine(row), games: row.games }));
   }
 
   private async line(id: string): Promise<LineRow> {

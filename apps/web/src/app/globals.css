@@ -4984,6 +4984,43 @@ textarea::placeholder {
   font-size: 0.8rem;
 }
 
+/* Aberturas: modos de estudo e lista de variações na coluna lateral do tabuleiro. */
+.openingModes {
+  display: grid;
+  gap: 0.35rem;
+}
+.openingModes button[aria-pressed='true'] {
+  background: #2f6f3a;
+  color: #fff;
+  font-weight: 700;
+}
+.openingVariations {
+  display: grid;
+  gap: 0.3rem;
+}
+.openingVariations a {
+  display: block;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  color: inherit;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+.openingVariations a[aria-current='page'] {
+  background: #2f6f3a;
+  color: #fff;
+  font-weight: 700;
+}
+.openingVariations small {
+  display: block;
+  opacity: 0.7;
+}
+.openingVariations select {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
 /* Contador e barra de pontos da revisão: dentro do cartão do jogador, nada sobre o tabuleiro. */
 .pointsCounter {
   font-size: 0.78rem;

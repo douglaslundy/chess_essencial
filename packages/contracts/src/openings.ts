@@ -3,6 +3,8 @@ import { z } from 'zod';
 export const openingSideSchema = z.enum(['white', 'black']);
 
 export const openingLineSchema = z.object({
+  /** Games of the study library that reached this line: how often it is played. */
+  games: z.number().int().nonnegative().optional(),
   eco: z.string(),
   family: z.string(),
   id: z.string().uuid(),
@@ -17,8 +19,12 @@ export type OpeningLine = z.infer<typeof openingLineSchema>;
 
 export const openingFamilySchema = z.object({
   family: z.string(),
+  /** Games of the study library in this family: how often it is played. */
+  games: z.number().int().nonnegative(),
   lines: z.number().int().nonnegative(),
   side: openingSideSchema,
+  /** The family's base line: opening it enters the opening. */
+  startId: z.string().uuid(),
 });
 export type OpeningFamily = z.infer<typeof openingFamilySchema>;
 

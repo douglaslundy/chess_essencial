@@ -3,13 +3,11 @@
 import { classifyMove } from '@xadrez/chess-domain';
 import type { OpeningBranch, OpeningDetail } from '@xadrez/contracts';
 import { Chess } from 'chess.js';
-import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { CoachCallout } from '@/components/coach/coach-callout';
 import { ChessBoard, type PieceTheme } from '@/components/game/chess-board';
 import { explainMove } from '@/components/history/move-narration';
-import styles from '@/components/portal/portal-pages.module.css';
 import { api } from '@/lib/api/client';
 import { evaluatePosition } from '@/lib/engine/browser-engine';
 import { speakableSquares, toBrazilianSan } from '@/lib/notation';
@@ -236,25 +234,24 @@ export function OpeningPlay({
   const turnIsMine = new Chess(fen).turn() === mine;
   return (
     <>
-      <CoachCallout message={notes.at(-1)!} />
-      <ChessBoard
-        disabled={busy || over || !turnIsMine}
-        fen={fen}
-        lastMove={lastMove}
-        movableColor={turnIsMine && !over ? mine : undefined}
-        onMove={(uci) => void onMove(uci)}
-        orientation={side}
-        pieceTheme={pieceTheme}
-      />
-      <p className={styles.helpText}>
-        {inBook ? 'Dentro do livro.' : 'Fora do livro.'} Lance {played.length}.
-      </p>
-      <button className={styles.primaryButton} onClick={restart} type="button">
-        Nova partida
-      </button>{' '}
-      <Link className={styles.helpText} href="/app/aberturas">
-        Ver outras aberturas
-      </Link>
+      <CoachCallout label={inBook ? 'Dentro do livro' : 'Fora do livro'} message={notes.at(-1)!} />
+      <div className="boardStage">
+        <ChessBoard
+          disabled={busy || over || !turnIsMine}
+          fen={fen}
+          lastMove={lastMove}
+          movableColor={turnIsMine && !over ? mine : undefined}
+          onMove={(uci) => void onMove(uci)}
+          orientation={side}
+          pieceTheme={pieceTheme}
+        />
+        <div aria-label="Comandos do tabuleiro" className="historyControls" role="group">
+          <button onClick={restart} type="button">
+            Nova partida
+          </button>
+        </div>
+      </div>
+      <p className="gameMessage">Lance {played.length}.</p>
     </>
   );
 }
