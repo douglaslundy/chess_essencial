@@ -438,12 +438,14 @@ export {
   type TutorLesson,
 } from './tutor.js';
 export {
+  openingBranchSchema,
   openingDetailSchema,
   openingFamilySchema,
   openingLessonSchema,
   openingLineSchema,
   openingPracticeInputSchema,
   openingSideSchema,
+  type OpeningBranch,
   type OpeningDetail,
   type OpeningFamily,
   type OpeningLesson,

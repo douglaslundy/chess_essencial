@@ -38,4 +38,13 @@ export const openingDetailSchema = z.object({
 });
 export type OpeningDetail = z.infer<typeof openingDetailSchema>;
 
+/** A move the opening book has after a given position, with the shortest named line that plays it. */
+export const openingBranchSchema = z.object({
+  lines: z.number().int().positive(),
+  name: z.string(),
+  openingId: z.string().uuid(),
+  uci: z.string(),
+});
+export type OpeningBranch = z.infer<typeof openingBranchSchema>;
+
 export const openingPracticeInputSchema = z.object({ correct: z.boolean() });

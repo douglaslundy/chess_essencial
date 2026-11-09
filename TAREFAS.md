@@ -29,7 +29,7 @@ Regra geral do usuário: todo conteúdo gerado por IA fica gravado em banco e é
 - [x] ABERT-01 (2026-11-08): migration 0053 (`opening_lines`, `opening_lessons`, `opening_progress`), importador `apps/api/src/database/import-openings.ts` (TSV CC0 em `database/content/openings/`, 3865 linhas; roda no deploy e na CI), API `/v1/openings*`, páginas `/app/aberturas` e `/app/aberturas/[id]`. Lado estudado: nome com Defense/Defence = pretas, o resto = brancas.
 - [x] ABERT-02: aula por linha (visão geral + texto por lance, com os fatos do tabuleiro), gerada na primeira abertura e guardada em `opening_lessons` (`OPENING_PROMPT_VERSION`); a voz usa o cache do servidor. Alternativas do adversário no lance final entram no contexto. Todas as famílias já estão disponíveis, não só a Siciliana.
 - [x] ABERT-03: treino de memória no tabuleiro (você joga seu lado, o outro responde), resultado em `opening_progress` com repetição espaçada (`nextReview`, tipo SM-2) e lista 'Para repetir hoje'.
-- [ ] ABERT-04: jogar contra o bot seguindo o livro; explicar desvios e adaptação.
+- [x] ABERT-04 (2026-11-09): botão 'Jogar contra o bot' em `/app/aberturas/[id]` (`components/openings/opening-play.tsx`): o bot segue a linha estudada (65%) ou outra jogada do livro (`GET /v1/openings/branches?uci=`), você joga de memória; ao sair do livro (você ou o bot) a tela nomeia o que o livro joga, o motor do navegador avalia seu lance e sugere como se adaptar; quando o bot desvia para outra linha, mostra o texto da aula já guardada daquela variante (gera e guarda se não existir). Depois do livro o bot joga pelo motor.
 - [ ] ABERT-05: ampliar o catálogo (brancas e pretas).
 
 Contexto da pesquisa (2026-11-08):

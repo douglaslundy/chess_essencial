@@ -106,6 +106,7 @@ import type {
   SendMessageInput,
   SendTestEmailInput,
   SmtpSettings,
+  OpeningBranch,
   OpeningDetail,
   OpeningFamily,
   OpeningLine,
@@ -690,6 +691,8 @@ export const api = {
     if (query.q) params.set('q', query.q);
     return request<OpeningLine[]>(`/openings?${params.toString()}`, token);
   },
+  listOpeningBranches: (uci: string, token: string) =>
+    request<OpeningBranch[]>(`/openings/branches?uci=${encodeURIComponent(uci)}`, token),
   getOpening: (openingId: string, token: string) =>
     request<OpeningDetail>(`/openings/${openingId}`, token),
   requestOpeningLesson: (openingId: string, token: string) =>

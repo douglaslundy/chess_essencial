@@ -1,6 +1,7 @@
 import {
   openingPracticeInputSchema,
   openingSideSchema,
+  type OpeningBranch,
   type OpeningDetail,
   type OpeningFamily,
   type OpeningLine,
@@ -36,6 +37,20 @@ export class OpeningsController {
   @Get('families')
   families(@Query('side') side?: string): Promise<OpeningFamily[]> {
     return this.openings.families(side ? parseInput(openingSideSchema, side) : undefined);
+  }
+
+  /** Book moves after the given position (`uci` = moves played so far, space separated). */
+  @Get('branches')
+  branches(@Query('uci') uci?: string): Promise<OpeningBranch[]> {
+    return this.openings.branches(
+      parseInput(
+        z
+          .string()
+          .regex(/^([a-h][1-8][a-h][1-8][qrbn]?)?( [a-h][1-8][a-h][1-8][qrbn]?)*$/)
+          .max(400),
+        uci ?? '',
+      ),
+    );
   }
 
   @Get('due')

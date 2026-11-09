@@ -5,6 +5,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import type {
+  OpeningBranch,
   OpeningDetail,
   OpeningFamily,
   OpeningLesson,
@@ -272,6 +273,27 @@ export class OpeningsService {
         last_result = EXCLUDED.last_result, updated_at = now()
     `;
     return { dueAt: next.dueAt.toISOString() };
+  }
+
+  /** Book moves after `prefix` (space-separated UCI moves from the start), most played first. */
+  async branches(prefix: string): Promise<OpeningBranch[]> {
+    const played = prefix.trim() === '' ? 0 : prefix.trim().split(/\s+/).length;
+    const rows = await this.sql<{ lines: number; name: string; opening_id: string; uci: string }[]>`
+      SELECT split_part(uci, ' ', ${played + 1}) AS uci, count(*)::int AS lines,
+             (array_agg(id ORDER BY ply_count, name))[1] AS opening_id,
+             (array_agg(name ORDER BY ply_count, name))[1] AS name
+        FROM opening_lines
+       WHERE ply_count > ${played}
+         AND ${played === 0 ? this.sql`true` : this.sql`uci LIKE ${`${prefix.trim()} %`}`}
+       GROUP BY 1
+       ORDER BY count(*) DESC, 1
+    `;
+    return rows.map((row) => ({
+      lines: row.lines,
+      name: row.name,
+      openingId: row.opening_id,
+      uci: row.uci,
+    }));
   }
 
   /** Lines the student practised that are due for review, soonest first. */

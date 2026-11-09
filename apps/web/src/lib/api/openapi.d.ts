@@ -2172,6 +2172,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/openings/branches': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Lances do livro de aberturas depois de uma posição (lances jogados, em UCI) */
+    get: operations['listOpeningBranches'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/openings/due': {
     parameters: {
       query?: never;
@@ -2448,6 +2465,13 @@ export interface components {
       lines: number;
       /** @enum {string} */
       side: 'white' | 'black';
+    };
+    OpeningBranch: {
+      uci: string;
+      lines: number;
+      name: string;
+      /** Format: uuid */
+      openingId: string;
     };
     OpeningLine: {
       /** Format: uuid */
@@ -7411,6 +7435,30 @@ export interface operations {
           'application/json': components['schemas']['OpeningFamily'][];
         };
       };
+      401: components['responses']['Problem'];
+    };
+  };
+  listOpeningBranches: {
+    parameters: {
+      query?: {
+        uci?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Próximos lances do livro, os mais comuns primeiro */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OpeningBranch'][];
+        };
+      };
+      400: components['responses']['Problem'];
       401: components['responses']['Problem'];
     };
   };

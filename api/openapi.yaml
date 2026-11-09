@@ -2135,6 +2135,22 @@ paths:
                 type: array
                 items: {$ref: '#/components/schemas/OpeningFamily'}
         '401': {$ref: '#/components/responses/Problem'}
+  /openings/branches:
+    get:
+      summary: Lances do livro de aberturas depois de uma posição (lances jogados, em UCI)
+      operationId: listOpeningBranches
+      parameters:
+        - {name: uci, in: query, required: false, schema: {type: string}}
+      responses:
+        '200':
+          description: Próximos lances do livro, os mais comuns primeiro
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/OpeningBranch'}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
   /openings/due:
     get:
       summary: Aberturas treinadas que já estão na hora de repetir
@@ -2504,6 +2520,14 @@ components:
         family: {type: string}
         lines: {type: integer}
         side: {type: string, enum: [white, black]}
+    OpeningBranch:
+      type: object
+      required: [uci, lines, name, openingId]
+      properties:
+        uci: {type: string}
+        lines: {type: integer}
+        name: {type: string}
+        openingId: {type: string, format: uuid}
     OpeningLine:
       type: object
       required: [id, eco, name, family, pgn, plyCount, side, moves]

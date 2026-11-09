@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CoachCallout } from '@/components/coach/coach-callout';
 import { ChessBoard } from '@/components/game/chess-board';
+import { OpeningPlay } from './opening-play';
 import styles from '@/components/portal/portal-pages.module.css';
 import { api } from '@/lib/api/client';
 import { speakableSquares } from '@/lib/notation';
@@ -47,7 +48,7 @@ export function OpeningStudy({ openingId }: { openingId: string }) {
   const { voiceName } = useVoicePreference();
   const [detail, setDetail] = useState<OpeningDetail | null>(null);
   const [message, setMessage] = useState('Carregando a abertura…');
-  const [mode, setMode] = useState<'practice' | 'study'>('study');
+  const [mode, setMode] = useState<'play' | 'practice' | 'study'>('study');
   const [ply, setPly] = useState(0);
   const [wrongOnce, setWrongOnce] = useState(false);
   const [practiceNote, setPracticeNote] = useState('');
@@ -159,7 +160,7 @@ export function OpeningStudy({ openingId }: { openingId: string }) {
     }
   }
 
-  function restart(next: 'practice' | 'study') {
+  function restart(next: 'play' | 'practice' | 'study') {
     stopSpeaking();
     savedRef.current = false;
     setWrongOnce(false);
@@ -205,54 +206,74 @@ export function OpeningStudy({ openingId }: { openingId: string }) {
       </header>
 
       <section className={styles.card}>
-        <CoachCallout message={coachMessage} />
-        <ChessBoard
-          disabled={mode === 'study' || !myTurn || finished}
-          fen={fen}
-          lastMove={last ? { from: last.from, to: last.to } : undefined}
-          movableColor={mode === 'practice' && myTurn ? (side === 'white' ? 'w' : 'b') : undefined}
-          onMove={onMove}
-          orientation={side}
-          pieceTheme={pieceTheme}
-        />
-        <div role="group" aria-label="Comandos do estudo">
-          {mode === 'study' ? (
-            <>
-              <button disabled={ply === 0} onClick={() => setPly(0)} type="button">
-                ⏮
-              </button>
-              <button disabled={ply === 0} onClick={() => setPly(ply - 1)} type="button">
-                ◀
-              </button>
-              <span>
-                {' '}
-                Lance {ply}/{total}{' '}
-              </span>
-              <button disabled={ply >= total} onClick={() => setPly(ply + 1)} type="button">
-                ▶
-              </button>
-              <button disabled={ply >= total} onClick={() => setPly(total)} type="button">
-                ⏭
-              </button>{' '}
-              <button
-                className={styles.primaryButton}
-                onClick={() => restart('practice')}
-                type="button"
-              >
-                Treinar de memória
-              </button>
-            </>
-          ) : (
-            <button className={styles.primaryButton} onClick={() => restart('study')} type="button">
+        {mode === 'play' ? (
+          <>
+            <OpeningPlay detail={detail} pieceTheme={pieceTheme} voiceName={voiceName} />
+            <button onClick={() => restart('study')} type="button">
               Voltar ao estudo
             </button>
-          )}
-          {finished ? (
-            <button onClick={() => restart('practice')} type="button">
-              Treinar de novo
-            </button>
-          ) : null}
-        </div>
+          </>
+        ) : (
+          <>
+            <CoachCallout message={coachMessage} />
+            <ChessBoard
+              disabled={mode === 'study' || !myTurn || finished}
+              fen={fen}
+              lastMove={last ? { from: last.from, to: last.to } : undefined}
+              movableColor={
+                mode === 'practice' && myTurn ? (side === 'white' ? 'w' : 'b') : undefined
+              }
+              onMove={onMove}
+              orientation={side}
+              pieceTheme={pieceTheme}
+            />
+            <div role="group" aria-label="Comandos do estudo">
+              {mode === 'study' ? (
+                <>
+                  <button disabled={ply === 0} onClick={() => setPly(0)} type="button">
+                    ⏮
+                  </button>
+                  <button disabled={ply === 0} onClick={() => setPly(ply - 1)} type="button">
+                    ◀
+                  </button>
+                  <span>
+                    {' '}
+                    Lance {ply}/{total}{' '}
+                  </span>
+                  <button disabled={ply >= total} onClick={() => setPly(ply + 1)} type="button">
+                    ▶
+                  </button>
+                  <button disabled={ply >= total} onClick={() => setPly(total)} type="button">
+                    ⏭
+                  </button>{' '}
+                  <button
+                    className={styles.primaryButton}
+                    onClick={() => restart('practice')}
+                    type="button"
+                  >
+                    Treinar de memória
+                  </button>{' '}
+                  <button onClick={() => restart('play')} type="button">
+                    Jogar contra o bot
+                  </button>
+                </>
+              ) : (
+                <button
+                  className={styles.primaryButton}
+                  onClick={() => restart('study')}
+                  type="button"
+                >
+                  Voltar ao estudo
+                </button>
+              )}
+              {finished ? (
+                <button onClick={() => restart('practice')} type="button">
+                  Treinar de novo
+                </button>
+              ) : null}
+            </div>
+          </>
+        )}
         {detail.dueAt ? (
           <p className={styles.helpText}>
             Próxima revisão: {new Date(detail.dueAt).toLocaleString('pt-BR')}
