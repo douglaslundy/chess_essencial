@@ -2135,6 +2135,81 @@ paths:
                 type: array
                 items: {$ref: '#/components/schemas/OpeningFamily'}
         '401': {$ref: '#/components/responses/Problem'}
+  /admin/openings/lessons:
+    get:
+      summary: Listar as aulas de abertura geradas, para revisão do administrador
+      operationId: adminListOpeningLessons
+      parameters:
+        - {name: reviewed, in: query, required: false, schema: {type: string, enum: ['true', 'false']}}
+      responses:
+        '200':
+          description: Aulas (no máximo 200, as mais recentes primeiro)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/AdminOpeningLesson'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+  /admin/openings/{openingId}/lesson:
+    put:
+      summary: Salvar o texto corrigido de uma aula de abertura e marcá-la como revisada
+      operationId: adminSaveOpeningLesson
+      parameters:
+        - {name: openingId, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [overview, frames, reviewed]
+              properties:
+                overview: {type: string, maxLength: 1200}
+                reviewed: {type: boolean}
+                frames:
+                  type: array
+                  maxItems: 200
+                  items:
+                    type: object
+                    required: [index, label, text]
+                    properties:
+                      index: {type: integer}
+                      label: {type: string}
+                      text: {type: string, maxLength: 900}
+      responses:
+        '204': {description: Aula salva}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /admin/openings/pregenerate:
+    post:
+      summary: Gerar antes as aulas que faltam de uma família de abertura (até 40 linhas por chamada)
+      operationId: adminPregenerateOpeningLessons
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [family]
+              properties:
+                family: {type: string}
+      responses:
+        '202':
+          description: Geração iniciada em segundo plano
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [started]
+                properties:
+                  started: {type: integer}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
   /openings/branches:
     get:
       summary: Lances do livro de aberturas depois de uma posição (lances jogados, em UCI)
@@ -2520,6 +2595,17 @@ components:
         family: {type: string}
         lines: {type: integer}
         side: {type: string, enum: [white, black]}
+    AdminOpeningLesson:
+      type: object
+      required: [openingId, name, eco, family, status, overview, reviewed]
+      properties:
+        openingId: {type: string, format: uuid}
+        name: {type: string}
+        eco: {type: string}
+        family: {type: string}
+        status: {type: string, enum: [generating, completed, failed]}
+        overview: {type: string}
+        reviewed: {type: boolean}
     OpeningBranch:
       type: object
       required: [uci, lines, name, openingId]
@@ -2553,6 +2639,7 @@ components:
           properties:
             status: {type: string, enum: [none, generating, completed, failed]}
             overview: {type: string}
+            reviewed: {type: boolean}
             frames:
               type: array
               items:

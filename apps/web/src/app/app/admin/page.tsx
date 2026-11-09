@@ -49,6 +49,12 @@ const sections = [
       'Chaves de API por provedor (Anthropic, OpenAI, Gemini) ou conta do ChatGPT via OAuth, usadas pela IA da plataforma.',
   },
   {
+    href: '/app/admin/aberturas',
+    title: 'Aberturas (revisão)',
+    description:
+      'Revisar e corrigir as aulas de abertura escritas pela IA, marcar como revisadas e gerar antes as de uma família.',
+  },
+  {
     href: '/app/admin/backup',
     title: 'Backup e restauração',
     description:

@@ -106,6 +106,8 @@ import type {
   SendMessageInput,
   SendTestEmailInput,
   SmtpSettings,
+  AdminOpeningLesson,
+  AdminOpeningLessonInput,
   OpeningBranch,
   OpeningDetail,
   OpeningFamily,
@@ -693,6 +695,21 @@ export const api = {
   },
   listOpeningBranches: (uci: string, token: string) =>
     request<OpeningBranch[]>(`/openings/branches?uci=${encodeURIComponent(uci)}`, token),
+  adminListOpeningLessons: (reviewed: boolean | undefined, token: string) =>
+    request<AdminOpeningLesson[]>(
+      `/admin/openings/lessons${reviewed === undefined ? '' : `?reviewed=${reviewed}`}`,
+      token,
+    ),
+  adminSaveOpeningLesson: (openingId: string, input: AdminOpeningLessonInput, token: string) =>
+    request<void>(`/admin/openings/${openingId}/lesson`, token, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    }),
+  adminPregenerateOpeningLessons: (family: string, token: string) =>
+    request<{ started: number }>('/admin/openings/pregenerate', token, {
+      method: 'POST',
+      body: JSON.stringify({ family }),
+    }),
   getOpening: (openingId: string, token: string) =>
     request<OpeningDetail>(`/openings/${openingId}`, token),
   requestOpeningLesson: (openingId: string, token: string) =>

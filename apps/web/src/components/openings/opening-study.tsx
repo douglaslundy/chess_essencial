@@ -202,6 +202,7 @@ export function OpeningStudy({ openingId }: { openingId: string }) {
           {line.eco} · estudando de {side === 'white' ? 'brancas' : 'pretas'}
         </span>
         <h1>{line.name}</h1>
+        {detail.lesson.reviewed ? <p>✔ Explicação revisada por um enxadrista.</p> : null}
         <p>{line.pgn}</p>
       </header>
 

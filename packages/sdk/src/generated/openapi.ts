@@ -2172,6 +2172,57 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/admin/openings/lessons': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Listar as aulas de abertura geradas, para revisão do administrador */
+    get: operations['adminListOpeningLessons'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/openings/{openingId}/lesson': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** Salvar o texto corrigido de uma aula de abertura e marcá-la como revisada */
+    put: operations['adminSaveOpeningLesson'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/openings/pregenerate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Gerar antes as aulas que faltam de uma família de abertura (até 40 linhas por chamada) */
+    post: operations['adminPregenerateOpeningLessons'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/openings/branches': {
     parameters: {
       query?: never;
@@ -2466,6 +2517,17 @@ export interface components {
       /** @enum {string} */
       side: 'white' | 'black';
     };
+    AdminOpeningLesson: {
+      /** Format: uuid */
+      openingId: string;
+      name: string;
+      eco: string;
+      family: string;
+      /** @enum {string} */
+      status: 'generating' | 'completed' | 'failed';
+      overview: string;
+      reviewed: boolean;
+    };
     OpeningBranch: {
       uci: string;
       lines: number;
@@ -2494,6 +2556,7 @@ export interface components {
         /** @enum {string} */
         status: 'none' | 'generating' | 'completed' | 'failed';
         overview: string;
+        reviewed?: boolean;
         frames: {
           index: number;
           label: string;
@@ -7436,6 +7499,98 @@ export interface operations {
         };
       };
       401: components['responses']['Problem'];
+    };
+  };
+  adminListOpeningLessons: {
+    parameters: {
+      query?: {
+        reviewed?: 'true' | 'false';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Aulas (no máximo 200, as mais recentes primeiro) */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AdminOpeningLesson'][];
+        };
+      };
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+    };
+  };
+  adminSaveOpeningLesson: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        openingId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          overview: string;
+          reviewed: boolean;
+          frames: {
+            index: number;
+            label: string;
+            text: string;
+          }[];
+        };
+      };
+    };
+    responses: {
+      /** @description Aula salva */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  adminPregenerateOpeningLessons: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          family: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Geração iniciada em segundo plano */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            started: number;
+          };
+        };
+      };
+      400: components['responses']['Problem'];
+      401: components['responses']['Problem'];
+      403: components['responses']['Problem'];
+      422: components['responses']['Problem'];
     };
   };
   listOpeningBranches: {

@@ -25,6 +25,8 @@ export type OpeningFamily = z.infer<typeof openingFamilySchema>;
 export const openingLessonSchema = z.object({
   frames: z.array(z.object({ index: z.number().int(), label: z.string(), text: z.string() })),
   overview: z.string(),
+  /** True once an administrator has reviewed (and possibly corrected) the text. */
+  reviewed: z.boolean().optional(),
   status: z.enum(['none', 'generating', 'completed', 'failed']),
 });
 export type OpeningLesson = z.infer<typeof openingLessonSchema>;
@@ -48,3 +50,29 @@ export const openingBranchSchema = z.object({
 export type OpeningBranch = z.infer<typeof openingBranchSchema>;
 
 export const openingPracticeInputSchema = z.object({ correct: z.boolean() });
+
+export const adminOpeningLessonSchema = z.object({
+  eco: z.string(),
+  family: z.string(),
+  name: z.string(),
+  openingId: z.string().uuid(),
+  overview: z.string(),
+  reviewed: z.boolean(),
+  status: z.enum(['generating', 'completed', 'failed']),
+});
+export type AdminOpeningLesson = z.infer<typeof adminOpeningLessonSchema>;
+
+export const adminOpeningLessonInputSchema = z.object({
+  frames: z
+    .array(
+      z.object({
+        index: z.number().int().nonnegative(),
+        label: z.string().max(200),
+        text: z.string().trim().min(1).max(900),
+      }),
+    )
+    .max(200),
+  overview: z.string().trim().max(1200),
+  reviewed: z.boolean(),
+});
+export type AdminOpeningLessonInput = z.infer<typeof adminOpeningLessonInputSchema>;

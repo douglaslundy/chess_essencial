@@ -5,6 +5,8 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import type {
+  AdminOpeningLesson,
+  AdminOpeningLessonInput,
   OpeningBranch,
   OpeningDetail,
   OpeningFamily,
@@ -103,12 +105,17 @@ export class OpeningsService {
 
   private async lesson(id: string): Promise<OpeningLesson> {
     const [row] = await this.sql<
-      { frames: TutorFrame[]; overview: string; status: OpeningLesson['status'] }[]
+      {
+        frames: TutorFrame[];
+        overview: string;
+        reviewed: boolean;
+        status: OpeningLesson['status'];
+      }[]
     >`
-      SELECT status, overview, frames FROM opening_lessons
+      SELECT status, overview, frames, reviewed_at IS NOT NULL AS reviewed FROM opening_lessons
        WHERE opening_id = ${id} AND prompt_version = ${OPENING_PROMPT_VERSION}
     `;
-    return row ?? { frames: [], overview: '', status: 'none' };
+    return row ?? { frames: [], overview: '', reviewed: false, status: 'none' };
   }
 
   async detail(id: string, userId: string): Promise<OpeningDetail> {
@@ -273,6 +280,77 @@ export class OpeningsService {
         last_result = EXCLUDED.last_result, updated_at = now()
     `;
     return { dueAt: next.dueAt.toISOString() };
+  }
+
+  async adminLessons(reviewed?: boolean): Promise<AdminOpeningLesson[]> {
+    const rows = await this.sql<
+      {
+        eco: string;
+        family: string;
+        name: string;
+        opening_id: string;
+        overview: string;
+        reviewed: boolean;
+        status: AdminOpeningLesson['status'];
+      }[]
+    >`
+      SELECT l.opening_id, o.name, o.eco, o.family, l.status, l.overview,
+             l.reviewed_at IS NOT NULL AS reviewed
+        FROM opening_lessons l JOIN opening_lines o ON o.id = l.opening_id
+       WHERE l.prompt_version = ${OPENING_PROMPT_VERSION}
+         AND ${reviewed === undefined ? this.sql`true` : this.sql`(l.reviewed_at IS NOT NULL) = ${reviewed}`}
+       ORDER BY l.updated_at DESC LIMIT 200
+    `;
+    return rows.map((row) => ({
+      eco: row.eco,
+      family: row.family,
+      name: row.name,
+      openingId: row.opening_id,
+      overview: row.overview,
+      reviewed: row.reviewed,
+      status: row.status,
+    }));
+  }
+
+  /** The administrator's corrected text replaces the AI's; a reviewed lesson is never rewritten. */
+  async adminSaveLesson(id: string, adminId: string, input: AdminOpeningLessonInput) {
+    await this.line(id);
+    await this.sql`
+      INSERT INTO opening_lessons
+        (opening_id, prompt_version, status, overview, frames, reviewed_at, reviewed_by)
+      VALUES (${id}, ${OPENING_PROMPT_VERSION}, 'completed', ${input.overview},
+              ${this.sql.json(input.frames as never)},
+              ${input.reviewed ? new Date() : null}, ${input.reviewed ? adminId : null})
+      ON CONFLICT (opening_id, prompt_version) DO UPDATE SET
+        status = 'completed', overview = EXCLUDED.overview, frames = EXCLUDED.frames,
+        reviewed_at = EXCLUDED.reviewed_at, reviewed_by = EXCLUDED.reviewed_by, updated_at = now()
+    `;
+  }
+
+  /** Writes the missing lessons of a family one after another, so the first student need not wait. */
+  async adminPregenerate(family: string): Promise<{ started: number }> {
+    const config = await this.aiProviders.resolveActiveConfig();
+    if (!config) throw new UnprocessableEntityException('Nenhuma IA está configurada.');
+    const rows = await this.sql<LineRow[]>`
+      SELECT o.id, o.eco, o.name, o.family, o.pgn, o.ply_count, o.side FROM opening_lines o
+       WHERE o.family = ${family}
+         AND NOT EXISTS (
+           SELECT 1 FROM opening_lessons l
+            WHERE l.opening_id = o.id AND l.prompt_version = ${OPENING_PROMPT_VERSION}
+              AND l.status IN ('completed', 'generating'))
+       ORDER BY o.ply_count, o.name LIMIT 40
+    `;
+    void (async () => {
+      for (const row of rows) {
+        await this.sql`
+          INSERT INTO opening_lessons (opening_id, prompt_version, status)
+          VALUES (${row.id}, ${OPENING_PROMPT_VERSION}, 'generating')
+          ON CONFLICT (opening_id, prompt_version) DO UPDATE SET status = 'generating', updated_at = now()
+        `;
+        await this.generate(row, config);
+      }
+    })().catch((error: unknown) => this.logger.error('Pré-geração das aberturas falhou', error));
+    return { started: rows.length };
   }
 
   /** Book moves after `prefix` (space-separated UCI moves from the start), most played first. */

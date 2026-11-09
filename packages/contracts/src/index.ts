@@ -438,6 +438,8 @@ export {
   type TutorLesson,
 } from './tutor.js';
 export {
+  adminOpeningLessonInputSchema,
+  adminOpeningLessonSchema,
   openingBranchSchema,
   openingDetailSchema,
   openingFamilySchema,
@@ -445,6 +447,8 @@ export {
   openingLineSchema,
   openingPracticeInputSchema,
   openingSideSchema,
+  type AdminOpeningLesson,
+  type AdminOpeningLessonInput,
   type OpeningBranch,
   type OpeningDetail,
   type OpeningFamily,
