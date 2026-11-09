@@ -2467,6 +2467,21 @@ paths:
         '401': {$ref: '#/components/responses/Problem'}
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
+  /classrooms/{classroomId}/games/{gameId}:
+    get:
+      summary: Ver, só leitura, a partida que o professor está jogando
+      operationId: getClassroomTeacherGame
+      parameters:
+        - {name: classroomId, in: path, required: true, schema: {type: string, format: uuid}}
+        - {name: gameId, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: Posição e lances da partida do professor
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ClassroomGameView'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
   /classrooms/{classroomId}/live:
     get:
       summary: Página em que o professor está agora (os alunos consultam e acompanham)
@@ -2664,6 +2679,26 @@ components:
               index: {type: integer}
               label: {type: string}
               text: {type: string}
+    ClassroomGameView:
+      type: object
+      required: [white, black, fen, sideToMove, status, result, moves]
+      properties:
+        white: {type: string}
+        black: {type: string}
+        fen: {type: string}
+        sideToMove: {type: string, enum: [white, black]}
+        status: {type: string}
+        result: {type: string, enum: [white_win, black_win, draw, none]}
+        moves:
+          type: array
+          items:
+            type: object
+            required: [ply, san, from, to]
+            properties:
+              ply: {type: integer}
+              san: {type: string}
+              from: {type: string}
+              to: {type: string}
     ClassroomLive:
       type: object
       required: [path, seq]

@@ -1,4 +1,4 @@
-import type { ClassroomMember, ClassroomSummary } from '@xadrez/contracts';
+import type { ClassroomGameView, ClassroomMember, ClassroomSummary } from '@xadrez/contracts';
 import { Injectable } from '@nestjs/common';
 
 import { DatabaseService } from '../database/database.service.js';
@@ -108,6 +108,50 @@ export class ClassroomRepository {
 
   async remove(classroomId: string): Promise<void> {
     await this.database.client`DELETE FROM classrooms WHERE id = ${classroomId}`;
+  }
+
+  /** The teacher's game as a spectator sees it; null unless the teacher is one of its players. */
+  async spectateGame(teacherId: string, gameId: string): Promise<ClassroomGameView | null> {
+    const sql = this.database.client;
+    const [game] = await sql<
+      Array<{
+        current_fen: string;
+        result: ClassroomGameView['result'];
+        side_to_move: 'black' | 'white';
+        status: string;
+      }>
+    >`
+      SELECT g.current_fen, g.result::text AS result, g.side_to_move::text AS side_to_move,
+             g.status::text AS status
+        FROM games g
+        JOIN game_players mine ON mine.game_id = g.id AND mine.user_id = ${teacherId}
+       WHERE g.id = ${gameId}
+    `;
+    if (!game) return null;
+    const names = await sql<Array<{ color: 'black' | 'white'; display_name: string }>>`
+      SELECT gp.color::text AS color, p.display_name
+        FROM game_players gp JOIN user_profiles p ON p.user_id = gp.user_id
+       WHERE gp.game_id = ${gameId}
+    `;
+    const moves = await sql<
+      Array<{ from_square: string; ply: number; san: string; to_square: string }>
+    >`
+      SELECT ply, san, from_square, to_square FROM game_moves WHERE game_id = ${gameId} ORDER BY ply
+    `;
+    return {
+      black: names.find((row) => row.color === 'black')?.display_name ?? 'Pretas',
+      fen: game.current_fen,
+      moves: moves.map((move) => ({
+        from: move.from_square,
+        ply: Number(move.ply),
+        san: move.san,
+        to: move.to_square,
+      })),
+      result: game.result,
+      sideToMove: game.side_to_move,
+      status: game.status,
+      white: names.find((row) => row.color === 'white')?.display_name ?? 'Brancas',
+    };
   }
 
   async publish(classroomId: string, path: string): Promise<void> {

@@ -10,6 +10,7 @@ import {
   CLASSROOM_AREAS,
   CLASSROOM_EVENT,
   readClassroomSession,
+  studentPathFor,
   writeClassroomSession,
   type ClassroomSession,
 } from '@/lib/classroom-session';
@@ -98,7 +99,8 @@ export function ClassroomSync() {
         if (!active || live.seq === lastSeq) return;
         lastSeq = live.seq;
         const current = window.location.pathname + window.location.search;
-        if (live.path !== current) router.push(live.path);
+        const target = studentPathFor(live.path);
+        if (target !== current) router.push(target);
         const rawSy = new URL(live.path, window.location.origin).searchParams.get('sy');
         const sy = Number(rawSy);
         if (rawSy !== null && Number.isFinite(sy)) {

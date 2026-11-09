@@ -39,3 +39,22 @@ export const classroomLiveSchema = z.object({
   seq: z.number().int(),
 });
 export type ClassroomLive = z.infer<typeof classroomLiveSchema>;
+
+/** What a student sees of the teacher's game: read-only, no clocks or controls. */
+export const classroomGameViewSchema = z.object({
+  black: z.string(),
+  fen: z.string(),
+  moves: z.array(
+    z.object({
+      from: z.string(),
+      ply: z.number().int().positive(),
+      san: z.string(),
+      to: z.string(),
+    }),
+  ),
+  result: z.enum(['white_win', 'black_win', 'draw', 'none']),
+  sideToMove: z.enum(['white', 'black']),
+  status: z.string(),
+  white: z.string(),
+});
+export type ClassroomGameView = z.infer<typeof classroomGameViewSchema>;

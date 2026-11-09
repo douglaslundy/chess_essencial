@@ -3,6 +3,7 @@ import {
   classroomLiveInputSchema,
   createClassroomInputSchema,
   type ClassroomDetail,
+  type ClassroomGameView,
   type ClassroomLive,
   type ClassroomSummary,
 } from '@xadrez/contracts';
@@ -25,6 +26,8 @@ import {
 import { AccessTokenGuard, type AuthenticatedRequest } from '../auth/access-token.guard.js';
 import { parseInput } from '../common/http/parse-input.js';
 import { ClassroomRepository } from './classroom.repository.js';
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 @UseGuards(AccessTokenGuard)
 @Controller('classrooms')
@@ -125,6 +128,20 @@ export class ClassroomController {
   ) {
     const room = await this.teacherOnly(id, request.auth.userId);
     await this.classrooms.publish(room.id, parseInput(classroomLiveInputSchema, body).path);
+  }
+
+  /** The teacher's live game for the students (read-only); 404 unless the teacher plays it. */
+  @Get(':classroomId/games/:gameId')
+  async teacherGame(
+    @Req() request: AuthenticatedRequest,
+    @Param('classroomId') id: string,
+    @Param('gameId') gameId: string,
+  ): Promise<ClassroomGameView> {
+    const { room } = await this.access(id, request.auth.userId);
+    if (!UUID_PATTERN.test(gameId)) throw new NotFoundException('Partida não encontrada.');
+    const view = await this.classrooms.spectateGame(room.teacher_id, gameId);
+    if (!view) throw new NotFoundException('Partida não encontrada.');
+    return view;
   }
 
   @Get(':classroomId/live')

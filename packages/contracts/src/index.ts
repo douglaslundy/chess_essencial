@@ -407,6 +407,7 @@ export {
 export {
   addClassroomMemberInputSchema,
   classroomDetailSchema,
+  classroomGameViewSchema,
   classroomLiveInputSchema,
   classroomLivePathSchema,
   classroomLiveSchema,
@@ -414,6 +415,7 @@ export {
   classroomSummarySchema,
   createClassroomInputSchema,
   type ClassroomDetail,
+  type ClassroomGameView,
   type ClassroomLive,
   type ClassroomMember,
   type ClassroomSummary,

@@ -3,6 +3,7 @@ import type {
   PlayerMetrics,
   RatingHistoryEntry,
   ClassroomDetail,
+  ClassroomGameView,
   ClassroomLive,
   ClassroomSummary,
   ChatgptOAuthStartInput,
@@ -674,6 +675,8 @@ export const api = {
     }),
   removeClassroomMember: (classroomId: string, userId: string, token: string) =>
     request<void>(`/classrooms/${classroomId}/members/${userId}`, token, { method: 'DELETE' }),
+  getClassroomTeacherGame: (classroomId: string, gameId: string, token: string) =>
+    request<ClassroomGameView>(`/classrooms/${classroomId}/games/${gameId}`, token),
   getClassroomLive: (classroomId: string, token: string) =>
     request<ClassroomLive>(`/classrooms/${classroomId}/live`, token),
   publishClassroomLive: (classroomId: string, path: string, token: string) =>

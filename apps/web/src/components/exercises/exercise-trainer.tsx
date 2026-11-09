@@ -10,6 +10,7 @@ import type {
 } from '@xadrez/contracts';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { readClassroomSession } from '@/lib/classroom-session';
 import { useTutorContent } from '@/lib/tutor-store';
 import { Chess } from 'chess.js';
 
@@ -151,6 +152,22 @@ export function ExerciseTrainer({
     moves: string[];
     positions: string[];
   } | null>(null);
+  // In a class the teacher's exercise and the moves played so far travel in the URL (?cx, ?cm), which
+  // ClassroomSync publishes; students get a read-only view (see studentPathFor).
+  const classroomMoves = boardHistory?.exerciseId === tutorExerciseId ? boardHistory : null;
+  const classroomMoveList = classroomMoves
+    ? classroomMoves.moves.slice(0, classroomMoves.index).join('-')
+    : '';
+  useEffect(() => {
+    if (readClassroomSession()?.role !== 'teacher') return;
+    const url = new URL(window.location.href);
+    if (tutorExerciseId) url.searchParams.set('cx', tutorExerciseId);
+    else url.searchParams.delete('cx');
+    if (classroomMoveList) url.searchParams.set('cm', classroomMoveList);
+    else url.searchParams.delete('cm');
+    if (url.href !== window.location.href)
+      window.history.replaceState(window.history.state, '', url);
+  }, [tutorExerciseId, classroomMoveList]);
 
   function token() {
     return window.localStorage.getItem('xadrez.access_token');

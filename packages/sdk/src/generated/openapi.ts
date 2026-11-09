@@ -2446,6 +2446,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/classrooms/{classroomId}/games/{gameId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Ver, só leitura, a partida que o professor está jogando */
+    get: operations['getClassroomTeacherGame'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/classrooms/{classroomId}/live': {
     parameters: {
       query?: never;
@@ -2572,6 +2589,22 @@ export interface components {
         index: number;
         label: string;
         text: string;
+      }[];
+    };
+    ClassroomGameView: {
+      white: string;
+      black: string;
+      fen: string;
+      /** @enum {string} */
+      sideToMove: 'white' | 'black';
+      status: string;
+      /** @enum {string} */
+      result: 'white_win' | 'black_win' | 'draw' | 'none';
+      moves: {
+        ply: number;
+        san: string;
+        from: string;
+        to: string;
       }[];
     };
     ClassroomLive: {
@@ -7978,6 +8011,31 @@ export interface operations {
       };
       401: components['responses']['Problem'];
       403: components['responses']['Problem'];
+      404: components['responses']['Problem'];
+    };
+  };
+  getClassroomTeacherGame: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        classroomId: string;
+        gameId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Posição e lances da partida do professor */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ClassroomGameView'];
+        };
+      };
+      401: components['responses']['Problem'];
       404: components['responses']['Problem'];
     };
   };
