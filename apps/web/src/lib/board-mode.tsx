@@ -9,7 +9,7 @@ export interface BoardEffects {
   moveToast: boolean;
   /** The moved piece walks square by square to its destination. */
   moveAnimation: boolean;
-  /** Cinematic duel (per-piece power + sound) when a piece is captured. */
+  /** Capture film (one per attacker/victim pair, with sound) when a piece is captured. */
   captureAnimation: boolean;
   /** Letters and numbers on the 3D board's wooden frame. On by default. */
   coordinates3d: boolean;

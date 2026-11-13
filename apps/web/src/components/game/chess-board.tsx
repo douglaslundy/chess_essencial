@@ -536,7 +536,7 @@ const Chess3DBoard = dynamic(() => import('./board3d/chess-3d-board'), {
   ssr: false,
 });
 
-const CaptureCinematic = dynamic(() => import('./capture-fx/capture-cinematic'), { ssr: false });
+const CaptureVideo = dynamic(() => import('./capture-fx/capture-video'), { ssr: false });
 
 /** Tracks the last single move that produced the current FEN (derived during render, no flicker). */
 function usePlayedMove(fen: string): PlayedMove | null {
@@ -563,7 +563,7 @@ export function ChessBoard(props: ChessBoardProps) {
   const staged = mode === '3d' && effects.cinema3d && effects.cinemaScenes;
   const cinematic =
     effects.captureAnimation && !staged && played?.captured ? (
-      <CaptureCinematic key={played.id} move={played} />
+      <CaptureVideo key={played.id} move={played} />
     ) : null;
   if (mode === '3d') {
     return (

@@ -90,6 +90,7 @@ Tabuleiro 3D:
 - [x] **3D-02 (2026-11-07):** setas do teclado, com o foco no tabuleiro, giram a câmera para cima, baixo e lados.
 - [x] **3D-03 (2026-11-07):** rei bem maior que as outras peças, dama a segunda maior (alturas em `PIECE_HEIGHT`, `piece-geometry.ts`). Verificar como o tamanho das peças é definido e ajustar também as demais.
 - [x] **CINE-01 (2026-11-13):** tabuleiro "Medieval Cinema" com figuras articuladas, cenas de captura com câmera de cinema por peça e aura ki (azul brancas, amarela pretas). Aprovado e enviado. Opcional: trocar as figuras por modelos `.glb` com esqueleto se o usuário conseguir os arquivos.
+- [x] **CINE-02 (2026-11-13):** vídeo de captura (60 filmes em `apps/web/public/captures`) no lugar do duelo animado em todos os tabuleiros, menos o Medieval Cinema.
 
 Plataforma:
 
