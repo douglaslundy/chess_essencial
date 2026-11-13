@@ -25,6 +25,8 @@ export interface BoardEffects {
   cinema3d: boolean;
   /** Medieval Cinema: a capture plays as a staged scene. On by default. */
   cinemaScenes: boolean;
+  /** Ki aura (blue for white, yellow for black) on a piece that moved into an attack. On by default. */
+  kiAura: boolean;
   /** Grey light squares in 3D so the white pieces stand out. On by default. */
   greyLight3d: boolean;
   /** Square name ("A1") written inside every empty square, 2D and 3D. Off by default. */
@@ -37,6 +39,7 @@ const DEFAULT_EFFECTS: BoardEffects = {
   captureAnimation: false,
   coordinates3d: true,
   greyLight3d: true,
+  kiAura: true,
   medieval3d: false,
   ivory3d: false,
   cinema3d: false,

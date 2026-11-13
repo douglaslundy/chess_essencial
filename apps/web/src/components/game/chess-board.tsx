@@ -4,6 +4,7 @@ import { Chess, type Color, type PieceSymbol, type Square } from 'chess.js';
 
 import dynamic from 'next/dynamic';
 
+import { nextAuraSquares } from '@/components/game/board3d/piece-attacks';
 import { detectMove, hintSquares, walkPath, type PlayedMove } from '@/components/game/move-path';
 import { MoveToast } from '@/components/game/move-toast';
 import { useDialogA11y } from '@/components/ui/dialog-a11y';
@@ -234,6 +235,8 @@ interface BoardEffectProps {
   toast: PlayedMove | null;
   /** Move whose piece should walk to its destination, or null. */
   walk: PlayedMove | null;
+  /** Squares whose piece wears the ki aura. */
+  aura: ReadonlySet<string>;
   squareNames: boolean;
 }
 
@@ -253,6 +256,7 @@ function cell(square: Square, orientation: BoardOrientation): [number, number] {
 }
 
 function ChessBoard2D({
+  aura,
   fen,
   orientation,
   disabled,
@@ -460,6 +464,9 @@ function ChessBoard2D({
                 tabIndex={focused === square ? 0 : -1}
                 type="button"
               >
+                {piece && aura.has(square) ? (
+                  <span aria-hidden="true" className={`kiAura kiAura-${piece.color}`} />
+                ) : null}
                 {piece ? renderPiece(piece, pieceTheme) : null}
                 {marks?.includes(square) ? (
                   <span className="courseStar" aria-hidden="true">
@@ -536,27 +543,35 @@ const Chess3DBoard = dynamic(() => import('./board3d/chess-3d-board'), {
   ssr: false,
 });
 
+const NO_AURA: ReadonlySet<string> = new Set();
+
 const CaptureVideo = dynamic(() => import('./capture-fx/capture-video'), { ssr: false });
 
 /** Tracks the last single move that produced the current FEN (derived during render, no flicker). */
-function usePlayedMove(fen: string): PlayedMove | null {
-  const [track, setTrack] = useState<{ count: number; fen: string; played: PlayedMove | null }>({
-    count: 0,
-    fen,
-    played: null,
-  });
+function usePlayedMove(fen: string) {
+  const [track, setTrack] = useState<{
+    aura: ReadonlySet<string>;
+    count: number;
+    fen: string;
+    played: PlayedMove | null;
+  }>({ aura: NO_AURA, count: 0, fen, played: null });
   if (track.fen !== fen) {
     const move = detectMove(track.fen, fen);
     const count = track.count + 1;
-    setTrack({ count, fen, played: move ? { ...move, id: count } : null });
+    setTrack({
+      aura: nextAuraSquares(track.aura, fen, move),
+      count,
+      fen,
+      played: move ? { ...move, id: count } : null,
+    });
   }
-  return track.played;
+  return track;
 }
 
 /** Renders the flat board, or the immersive 3D board when the player enabled it (menu switch). */
 export function ChessBoard(props: ChessBoardProps) {
   const { effects, mode } = useBoardMode();
-  const played = usePlayedMove(props.fen);
+  const { aura, played } = usePlayedMove(props.fen);
   const toast = effects.moveToast ? played : null;
   const walk = effects.moveAnimation ? played : null;
   // The Medieval Cinema board stages the capture itself, on the board.
@@ -582,6 +597,7 @@ export function ChessBoard(props: ChessBoardProps) {
           ivory={effects.ivory3d && !effects.cinema3d}
           cinema={effects.cinema3d}
           cinemaScenes={effects.cinemaScenes}
+          kiAura={effects.kiAura}
           greyLightSquares={effects.greyLight3d}
           rims={{ b: effects.rimBlack, w: effects.rimWhite }}
           orientation={props.orientation}
@@ -594,7 +610,13 @@ export function ChessBoard(props: ChessBoardProps) {
   }
   return (
     <>
-      <ChessBoard2D {...props} squareNames={effects.squareNames} toast={toast} walk={walk} />
+      <ChessBoard2D
+        {...props}
+        aura={effects.kiAura ? aura : NO_AURA}
+        squareNames={effects.squareNames}
+        toast={toast}
+        walk={walk}
+      />
       {cinematic}
     </>
   );

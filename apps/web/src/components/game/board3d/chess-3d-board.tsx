@@ -36,6 +36,8 @@ import { playCaptureSound } from '@/components/game/capture-fx/capture-sound';
 import { PIECE_HEIGHT, pieceGeometry } from './piece-geometry';
 import { initialPieces, reconcile, type TrackedPiece } from './piece-tracker';
 
+const NO_AURAS: ReadonlySet<number> = new Set();
+
 export type Board3DOrientation = 'white' | 'black';
 
 export interface Chess3DBoardProps {
@@ -67,6 +69,8 @@ export interface Chess3DBoardProps {
   cinema?: boolean;
   /** With `cinema`: a capture plays as a staged scene (camera shot, power, bow). */
   cinemaScenes?: boolean;
+  /** Ki aura on the pieces that moved into an attack. */
+  kiAura?: boolean;
 }
 
 interface View {
@@ -317,7 +321,9 @@ function PieceMesh({
 
   return (
     <group position={home} ref={group} rotation={[0, baseYaw, 0]}>
-      {aura && !ghost ? <KiAura color={piece.color} height={PIECE_HEIGHT[piece.type]} /> : null}
+      {aura && !ghost ? (
+        <KiAura color={piece.color} height={PIECE_HEIGHT[piece.type]} solid={ivory} />
+      ) : null}
       {ivory ? (
         <IvoryPiece color={piece.color} kind={piece.type} />
       ) : (medieval || cinema) && piece.type === 'r' ? (
@@ -767,7 +773,7 @@ function Scene({
           }}
         >
           <PieceMesh
-            aura={stoneBoard && auras.has(piece.id)}
+            aura={auras.has(piece.id)}
             cine={cine}
             cinema={cinema}
             ivory={ivory}
@@ -827,6 +833,7 @@ export default function Chess3DBoard({
   ivory = false,
   cinema = false,
   cinemaScenes = true,
+  kiAura = true,
 }: Chess3DBoardProps) {
   const hinted = useMemo(
     () => ({ from: hint?.from ?? null, ...hintSquares(fen, hint) }),
@@ -1192,7 +1199,7 @@ export default function Chess3DBoard({
           shadows
         >
           <Scene
-            auras={auras}
+            auras={kiAura ? auras : NO_AURAS}
             checkSquare={checkSquare}
             cine={cine}
             cinema={cinema}

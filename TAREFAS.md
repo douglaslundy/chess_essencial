@@ -91,6 +91,7 @@ Tabuleiro 3D:
 - [x] **3D-03 (2026-11-07):** rei bem maior que as outras peças, dama a segunda maior (alturas em `PIECE_HEIGHT`, `piece-geometry.ts`). Verificar como o tamanho das peças é definido e ajustar também as demais.
 - [x] **CINE-01 (2026-11-13):** tabuleiro "Medieval Cinema" com figuras articuladas, cenas de captura com câmera de cinema por peça e aura ki (azul brancas, amarela pretas). Aprovado e enviado. Opcional: trocar as figuras por modelos `.glb` com esqueleto se o usuário conseguir os arquivos.
 - [x] **CINE-02 (2026-11-13):** vídeo de captura (60 filmes em `apps/web/public/captures`) no lugar do duelo animado em todos os tabuleiros, menos o Medieval Cinema.
+- [x] **CINE-03 (2026-11-13):** aura ki (azul brancas, amarela pretas) em todos os tabuleiros, 2D e 3D, com opção "Aura de ataque" no menu.
 
 Plataforma:
 

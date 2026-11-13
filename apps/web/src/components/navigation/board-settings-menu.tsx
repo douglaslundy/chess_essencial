@@ -14,6 +14,11 @@ const EFFECT_LABELS: Array<[keyof BoardEffects, string, string]> = [
     'Filme de 10 segundos da captura, com som. Toque no vídeo para pular.',
   ],
   [
+    'kiAura',
+    'Aura de ataque',
+    'A peça que se move e passa a atacar outra ganha uma chama: azul nas brancas, amarela nas pretas.',
+  ],
+  [
     'cinemaScenes',
     'Cenas de captura (Medieval Cinema)',
     'A captura vira uma cena com câmera de cinema. Toque no tabuleiro para pular.',

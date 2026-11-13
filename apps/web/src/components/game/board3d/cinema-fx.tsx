@@ -9,10 +9,12 @@ import {
   DoubleSide,
   LatheGeometry,
   MeshStandardMaterial,
+  NormalBlending,
   ShaderMaterial,
   TubeGeometry,
   Vector2,
   Vector3,
+  type Blending,
   type Group,
   type Mesh,
   type MeshBasicMaterial,
@@ -24,9 +26,9 @@ import { CINE_IMPACT, liveCine, span, victimState, type Cine } from './cinema-sc
 const auraTime = { value: 0 };
 
 /** Flame shell: noise scrolling upwards, cut into tongues that thin out towards the top. */
-function auraMaterial(color: string, core: string) {
+function auraMaterial(color: string, core: string, blending: Blending = AdditiveBlending) {
   return new ShaderMaterial({
-    blending: AdditiveBlending,
+    blending,
     depthWrite: false,
     fragmentShader: `
       uniform float uTime;
@@ -74,7 +76,13 @@ function auraMaterial(color: string, core: string) {
   });
 }
 
-let aura: { b: ShaderMaterial; geometry: LatheGeometry; w: ShaderMaterial } | null = null;
+let aura: {
+  b: ShaderMaterial;
+  geometry: LatheGeometry;
+  solidB: ShaderMaterial;
+  solidW: ShaderMaterial;
+  w: ShaderMaterial;
+} | null = null;
 function auraAssets() {
   aura ??= {
     // Black pieces burn yellow, white pieces blue.
@@ -90,13 +98,25 @@ function auraAssets() {
       ].map(([r, y]) => new Vector2(r, y)),
       32,
     ),
+    // Additive light vanishes on a bright board: there the flame is painted over instead.
+    solidB: auraMaterial('#ff9d00', '#ffd84a', NormalBlending),
+    solidW: auraMaterial('#1f7bff', '#7fc4ff', NormalBlending),
     w: auraMaterial('#1f7bff', '#bfe6ff'),
   };
   return aura;
 }
 
 /** Ki-style aura around a piece that attacks an enemy piece. `height` is the piece's height. */
-export function KiAura({ color, height }: { color: 'w' | 'b'; height: number }) {
+export function KiAura({
+  color,
+  height,
+  solid = false,
+}: {
+  color: 'w' | 'b';
+  height: number;
+  /** For bright boards (Marfim). */
+  solid?: boolean;
+}) {
   const assets = auraAssets();
   useFrame((state) => {
     auraTime.value = state.clock.elapsedTime;
@@ -104,7 +124,7 @@ export function KiAura({ color, height }: { color: 'w' | 'b'; height: number }) 
   return (
     <mesh
       geometry={assets.geometry}
-      material={assets[color]}
+      material={solid ? assets[color === 'w' ? 'solidW' : 'solidB'] : assets[color]}
       renderOrder={2}
       scale={[1, height / 1.3, 1]}
     />

@@ -10,7 +10,7 @@ import {
   stageFor,
   victimState,
 } from './cinema-scenes';
-import { attackingSquares } from './piece-attacks';
+import { attackingSquares, nextAuraSquares } from './piece-attacks';
 
 describe('capture scene', () => {
   const from: [number, number] = [0, 3];
@@ -78,5 +78,21 @@ describe('attackingSquares', () => {
     expect(attackingSquares('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1').size).toBe(
       0,
     );
+  });
+});
+
+describe('nextAuraSquares', () => {
+  it('lights the piece that moved into an attack and keeps it while it attacks', () => {
+    const moved = nextAuraSquares(new Set(), '4k3/3p4/8/8/8/8/8/3QK3 b - - 0 1', {
+      from: 'c1',
+      to: 'd1',
+    });
+    expect([...moved]).toEqual(['d1']);
+    const kept = nextAuraSquares(moved, '5k2/3p4/8/8/8/8/8/3QK3 w - - 0 1', {
+      from: 'e8',
+      to: 'f8',
+    });
+    expect([...kept]).toEqual(['d1']);
+    expect(nextAuraSquares(kept, '5k2/8/8/3p4/8/8/8/2Q1K3 b - - 0 1', null).size).toBe(0);
   });
 });

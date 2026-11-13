@@ -1253,6 +1253,40 @@ a.primaryButton {
   text-shadow: 0 0 3px rgb(0 0 0 / 55%);
 }
 
+/* Aura ki no tabuleiro 2D: chama azul nas brancas, amarela nas pretas, sobre a peça que ataca. */
+.kiAura {
+  position: absolute;
+  inset: -14% -4% 2%;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 50% 50% 46% 46% / 72% 72% 28% 28%;
+  filter: blur(3px);
+  transform-origin: 50% 100%;
+  animation: kiAuraFlicker 0.45s ease-in-out infinite alternate;
+}
+.kiAura-w {
+  background: radial-gradient(ellipse at 50% 78%, #bfe6ff 0%, #1f7bff 42%, transparent 72%);
+}
+.kiAura-b {
+  background: radial-gradient(ellipse at 50% 78%, #fff3a0 0%, #ffb300 42%, transparent 72%);
+}
+@keyframes kiAuraFlicker {
+  from {
+    opacity: 0.55;
+    transform: scale(0.94, 0.9);
+  }
+  to {
+    opacity: 0.85;
+    transform: scale(1.03, 1.08);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kiAura {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+
 .moveTarget {
   position: absolute;
   z-index: 3;
