@@ -8,7 +8,11 @@ import { getNarrationRate, NARRATION_RATES, setNarrationRate } from '@/lib/speec
 const EFFECT_LABELS: Array<[keyof BoardEffects, string, string]> = [
   ['moveToast', 'Balão da jogada', 'Mostra a anotação do lance por 2 segundos.'],
   ['moveAnimation', 'Animação de movimento', 'A peça caminha casa a casa até o destino.'],
-  ['captureAnimation', 'Vídeo de captura', 'Filme de 10 segundos da captura, com som. Toque no vídeo para pular.'],
+  [
+    'captureAnimation',
+    'Vídeo de captura',
+    'Filme de 10 segundos da captura, com som. Toque no vídeo para pular.',
+  ],
   [
     'cinemaScenes',
     'Cenas de captura (Medieval Cinema)',
