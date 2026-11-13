@@ -29,11 +29,12 @@ function parseCookies(header: string | undefined) {
   return cookies;
 }
 
-function serializeCookie(name: string, value: string, maxAge: number, secure: boolean) {
+/** Without `maxAge` the browser drops the cookie when it closes. */
+function serializeCookie(name: string, value: string, maxAge: number | null, secure: boolean) {
   return [
     `${name}=${encodeURIComponent(value)}`,
     'Path=/',
-    `Max-Age=${maxAge}`,
+    ...(maxAge === null ? [] : [`Max-Age=${maxAge}`]),
     'HttpOnly',
     'SameSite=Lax',
     ...(secure ? ['Secure'] : []),
@@ -54,9 +55,19 @@ export function readRefreshCookie(request: FastifyRequest, config: ConfigService
   );
 }
 
-export function setRefreshCookie(reply: FastifyReply, refreshToken: string, config: ConfigService) {
+/** The web client says on every login and refresh whether the player chose to stay signed in. */
+export function staysSignedIn(request: FastifyRequest) {
+  return request.headers['x-xadrez-remember'] !== '0';
+}
+
+export function setRefreshCookie(
+  reply: FastifyReply,
+  refreshToken: string,
+  config: ConfigService,
+  persistent = true,
+) {
   const secure = useSecureCookie(config);
-  const maxAge = config.get<number>('AUTH_REFRESH_TTL_SECONDS', 2_592_000);
+  const maxAge = persistent ? config.get<number>('AUTH_REFRESH_TTL_SECONDS', 2_592_000) : null;
   reply.header('Set-Cookie', serializeCookie(cookieName(config), refreshToken, maxAge, secure));
 }
 

@@ -19,6 +19,7 @@ import {
   isWebClient,
   readRefreshCookie,
   setRefreshCookie,
+  staysSignedIn,
 } from './web-session-cookie.js';
 
 @Controller('auth')
@@ -57,7 +58,9 @@ export class AuthController {
       ip: request.ip ?? null,
       userAgent: typeof userAgent === 'string' ? userAgent.slice(0, 1_024) : null,
     });
-    if (isWebClient(request)) setRefreshCookie(reply, result.tokens.refreshToken, this.config);
+    if (isWebClient(request)) {
+      setRefreshCookie(reply, result.tokens.refreshToken, this.config, staysSignedIn(request));
+    }
     return result;
   }
 
@@ -72,7 +75,7 @@ export class AuthController {
     const refreshToken = cookieToken ?? parseInput(refreshInputSchema, body).refreshToken;
     const tokens = await this.authService.refresh(refreshToken);
     if (cookieToken || isWebClient(request)) {
-      setRefreshCookie(reply, tokens.refreshToken, this.config);
+      setRefreshCookie(reply, tokens.refreshToken, this.config, staysSignedIn(request));
     }
     return tokens;
   }

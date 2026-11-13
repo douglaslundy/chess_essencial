@@ -172,6 +172,25 @@ const sessionKeys = [
   'xadrez.username',
 ] as const;
 
+/** True while this browser holds a web session (the token itself lives in an HttpOnly cookie). */
+export function hasStoredSession() {
+  return (
+    typeof window !== 'undefined' && Boolean(window.localStorage.getItem('xadrez.access_token'))
+  );
+}
+
+const REMEMBER_KEY = 'xadrez.remember';
+
+/** "Permanecer conectado": off makes the session end when the browser closes. */
+export function setRememberSession(remember: boolean) {
+  window.localStorage.setItem(REMEMBER_KEY, remember ? '1' : '0');
+}
+
+function rememberHeader() {
+  const off = typeof window !== 'undefined' && window.localStorage.getItem(REMEMBER_KEY) === '0';
+  return { 'X-Xadrez-Remember': off ? '0' : '1' };
+}
+
 export function clearStoredSession() {
   memoryAccessToken = null;
   if (typeof window === 'undefined') return;
@@ -208,11 +227,14 @@ async function refreshStoredSession(): Promise<string | null> {
           'Content-Type': 'application/json',
           'X-Xadrez-Client': 'web',
           'X-Xadrez-CSRF': '1',
+          ...rememberHeader(),
         },
         method: 'POST',
       });
       if (!response.ok) {
-        clearStoredSession();
+        // Only a refusal ends the session. A restart or a rate limit must not: the cookie is still
+        // valid and the next page load tries again.
+        if (response.status < 500 && response.status !== 429) clearStoredSession();
         return null;
       }
       const tokens = (await response.json()) as TokenPair;
@@ -223,7 +245,7 @@ async function refreshStoredSession(): Promise<string | null> {
       if (typeof userId === 'string') window.localStorage.setItem('xadrez.user_id', userId);
       return tokens.accessToken;
     } catch {
-      clearStoredSession();
+      // Offline or API unreachable: keep the session for the next attempt.
       return null;
     }
   })();
@@ -265,6 +287,7 @@ function fetchApi(path: string, token?: string, init?: RequestInit) {
         ? {}
         : { 'Content-Type': 'application/json' }),
       ...authHeaders(token),
+      ...(path === '/auth/login' ? rememberHeader() : {}),
       ...init?.headers,
     },
   });

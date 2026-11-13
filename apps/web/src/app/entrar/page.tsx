@@ -4,7 +4,7 @@ import type { FormEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { api, establishWebSession } from '@/lib/api/client';
+import { api, establishWebSession, hasStoredSession, setRememberSession } from '@/lib/api/client';
 
 type Mode = 'login' | 'register';
 
@@ -25,6 +25,11 @@ export default function AuthPage() {
       setMode('register');
     }
     const token = search.get('verify');
+    // Already signed in: the login form is not what the player came for.
+    if (!token && hasStoredSession()) {
+      router.replace('/app');
+      return;
+    }
     if (!token || verificationStarted.current) return;
     verificationStarted.current = true;
     setBusy(true);
@@ -35,7 +40,7 @@ export default function AuthPage() {
         setMessage(error instanceof Error ? error.message : 'Não foi possível confirmar o e-mail.'),
       )
       .finally(() => setBusy(false));
-  }, []);
+  }, [router]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -61,6 +66,7 @@ export default function AuthPage() {
               : 'Cadastro criado, mas não conseguimos enviar o e-mail de confirmação agora. Tente reenviar mais tarde ou fale com o suporte.',
         );
       } else {
+        setRememberSession(data.get('remember') === 'on');
         const result = await api.login({
           identifier: String(data.get('identifier') ?? ''),
           password: String(data.get('password') ?? ''),
@@ -160,6 +166,12 @@ export default function AuthPage() {
               type="password"
             />
           </label>
+          {mode === 'login' ? (
+            <label className="authRemember">
+              <input defaultChecked name="remember" type="checkbox" />
+              Permanecer conectado por 30 dias
+            </label>
+          ) : null}
           <button className="primaryButton" disabled={busy} type="submit">
             {busy ? 'Aguarde…' : mode === 'login' ? 'Entrar' : 'Criar conta'}
           </button>

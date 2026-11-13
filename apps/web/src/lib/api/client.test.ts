@@ -6,6 +6,8 @@ import {
   establishWebSession,
   getRealtimeAccessToken,
   getStoredUserId,
+  hasStoredSession,
+  setRememberSession,
 } from './client';
 
 function localStorageWith(values: Record<string, string>) {
@@ -96,6 +98,37 @@ describe('API session refresh', () => {
     expect(localStorage.getItem('xadrez.access_token')).toBeNull();
     expect(localStorage.getItem('xadrez.refresh_token')).toBeNull();
     expect(localStorage.getItem('xadrez.username')).toBeNull();
+  });
+
+  it.each([
+    ['the network fails', () => Promise.reject(new TypeError('Failed to fetch'))],
+    ['the API is restarting', () => Promise.resolve(new Response(null, { status: 503 }))],
+  ])('keeps the session when %s during the refresh', async (_case, refresh) => {
+    const localStorage = localStorageWith({ 'xadrez.access_token': 'web-session' });
+    vi.stubGlobal('window', { dispatchEvent: vi.fn(), localStorage });
+    vi.stubGlobal('fetch', vi.fn().mockImplementationOnce(refresh));
+
+    await expect(getRealtimeAccessToken(true)).resolves.toBeNull();
+    // The 30-day cookie is still valid: the next page load must try again, not ask for a login.
+    expect(hasStoredSession()).toBe(true);
+  });
+
+  it('tells the API whether the player asked to stay signed in', async () => {
+    const localStorage = localStorageWith({ 'xadrez.access_token': 'web-session' });
+    vi.stubGlobal('window', { dispatchEvent: vi.fn(), localStorage });
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() => Promise.resolve(new Response(null, { status: 503 })));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await getRealtimeAccessToken(true);
+    setRememberSession(false);
+    await getRealtimeAccessToken(true);
+
+    const sent = fetchMock.mock.calls.map(
+      ([, init]) => (init as { headers: Record<string, string> }).headers['X-Xadrez-Remember'],
+    );
+    expect(sent).toEqual(['1', '0']);
   });
 
   it('provides a refreshed token to realtime after HTTP rotated the session', async () => {

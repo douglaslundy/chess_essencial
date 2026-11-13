@@ -1,5 +1,7 @@
 import Link from 'next/link';
 
+import { SessionRedirect } from '@/components/auth/session-redirect';
+
 const highlights = [
   'Partidas ao vivo com servidor autoritativo',
   'Exercícios e desafios progressivos, do iniciante ao avançado',
@@ -9,6 +11,7 @@ const highlights = [
 export default function HomePage() {
   return (
     <main className="landingPage">
+      <SessionRedirect />
       <header className="landingBar">
         <Link className="landingBrand" href="/">
           <span>XE</span>

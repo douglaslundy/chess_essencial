@@ -21,6 +21,18 @@ describe('web refresh cookie', () => {
     );
   });
 
+  it('sets a browser-session cookie when the player did not ask to stay signed in', () => {
+    const header = vi.fn();
+    const config = new ConfigService({ AUTH_REFRESH_TTL_SECONDS: 3_600, NODE_ENV: 'test' });
+
+    setRefreshCookie({ header } as never, 'opaque-token', config, false);
+
+    expect(header).toHaveBeenCalledWith(
+      'Set-Cookie',
+      'xadrez_refresh=opaque-token; Path=/; HttpOnly; SameSite=Lax',
+    );
+  });
+
   it('reads and expires the development cookie without exposing it to scripts', () => {
     const config = new ConfigService({ NODE_ENV: 'test' });
     expect(

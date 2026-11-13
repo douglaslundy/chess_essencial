@@ -3048,6 +3048,17 @@ a.primaryButton {
   color: #fff;
   padding: 0.75rem;
 }
+.authCard .authRemember {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.authCard .authRemember input {
+  width: auto;
+  min-height: 0;
+}
+
 .resendVerification {
   color: var(--muted);
 }
