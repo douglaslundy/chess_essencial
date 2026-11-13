@@ -21,6 +21,10 @@ export interface BoardEffects {
   medieval3d: boolean;
   /** 3D style "Marfim": ivory and graphite pieces on a walnut board with studio light. */
   ivory3d: boolean;
+  /** 3D style "Medieval Cinema": articulated stone figures on the medieval board. */
+  cinema3d: boolean;
+  /** Medieval Cinema: a capture plays as a staged scene. On by default. */
+  cinemaScenes: boolean;
   /** Grey light squares in 3D so the white pieces stand out. On by default. */
   greyLight3d: boolean;
   /** Square name ("A1") written inside every empty square, 2D and 3D. Off by default. */
@@ -35,6 +39,8 @@ const DEFAULT_EFFECTS: BoardEffects = {
   greyLight3d: true,
   medieval3d: false,
   ivory3d: false,
+  cinema3d: false,
+  cinemaScenes: true,
   rimBlack: true,
   rimWhite: true,
   moveAnimation: false,

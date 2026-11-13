@@ -4,7 +4,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Chess, type Square } from 'chess.js';
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { PerformanceMonitor } from '@react-three/drei';
-import { BackSide, type Group, type Texture } from 'three';
+import { BackSide, Vector3, type Group, type Texture } from 'three';
 
 import { BoardCoordinates, SquareName } from './board-coordinates';
 import styles from './chess-3d-board.module.css';
@@ -14,7 +14,26 @@ import { useDialogA11y } from '@/components/ui/dialog-a11y';
 import { MedievalFrame, MedievalStatue, MedievalTower, useMedievalMaterials } from './medieval';
 import { IvoryEnvironment, IvoryFrame, IvoryLights, IvoryPiece, useIvoryMaps } from './ivory';
 import { IVORY_KNIGHT_YAW } from './ivory-geometry';
-import { pieceGeometry } from './piece-geometry';
+import { CinemaFigure } from './cinema-figures';
+import { CineFx, KiAura } from './cinema-fx';
+import {
+  CINE_HIDE_FROM,
+  CINE_HIDE_TO,
+  CINE_IMPACT,
+  CINE_RETURN_AT,
+  CINE_TOTAL,
+  REST_POSE,
+  actorPose,
+  captorMotion,
+  cineCamera,
+  liveCine,
+  stageFor,
+  victimState,
+  type Cine,
+} from './cinema-scenes';
+import { attackingSquares } from './piece-attacks';
+import { playCaptureSound } from '@/components/game/capture-fx/capture-sound';
+import { PIECE_HEIGHT, pieceGeometry } from './piece-geometry';
 import { initialPieces, reconcile, type TrackedPiece } from './piece-tracker';
 
 export type Board3DOrientation = 'white' | 'black';
@@ -44,6 +63,10 @@ export interface Chess3DBoardProps {
   medieval?: boolean;
   /** Ivory set ("Marfim"): turned ivory and graphite pieces on a walnut board, studio light. */
   ivory?: boolean;
+  /** "Medieval Cinema" set: articulated stone figures on the medieval board. */
+  cinema?: boolean;
+  /** With `cinema`: a capture plays as a staged scene (camera shot, power, bow). */
+  cinemaScenes?: boolean;
 }
 
 interface View {
@@ -134,19 +157,30 @@ interface Ghost {
   captor: [number, number] | null;
   key: number;
   piece: TrackedPiece;
+  /** Victim of a capture scene: the scene moves it, not the knock-off animation. */
+  staged: boolean;
 }
 
 function PieceMesh({
+  aura = false,
   captorXZ,
+  cine,
+  cinema = false,
   ghost,
   ivory = false,
   medieval = false,
   piece,
   rim = true,
   selected,
+  staged = false,
   walk,
 }: {
+  aura?: boolean;
   captorXZ?: [number, number] | null;
+  cine: MutableRefObject<Cine | null>;
+  cinema?: boolean;
+  /** Ghost only: victim of a capture scene. */
+  staged?: boolean;
   ghost?: boolean;
   ivory?: boolean;
   medieval?: boolean;
@@ -169,12 +203,54 @@ function PieceMesh({
   const reduced = prefersReducedMotion();
   const geometry = useMemo(() => pieceGeometry(piece.type), [piece.type]);
   const white = piece.color === 'w';
+  const baseYaw =
+    (white ? Math.PI / 2 : -Math.PI / 2) + (ivory && piece.type === 'n' ? IVORY_KNIGHT_YAW : 0);
+  const pose = useRef(REST_POSE[piece.type]);
 
   useFrame((state) => {
     const node = group.current;
     if (!node) return;
     const now = state.clock.elapsedTime;
     const a = anim.current;
+    const scene = liveCine(cine.current);
+    const sceneTime = scene ? performance.now() / 1000 - scene.at : 0;
+    if (staged) {
+      // Only the scene it was captured in moves this ghost; afterwards it is gone.
+      const v = scene?.victimId === piece.id ? victimState(scene.attacker, sceneTime) : null;
+      node.visible = Boolean(v?.visible);
+      if (!v) return;
+      node.position.set(
+        tx + Math.sin(sceneTime * 70) * v.shake,
+        v.y,
+        tz + Math.cos(sceneTime * 83) * v.shake,
+      );
+      node.rotation.set(v.wobble, baseYaw + v.spin, 0);
+      return;
+    }
+    if (scene && !ghost && scene.captorId === piece.id) {
+      // The scene owns the capturing piece: it waits at its mark, acts, then takes the square.
+      a.lastSquare = piece.square;
+      a.start = -1;
+      const m = captorMotion(scene.attacker, sceneTime);
+      const sx = scene.from[0] + (scene.stage[0] - scene.from[0]) * m.approach;
+      const sz = scene.from[1] + (scene.stage[1] - scene.from[1]) * m.approach;
+      node.position.set(
+        sx + (scene.end[0] - sx) * m.advance,
+        m.lift,
+        sz + (scene.end[1] - sz) * m.advance,
+      );
+      const turn = ((scene.yaw - baseYaw + 3 * Math.PI) % (2 * Math.PI)) - Math.PI;
+      node.rotation.set(0, baseYaw + turn * m.face, 0);
+      node.scale.set(1, 1, 1);
+      node.visible = true;
+      pose.current = actorPose(scene.attacker, sceneTime);
+      return;
+    }
+    if (!ghost) {
+      node.visible = !scene || sceneTime < CINE_HIDE_FROM || sceneTime > CINE_HIDE_TO;
+      node.rotation.y = baseYaw;
+      pose.current = REST_POSE[piece.type];
+    }
     if (!ghost && a.lastSquare !== piece.square) {
       const origin: [number, number] = [node.position.x, node.position.z];
       a.walking = Boolean(walk);
@@ -240,19 +316,14 @@ function PieceMesh({
   });
 
   return (
-    <group
-      position={home}
-      ref={group}
-      rotation={[
-        0,
-        (white ? Math.PI / 2 : -Math.PI / 2) + (ivory && piece.type === 'n' ? IVORY_KNIGHT_YAW : 0),
-        0,
-      ]}
-    >
+    <group position={home} ref={group} rotation={[0, baseYaw, 0]}>
+      {aura && !ghost ? <KiAura color={piece.color} height={PIECE_HEIGHT[piece.type]} /> : null}
       {ivory ? (
         <IvoryPiece color={piece.color} kind={piece.type} />
-      ) : medieval && piece.type === 'r' ? (
+      ) : (medieval || cinema) && piece.type === 'r' ? (
         <MedievalTower color={piece.color} />
+      ) : cinema && piece.type !== 'r' ? (
+        <CinemaFigure color={piece.color} kind={piece.type} pose={pose} />
       ) : medieval ? (
         <MedievalStatue color={piece.color} kind={piece.type} />
       ) : (
@@ -366,10 +437,30 @@ function stepCamera(
   );
 }
 
-function CameraRig({ view }: { view: MutableRefObject<Rig> }) {
-  useFrame((state, delta) =>
-    stepCamera(view.current, state.camera, delta, state.size.width / (state.size.height || 1)),
-  );
+const shotPos = new Vector3();
+const shotLook = new Vector3();
+
+function CameraRig({
+  cine,
+  view,
+}: {
+  cine: MutableRefObject<Cine | null>;
+  view: MutableRefObject<Rig>;
+}) {
+  useFrame((state, delta) => {
+    stepCamera(view.current, state.camera, delta, state.size.width / (state.size.height || 1));
+    const scene = liveCine(cine.current);
+    if (!scene) return;
+    const t = performance.now() / 1000 - scene.at;
+    // The capture scene takes the camera, blended with the game view at both ends.
+    const shot = cineCamera(scene, t);
+    const { azimuth } = view.current.current;
+    state.camera.position.lerp(shotPos.set(...shot.pos), shot.weight);
+    shotLook
+      .set(Math.sin(azimuth) * AIM_TOWARDS_PLAYER, 0, Math.cos(azimuth) * AIM_TOWARDS_PLAYER)
+      .lerp(shotPos.set(...shot.look), shot.weight);
+    state.camera.lookAt(shotLook);
+  });
   return null;
 }
 
@@ -536,7 +627,10 @@ function BoardSquares({
 }
 
 function Scene({
+  auras,
   checkSquare,
+  cine,
+  cinema,
   coordinates,
   rims,
   destinations,
@@ -556,6 +650,10 @@ function Scene({
   view,
   walk,
 }: {
+  /** Ids of the pieces wrapped in the ki aura. */
+  auras: ReadonlySet<number>;
+  cine: MutableRefObject<Cine | null>;
+  cinema: boolean;
   checkSquare: string | null;
   greyLight: boolean;
   hint: { from: string | null; path: Set<string>; target: string | null };
@@ -578,13 +676,15 @@ function Scene({
 }) {
   const maps = useMedievalMaterials();
   const ivoryMaps = useIvoryMaps(ivory);
+  // The cinema set stands on the medieval board: same stone, oak and torchlight.
+  const stoneBoard = medieval || cinema;
   const coarse = useMemo(
     () => typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches,
     [],
   );
   return (
     <>
-      <color args={[ivory ? '#0d0b0b' : medieval ? '#0f0b09' : '#14110f']} attach="background" />
+      <color args={[ivory ? '#0d0b0b' : stoneBoard ? '#0f0b09' : '#14110f']} attach="background" />
       {ivory ? (
         <>
           <IvoryEnvironment />
@@ -596,7 +696,7 @@ function Scene({
         </>
       ) : null}
       {/* Torchlight from the players' sides warms the stone. */}
-      {medieval ? (
+      {stoneBoard ? (
         <>
           <pointLight
             color="#ffb46b"
@@ -631,10 +731,11 @@ function Scene({
           />
         </>
       )}
-      <CameraRig view={view} />
+      <CameraRig cine={cine} view={view} />
+      {cinema ? <CineFx cine={cine} /> : null}
       {ivoryMaps ? (
         <IvoryFrame maps={ivoryMaps} />
-      ) : medieval ? (
+      ) : stoneBoard ? (
         <MedievalFrame maps={maps} />
       ) : (
         <mesh position={[0, -0.27, 0]} receiveShadow>
@@ -650,7 +751,7 @@ function Scene({
         greyLight={greyLight && !ivory}
         hint={hint}
         lastMove={lastMove}
-        maps={ivoryMaps ?? (medieval ? maps : undefined)}
+        maps={ivoryMaps ?? (stoneBoard ? maps : undefined)}
         marks={marks}
         occupied={new Set(pieces.map((piece) => piece.square))}
         onSquare={onSquare}
@@ -666,6 +767,9 @@ function Scene({
           }}
         >
           <PieceMesh
+            aura={stoneBoard && auras.has(piece.id)}
+            cine={cine}
+            cinema={cinema}
             ivory={ivory}
             medieval={medieval}
             piece={piece}
@@ -679,13 +783,16 @@ function Scene({
         <group key={`ghost-${ghost.key}`}>
           <PieceMesh
             captorXZ={ghost.captor}
+            cine={cine}
+            cinema={cinema}
             ghost
             ivory={ivory}
             medieval={medieval}
             piece={ghost.piece}
             rim={rims[ghost.piece.color]}
+            staged={ghost.staged}
           />
-          <Burst at={squareToXZ(ghost.piece.square)} />
+          {ghost.staged ? null : <Burst at={squareToXZ(ghost.piece.square)} />}
         </group>
       ))}
     </>
@@ -718,6 +825,8 @@ export default function Chess3DBoard({
   rims = DEFAULT_RIMS,
   medieval = false,
   ivory = false,
+  cinema = false,
+  cinemaScenes = true,
 }: Chess3DBoardProps) {
   const hinted = useMemo(
     () => ({ from: hint?.from ?? null, ...hintSquares(fen, hint) }),
@@ -727,6 +836,12 @@ export default function Chess3DBoard({
   const tracker = useRef(initial);
   const [pieces, setPieces] = useState<TrackedPiece[]>(initial.pieces);
   const [ghosts, setGhosts] = useState<Ghost[]>([]);
+  const cine = useRef<Cine | null>(null);
+  const [auras, setAuras] = useState<ReadonlySet<number>>(() => new Set());
+  const scenes = useRef(false);
+  useEffect(() => {
+    scenes.current = cinema && cinemaScenes && !ivory;
+  }, [cinema, cinemaScenes, ivory]);
   const [selected, setSelected] = useState<Square | null>(null);
   const [promotion, setPromotion] = useState<{ from: Square; to: Square } | null>(null);
   const promotionFocusRef = useRef<HTMLButtonElement>(null);
@@ -827,9 +942,46 @@ export default function Chess3DBoard({
       if (same) return;
     }
     tracker.current = { nextId: result.nextId, pieces: result.pieces };
+    const attacking = attackingSquares(fen);
+    const before = new Map(state.pieces.map((piece) => [piece.id, piece.square]));
+    // A single capture with a known captor plays as a scene (not when several moves were skipped).
+    const only = result.captures.length === 1 ? result.captures[0]! : null;
+    const taker = only ? result.pieces.find((piece) => piece.id === only.captorId) : undefined;
+    const origin = taker ? state.pieces.find((piece) => piece.id === taker.id) : undefined;
+    const staged = Boolean(scenes.current && taker && origin && !prefersReducedMotion());
+    if (staged && only && taker && origin) {
+      const from = squareToXZ(origin.square);
+      const to = squareToXZ(only.victim.square);
+      const placed = stageFor(from, to, origin.type);
+      const { azimuth } = view.current.current;
+      cine.current = {
+        ...placed,
+        at: performance.now() / 1000,
+        attacker: origin.type,
+        captorId: taker.id,
+        end: squareToXZ(taker.square),
+        from,
+        // Stops on the side of the duel nearer to where the player is looking from.
+        side:
+          Math.sign(-placed.dir[1] * Math.sin(azimuth) + placed.dir[0] * Math.cos(azimuth)) || 1,
+        to,
+        victimId: only.victim.id,
+        victimWhite: only.victim.color === 'w',
+      };
+      playCaptureSound(origin.type, 1.4, CINE_IMPACT);
+    }
     queueMicrotask(() => {
       setPieces(result.pieces);
       setSelected(null);
+      // Ki aura: a piece that moved into an attack keeps it for as long as it attacks something.
+      setAuras((old) => {
+        const next = new Set<number>();
+        for (const piece of result.pieces) {
+          const moved = before.has(piece.id) && before.get(piece.id) !== piece.square;
+          if ((moved || old.has(piece.id)) && attacking.has(piece.square)) next.add(piece.id);
+        }
+        return next;
+      });
       if (result.captures.length > 0) {
         const created = result.captures.map(({ captorId, victim }) => {
           const captor = result.pieces.find((piece) => piece.id === captorId);
@@ -838,12 +990,13 @@ export default function Chess3DBoard({
             captor: captor ? squareToXZ(captor.square) : null,
             key: ghostKey.current,
             piece: victim,
+            staged,
           } satisfies Ghost;
         });
         setGhosts((old) => [...old, ...created]);
         const timer = window.setTimeout(
           () => setGhosts((old) => old.filter((ghost) => !created.includes(ghost))),
-          2500,
+          staged ? CINE_TOTAL * 1000 : 2500,
         );
         timers.current.push(timer);
       }
@@ -977,6 +1130,9 @@ export default function Chess3DBoard({
           drag.current = null;
         }}
         onPointerDown={(event) => {
+          // A tap during a capture scene skips to its end.
+          const scene = liveCine(cine.current);
+          if (scene) scene.at = Math.min(scene.at, performance.now() / 1000 - CINE_RETURN_AT);
           event.currentTarget.focus({ preventScroll: true });
           pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
           drag.current = {
@@ -1036,7 +1192,10 @@ export default function Chess3DBoard({
           shadows
         >
           <Scene
+            auras={auras}
             checkSquare={checkSquare}
+            cine={cine}
+            cinema={cinema}
             coordinates={coordinates}
             rims={rims}
             destinations={destinations}

@@ -9,6 +9,11 @@ const EFFECT_LABELS: Array<[keyof BoardEffects, string, string]> = [
   ['moveToast', 'Balão da jogada', 'Mostra a anotação do lance por 2 segundos.'],
   ['moveAnimation', 'Animação de movimento', 'A peça caminha casa a casa até o destino.'],
   ['captureAnimation', 'Animação de captura', 'Duelo com o poder de cada peça e som.'],
+  [
+    'cinemaScenes',
+    'Cenas de captura (Medieval Cinema)',
+    'A captura vira uma cena com câmera de cinema. Toque no tabuleiro para pular.',
+  ],
   ['squareNames', 'Nome das casas', 'Mostra A1, B2… dentro das casas vazias (2D e 3D).'],
   [
     'greyLight3d',
@@ -106,11 +111,12 @@ export function BoardSettingsMenu() {
               <legend>Estilo do tabuleiro 3D</legend>
               <label>
                 <input
-                  checked={!effects.medieval3d && !effects.ivory3d}
+                  checked={!effects.medieval3d && !effects.ivory3d && !effects.cinema3d}
                   name={`${panelId}-style`}
                   onChange={() => {
                     setEffect('medieval3d', false);
                     setEffect('ivory3d', false);
+                    setEffect('cinema3d', false);
                   }}
                   type="radio"
                 />
@@ -118,10 +124,11 @@ export function BoardSettingsMenu() {
               </label>
               <label>
                 <input
-                  checked={effects.medieval3d && !effects.ivory3d}
+                  checked={effects.medieval3d && !effects.ivory3d && !effects.cinema3d}
                   name={`${panelId}-style`}
                   onChange={() => {
                     setEffect('ivory3d', false);
+                    setEffect('cinema3d', false);
                     setEffect('medieval3d', true);
                   }}
                   type="radio"
@@ -130,15 +137,29 @@ export function BoardSettingsMenu() {
               </label>
               <label>
                 <input
-                  checked={effects.ivory3d}
+                  checked={effects.ivory3d && !effects.cinema3d}
                   name={`${panelId}-style`}
                   onChange={() => {
                     setEffect('medieval3d', false);
+                    setEffect('cinema3d', false);
                     setEffect('ivory3d', true);
                   }}
                   type="radio"
                 />
                 <span>Marfim</span>
+              </label>
+              <label>
+                <input
+                  checked={effects.cinema3d}
+                  name={`${panelId}-style`}
+                  onChange={() => {
+                    setEffect('medieval3d', false);
+                    setEffect('ivory3d', false);
+                    setEffect('cinema3d', true);
+                  }}
+                  type="radio"
+                />
+                <span>Medieval Cinema</span>
               </label>
             </fieldset>
           ) : null}

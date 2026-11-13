@@ -559,8 +559,10 @@ export function ChessBoard(props: ChessBoardProps) {
   const played = usePlayedMove(props.fen);
   const toast = effects.moveToast ? played : null;
   const walk = effects.moveAnimation ? played : null;
+  // The Medieval Cinema board stages the capture itself, on the board.
+  const staged = mode === '3d' && effects.cinema3d && effects.cinemaScenes;
   const cinematic =
-    effects.captureAnimation && played?.captured ? (
+    effects.captureAnimation && !staged && played?.captured ? (
       <CaptureCinematic key={played.id} move={played} />
     ) : null;
   if (mode === '3d') {
@@ -576,8 +578,10 @@ export function ChessBoard(props: ChessBoardProps) {
           movableColor={props.movableColor}
           onMove={props.onMove}
           coordinates={effects.coordinates3d}
-          medieval={effects.medieval3d && !effects.ivory3d}
-          ivory={effects.ivory3d}
+          medieval={effects.medieval3d && !effects.ivory3d && !effects.cinema3d}
+          ivory={effects.ivory3d && !effects.cinema3d}
+          cinema={effects.cinema3d}
+          cinemaScenes={effects.cinemaScenes}
           greyLightSquares={effects.greyLight3d}
           rims={{ b: effects.rimBlack, w: effects.rimWhite }}
           orientation={props.orientation}
