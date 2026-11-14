@@ -7,6 +7,9 @@
   place-items: center;
   pointer-events: none;
 }
+.overlay[hidden] {
+  display: none;
+}
 .window {
   position: relative;
   width: min(94vw, 44rem);

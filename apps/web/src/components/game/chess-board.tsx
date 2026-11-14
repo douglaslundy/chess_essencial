@@ -569,17 +569,31 @@ function usePlayedMove(fen: string) {
 }
 
 /** Renders the flat board, or the immersive 3D board when the player enabled it (menu switch). */
-export function ChessBoard(props: ChessBoardProps) {
+export function ChessBoard(live: ChessBoardProps) {
   const { effects, mode } = useBoardMode();
+  // While a capture film plays the board stays on the capture: the next move (the opponent's
+  // reply) only reaches it when the film ends or the player skips it.
+  const [film, setFilm] = useState<{ hold: ChessBoardProps; move: PlayedMove } | null>(null);
+  const [filmedId, setFilmedId] = useState(0);
+  const props: ChessBoardProps = film
+    ? {
+        ...film.hold,
+        disabled: live.disabled || film.hold.fen !== live.fen,
+        onMove: live.onMove,
+      }
+    : live;
   const { aura, played } = usePlayedMove(props.fen);
   const toast = effects.moveToast ? played : null;
   const walk = effects.moveAnimation ? played : null;
   // The Medieval Cinema board stages the capture itself, on the board.
   const staged = mode === '3d' && effects.cinema3d && effects.cinemaScenes;
-  const cinematic =
-    effects.captureAnimation && !staged && played?.captured ? (
-      <CaptureVideo key={played.id} move={played} />
-    ) : null;
+  if (effects.captureAnimation && !staged && played?.captured && played.id !== filmedId) {
+    setFilmedId(played.id);
+    setFilm({ hold: live, move: played });
+  }
+  const cinematic = film ? (
+    <CaptureVideo key={film.move.id} move={film.move} onClose={() => setFilm(null)} />
+  ) : null;
   if (mode === '3d') {
     return (
       <>
