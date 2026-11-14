@@ -238,6 +238,8 @@ export {
 export {
   REALTIME_PROTOCOL_VERSION,
   authenticateCommandSchema,
+  captureFilmCommandSchema,
+  clockUpdatedEventSchema,
   authenticatedEventSchema,
   drawOfferedEventSchema,
   gameJoinCommandSchema,
@@ -248,6 +250,8 @@ export {
   realtimeMoveSubmitSchema,
   realtimeProblemSchema,
   type AuthenticateCommand,
+  type CaptureFilmCommand,
+  type ClockUpdatedEvent,
   type AuthenticatedEvent,
   type DrawOfferedEvent,
   type GameJoinCommand,

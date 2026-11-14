@@ -1,6 +1,7 @@
 import {
   REALTIME_PROTOCOL_VERSION,
   authenticateCommandSchema,
+  captureFilmCommandSchema,
   gameJoinCommandSchema,
   realtimeMoveSubmitSchema,
   type GameState,
@@ -230,6 +231,30 @@ export class GamesGateway
     }
   }
 
+  /** The player's capture film started or is over: the clock stands still only while it plays. */
+  @SubscribeMessage('game.capture_film')
+  async captureFilm(@ConnectedSocket() client: WebSocket, @MessageBody() body: unknown) {
+    try {
+      this.consumeCommand(client, 'game.capture_film');
+      const command = captureFilmCommandSchema.parse(body);
+      const userId = this.authenticatedUserId(client);
+      if (!this.session(client).gameIds.has(command.gameId)) {
+        throw new UnauthorizedException('Join the game before reporting a capture film');
+      }
+      const state = await this.games.captureFilm(
+        command.gameId,
+        userId,
+        command.ply,
+        command.playing,
+      );
+      if (!state) return;
+      this.broadcast(command.gameId, 'game.clock_updated', { clock: this.clock(state), state });
+      this.scheduleTimeout(command.gameId, state);
+    } catch (error) {
+      this.fail(client, 'game.capture_film', error);
+    }
+  }
+
   private scheduleBotReply(gameId: string) {
     const timer = setTimeout(() => {
       void this.games
@@ -354,7 +379,7 @@ export class GamesGateway
     if (state.status !== 'active' || !state.activeClockStartedAt) return;
 
     const storedClockMs = state.sideToMove === 'white' ? state.whiteClockMs : state.blackClockMs;
-    // Negative during the capture-film pause (the clock starts in the future): the flag falls later.
+    // Negative while a capture film holds the clock (it starts in the future): the flag falls later.
     const elapsedMs = Date.now() - new Date(state.activeClockStartedAt).getTime();
     const timer = setTimeout(
       async () => {

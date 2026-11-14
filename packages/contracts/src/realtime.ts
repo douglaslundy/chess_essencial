@@ -27,6 +27,14 @@ export const realtimeMoveSubmitSchema = submitMoveInputSchema.extend({
   gameId: z.string().uuid(),
 });
 
+/** A player's capture film started (`playing`) or is over (ended, skipped or failed). */
+export const captureFilmCommandSchema = z.object({
+  gameId: z.string().uuid(),
+  playing: z.boolean(),
+  /** Ply of the capture the film shows. */
+  ply: z.number().int().positive(),
+});
+
 export const realtimeClockSchema = z.object({
   activeClockStartedAt: z.string().datetime().nullable(),
   blackClockMs: z.number().int().nonnegative(),
@@ -46,6 +54,11 @@ export const moveCommittedEventSchema = z.object({
   state: gameStateSchema,
 });
 
+export const clockUpdatedEventSchema = z.object({
+  clock: realtimeClockSchema,
+  state: gameStateSchema,
+});
+
 export const drawOfferedEventSchema = z.object({
   clock: realtimeClockSchema,
   offerId: z.string().uuid(),
@@ -61,6 +74,8 @@ export const realtimeProblemSchema = z.object({
 
 export type AuthenticateCommand = z.infer<typeof authenticateCommandSchema>;
 export type AuthenticatedEvent = z.infer<typeof authenticatedEventSchema>;
+export type CaptureFilmCommand = z.infer<typeof captureFilmCommandSchema>;
+export type ClockUpdatedEvent = z.infer<typeof clockUpdatedEventSchema>;
 export type DrawOfferedEvent = z.infer<typeof drawOfferedEventSchema>;
 export type GameJoinCommand = z.infer<typeof gameJoinCommandSchema>;
 export type RealtimeClock = z.infer<typeof realtimeClockSchema>;

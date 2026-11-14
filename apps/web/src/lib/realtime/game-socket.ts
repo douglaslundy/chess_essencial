@@ -1,5 +1,6 @@
 import {
   authenticatedEventSchema,
+  clockUpdatedEventSchema,
   drawOfferedEventSchema,
   gameSnapshotEventSchema,
   moveCommittedEventSchema,
@@ -21,6 +22,8 @@ export interface GameSocketHandlers {
   snapshot: (state: GameState, moves: GameMove[], clock: RealtimeClock) => void;
   move: (state: GameState, move: GameMove, clock: RealtimeClock) => void;
   finished: (state: GameState, clock: RealtimeClock) => void;
+  /** The clock changed without a move (a capture film holds or releases it). */
+  clock?: (state: GameState, clock: RealtimeClock) => void;
   error: (message: string) => void;
 }
 
@@ -67,6 +70,11 @@ export class GameSocket {
       expectedVersion: this.version,
       uci,
     });
+  }
+
+  /** Tells the server this player's capture film started (`playing`) or is over. */
+  captureFilm(ply: number, playing: boolean) {
+    this.send('game.capture_film', { gameId: this.gameId, playing, ply });
   }
 
   stop() {
@@ -144,6 +152,11 @@ export class GameSocket {
         this.version = parsed.data.state.version;
         this.handlers.move(parsed.data.state, parsed.data.move, parsed.data.clock);
       }
+      return;
+    }
+    if (envelope.event === 'game.clock_updated') {
+      const parsed = clockUpdatedEventSchema.safeParse(envelope.data);
+      if (parsed.success) this.handlers.clock?.(parsed.data.state, parsed.data.clock);
       return;
     }
     if (envelope.event === 'game.draw_offered') {

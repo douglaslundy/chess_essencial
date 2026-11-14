@@ -74,6 +74,10 @@ export class GamesService {
     return this.games.setConnection(gameId, userId, connected);
   }
 
+  captureFilm(gameId: string, userId: string, ply: number, playing: boolean) {
+    return this.games.captureFilm(gameId, userId, ply, playing);
+  }
+
   async expireOnTime(gameId: string) {
     const state = await this.games.expireOnTime(gameId);
     if (state?.status === 'finished') await this.ratings.processFinishedGame(gameId);

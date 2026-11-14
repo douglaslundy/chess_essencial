@@ -29,7 +29,16 @@ const GIVE_UP_MS = 5000;
  * Capture film over the board. It ends by itself or when the player taps it; the caller keeps
  * the board on the capture until `onClose`. Only the window takes clicks.
  */
-export default function CaptureVideo({ move, onClose }: { move: PlayedMove; onClose: () => void }) {
+export default function CaptureVideo({
+  move,
+  onClose,
+  onPlaying,
+}: {
+  move: PlayedMove;
+  onClose: () => void;
+  /** The film really started (the game clock is held only from here). */
+  onPlaying?: () => void;
+}) {
   const [started, setStarted] = useState(false);
   const video = useRef<HTMLVideoElement>(null);
   const close = useRef(onClose);
@@ -67,6 +76,7 @@ export default function CaptureVideo({ move, onClose }: { move: PlayedMove; onCl
         <video
           onEnded={onClose}
           onError={onClose}
+          onPlaying={onPlaying}
           playsInline
           preload="auto"
           ref={video}

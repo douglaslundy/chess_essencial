@@ -36,6 +36,7 @@ import { DatabaseService } from '../../database/database.service.js';
 import { SubscriptionsService } from '../../subscriptions/subscriptions.service.js';
 import {
   calculateClockTransition,
+  captureFilmClockStart,
   effectiveClockMs,
   nextClockStart,
 } from '../domain/game-clock.js';
@@ -809,6 +810,61 @@ export class GamesRepository {
     return this.getState(gameId, userId);
   }
 
+  /**
+   * A player's capture film started or is over: holds or releases the clock (see
+   * `captureFilmClockStart`). Returns the new state, or null when nothing changed.
+   */
+  async captureFilm(
+    gameId: string,
+    userId: string,
+    ply: number,
+    playing: boolean,
+  ): Promise<GameState | null> {
+    return this.database.client.begin(async (transaction) => {
+      await transaction`SELECT pg_advisory_xact_lock(hashtextextended(${gameId}, 0))`;
+      const [row] = await transaction<
+        {
+          capture: boolean;
+          capturedAt: Date | string;
+          color: string;
+          lastPly: number;
+          now: Date | string;
+          sideToMove: string;
+          start: Date | string;
+        }[]
+      >`
+        SELECT
+          COALESCE((m.flags->>'capture')::boolean, false) AS capture,
+          m.server_received_at AS "capturedAt",
+          p.color,
+          (SELECT max(ply) FROM game_moves WHERE game_id = g.id)::integer AS "lastPly",
+          clock_timestamp() AS now,
+          g.side_to_move AS "sideToMove",
+          g.active_clock_started_at AS start
+        FROM games g
+        JOIN game_players p ON p.game_id = g.id AND p.user_id = ${userId}
+        JOIN game_moves m ON m.game_id = g.id AND m.ply = ${ply}
+        WHERE g.id = ${gameId} AND g.status = 'active' AND g.active_clock_started_at IS NOT NULL
+      `;
+      // Only the last capture counts, also when the opponent (a bot) already replied to it.
+      if (!row?.capture || ply < row.lastPly - 1) return null;
+      const start = captureFilmClockStart({
+        capturedAt: new Date(row.capturedAt),
+        currentStart: new Date(row.start),
+        now: new Date(row.now),
+        playing,
+        senderToMove: row.color === row.sideToMove,
+      });
+      if (!start) return null;
+      await transaction`
+        UPDATE games
+        SET active_clock_started_at = ${start.toISOString()}, updated_at = now()
+        WHERE id = ${gameId}
+      `;
+      return this.getStateInTransaction(transaction, gameId, userId);
+    });
+  }
+
   async resign(gameId: string, userId: string): Promise<GameState> {
     return this.database.client.begin(async (transaction) => {
       await transaction`SELECT pg_advisory_xact_lock(hashtextextended(${gameId}, 0))`;
@@ -1235,11 +1291,7 @@ export class GamesRepository {
           active_clock_started_at = ${
             applied.status.isGameOver
               ? null
-              : nextClockStart(
-                  receivedAt,
-                  activeClockStartedAt,
-                  applied.flags.capture,
-                ).toISOString()
+              : nextClockStart(receivedAt, activeClockStartedAt).toISOString()
           },
           halfmove_clock = ${Number(fenParts[4] ?? 0)},
           fullmove_number = ${Number(fenParts[5] ?? 1)},

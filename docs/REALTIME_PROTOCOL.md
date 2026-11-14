@@ -42,11 +42,20 @@ Resposta: `game.snapshot`, contendo estado canônico, relógio sincronizado e os
 
 O servidor valida autenticação, participação, turno, versão, legalidade e relógio sob lock transacional por partida.
 
+### `game.capture_film`
+
+```json
+{ "event": "game.capture_film", "data": { "gameId": "uuid", "ply": 12, "playing": true } }
+```
+
+Enviado pelo cliente que mostra o vídeo de captura: `playing: true` quando o vídeo do lance `ply` começa a tocar, `playing: false` quando termina, é pulado ou falha. Com `true`, o servidor segura o relógio até 11 s depois da captura (nunca mais que isso, e só se o aviso chegar em até 7 s). Com `false`, o relógio do próprio remetente volta a correr na hora. Sem aviso (vídeo desligado ou que não carregou) não há pausa. Resposta, quando o relógio muda: `game.clock_updated` para a sala.
+
 ## Eventos do servidor
 
 - `auth.authenticated`: autenticação concluída.
 - `game.snapshot`: snapshot de entrada ou reconexão.
 - `game.move_committed`: lance persistido e estado atualizado; é transmitido a todos na sala.
+- `game.clock_updated`: o relógio mudou sem lance (vídeo de captura segurou ou liberou); traz estado e relógio.
 - `game.draw_offered`: oferta persistida, com autor, estado canônico e relógio sincronizado.
 - `game.finished`: encerramento autoritativo por regra, tempo, desistência ou acordo.
 - `game.error`: erro do comando, sem expor token ou detalhes internos.

@@ -4,6 +4,7 @@ import {
   CAPTURE_FILM_MS,
   calculateClockTransition,
   effectiveClockMs,
+  captureFilmClockStart,
   nextClockStart,
 } from './game-clock.js';
 
@@ -40,15 +41,30 @@ describe('authoritative game clock', () => {
     ).toMatchObject({ clockAfterMoveMs: 0, timedOut: true });
   });
 
-  it('pauses every clock for the capture film and keeps the pause through a quick reply', () => {
-    const capture = nextClockStart(started, started, true);
-    expect(capture.getTime() - started.getTime()).toBe(CAPTURE_FILM_MS);
-    // Reply 3 s into the film: the capturing player is still watching, the pause end stays.
-    const reply = new Date(started.getTime() + 3_000);
-    expect(nextClockStart(reply, capture, false)).toEqual(capture);
-    expect(effectiveClockMs(60_000, capture, new Date(started.getTime() + 5_000))).toBe(60_000);
-    // After the film a quiet move starts the clock at once.
-    const late = new Date(started.getTime() + 20_000);
-    expect(nextClockStart(late, capture, false)).toEqual(late);
+  it('pauses the clock only while a capture film plays, never past the film length', () => {
+    const film = { capturedAt: started, currentStart: started, senderToMove: true };
+    const at = (ms: number) => new Date(started.getTime() + ms);
+    // No report (film off or failed to load): the clock runs from the capture.
+    expect(nextClockStart(at(3_000), started)).toEqual(at(3_000));
+    // Film started 1.2 s after the capture: paused until the film ends.
+    const paused = captureFilmClockStart({ ...film, now: at(1_200), playing: true });
+    expect(paused).toEqual(at(CAPTURE_FILM_MS));
+    expect(effectiveClockMs(60_000, paused, at(5_000))).toBe(60_000);
+    // A reply during the film keeps the pause for the player still watching.
+    expect(nextClockStart(at(3_000), paused!)).toEqual(paused);
+    // A late "playing" is refused; skipping or an error starts the sender's clock at once.
+    expect(captureFilmClockStart({ ...film, now: at(9_000), playing: true })).toBeNull();
+    expect(
+      captureFilmClockStart({ ...film, currentStart: paused!, now: at(4_000), playing: false }),
+    ).toEqual(at(4_000));
+    expect(
+      captureFilmClockStart({
+        ...film,
+        currentStart: paused!,
+        now: at(4_000),
+        playing: false,
+        senderToMove: false,
+      }),
+    ).toBeNull();
   });
 });

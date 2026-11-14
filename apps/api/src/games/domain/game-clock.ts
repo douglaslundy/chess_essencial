@@ -38,17 +38,40 @@ export function effectiveClockMs(
   return Math.max(0, storedClockMs - Math.max(0, elapsedMs - delayMs));
 }
 
-/**
- * After a capture both players may watch the capture film (1 s on the board + 10 s of film), so no
- * clock runs for this long. It is a fixed server rule: the client is never asked whether it watched.
- */
+/** The capture film: 1 s with the capture on the board + 10 s of film. */
 export const CAPTURE_FILM_MS = 11_000;
+/** A film must report that it started this soon after the capture (start delay + loading). */
+export const CAPTURE_FILM_START_WINDOW_MS = 7_000;
 
 /**
- * When the clock of the side to move starts counting. A capture opens the film pause; a quick
- * reply inside the pause keeps it, so the capturing player is not charged while still watching.
+ * When the clock of the side to move starts counting: at once, unless a capture film is still
+ * holding it (a quick reply inside the pause must not charge the player who is still watching).
  */
-export function nextClockStart(receivedAt: Date, previousStart: Date, capture: boolean) {
-  if (capture) return new Date(receivedAt.getTime() + CAPTURE_FILM_MS);
+export function nextClockStart(receivedAt: Date, previousStart: Date) {
   return previousStart > receivedAt ? previousStart : receivedAt;
+}
+
+export interface CaptureFilmInput {
+  capturedAt: Date;
+  currentStart: Date;
+  now: Date;
+  /** The film started; false when it ended, was skipped or failed. */
+  playing: boolean;
+  senderToMove: boolean;
+}
+
+/**
+ * New clock start after a player's film report, or null when nothing changes. The pause exists
+ * only while a film really plays, and never goes past `capturedAt + CAPTURE_FILM_MS`, whatever
+ * the client says.
+ */
+export function captureFilmClockStart(input: CaptureFilmInput): Date | null {
+  const { capturedAt, currentStart, now } = input;
+  if (input.playing) {
+    if (now.getTime() > capturedAt.getTime() + CAPTURE_FILM_START_WINDOW_MS) return null;
+    const filmEnd = new Date(capturedAt.getTime() + CAPTURE_FILM_MS);
+    return currentStart < filmEnd ? filmEnd : null;
+  }
+  // Film over: the sender's own clock runs again at once; the opponent's pause is not theirs to cut.
+  return input.senderToMove && currentStart > now ? now : null;
 }

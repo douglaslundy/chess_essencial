@@ -322,6 +322,10 @@ export function GameRoom({ gameId }: { gameId: string }) {
             const described = describeImportantMove(move);
             if (described) setAnnouncement({ ...described, key: `move-${move.id}` });
           },
+          clock: (snapshot, clock) => {
+            setState(snapshot);
+            setServerOffset(Date.parse(clock.serverNow) - Date.now());
+          },
           finished: (snapshot, clock) => {
             setState(snapshot);
             setServerOffset(Date.parse(clock.serverNow) - Date.now());
@@ -868,6 +872,10 @@ export function GameRoom({ gameId }: { gameId: string }) {
                 : undefined
             }
             lastMove={lastMove ? { from: lastMove.from, to: lastMove.to } : undefined}
+            onCaptureFilm={(playing, fen) => {
+              const capture = moves.findLast((move) => move.fenAfter === fen);
+              if (capture) socketRef.current?.captureFilm(capture.ply, playing);
+            }}
             movableColor={
               isDemo
                 ? displayFen.split(' ')[1] === 'b'

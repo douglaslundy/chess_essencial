@@ -13,6 +13,7 @@ interface Identity {
 
 interface MessageEnvelope {
   data: {
+    clock: { activeClockStartedAt: string | null; serverNow: string };
     move: { clientMoveId: string; id: number };
     offerId: string;
     offeredByUserId: string;
@@ -350,6 +351,64 @@ describeDatabase('realtime game integration', () => {
       whiteClockMs: 0,
     });
   }, 10_000);
+
+  it('holds the clock only while a capture film plays', async () => {
+    const created = await app.inject({
+      headers: { authorization: `Bearer ${white.accessToken}` },
+      method: 'POST',
+      payload: {
+        creatorColor: 'white',
+        opponentUserId: black.userId,
+        timeControlCode: 'blitz-3-0',
+      },
+      url: '/v1/games',
+    });
+    expect(created.statusCode, created.body).toBe(201);
+    const gameId = created.json().id as string;
+    const whiteSocket = await connect(white);
+    const blackSocket = await connect(black);
+    for (const socket of [whiteSocket, blackSocket]) {
+      const snapshot = waitFor(socket, 'game.snapshot');
+      send(socket, 'game.join', { gameId, lastKnownVersion: 0 });
+      await snapshot;
+    }
+    const startsIn = (clock: MessageEnvelope['data']['clock']) =>
+      Date.parse(clock.activeClockStartedAt ?? '') - Date.parse(clock.serverNow);
+
+    await submit(whiteSocket, gameId, '018f47f4-7b2f-4d90-8a66-c00000000001', 0, 'e2e4');
+    await submit(blackSocket, gameId, '018f47f4-7b2f-4d90-8a66-c00000000002', 1, 'd7d5');
+    const capture = await submit(
+      whiteSocket,
+      gameId,
+      '018f47f4-7b2f-4d90-8a66-c00000000003',
+      2,
+      'e4d5',
+    );
+    // No film reported: the clock of the side to move runs from the capture.
+    expect(startsIn(capture.clock)).toBeLessThanOrEqual(0);
+
+    // White's film starts: nobody's clock runs until the film is over.
+    const held = waitFor(blackSocket, 'game.clock_updated');
+    send(whiteSocket, 'game.capture_film', { gameId, playing: true, ply: 3 });
+    const pause = startsIn((await held).data.clock);
+    expect(pause).toBeGreaterThan(5_000);
+    expect(pause).toBeLessThanOrEqual(11_000);
+
+    // Black (to move) skips its own film: its clock runs again at once.
+    const released = waitFor(whiteSocket, 'game.clock_updated');
+    send(blackSocket, 'game.capture_film', { gameId, playing: false, ply: 3 });
+    expect(startsIn((await released).data.clock)).toBeLessThanOrEqual(0);
+
+    // A film for a move that was not a capture changes nothing.
+    const refused = waitFor(whiteSocket, 'game.clock_updated').then(
+      () => true,
+      () => false,
+    );
+    send(whiteSocket, 'game.capture_film', { gameId, playing: true, ply: 1 });
+    expect(await refused).toBe(false);
+    whiteSocket.close();
+    blackSocket.close();
+  }, 20_000);
 
   it('rate limits commands on each WebSocket connection', async () => {
     const socket = await connect(white);

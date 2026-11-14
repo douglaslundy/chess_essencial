@@ -223,6 +223,8 @@ interface ChessBoardProps {
   /** Course stars still to collect (squares). */
   marks?: readonly string[] | undefined;
   movableColor?: Color | undefined;
+  /** The capture film of the position `fen` started playing (true) or is over (false). */
+  onCaptureFilm?: ((playing: boolean, fen: string) => void) | undefined;
   onMove: (uci: string) => void;
   pieceTheme?: PieceTheme;
 }
@@ -592,7 +594,15 @@ export function ChessBoard(live: ChessBoardProps) {
     setFilm({ hold: live, move: played });
   }
   const cinematic = film ? (
-    <CaptureVideo key={film.move.id} move={film.move} onClose={() => setFilm(null)} />
+    <CaptureVideo
+      key={film.move.id}
+      move={film.move}
+      onClose={() => {
+        live.onCaptureFilm?.(false, film.hold.fen);
+        setFilm(null);
+      }}
+      onPlaying={() => live.onCaptureFilm?.(true, film.hold.fen)}
+    />
   ) : null;
   if (mode === '3d') {
     return (
