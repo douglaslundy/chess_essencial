@@ -37,3 +37,18 @@ export function effectiveClockMs(
   const elapsedMs = Math.max(0, now.getTime() - activeClockStartedAt.getTime());
   return Math.max(0, storedClockMs - Math.max(0, elapsedMs - delayMs));
 }
+
+/**
+ * After a capture both players may watch the capture film (1 s on the board + 10 s of film), so no
+ * clock runs for this long. It is a fixed server rule: the client is never asked whether it watched.
+ */
+export const CAPTURE_FILM_MS = 11_000;
+
+/**
+ * When the clock of the side to move starts counting. A capture opens the film pause; a quick
+ * reply inside the pause keeps it, so the capturing player is not charged while still watching.
+ */
+export function nextClockStart(receivedAt: Date, previousStart: Date, capture: boolean) {
+  if (capture) return new Date(receivedAt.getTime() + CAPTURE_FILM_MS);
+  return previousStart > receivedAt ? previousStart : receivedAt;
+}

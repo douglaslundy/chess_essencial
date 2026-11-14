@@ -34,7 +34,11 @@ import type { TransactionSql } from 'postgres';
 
 import { DatabaseService } from '../../database/database.service.js';
 import { SubscriptionsService } from '../../subscriptions/subscriptions.service.js';
-import { calculateClockTransition, effectiveClockMs } from '../domain/game-clock.js';
+import {
+  calculateClockTransition,
+  effectiveClockMs,
+  nextClockStart,
+} from '../domain/game-clock.js';
 import { canNarrateLiveTurn } from '../narration/live-narration-policy.js';
 import { LiveNarrationService } from '../narration/live-narration.service.js';
 
@@ -1228,7 +1232,15 @@ export class GamesRepository {
           side_to_move = ${applied.status.sideToMove},
           white_clock_ms = ${player.color === 'white' ? clock.clockAfterMoveMs : game.whiteClockMs},
           black_clock_ms = ${player.color === 'black' ? clock.clockAfterMoveMs : game.blackClockMs},
-          active_clock_started_at = ${applied.status.isGameOver ? null : receivedAt.toISOString()},
+          active_clock_started_at = ${
+            applied.status.isGameOver
+              ? null
+              : nextClockStart(
+                  receivedAt,
+                  activeClockStartedAt,
+                  applied.flags.capture,
+                ).toISOString()
+          },
           halfmove_clock = ${Number(fenParts[4] ?? 0)},
           fullmove_number = ${Number(fenParts[5] ?? 1)},
           version = version + 1,

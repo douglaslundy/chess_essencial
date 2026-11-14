@@ -354,7 +354,8 @@ export class GamesGateway
     if (state.status !== 'active' || !state.activeClockStartedAt) return;
 
     const storedClockMs = state.sideToMove === 'white' ? state.whiteClockMs : state.blackClockMs;
-    const elapsedMs = Math.max(0, Date.now() - new Date(state.activeClockStartedAt).getTime());
+    // Negative during the capture-film pause (the clock starts in the future): the flag falls later.
+    const elapsedMs = Date.now() - new Date(state.activeClockStartedAt).getTime();
     const timer = setTimeout(
       async () => {
         try {

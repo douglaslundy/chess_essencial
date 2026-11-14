@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { calculateClockTransition, effectiveClockMs } from './game-clock.js';
+import {
+  CAPTURE_FILM_MS,
+  calculateClockTransition,
+  effectiveClockMs,
+  nextClockStart,
+} from './game-clock.js';
 
 describe('authoritative game clock', () => {
   const started = new Date('2026-01-01T00:00:00.000Z');
@@ -33,5 +38,17 @@ describe('authoritative game clock', () => {
         receivedAt: new Date('2026-01-01T00:00:03.000Z'),
       }),
     ).toMatchObject({ clockAfterMoveMs: 0, timedOut: true });
+  });
+
+  it('pauses every clock for the capture film and keeps the pause through a quick reply', () => {
+    const capture = nextClockStart(started, started, true);
+    expect(capture.getTime() - started.getTime()).toBe(CAPTURE_FILM_MS);
+    // Reply 3 s into the film: the capturing player is still watching, the pause end stays.
+    const reply = new Date(started.getTime() + 3_000);
+    expect(nextClockStart(reply, capture, false)).toEqual(capture);
+    expect(effectiveClockMs(60_000, capture, new Date(started.getTime() + 5_000))).toBe(60_000);
+    // After the film a quiet move starts the clock at once.
+    const late = new Date(started.getTime() + 20_000);
+    expect(nextClockStart(late, capture, false)).toEqual(late);
   });
 });

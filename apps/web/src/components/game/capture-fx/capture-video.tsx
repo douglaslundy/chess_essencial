@@ -22,8 +22,8 @@ export function captureVideoSrc(move: Pick<PlayedMove, 'captured' | 'color' | 'p
 
 /** The capture is seen on the board first; the film starts after this. */
 const START_DELAY_MS = 1000;
-/** A film that never loads or ends must not hold the board for ever. */
-const GIVE_UP_MS = 15_000;
+/** A film that has not started playing by then frees the board. */
+const GIVE_UP_MS = 5000;
 
 /**
  * Capture film over the board. It ends by itself or when the player taps it; the caller keeps
@@ -46,7 +46,9 @@ export default function CaptureVideo({ move, onClose }: { move: PlayedMove; onCl
         element.play().catch(() => close.current());
       });
     }, START_DELAY_MS);
-    const giveUp = window.setTimeout(() => close.current(), GIVE_UP_MS);
+    const giveUp = window.setTimeout(() => {
+      if (!video.current?.currentTime) close.current();
+    }, GIVE_UP_MS);
     return () => {
       window.clearTimeout(start);
       window.clearTimeout(giveUp);

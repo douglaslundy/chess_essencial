@@ -172,7 +172,9 @@ function displayedClock(state: GameState, color: BoardOrientation, serverOffset:
   const base = color === 'white' ? state.whiteClockMs : state.blackClockMs;
   if (state.status !== 'active' || state.sideToMove !== color || !state.activeClockStartedAt)
     return base;
-  return Math.max(0, base - (Date.now() + serverOffset - Date.parse(state.activeClockStartedAt)));
+  // The start lies in the future while the capture film plays: the clock stands still until then.
+  const elapsed = Math.max(0, Date.now() + serverOffset - Date.parse(state.activeClockStartedAt));
+  return Math.max(0, base - elapsed);
 }
 
 function demoState(gameId: string): GameState {
