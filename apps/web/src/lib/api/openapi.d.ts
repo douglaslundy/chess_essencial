@@ -3847,6 +3847,11 @@ export interface components {
       sideToMove: 'white' | 'black';
       coachMode: boolean;
       opponentIsBot?: boolean;
+      /** @description Aura e vídeo de captura em partida entre pessoas só valem quando os dois aceitam */
+      effectsConsent?: {
+        white: boolean;
+        black: boolean;
+      };
       version: number;
       whiteClockMs: number;
       blackClockMs: number;

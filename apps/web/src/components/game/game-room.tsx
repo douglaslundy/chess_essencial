@@ -38,6 +38,24 @@ const initialFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 // render as an infinity glyph instead of a huge countdown.
 const UNTIMED_CLOCK_THRESHOLD_MS = 604_800_000;
 
+/**
+ * Aura and capture film in a live game: between people they need the OK of both players; against
+ * the bot (or in the demo) each player's own setting applies.
+ */
+export function liveEffectsState(input: {
+  consent?: { black: boolean; white: boolean } | undefined;
+  isDemo: boolean;
+  myColor: BoardOrientation | null;
+  opponentIsBot?: boolean | undefined;
+}) {
+  const people = !input.isDemo && input.opponentIsBot !== true;
+  const mine = Boolean(input.myColor && input.consent?.[input.myColor]);
+  const theirs = Boolean(
+    input.myColor && input.consent?.[input.myColor === 'white' ? 'black' : 'white'],
+  );
+  return { active: !people || (mine && theirs), mine, people, theirs };
+}
+
 export function formatClock(milliseconds: number) {
   if (milliseconds >= UNTIMED_CLOCK_THRESHOLD_MS) return '∞';
   const safe = Math.max(0, milliseconds);
@@ -411,6 +429,39 @@ export function GameRoom({ gameId }: { gameId: string }) {
   const white = state.players.find((player) => player.color === 'white');
   const black = state.players.find((player) => player.color === 'black');
   const me = myColor ? state.players.find((player) => player.color === myColor) : undefined;
+  const effects = liveEffectsState({
+    consent: state.effectsConsent,
+    isDemo,
+    myColor,
+    opponentIsBot: state.opponentIsBot,
+  });
+  const askedForEffects = effects.people && effects.theirs && !effects.mine;
+  useEffect(() => {
+    if (askedForEffects) {
+      queueMicrotask(() =>
+        setMessage(
+          'Seu adversário quer ativar a aura e os vídeos de captura. Use ✨ para aceitar.',
+        ),
+      );
+    }
+  }, [askedForEffects]);
+  const effectsButton =
+    effects.people && state.status === 'active' && myColor ? (
+      <button
+        aria-pressed={effects.mine}
+        onClick={() => socketRef.current?.effectsConsent(!effects.mine)}
+        title="Aura e vídeo de captura só ficam ativos quando os dois jogadores aceitam."
+        type="button"
+      >
+        {effects.mine && effects.theirs
+          ? '✨ Efeitos ativos (desativar)'
+          : effects.mine
+            ? '✨ Aguardando o adversário (cancelar)'
+            : effects.theirs
+              ? '✨ Aceitar efeitos do adversário'
+              : '✨ Propor efeitos (aura e vídeo)'}
+      </button>
+    ) : null;
   // Reflects the server's persisted pending draw offer (populated on initial
   // load, WS reconnection snapshots, and every live event), so a fresh page
   // load or a second device shows an opponent's pending offer even if the
@@ -806,6 +857,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
             <button className="dangerAction" onClick={() => action('resign')} type="button">
               ⚑ Desistir
             </button>
+            {effectsButton}
             {canEnableAssistant ? (
               <button onClick={() => setAssistantDialogOpen(true)} type="button">
                 🎓 Assistente
@@ -861,6 +913,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
         </div>
         <div className={`boardStage ${stageFullscreen ? 'isFullscreen' : ''}`} ref={stageRef}>
           <ChessBoard
+            liveEffects={effects.active}
             disabled={isDemo ? !canMove : viewingHistory || !canMove}
             fen={displayFen}
             hint={
@@ -1122,6 +1175,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
           <button className="dangerAction" onClick={() => action('resign')} type="button">
             ⚑ Desistir
           </button>
+          {effectsButton}
           {canEnableAssistant ? (
             <button onClick={() => setAssistantDialogOpen(true)} type="button">
               🎓 Assistente

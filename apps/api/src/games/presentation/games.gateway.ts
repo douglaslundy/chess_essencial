@@ -2,6 +2,7 @@ import {
   REALTIME_PROTOCOL_VERSION,
   authenticateCommandSchema,
   captureFilmCommandSchema,
+  effectsConsentCommandSchema,
   gameJoinCommandSchema,
   realtimeMoveSubmitSchema,
   type GameState,
@@ -228,6 +229,26 @@ export class GamesGateway
       this.scheduleBotReply(command.gameId);
     } catch (error) {
       this.fail(client, 'move.submit', error);
+    }
+  }
+
+  /** A player accepts or withdraws the aura and capture film; both must accept for them to run. */
+  @SubscribeMessage('game.effects_consent')
+  async effectsConsent(@ConnectedSocket() client: WebSocket, @MessageBody() body: unknown) {
+    try {
+      this.consumeCommand(client, 'game.effects_consent');
+      const command = effectsConsentCommandSchema.parse(body);
+      const userId = this.authenticatedUserId(client);
+      if (!this.session(client).gameIds.has(command.gameId)) {
+        throw new UnauthorizedException('Join the game before answering the effects request');
+      }
+      const state = await this.games.setEffectsConsent(command.gameId, userId, command.enabled);
+      this.broadcast(command.gameId, 'game.effects_updated', {
+        clock: this.clock(state),
+        state,
+      });
+    } catch (error) {
+      this.fail(client, 'game.effects_consent', error);
     }
   }
 

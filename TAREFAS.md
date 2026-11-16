@@ -93,6 +93,7 @@ Tabuleiro 3D:
 - [x] **CINE-02 (2026-11-13):** vídeo de captura (60 filmes em `apps/web/public/captures`) no lugar do duelo animado em todos os tabuleiros, menos o Medieval Cinema.
 - [x] **CINE-03 (2026-11-13):** aura ki (azul brancas, amarela pretas) em todos os tabuleiros, 2D e 3D, com opção "Aura de ataque" no menu.
 - [x] **TRAP-01 (2026-11-16):** menu Armadilhas (`/app/armadilhas`) com 15 armadilhas clássicas conferidas no Stockfish. Pendente: crescer o catálogo (meta inicial era 40-60), armadilhas de meio-jogo.
+- [x] **FX-01 (2026-11-16):** aura e vídeo de captura em partida entre pessoas só com aceite dos dois jogadores (padrão: inativos); contra o bot, configuração própria.
 
 Plataforma:
 

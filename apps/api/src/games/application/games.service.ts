@@ -74,6 +74,10 @@ export class GamesService {
     return this.games.setConnection(gameId, userId, connected);
   }
 
+  setEffectsConsent(gameId: string, userId: string, enabled: boolean) {
+    return this.games.setEffectsConsent(gameId, userId, enabled);
+  }
+
   captureFilm(gameId: string, userId: string, ply: number, playing: boolean) {
     return this.games.captureFilm(gameId, userId, ply, playing);
   }

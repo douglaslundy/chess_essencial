@@ -35,6 +35,12 @@ export const captureFilmCommandSchema = z.object({
   ply: z.number().int().positive(),
 });
 
+/** A player accepts (`enabled`) or withdraws the aura and capture film for this game. */
+export const effectsConsentCommandSchema = z.object({
+  enabled: z.boolean(),
+  gameId: z.string().uuid(),
+});
+
 export const realtimeClockSchema = z.object({
   activeClockStartedAt: z.string().datetime().nullable(),
   blackClockMs: z.number().int().nonnegative(),
@@ -74,6 +80,7 @@ export const realtimeProblemSchema = z.object({
 
 export type AuthenticateCommand = z.infer<typeof authenticateCommandSchema>;
 export type AuthenticatedEvent = z.infer<typeof authenticatedEventSchema>;
+export type EffectsConsentCommand = z.infer<typeof effectsConsentCommandSchema>;
 export type CaptureFilmCommand = z.infer<typeof captureFilmCommandSchema>;
 export type ClockUpdatedEvent = z.infer<typeof clockUpdatedEventSchema>;
 export type DrawOfferedEvent = z.infer<typeof drawOfferedEventSchema>;

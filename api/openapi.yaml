@@ -4189,6 +4189,13 @@ components:
         sideToMove: {type: string, enum: [white, black]}
         coachMode: {type: boolean}
         opponentIsBot: {type: boolean}
+        effectsConsent:
+          type: object
+          description: Aura e vídeo de captura em partida entre pessoas só valem quando os dois aceitam
+          required: [white, black]
+          properties:
+            white: {type: boolean}
+            black: {type: boolean}
         version: {type: integer, minimum: 0}
         whiteClockMs: {type: integer, minimum: 0}
         blackClockMs: {type: integer, minimum: 0}

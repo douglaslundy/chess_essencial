@@ -8,6 +8,7 @@ import {
   demoGameEnd,
   gameOutcomeFor,
   historyBaseIndex,
+  liveEffectsState,
   shouldSuggestCoachMove,
   stepHistoryIndex,
 } from './game-room';
@@ -122,5 +123,37 @@ describe('demoGameEnd', () => {
       termination: 'stalemate',
     });
     expect(demoGameEnd(new Chess())).toBeNull();
+  });
+});
+
+describe('liveEffectsState', () => {
+  const none = { black: false, white: false };
+
+  it('between people the effects need the OK of both players', () => {
+    const base = { isDemo: false, myColor: 'white' as const, opponentIsBot: false };
+    expect(liveEffectsState({ ...base, consent: none }).active).toBe(false);
+    expect(liveEffectsState({ ...base, consent: { black: false, white: true } })).toMatchObject({
+      active: false,
+      mine: true,
+      theirs: false,
+    });
+    expect(liveEffectsState({ ...base, consent: { black: true, white: false } })).toMatchObject({
+      active: false,
+      mine: false,
+      theirs: true,
+    });
+    expect(liveEffectsState({ ...base, consent: { black: true, white: true } }).active).toBe(true);
+    // No answer from the server yet counts as "no".
+    expect(liveEffectsState(base).active).toBe(false);
+  });
+
+  it('against the bot and in the demo the player own setting applies', () => {
+    expect(
+      liveEffectsState({ consent: none, isDemo: false, myColor: 'black', opponentIsBot: true }),
+    ).toMatchObject({ active: true, people: false });
+    expect(liveEffectsState({ isDemo: true, myColor: null })).toMatchObject({
+      active: true,
+      people: false,
+    });
   });
 });

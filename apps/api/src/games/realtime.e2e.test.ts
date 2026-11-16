@@ -24,6 +24,7 @@ interface MessageEnvelope {
       termination: string;
       version: number;
       whiteClockMs: number;
+      effectsConsent: { black: boolean; white: boolean };
       pendingDrawOffer: { offerId: string; offeredByUserId: string; createdAt: string } | null;
     };
   };
@@ -352,7 +353,7 @@ describeDatabase('realtime game integration', () => {
     });
   }, 10_000);
 
-  it('holds the clock only while a capture film plays', async () => {
+  it('holds the clock only while a capture film plays, and only if both accepted', async () => {
     const created = await app.inject({
       headers: { authorization: `Bearer ${white.accessToken}` },
       method: 'POST',
@@ -386,6 +387,37 @@ describeDatabase('realtime game integration', () => {
     );
     // No film reported: the clock of the side to move runs from the capture.
     expect(startsIn(capture.clock)).toBeLessThanOrEqual(0);
+
+    const silent = (socket: WebSocket, event: string, ms = 700) =>
+      new Promise<boolean>((resolve) => {
+        const timer = setTimeout(() => {
+          socket.off('message', listener);
+          resolve(true);
+        }, ms);
+        function listener(raw: unknown) {
+          if ((JSON.parse(String(raw)) as MessageEnvelope).event !== event) return;
+          clearTimeout(timer);
+          socket.off('message', listener);
+          resolve(false);
+        }
+        socket.on('message', listener);
+      });
+
+    // Nobody accepted the effects yet: the film report is ignored and the clock keeps running.
+    const ignored = silent(blackSocket, 'game.clock_updated');
+    send(whiteSocket, 'game.capture_film', { gameId, playing: true, ply: 3 });
+    expect(await ignored).toBe(true);
+
+    // One player accepting is not enough; the second one makes it valid.
+    const firstOk = waitFor(blackSocket, 'game.effects_updated');
+    send(whiteSocket, 'game.effects_consent', { enabled: true, gameId });
+    expect((await firstOk).data.state.effectsConsent).toEqual({ black: false, white: true });
+    const stillIgnored = silent(blackSocket, 'game.clock_updated');
+    send(whiteSocket, 'game.capture_film', { gameId, playing: true, ply: 3 });
+    expect(await stillIgnored).toBe(true);
+    const secondOk = waitFor(whiteSocket, 'game.effects_updated');
+    send(blackSocket, 'game.effects_consent', { enabled: true, gameId });
+    expect((await secondOk).data.state.effectsConsent).toEqual({ black: true, white: true });
 
     // White's film starts: nobody's clock runs until the film is over.
     const held = waitFor(blackSocket, 'game.clock_updated');

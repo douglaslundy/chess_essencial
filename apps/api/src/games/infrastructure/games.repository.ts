@@ -845,6 +845,11 @@ export class GamesRepository {
         JOIN game_players p ON p.game_id = g.id AND p.user_id = ${userId}
         JOIN game_moves m ON m.game_id = g.id AND m.ply = ${ply}
         WHERE g.id = ${gameId} AND g.status = 'active' AND g.active_clock_started_at IS NOT NULL
+          AND (
+            EXISTS (SELECT 1 FROM game_bots b WHERE b.game_id = g.id)
+            OR NOT EXISTS (
+              SELECT 1 FROM game_players cp WHERE cp.game_id = g.id AND NOT cp.effects_consent)
+          )
       `;
       // Only the last capture counts, also when the opponent (a bot) already replied to it.
       if (!row?.capture || ply < row.lastPly - 1) return null;
@@ -863,6 +868,24 @@ export class GamesRepository {
       `;
       return this.getStateInTransaction(transaction, gameId, userId);
     });
+  }
+
+  /** A player accepts or withdraws the aura and capture film. Only in games between people. */
+  async setEffectsConsent(gameId: string, userId: string, enabled: boolean): Promise<GameState> {
+    await this.assertPlayer(gameId, userId);
+    const [game] = await this.database.client<{ bot: boolean; status: string }[]>`
+      SELECT g.status, EXISTS (SELECT 1 FROM game_bots b WHERE b.game_id = g.id) AS bot
+        FROM games g WHERE g.id = ${gameId}
+    `;
+    if (game?.bot) {
+      throw new ConflictException('Contra o bot, os efeitos seguem a sua configuração.');
+    }
+    if (game?.status !== 'active') throw new ConflictException('A partida não está em andamento.');
+    await this.database.client`
+      UPDATE game_players SET effects_consent = ${enabled}
+       WHERE game_id = ${gameId} AND user_id = ${userId}
+    `;
+    return this.getState(gameId, userId);
   }
 
   async resign(gameId: string, userId: string): Promise<GameState> {
@@ -1410,10 +1433,16 @@ export class GamesRepository {
     const [bot] = await query<{ present: boolean }[]>`
       SELECT true AS present FROM game_bots WHERE game_id = ${gameId}
     `;
+    const consents = await query<{ color: 'black' | 'white'; consent: boolean }[]>`
+      SELECT color, effects_consent AS consent FROM game_players WHERE game_id = ${gameId}
+    `;
+    const consentOf = (color: 'black' | 'white') =>
+      consents.find((row) => row.color === color)?.consent ?? false;
     return {
       activeClockStartedAt: this.toIso(game.activeClockStartedAt),
       blackClockMs: game.blackClockMs,
       coachMode: game.coachMode,
+      effectsConsent: { black: consentOf('black'), white: consentOf('white') },
       opponentIsBot: Boolean(bot),
       currentFen: game.currentFen,
       finishedAt: this.toIso(game.finishedAt),

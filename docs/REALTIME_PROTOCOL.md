@@ -42,13 +42,21 @@ Resposta: `game.snapshot`, contendo estado canônico, relógio sincronizado e os
 
 O servidor valida autenticação, participação, turno, versão, legalidade e relógio sob lock transacional por partida.
 
+### `game.effects_consent`
+
+```json
+{ "event": "game.effects_consent", "data": { "gameId": "uuid", "enabled": true } }
+```
+
+Cada jogador aceita (`true`) ou retira (`false`) a aura e o vídeo de captura da partida. Em partida entre pessoas os efeitos só valem quando os dois aceitam; o padrão é não aceitar. Contra o bot a configuração de cada jogador vale e o servidor recusa o comando. O estado traz `effectsConsent: { white, black }`. Resposta: `game.effects_updated` para a sala.
+
 ### `game.capture_film`
 
 ```json
 { "event": "game.capture_film", "data": { "gameId": "uuid", "ply": 12, "playing": true } }
 ```
 
-Enviado pelo cliente que mostra o vídeo de captura: `playing: true` quando o vídeo do lance `ply` começa a tocar, `playing: false` quando termina, é pulado ou falha. Com `true`, o servidor segura o relógio até 11 s depois da captura (nunca mais que isso, e só se o aviso chegar em até 7 s). Com `false`, o relógio do próprio remetente volta a correr na hora. Sem aviso (vídeo desligado ou que não carregou) não há pausa. Resposta, quando o relógio muda: `game.clock_updated` para a sala.
+Enviado pelo cliente que mostra o vídeo de captura: `playing: true` quando o vídeo do lance `ply` começa a tocar, `playing: false` quando termina, é pulado ou falha. O servidor ignora o aviso em partida entre pessoas se os dois não aceitaram os efeitos. Com `true`, o servidor segura o relógio até 11 s depois da captura (nunca mais que isso, e só se o aviso chegar em até 7 s). Com `false`, o relógio do próprio remetente volta a correr na hora. Sem aviso (vídeo desligado ou que não carregou) não há pausa. Resposta, quando o relógio muda: `game.clock_updated` para a sala.
 
 ## Eventos do servidor
 
@@ -56,6 +64,7 @@ Enviado pelo cliente que mostra o vídeo de captura: `playing: true` quando o v�
 - `game.snapshot`: snapshot de entrada ou reconexão.
 - `game.move_committed`: lance persistido e estado atualizado; é transmitido a todos na sala.
 - `game.clock_updated`: o relógio mudou sem lance (vídeo de captura segurou ou liberou); traz estado e relógio.
+- `game.effects_updated`: um jogador aceitou ou retirou os efeitos; traz estado e relógio.
 - `game.draw_offered`: oferta persistida, com autor, estado canônico e relógio sincronizado.
 - `game.finished`: encerramento autoritativo por regra, tempo, desistência ou acordo.
 - `game.error`: erro do comando, sem expor token ou detalhes internos.

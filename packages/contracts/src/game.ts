@@ -40,6 +40,11 @@ export const gameStateSchema = z.object({
   coachMode: z.boolean(),
   /** True in a game against the bot: the only kind of game where the assistant can be turned on. */
   opponentIsBot: z.boolean().optional(),
+  /**
+   * Aura and capture film in a game between people: active only when both players accepted.
+   * Against the bot each player's own setting applies and this is ignored.
+   */
+  effectsConsent: z.object({ black: z.boolean(), white: z.boolean() }).optional(),
   version: z.number().int().nonnegative(),
   whiteClockMs: z.number().int().nonnegative(),
   blackClockMs: z.number().int().nonnegative(),

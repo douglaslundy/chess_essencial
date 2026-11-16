@@ -72,6 +72,11 @@ export class GameSocket {
     });
   }
 
+  /** Accepts (or withdraws) the aura and capture film for this game. */
+  effectsConsent(enabled: boolean) {
+    this.send('game.effects_consent', { enabled, gameId: this.gameId });
+  }
+
   /** Tells the server this player's capture film started (`playing`) or is over. */
   captureFilm(ply: number, playing: boolean) {
     this.send('game.capture_film', { gameId: this.gameId, playing, ply });
@@ -154,7 +159,7 @@ export class GameSocket {
       }
       return;
     }
-    if (envelope.event === 'game.clock_updated') {
+    if (envelope.event === 'game.clock_updated' || envelope.event === 'game.effects_updated') {
       const parsed = clockUpdatedEventSchema.safeParse(envelope.data);
       if (parsed.success) this.handlers.clock?.(parsed.data.state, parsed.data.clock);
       return;
