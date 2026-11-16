@@ -48,7 +48,7 @@ O servidor valida autenticação, participação, turno, versão, legalidade e r
 { "event": "game.effects_consent", "data": { "gameId": "uuid", "enabled": true } }
 ```
 
-Cada jogador aceita (`true`) ou retira (`false`) a aura e o vídeo de captura da partida. Em partida entre pessoas os efeitos só valem quando os dois aceitam; o padrão é não aceitar. Contra o bot a configuração de cada jogador vale e o servidor recusa o comando. O estado traz `effectsConsent: { white, black }`. Resposta: `game.effects_updated` para a sala.
+Cada jogador aceita (`true`) ou retira (`false`) a aura, o vídeo e as cenas de captura (Medieval Cinema) da partida. Em partida entre pessoas os efeitos só valem quando os dois aceitam; o padrão é não aceitar. Contra o bot a configuração de cada jogador vale e o servidor recusa o comando. O estado traz `effectsConsent: { white, black }`. Resposta: `game.effects_updated` para a sala.
 
 ### `game.capture_film`
 

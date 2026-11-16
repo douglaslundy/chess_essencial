@@ -223,7 +223,7 @@ interface ChessBoardProps {
   /** Course stars still to collect (squares). */
   marks?: readonly string[] | undefined;
   movableColor?: Color | undefined;
-  /** False in a live game between people until both accept: no aura and no capture film. */
+  /** False in a live game between people until both accept: no aura, capture film or capture scene. */
   liveEffects?: boolean | undefined;
   /** The capture film of the position `fen` started playing (true) or is over (false). */
   onCaptureFilm?: ((playing: boolean, fen: string) => void) | undefined;
@@ -576,7 +576,9 @@ function usePlayedMove(fen: string) {
 export function ChessBoard(live: ChessBoardProps) {
   const { effects: chosen, mode } = useBoardMode();
   const effects =
-    live.liveEffects === false ? { ...chosen, captureAnimation: false, kiAura: false } : chosen;
+    live.liveEffects === false
+      ? { ...chosen, captureAnimation: false, cinemaScenes: false, kiAura: false }
+      : chosen;
   // While a capture film plays the board stays on the capture: the next move (the opponent's
   // reply) only reaches it when the film ends or the player skips it.
   const [film, setFilm] = useState<{ hold: ChessBoardProps; move: PlayedMove } | null>(null);

@@ -440,7 +440,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
     if (askedForEffects) {
       queueMicrotask(() =>
         setMessage(
-          'Seu adversário quer ativar a aura e os vídeos de captura. Use ✨ para aceitar.',
+          'Seu adversário quer ativar a aura e as animações de captura. Use ✨ para aceitar.',
         ),
       );
     }
@@ -450,7 +450,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
       <button
         aria-pressed={effects.mine}
         onClick={() => socketRef.current?.effectsConsent(!effects.mine)}
-        title="Aura e vídeo de captura só ficam ativos quando os dois jogadores aceitam."
+        title="Aura, vídeo e cenas de captura só ficam ativos quando os dois jogadores aceitam."
         type="button"
       >
         {effects.mine && effects.theirs
@@ -459,7 +459,7 @@ export function GameRoom({ gameId }: { gameId: string }) {
             ? '✨ Aguardando o adversário (cancelar)'
             : effects.theirs
               ? '✨ Aceitar efeitos do adversário'
-              : '✨ Propor efeitos (aura e vídeo)'}
+              : '✨ Propor efeitos (aura e capturas)'}
       </button>
     ) : null;
   // Reflects the server's persisted pending draw offer (populated on initial
