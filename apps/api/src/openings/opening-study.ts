@@ -24,6 +24,8 @@ export interface OpeningContext {
   eco: string;
   name: string;
   side: 'black' | 'white';
+  /** Set for traps: the idea written in the catalog. */
+  trapIdea?: string | null;
 }
 
 export function overviewPrompt(context: OpeningContext, moves: string[]): string {
@@ -32,6 +34,11 @@ export function overviewPrompt(context: OpeningContext, moves: string[]): string
     context.alternatives.length > 0
       ? ` Nesta posição, o adversário também pode seguir por: ${context.alternatives.join('; ')}.`
       : '';
+  if (context.trapIdea) {
+    return `Armadilha: ${context.name}. Lado que arma a armadilha (o estudado): ${side}. Lances: ${moves.join(' ')}. Ideia: ${context.trapIdea}
+
+Escreva a visão geral (no máximo 110 palavras): qual é a isca, que erro o adversário comete, como o estudante pune e como o adversário evita a armadilha. Use só os fatos acima. Responda só com o texto.`;
+  }
   return `Abertura: ${context.name} (ECO ${context.eco}). Lado estudado: ${side}. Lances: ${moves.join(' ')}.${alternatives}
 
 Escreva a visão geral (no máximo 110 palavras): a ideia central, quando vale escolher esta linha, o plano do lado estudado e o principal cuidado. Se houver alternativas do adversário, diga em uma frase como o estudante deve se adaptar quando o adversário sair desta linha. Responda só com o texto.`;

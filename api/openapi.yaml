@@ -2230,6 +2230,8 @@ paths:
     get:
       summary: Aberturas treinadas que já estão na hora de repetir
       operationId: listDueOpenings
+      parameters:
+        - {name: kind, in: query, required: false, schema: {type: string, enum: [opening, trap]}}
       responses:
         '200':
           description: Linhas a repetir
@@ -2241,10 +2243,11 @@ paths:
         '401': {$ref: '#/components/responses/Problem'}
   /openings:
     get:
-      summary: Buscar linhas de abertura por família ou nome
+      summary: Buscar linhas de abertura (ou armadilhas, com kind=trap) por família ou nome
       operationId: searchOpenings
       parameters:
         - {name: family, in: query, required: false, schema: {type: string}}
+        - {name: kind, in: query, required: false, schema: {type: string, enum: [opening, trap]}}
         - {name: q, in: query, required: false, schema: {type: string}}
       responses:
         '200':
@@ -2644,6 +2647,7 @@ components:
         plyCount: {type: integer}
         side: {type: string, enum: [white, black]}
         moves: {type: array, items: {type: string}}
+        trapIdea: {type: string}
     OpeningDetail:
       type: object
       required: [aiAvailable, dueAt, lesson, line]

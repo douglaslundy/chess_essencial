@@ -88,13 +88,15 @@ export function OpeningStudy({ openingId }: { openingId: string }) {
 
   // The other variations of the same opening, most played first.
   const family = detail?.line.family;
+  // A trap is a single line of its own: it has no variations.
+  const trapIdea = detail?.line.trapIdea;
   useEffect(() => {
-    if (!family) return;
+    if (!family || trapIdea) return;
     api
       .searchOpenings({ family }, token())
       .then(setSiblings)
       .catch(() => undefined);
-  }, [family]);
+  }, [family, trapIdea]);
   const variations = useMemo(() => pickVariations(siblings), [siblings]);
 
   // The lesson is written once by the AI and stored: opening the line asks for it, and the page
@@ -243,7 +245,14 @@ export function OpeningStudy({ openingId }: { openingId: string }) {
             {line.eco} · estudando de {side === 'white' ? 'brancas' : 'pretas'}
           </span>
           {detail.lesson.reviewed ? <span>✔ Explicação revisada por um enxadrista</span> : null}
-          <Link href="/app/aberturas">← Aberturas</Link>
+          {trapIdea ? (
+            <span>
+              <b>A armadilha:</b> {trapIdea}
+            </span>
+          ) : null}
+          <Link href={trapIdea ? '/app/armadilhas' : '/app/aberturas'}>
+            ← {trapIdea ? 'Armadilhas' : 'Aberturas'}
+          </Link>
         </div>
         <div aria-label="Modo" className="libraryGameInfo openingModes" role="group">
           <button aria-pressed={mode === 'study'} onClick={() => changeMode('study')} type="button">
@@ -260,34 +269,36 @@ export function OpeningStudy({ openingId }: { openingId: string }) {
             Jogar contra o bot
           </button>
         </div>
-        <nav aria-label="Variações" className="libraryGameInfo openingVariations">
-          <strong>Variações mais jogadas</strong>
-          {variations.base ? variationLink(variations.base, 'Linha principal') : null}
-          {variations.main.map((item, index) =>
-            variationLink(item, `Variação ${index + 1} · ${variationName(item)}`),
-          )}
-          {variations.others.length > 0 ? (
-            <label>
-              Outras variações
-              <select
-                onChange={(event) => {
-                  if (event.target.value) {
-                    window.location.assign(`/app/aberturas/${event.target.value}`);
-                  }
-                }}
-                value=""
-              >
-                <option value="">Escolher…</option>
-                {variations.others.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {variationName(item)}
-                    {gamesLabel(item)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
-        </nav>
+        {trapIdea ? null : (
+          <nav aria-label="Variações" className="libraryGameInfo openingVariations">
+            <strong>Variações mais jogadas</strong>
+            {variations.base ? variationLink(variations.base, 'Linha principal') : null}
+            {variations.main.map((item, index) =>
+              variationLink(item, `Variação ${index + 1} · ${variationName(item)}`),
+            )}
+            {variations.others.length > 0 ? (
+              <label>
+                Outras variações
+                <select
+                  onChange={(event) => {
+                    if (event.target.value) {
+                      window.location.assign(`/app/aberturas/${event.target.value}`);
+                    }
+                  }}
+                  value=""
+                >
+                  <option value="">Escolher…</option>
+                  {variations.others.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {variationName(item)}
+                      {gamesLabel(item)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+          </nav>
+        )}
       </aside>
 
       <section className="boardColumn" aria-label="Área do tabuleiro">

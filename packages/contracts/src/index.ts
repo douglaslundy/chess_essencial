@@ -449,6 +449,7 @@ export {
   openingBranchSchema,
   openingDetailSchema,
   openingFamilySchema,
+  openingKindSchema,
   openingLessonSchema,
   openingLineSchema,
   openingPracticeInputSchema,
@@ -458,6 +459,7 @@ export {
   type OpeningBranch,
   type OpeningDetail,
   type OpeningFamily,
+  type OpeningKind,
   type OpeningLesson,
   type OpeningLine,
 } from './openings.js';

@@ -10,6 +10,7 @@ import type {
   OpeningBranch,
   OpeningDetail,
   OpeningFamily,
+  OpeningKind,
   OpeningLesson,
   OpeningLine,
   TutorFrame,
@@ -42,6 +43,7 @@ interface LineRow {
   pgn: string;
   ply_count: number;
   side: 'black' | 'white';
+  trap_idea: string | null;
 }
 
 const toLine = (row: LineRow): OpeningLine => ({
@@ -53,6 +55,7 @@ const toLine = (row: LineRow): OpeningLine => ({
   pgn: row.pgn,
   plyCount: row.ply_count,
   side: row.side,
+  ...(row.trap_idea ? { trapIdea: row.trap_idea } : {}),
 });
 
 type ActiveConfig = NonNullable<Awaited<ReturnType<AiProvidersService['resolveActiveConfig']>>>;
@@ -78,7 +81,7 @@ export class OpeningsService {
              (array_agg(o.id ORDER BY o.ply_count, o.name))[1] AS start_id,
              COALESCE((SELECT count(*) FROM library_games g WHERE g.opening_family = o.family), 0)::int AS games
         FROM opening_lines o
-       WHERE ${side ? this.sql`o.side = ${side}` : this.sql`true`}
+       WHERE o.kind = 'opening' AND ${side ? this.sql`o.side = ${side}` : this.sql`true`}
        GROUP BY o.family
        ORDER BY games DESC, count(*) DESC, o.family
     `;
@@ -93,8 +96,10 @@ export class OpeningsService {
 
   async search(input: {
     family?: string | undefined;
+    kind?: OpeningKind | undefined;
     q?: string | undefined;
   }): Promise<OpeningLine[]> {
+    const kind = input.kind ?? 'opening';
     // Played often = games of the study library that reached the line or any of its sub-variations.
     const rows = await this.sql<(LineRow & { games: number })[]>`
       WITH played AS (
@@ -102,13 +107,14 @@ export class OpeningsService {
          WHERE ${input.family ? this.sql`opening_family = ${input.family}` : this.sql`true`}
          GROUP BY opening_name
       )
-      SELECT l.id, l.eco, l.name, l.family, l.pgn, l.ply_count, l.side,
+      SELECT l.id, l.eco, l.name, l.family, l.pgn, l.ply_count, l.side, l.trap_idea,
              COALESCE((SELECT sum(p.n) FROM played p
                         WHERE p.name = l.name
                            OR starts_with(p.name, l.name || ':')
                            OR starts_with(p.name, l.name || ',')), 0)::int AS games
         FROM opening_lines l
-       WHERE ${input.family ? this.sql`l.family = ${input.family}` : this.sql`true`}
+       WHERE l.kind = ${kind}
+         AND ${input.family ? this.sql`l.family = ${input.family}` : this.sql`true`}
          AND ${input.q ? this.sql`l.name ILIKE ${`%${input.q}%`}` : this.sql`true`}
        ORDER BY games DESC, l.ply_count, l.name
        LIMIT ${MAX_RESULTS}
@@ -118,7 +124,7 @@ export class OpeningsService {
 
   private async line(id: string): Promise<LineRow> {
     const [row] = await this.sql<LineRow[]>`
-      SELECT id, eco, name, family, pgn, ply_count, side FROM opening_lines WHERE id = ${id}
+      SELECT id, eco, name, family, pgn, ply_count, side, trap_idea FROM opening_lines WHERE id = ${id}
     `;
     if (!row) throw new NotFoundException('Abertura não encontrada.');
     return row;
@@ -185,6 +191,7 @@ export class OpeningsService {
   }
 
   private async alternatives(row: LineRow): Promise<string[]> {
+    if (row.trap_idea) return [];
     const [own] = await this.sql<{ uci: string }[]>`
       SELECT uci FROM opening_lines WHERE id = ${row.id}
     `;
@@ -193,7 +200,7 @@ export class OpeningsService {
     const prefix = parts.slice(0, -1).join(' ');
     const siblings = await this.sql<{ name: string }[]>`
       SELECT name FROM opening_lines
-       WHERE id <> ${row.id} AND ply_count = ${row.ply_count}
+       WHERE kind = 'opening' AND id <> ${row.id} AND ply_count = ${row.ply_count}
          AND uci LIKE ${`${prefix} %`}
        ORDER BY name LIMIT 8
     `;
@@ -234,6 +241,7 @@ export class OpeningsService {
       eco: row.eco,
       name: row.name,
       side: row.side,
+      trapIdea: row.trap_idea,
     };
     const steps = movesToSteps(null, moves);
     const frames: TutorFrame[] = [];
@@ -246,7 +254,7 @@ export class OpeningsService {
         .slice(0, 900);
       await this.save(row.id, overview, frames, 'generating');
       const script = {
-        context: `Abertura: ${row.name} (ECO ${row.eco}). Lado estudado: ${row.side === 'white' ? 'brancas' : 'pretas'}. Lances: ${moves.join(' ')}.`,
+        context: `Abertura: ${row.name} (ECO ${row.eco}). Lado estudado: ${row.side === 'white' ? 'brancas' : 'pretas'}. Lances: ${moves.join(' ')}.${row.trap_idea ? ` Esta linha é uma armadilha do lado estudado. Ideia: ${row.trap_idea}` : ''}`,
         steps,
         title: row.name,
       };
@@ -353,7 +361,7 @@ export class OpeningsService {
     const config = await this.aiProviders.resolveActiveConfig();
     if (!config) throw new UnprocessableEntityException('Nenhuma IA está configurada.');
     const rows = await this.sql<LineRow[]>`
-      SELECT o.id, o.eco, o.name, o.family, o.pgn, o.ply_count, o.side FROM opening_lines o
+      SELECT o.id, o.eco, o.name, o.family, o.pgn, o.ply_count, o.side, o.trap_idea FROM opening_lines o
        WHERE o.family = ${family}
          AND NOT EXISTS (
            SELECT 1 FROM opening_lessons l
@@ -382,7 +390,7 @@ export class OpeningsService {
              (array_agg(id ORDER BY ply_count, name))[1] AS opening_id,
              (array_agg(name ORDER BY ply_count, name))[1] AS name
         FROM opening_lines
-       WHERE ply_count > ${played}
+       WHERE kind = 'opening' AND ply_count > ${played}
          AND ${played === 0 ? this.sql`true` : this.sql`uci LIKE ${`${prefix.trim()} %`}`}
        GROUP BY 1
        ORDER BY count(*) DESC, 1
@@ -396,11 +404,11 @@ export class OpeningsService {
   }
 
   /** Lines the student practised that are due for review, soonest first. */
-  async due(userId: string): Promise<OpeningLine[]> {
+  async due(userId: string, kind: OpeningKind = 'opening'): Promise<OpeningLine[]> {
     const rows = await this.sql<LineRow[]>`
-      SELECT l.id, l.eco, l.name, l.family, l.pgn, l.ply_count, l.side
+      SELECT l.id, l.eco, l.name, l.family, l.pgn, l.ply_count, l.side, l.trap_idea
         FROM opening_progress p JOIN opening_lines l ON l.id = p.opening_id
-       WHERE p.user_id = ${userId} AND p.due_at <= now()
+       WHERE l.kind = ${kind} AND p.user_id = ${userId} AND p.due_at <= now()
        ORDER BY p.due_at LIMIT 50
     `;
     return rows.map(toLine);

@@ -15,8 +15,8 @@ PROJECT_NAME="xadrez-essencial"
 # and 0050 (classrooms), 0051 (study progress) and 0052 (tutor) on 2026-11-07/08. They run with the
 # local dump only. The next migration requires the offsite backup again.
 # 2026-11-08: the user waived the offsite backup for the openings feature and "whenever needed",
-# so the ceiling follows the openings migrations (0053, 0054).
-ONE_TIME_LOCAL_BACKUP_CEILING="0054_opening_review.up.sql"
+# so the ceiling follows the openings migrations (0053, 0054, 0055).
+ONE_TIME_LOCAL_BACKUP_CEILING="0055_opening_traps.up.sql"
 IMAGE_TAG="$(git rev-parse --short=12 HEAD)"
 export IMAGE_TAG
 

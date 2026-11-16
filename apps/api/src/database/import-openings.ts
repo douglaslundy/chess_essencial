@@ -16,6 +16,8 @@ const root = resolve(
 
 interface Line {
   eco: string;
+  kind?: 'opening' | 'trap';
+  trap_idea?: string;
   family: string;
   name: string;
   pgn: string;
@@ -53,6 +55,23 @@ export function parseLine(eco: string, name: string, pgn: string): Line | null {
   };
 }
 
+/**
+ * Traps: our own catalog (`database/content/traps/armadilhas.tsv`: name, trapper's side, PGN, idea).
+ * Every line was checked with Stockfish: at its end the trapper has mated, won material or has a
+ * clear attack (never equal).
+ */
+export function parseTraps(text: string): Line[] {
+  const traps: Line[] = [];
+  for (const row of text.split(/\r?\n/).slice(1)) {
+    const [name, side, pgn, idea] = row.split('\t');
+    if (!name || !pgn || !idea || (side !== 'white' && side !== 'black')) continue;
+    const line = parseLine('TRP', name, pgn);
+    if (!line) continue;
+    traps.push({ ...line, family: name, kind: 'trap', side, trap_idea: idea });
+  }
+  return traps;
+}
+
 if (process.argv[1]?.endsWith('import-openings.ts')) {
   const lines: Line[] = [];
   for (const volume of VOLUMES) {
@@ -64,8 +83,9 @@ if (process.argv[1]?.endsWith('import-openings.ts')) {
       if (line) lines.push(line);
     }
   }
+  const traps = parseTraps(await readFile(resolve(root, '../traps/armadilhas.tsv'), 'utf8'));
   if (dryRun) {
-    process.stdout.write(`${JSON.stringify({ total: lines.length })}\n`);
+    process.stdout.write(`${JSON.stringify({ total: lines.length, traps: traps.length })}\n`);
   } else {
     const databaseUrl = process.env.DATABASE_URL;
     if (!databaseUrl) throw new Error('DATABASE_URL is required unless --dry-run is used');
@@ -78,7 +98,18 @@ if (process.argv[1]?.endsWith('import-openings.ts')) {
         `;
         inserted += result.count;
       }
-      process.stdout.write(`${JSON.stringify({ inserted, total: lines.length })}\n`);
+      // A trap wins over a plain opening line with the same moves (e.g. "Fool's Mate").
+      for (const trap of traps) {
+        await sql`
+          INSERT INTO opening_lines ${sql(trap, 'eco', 'family', 'name', 'pgn', 'ply_count', 'side', 'uci', 'kind', 'trap_idea')}
+          ON CONFLICT (uci) DO UPDATE SET
+            family = EXCLUDED.family, name = EXCLUDED.name, pgn = EXCLUDED.pgn, side = EXCLUDED.side,
+            kind = 'trap', trap_idea = EXCLUDED.trap_idea
+        `;
+      }
+      process.stdout.write(
+        `${JSON.stringify({ inserted, total: lines.length, traps: traps.length })}\n`,
+      );
     } finally {
       await sql.end({ timeout: 5 });
     }

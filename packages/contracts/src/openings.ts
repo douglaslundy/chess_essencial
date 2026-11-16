@@ -14,7 +14,11 @@ export const openingLineSchema = z.object({
   side: openingSideSchema,
   /** Moves in SAN, in order (white first). */
   moves: z.array(z.string()),
+  /** Traps only: what the trapper is setting up and how the opponent falls for it. */
+  trapIdea: z.string().optional(),
 });
+export const openingKindSchema = z.enum(['opening', 'trap']);
+export type OpeningKind = z.infer<typeof openingKindSchema>;
 export type OpeningLine = z.infer<typeof openingLineSchema>;
 
 export const openingFamilySchema = z.object({

@@ -1,4 +1,5 @@
 import {
+  openingKindSchema,
   openingPracticeInputSchema,
   openingSideSchema,
   type OpeningBranch,
@@ -26,6 +27,7 @@ import { OpeningsService } from './openings.service.js';
 const idSchema = z.string().uuid();
 const searchSchema = z.object({
   family: z.string().trim().min(1).max(120).optional(),
+  kind: openingKindSchema.optional(),
   q: z.string().trim().min(1).max(80).optional(),
 });
 
@@ -54,8 +56,11 @@ export class OpeningsController {
   }
 
   @Get('due')
-  due(@Req() request: AuthenticatedRequest): Promise<OpeningLine[]> {
-    return this.openings.due(request.auth.userId);
+  due(@Req() request: AuthenticatedRequest, @Query('kind') kind?: string): Promise<OpeningLine[]> {
+    return this.openings.due(
+      request.auth.userId,
+      kind ? parseInput(openingKindSchema, kind) : undefined,
+    );
   }
 
   @Get()

@@ -2264,7 +2264,7 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** Buscar linhas de abertura por família ou nome */
+    /** Buscar linhas de abertura (ou armadilhas, com kind=trap) por família ou nome */
     get: operations['searchOpenings'];
     put?: never;
     post?: never;
@@ -2567,6 +2567,7 @@ export interface components {
       /** @enum {string} */
       side: 'white' | 'black';
       moves: string[];
+      trapIdea?: string;
     };
     OpeningDetail: {
       aiAvailable: boolean;
@@ -7656,7 +7657,9 @@ export interface operations {
   };
   listDueOpenings: {
     parameters: {
-      query?: never;
+      query?: {
+        kind?: 'opening' | 'trap';
+      };
       header?: never;
       path?: never;
       cookie?: never;
@@ -7679,6 +7682,7 @@ export interface operations {
     parameters: {
       query?: {
         family?: string;
+        kind?: 'opening' | 'trap';
         q?: string;
       };
       header?: never;

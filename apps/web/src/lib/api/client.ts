@@ -709,13 +709,19 @@ export const api = {
     }),
   listOpeningFamilies: (side: 'black' | 'white', token: string) =>
     request<OpeningFamily[]>(`/openings/families?side=${side}`, token),
-  listDueOpenings: (token: string) => request<OpeningLine[]>('/openings/due', token),
+  listDueOpenings: (token: string, kind?: 'opening' | 'trap') =>
+    request<OpeningLine[]>(`/openings/due${kind ? `?kind=${kind}` : ''}`, token),
   searchOpenings: (
-    query: { family?: string | undefined; q?: string | undefined },
+    query: {
+      family?: string | undefined;
+      kind?: 'opening' | 'trap' | undefined;
+      q?: string | undefined;
+    },
     token: string,
   ) => {
     const params = new URLSearchParams();
     if (query.family) params.set('family', query.family);
+    if (query.kind) params.set('kind', query.kind);
     if (query.q) params.set('q', query.q);
     return request<OpeningLine[]>(`/openings?${params.toString()}`, token);
   },
