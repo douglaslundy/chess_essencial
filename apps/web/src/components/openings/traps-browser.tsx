@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import styles from '@/components/library/library.module.css';
+import { readWatchedGames } from '@/components/library/watched-games';
 import { api } from '@/lib/api/client';
 
 const token = () => window.localStorage.getItem('xadrez.access_token') ?? '';
@@ -14,6 +15,10 @@ export function TrapsBrowser() {
   const [traps, setTraps] = useState<OpeningLine[] | null>(null);
   const [due, setDue] = useState<OpeningLine[]>([]);
   const [query, setQuery] = useState('');
+  const [watched, setWatched] = useState<Set<string>>(() => new Set());
+  useEffect(() => {
+    queueMicrotask(() => setWatched(readWatchedGames()));
+  }, []);
   const [status, setStatus] = useState('Carregando as armadilhas…');
 
   useEffect(() => {
@@ -100,10 +105,14 @@ export function TrapsBrowser() {
 
       <ul className={styles.list}>
         {shown.map((trap) => (
-          <li className={styles.card} key={trap.id}>
+          <li
+            className={watched.has(trap.id) ? `${styles.card} ${styles.watched}` : styles.card}
+            key={trap.id}
+          >
             <Link href={`/app/aberturas/${trap.id}`}>
               <strong>{trap.name}</strong>
             </Link>
+            {watched.has(trap.id) ? <span className={styles.watchedBadge}>✓ Assistida</span> : null}
             <span className={styles.meta}>{trap.trapIdea}</span>
           </li>
         ))}

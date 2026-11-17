@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import styles from '@/components/library/library.module.css';
+import { readWatchedGames } from '@/components/library/watched-games';
 import { api } from '@/lib/api/client';
 
 const token = () => window.localStorage.getItem('xadrez.access_token') ?? '';
@@ -15,6 +16,10 @@ export function OpeningsBrowser() {
   const [query, setQuery] = useState('');
   const [found, setFound] = useState<OpeningLine[]>([]);
   const [due, setDue] = useState<OpeningLine[]>([]);
+  const [watched, setWatched] = useState<Set<string>>(() => new Set());
+  useEffect(() => {
+    queueMicrotask(() => setWatched(readWatchedGames()));
+  }, []);
   const [status, setStatus] = useState('Carregando as aberturas…');
 
   useEffect(() => {
@@ -109,10 +114,16 @@ export function OpeningsBrowser() {
       {found.length > 0 ? (
         <ul className={styles.list}>
           {found.map((line) => (
-            <li className={styles.card} key={line.id}>
+            <li
+              className={watched.has(line.id) ? `${styles.card} ${styles.watched}` : styles.card}
+              key={line.id}
+            >
               <Link href={`/app/aberturas/${line.id}`}>
                 <strong>{line.name}</strong>
               </Link>
+              {watched.has(line.id) ? (
+                <span className={styles.watchedBadge}>✓ Assistida</span>
+              ) : null}
               <span className={styles.meta}>
                 {line.eco} · {line.pgn}
                 {line.games ? ` · ${line.games.toLocaleString('pt-BR')} partidas` : ''}

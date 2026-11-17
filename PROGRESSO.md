@@ -571,3 +571,6 @@ Configurar e validar um backend Restic externo à VPS. Depois, executar o deploy
 
 2026-10-04 - **COR-T20-017 retomada localmente:** a seleção já evita resolvidos, recomendações dos últimos 30 dias e repetição excessiva, mas o relatório agregado ainda mistura faixas de dificuldade e não mede cobertura, latência nem distribuição além do item líder. Próximo incremento: ampliar a medição anônima e sua documentação antes de qualquer mudança no classificador. Trabalho exclusivamente local; sem VPS, push ou deploy.
 2026-10-04 - **COR-T20-017 / validação local concluída:** 49 testes do worker, typecheck, lint, build, format-check, `git diff --check` e varredura UTF-8 de 9 arquivos passaram. Os oito U+00C3 encontrados em `PROGRESSO.md` são usos legítimos de “NÃO”/“PRODUÇÃO”, não mojibake. Migration 0044 e relatório SQL ainda precisam do gate PostgreSQL limpo/rollback da CI, pois o ambiente local não possui Docker nem `psql`. Sem VPS, push ou deploy.
+
+## Marca "Assistida" em aberturas e armadilhas
+- Lista de armadilhas e de aberturas mostra "✓ Assistida" (reusa `library/watched-games`, localStorage por usuário); a linha conta como assistida ao avançar o primeiro lance no estudo (`opening-study.tsx`). Atalho: só neste navegador, igual à biblioteca.

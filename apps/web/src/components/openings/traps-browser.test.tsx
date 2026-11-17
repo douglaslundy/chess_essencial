@@ -4,6 +4,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { createElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { markGameWatched } from '@/components/library/watched-games';
+
 import { TrapsBrowser } from './traps-browser';
 
 const trap = (name: string, side: 'black' | 'white'): OpeningLine => ({
@@ -20,6 +22,7 @@ const trap = (name: string, side: 'black' | 'white'): OpeningLine => ({
 
 const search = vi.fn();
 vi.mock('@/lib/api/client', () => ({
+  getStoredUserId: () => null,
   api: {
     listDueOpenings: () => Promise.resolve([]),
     searchOpenings: (...args: unknown[]) => search(...args),
@@ -38,5 +41,13 @@ describe('TrapsBrowser', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Com as pretas' }));
     await waitFor(() => expect(screen.getByText('Armadilha Preta')).toBeTruthy());
     expect(search).toHaveBeenCalledWith({ kind: 'trap', q: undefined }, expect.any(String));
+  });
+
+  it('marks the traps the student already watched', async () => {
+    window.localStorage.clear();
+    markGameWatched('00000000-0000-4000-8000-000000000001');
+    search.mockResolvedValue([trap('Armadilha Branca', 'white')]);
+    render(createElement(TrapsBrowser));
+    expect(await screen.findByText('✓ Assistida')).toBeTruthy();
   });
 });

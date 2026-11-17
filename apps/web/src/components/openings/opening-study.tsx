@@ -9,6 +9,7 @@ import { OpeningPlay } from './opening-play';
 import { pickVariations } from './variations';
 import { CoachCallout } from '@/components/coach/coach-callout';
 import { ChessBoard, type BoardOrientation } from '@/components/game/chess-board';
+import { markGameWatched } from '@/components/library/watched-games';
 import { api } from '@/lib/api/client';
 import { speakableSquares, toBrazilianSan } from '@/lib/notation';
 import { usePieceTheme } from '@/lib/piece-theme';
@@ -62,6 +63,11 @@ export function OpeningStudy({ openingId }: { openingId: string }) {
   const [message, setMessage] = useState('Carregando a abertura…');
   const [mode, setMode] = useState<Mode>('study');
   const [ply, setPly] = useState(0);
+  // Moving past the start counts as watching: the openings and traps lists mark the line.
+  const lineId = detail?.line.id;
+  useEffect(() => {
+    if (ply > 0 && lineId) markGameWatched(lineId);
+  }, [ply, lineId]);
   const [audio, setAudio] = useState(true);
   const [flipped, setFlipped] = useState(false);
   const [wrongOnce, setWrongOnce] = useState(false);
