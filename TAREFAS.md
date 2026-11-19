@@ -518,4 +518,4 @@ Pedido único do usuário, estruturado como instrução formal (processo obrigat
 
 - [x] Marca "Assistida" nas listas de armadilhas e aberturas.
 
-- [x] Armadilhas ampliadas para 54 e ranqueadas (trap_rank).
+- [x] Armadilhas ampliadas e ranqueadas (32 finais) (trap_rank).

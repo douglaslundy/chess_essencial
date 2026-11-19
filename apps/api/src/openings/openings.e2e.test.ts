@@ -53,7 +53,7 @@ describeDatabase('openings and traps database integration', () => {
       trapIdea?: string;
       trapRank?: number;
     }>;
-    expect(traps.length).toBeGreaterThanOrEqual(54);
+    expect(traps.length).toBeGreaterThanOrEqual(32);
     // Best first: the ranking follows the catalog order.
     expect(traps.map((trap) => trap.trapRank)).toEqual(
       [...traps].map((trap) => trap.trapRank).sort((a, b) => a! - b!),

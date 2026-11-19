@@ -575,5 +575,5 @@ Configurar e validar um backend Restic externo à VPS. Depois, executar o deploy
 ## Marca "Assistida" em aberturas e armadilhas
 - Lista de armadilhas e de aberturas mostra "✓ Assistida" (reusa `library/watched-games`, localStorage por usuário); a linha conta como assistida ao avançar o primeiro lance no estudo (`opening-study.tsx`). Atalho: só neste navegador, igual à biblioteca.
 
-## Armadilhas 15 -> 54, ranqueadas
-- `armadilhas.tsv` com 54 linhas (15 escritas + 39 achadas com Stockfish varrendo o livro de aberturas: lance que parece normal no depth 4 e perde >=300cp no depth 15). Ordem do arquivo = `trap_rank` (migration 0057): mates por menos lances primeiro, depois por vantagem. Lista mostra `#rank` e `(N lances)`. Nomes das achadas ficam em ingles (nome lichess). Nao chegou a 60: sem padding com linhas fracas.
+## Armadilhas 15 -> 32, ranqueadas
+- `armadilhas.tsv` com 32 linhas apos limpeza (descartadas as fracas, nomes em PT-BR, +5 famosas verificadas; antes: 15 escritas + 39 achadas com Stockfish varrendo o livro de aberturas: lance que parece normal no depth 4 e perde >=300cp no depth 15). Ordem do arquivo = `trap_rank` (migration 0057): mates por menos lances primeiro, depois por vantagem. Lista mostra `#rank` e `(N lances)`. Nao chegou a 60: sem padding com linhas fracas (usuario aceitou menos).
