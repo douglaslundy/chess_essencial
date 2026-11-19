@@ -18,6 +18,7 @@ interface Line {
   eco: string;
   kind?: 'opening' | 'trap';
   trap_idea?: string;
+  trap_rank?: number;
   family: string;
   name: string;
   pgn: string;
@@ -57,6 +58,7 @@ export function parseLine(eco: string, name: string, pgn: string): Line | null {
 
 /**
  * Traps: our own catalog (`database/content/traps/armadilhas.tsv`: name, trapper's side, PGN, idea).
+ * Rows go from the most effective trap (fastest finish) to the least: the order sets `trap_rank`.
  * Every line was checked with Stockfish: at its end the trapper has mated, won material or has a
  * clear attack (never equal).
  */
@@ -67,7 +69,15 @@ export function parseTraps(text: string): Line[] {
     if (!name || !pgn || !idea || (side !== 'white' && side !== 'black')) continue;
     const line = parseLine('TRP', name, pgn);
     if (!line) continue;
-    traps.push({ ...line, family: name, kind: 'trap', side, trap_idea: idea });
+    // The file is sorted best first: the row order is the ranking.
+    traps.push({
+      ...line,
+      family: name,
+      kind: 'trap',
+      side,
+      trap_idea: idea,
+      trap_rank: traps.length + 1,
+    });
   }
   return traps;
 }
@@ -101,10 +111,10 @@ if (process.argv[1]?.endsWith('import-openings.ts')) {
       // A trap wins over a plain opening line with the same moves (e.g. "Fool's Mate").
       for (const trap of traps) {
         await sql`
-          INSERT INTO opening_lines ${sql(trap, 'eco', 'family', 'name', 'pgn', 'ply_count', 'side', 'uci', 'kind', 'trap_idea')}
+          INSERT INTO opening_lines ${sql(trap, 'eco', 'family', 'name', 'pgn', 'ply_count', 'side', 'uci', 'kind', 'trap_idea', 'trap_rank')}
           ON CONFLICT (uci) DO UPDATE SET
             family = EXCLUDED.family, name = EXCLUDED.name, pgn = EXCLUDED.pgn, side = EXCLUDED.side,
-            kind = 'trap', trap_idea = EXCLUDED.trap_idea
+            kind = 'trap', trap_idea = EXCLUDED.trap_idea, trap_rank = EXCLUDED.trap_rank
         `;
       }
       process.stdout.write(

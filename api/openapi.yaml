@@ -2648,6 +2648,7 @@ components:
         side: {type: string, enum: [white, black]}
         moves: {type: array, items: {type: string}}
         trapIdea: {type: string}
+        trapRank: {type: integer, minimum: 1}
     OpeningDetail:
       type: object
       required: [aiAvailable, dueAt, lesson, line]

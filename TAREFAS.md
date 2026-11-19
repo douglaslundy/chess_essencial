@@ -517,3 +517,5 @@ Pedido único do usuário, estruturado como instrução formal (processo obrigat
 **Gates em todos os 7 itens**: typecheck, lint, format, testes (suíte completa do `apps/api` e do `apps/web`, incluindo os novos), build, e CI real (`quality`/`database-integration`/`container-validation`) verde em cada push — confirmado via `gh run watch`, não só localmente. **Limitação real, não escondida**: nenhuma validação visual em navegador foi possível nesta sessão (extensão Chrome não conectada) — itens 2, 6 e 7 (os três com componente visual/responsivo) precisam de conferência manual do usuário após o deploy.
 
 - [x] Marca "Assistida" nas listas de armadilhas e aberturas.
+
+- [x] Armadilhas ampliadas para 54 e ranqueadas (trap_rank).

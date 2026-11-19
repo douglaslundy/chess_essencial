@@ -44,6 +44,7 @@ interface LineRow {
   ply_count: number;
   side: 'black' | 'white';
   trap_idea: string | null;
+  trap_rank?: number | null;
 }
 
 const toLine = (row: LineRow): OpeningLine => ({
@@ -56,6 +57,7 @@ const toLine = (row: LineRow): OpeningLine => ({
   plyCount: row.ply_count,
   side: row.side,
   ...(row.trap_idea ? { trapIdea: row.trap_idea } : {}),
+  ...(row.trap_rank ? { trapRank: row.trap_rank } : {}),
 });
 
 type ActiveConfig = NonNullable<Awaited<ReturnType<AiProvidersService['resolveActiveConfig']>>>;
@@ -107,7 +109,7 @@ export class OpeningsService {
          WHERE ${input.family ? this.sql`opening_family = ${input.family}` : this.sql`true`}
          GROUP BY opening_name
       )
-      SELECT l.id, l.eco, l.name, l.family, l.pgn, l.ply_count, l.side, l.trap_idea,
+      SELECT l.id, l.eco, l.name, l.family, l.pgn, l.ply_count, l.side, l.trap_idea, l.trap_rank,
              COALESCE((SELECT sum(p.n) FROM played p
                         WHERE p.name = l.name
                            OR starts_with(p.name, l.name || ':')
@@ -116,7 +118,7 @@ export class OpeningsService {
        WHERE l.kind = ${kind}
          AND ${input.family ? this.sql`l.family = ${input.family}` : this.sql`true`}
          AND ${input.q ? this.sql`l.name ILIKE ${`%${input.q}%`}` : this.sql`true`}
-       ORDER BY games DESC, l.ply_count, l.name
+       ORDER BY l.trap_rank NULLS LAST, games DESC, l.ply_count, l.name
        LIMIT ${MAX_RESULTS}
     `;
     return rows.map((row) => ({ ...toLine(row), games: row.games }));

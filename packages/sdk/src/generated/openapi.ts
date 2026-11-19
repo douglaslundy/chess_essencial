@@ -2568,6 +2568,7 @@ export interface components {
       side: 'white' | 'black';
       moves: string[];
       trapIdea?: string;
+      trapRank?: number;
     };
     OpeningDetail: {
       aiAvailable: boolean;

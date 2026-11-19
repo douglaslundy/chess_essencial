@@ -16,6 +16,8 @@ export const openingLineSchema = z.object({
   moves: z.array(z.string()),
   /** Traps only: what the trapper is setting up and how the opponent falls for it. */
   trapIdea: z.string().optional(),
+  /** Traps only: 1 is the most effective (fastest finish). */
+  trapRank: z.number().int().positive().optional(),
 });
 export const openingKindSchema = z.enum(['opening', 'trap']);
 export type OpeningKind = z.infer<typeof openingKindSchema>;

@@ -109,9 +109,11 @@ export function TrapsBrowser() {
             className={watched.has(trap.id) ? `${styles.card} ${styles.watched}` : styles.card}
             key={trap.id}
           >
+            {trap.trapRank ? <span className={styles.meta}>#{trap.trapRank} </span> : null}
             <Link href={`/app/aberturas/${trap.id}`}>
               <strong>{trap.name}</strong>
             </Link>
+            <span className={styles.meta}> ({Math.ceil(trap.plyCount / 2)} lances)</span>
             {watched.has(trap.id) ? <span className={styles.watchedBadge}>✓ Assistida</span> : null}
             <span className={styles.meta}>{trap.trapIdea}</span>
           </li>
