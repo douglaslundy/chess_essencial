@@ -28,7 +28,7 @@ export class VerificationEmailService {
 
     const email = message.email.replace(/[\r\n]/g, '');
     const webOrigin = this.config.get<string>('WEB_ORIGIN', 'http://localhost:3000');
-    const actionUrl = new URL('/entrar', webOrigin);
+    const actionUrl = new URL(`${this.config.get<string>('WEB_BASE_PATH', '')}/entrar`, webOrigin);
     actionUrl.searchParams.set(mode === 'verify' ? 'verify' : 'reset', message.token);
     const subject =
       mode === 'verify'

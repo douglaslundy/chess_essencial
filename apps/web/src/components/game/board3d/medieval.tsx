@@ -16,6 +16,7 @@ import {
   type Mesh,
   type Texture,
 } from 'three';
+import { withBasePath } from '@/lib/base-path';
 
 type Kind = 'k' | 'q' | 'r' | 'b' | 'n' | 'p';
 
@@ -44,7 +45,7 @@ const MEDIEVAL_HEIGHT: Record<Kind, number> = {
 };
 
 export function medievalViewUrl(color: 'w' | 'b', kind: Kind, angle: number) {
-  return `/pieces/medieval/${color}${kind}/${String(angle).padStart(3, '0')}.webp`;
+  return withBasePath(`/pieces/medieval/${color}${kind}/${String(angle).padStart(3, '0')}.webp`);
 }
 
 /** The photographed angle closest to `degrees`; keeps `current` unless another is clearly closer. */

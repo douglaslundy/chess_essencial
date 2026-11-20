@@ -19,6 +19,8 @@ const contentSecurityPolicy = [
 ].join('; ');
 
 const nextConfig: NextConfig = {
+  // Served under a sub-path (e.g. /game) when NEXT_PUBLIC_BASE_PATH is set at build time.
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH ?? '',
   async headers() {
     return [
       {

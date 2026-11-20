@@ -18,6 +18,7 @@ import {
   type DragEvent,
   type KeyboardEvent,
 } from 'react';
+import { withBasePath } from '@/lib/base-path';
 
 const pieceNames: Record<PieceSymbol, string> = {
   k: 'rei',
@@ -173,7 +174,7 @@ function StauntonPieceImage({ color, type }: BoardPiece) {
       className={`pieceImage ${color === 'w' ? 'whitePiece' : 'blackPiece'}`}
       data-color={color}
       data-piece={type}
-      src={`/piece-themes/staunton-3d/${colorName}-${pieceFileNames[type]}.png`}
+      src={withBasePath(`/piece-themes/staunton-3d/${colorName}-${pieceFileNames[type]}.png`)}
     />
   );
 }

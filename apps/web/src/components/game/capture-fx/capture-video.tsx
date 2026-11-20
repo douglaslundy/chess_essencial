@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import styles from './capture-video.module.css';
 import type { PlayedMove } from '@/components/game/move-path';
+import { withBasePath } from '@/lib/base-path';
 
 const PIECE_PT: Record<PieceSymbol, string> = {
   b: 'Bispo',
@@ -17,7 +18,7 @@ const PIECE_PT: Record<PieceSymbol, string> = {
 
 /** One film per capture in `public/captures`: `<colour><capturing piece>x<captured piece>.mp4`. */
 export function captureVideoSrc(move: Pick<PlayedMove, 'captured' | 'color' | 'piece'>) {
-  return `/captures/${move.color}${move.piece}x${move.captured}.mp4`;
+  return withBasePath(`/captures/${move.color}${move.piece}x${move.captured}.mp4`);
 }
 
 /** The capture is seen on the board first; the film starts after this. */

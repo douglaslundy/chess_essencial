@@ -108,12 +108,15 @@ require_deploy_capacity
 
 docker build --file "$ROOT_DIR/deploy/Dockerfile" --target api \
   --build-arg "NEXT_PUBLIC_API_URL=$PUBLIC_API_URL" \
+  --build-arg "NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH:-}" \
   --label "br.com.dlsistemas.project=$PROJECT_NAME" --tag "xadrez-api:$IMAGE_TAG" "$ROOT_DIR"
 docker build --file "$ROOT_DIR/deploy/Dockerfile" --target worker \
   --build-arg "NEXT_PUBLIC_API_URL=$PUBLIC_API_URL" \
+  --build-arg "NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH:-}" \
   --label "br.com.dlsistemas.project=$PROJECT_NAME" --tag "xadrez-worker:$IMAGE_TAG" "$ROOT_DIR"
 docker build --file "$ROOT_DIR/deploy/Dockerfile" --target web \
   --build-arg "NEXT_PUBLIC_API_URL=$PUBLIC_API_URL" \
+  --build-arg "NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH:-}" \
   --label "br.com.dlsistemas.project=$PROJECT_NAME" --tag "xadrez-web:$IMAGE_TAG" "$ROOT_DIR"
 
 "${compose[@]}" up --detach --wait --wait-timeout 120 postgres redis mailpit
@@ -179,7 +182,7 @@ wait_for_url() {
 
 wait_for_url api "http://127.0.0.1:$API_PORT/v1/health"
 wait_for_url worker "http://127.0.0.1:$WORKER_PORT/health"
-wait_for_url web "http://127.0.0.1:$WEB_PORT/api/health"
+wait_for_url web "http://127.0.0.1:$WEB_PORT${NEXT_PUBLIC_BASE_PATH:-}/api/health"
 wait_for_url course "http://127.0.0.1:$API_PORT/v1/courses/xadrez-essencial"
 
 "${compose[@]}" exec --no-TTY \

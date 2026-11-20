@@ -12,6 +12,9 @@ COPY . .
 ARG NEXT_PUBLIC_API_URL=http://localhost:4000/v1
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+ARG NEXT_PUBLIC_BASE_PATH=
+ENV NEXT_PUBLIC_BASE_PATH=$NEXT_PUBLIC_BASE_PATH
+
 RUN pnpm install --frozen-lockfile
 # One task at a time: the shared VPS has little free RAM and parallel builds were OOM-killed.
 RUN pnpm exec turbo run build --concurrency=1

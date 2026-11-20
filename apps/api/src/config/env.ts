@@ -38,6 +38,11 @@ export const apiEnvSchema = z.object({
   REDIS_URL: z.string().url().default('redis://localhost:6379'),
   SETTINGS_ENCRYPTION_KEY: optionalSecret,
   SMTP_URL: z.string().url().optional(),
+  // Sub-path the web app is served under (e.g. /game); empty at the domain root.
+  WEB_BASE_PATH: z
+    .string()
+    .regex(/^(\/[a-z0-9-]+)*$/)
+    .default(''),
   WEB_ORIGIN: z.string().url().default('http://localhost:3000'),
 });
 

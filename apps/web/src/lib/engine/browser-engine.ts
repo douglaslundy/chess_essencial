@@ -1,4 +1,5 @@
 import { Chess } from 'chess.js';
+import { withBasePath } from '@/lib/base-path';
 
 export interface EngineEvaluation {
   bestMove: string | null;
@@ -13,7 +14,7 @@ export interface EvaluateOptions {
 
 /** Centipawn extreme for a checkmated side (same value the server-side analysis uses). */
 const MATED_SCORE_CP = 100_000;
-const ENGINE_URL = '/engine/stockfish-18-lite-single.js';
+const ENGINE_URL = withBasePath('/engine/stockfish-18-lite-single.js');
 const DEFAULT_DEPTH = 10;
 const EVALUATE_TIMEOUT_MS = 15_000;
 const START_TIMEOUT_MS = 20_000;

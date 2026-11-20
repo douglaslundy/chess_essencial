@@ -15,6 +15,7 @@ import { speakableSquares, toBrazilianSan } from '@/lib/notation';
 import { usePieceTheme } from '@/lib/piece-theme';
 import { prefetchSpeech, speak, stopSpeaking } from '@/lib/speech';
 import { useVoicePreference } from '@/lib/voice-preference';
+import { withBasePath } from '@/lib/base-path';
 
 const POLL_MS = 3_000;
 const REPLY_DELAY_MS = 600;
@@ -288,7 +289,7 @@ export function OpeningStudy({ openingId }: { openingId: string }) {
                 <select
                   onChange={(event) => {
                     if (event.target.value) {
-                      window.location.assign(`/app/aberturas/${event.target.value}`);
+                      window.location.assign(withBasePath(`/app/aberturas/${event.target.value}`));
                     }
                   }}
                   value=""

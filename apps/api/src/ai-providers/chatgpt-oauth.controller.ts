@@ -23,7 +23,10 @@ export class ChatgptOAuthCallbackController {
     @Query('error_description') errorDescription: string | undefined,
     @Res() reply: FastifyReply,
   ) {
-    const target = new URL('/app/admin/ia', this.config.getOrThrow<string>('WEB_ORIGIN'));
+    const target = new URL(
+      `${this.config.get<string>('WEB_BASE_PATH', '')}/app/admin/ia`,
+      this.config.getOrThrow<string>('WEB_ORIGIN'),
+    );
     try {
       if (!code || !state)
         throw new Error(errorDescription ?? 'A OpenAI não devolveu a autorização.');
