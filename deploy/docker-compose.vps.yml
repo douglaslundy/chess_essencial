@@ -166,6 +166,9 @@ services:
       api:
         condition: service_healthy
     environment:
+      # next start re-reads next.config.ts at runtime, so these must match the build.
+      NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:4000/v1}
+      NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-}
       NODE_ENV: production
       PORT: 3000
     healthcheck:
