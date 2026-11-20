@@ -183,7 +183,10 @@ wait_for_url() {
 wait_for_url api "http://127.0.0.1:$API_PORT/v1/health"
 wait_for_url worker "http://127.0.0.1:$WORKER_PORT/health"
 wait_for_url web "http://127.0.0.1:$WEB_PORT${NEXT_PUBLIC_BASE_PATH:-}/api/health"
-wait_for_url course "http://127.0.0.1:$API_PORT/v1/courses/xadrez-essencial"
+# The book course is imported/published through the admin; a fresh host can opt out until then.
+if [[ "${XADREZ_REQUIRE_PUBLISHED_COURSE:-true}" == "true" ]]; then
+  wait_for_url course "http://127.0.0.1:$API_PORT/v1/courses/xadrez-essencial"
+fi
 
 "${compose[@]}" exec --no-TTY \
   --env LOAD_TEST_URL=http://127.0.0.1:4000/v1/health \
