@@ -134,11 +134,13 @@ export function registerHttpSecurity(
 
     const mutating = ['POST', 'PUT', 'PATCH'].includes(request.method);
     const contentLength = Number(request.headers['content-length'] ?? 0);
-    if (
-      mutating &&
-      contentLength > 0 &&
-      request.headers['content-type']?.split(';')[0] !== 'application/json'
-    ) {
+    const contentType = request.headers['content-type']?.split(';')[0];
+    // The backup restore streams the raw .xebak file, so it is the one route allowed a non-JSON body.
+    const rawUpload =
+      request.method === 'POST' &&
+      contentType === 'application/octet-stream' &&
+      request.url.split('?')[0] === '/v1/admin/backup/restore';
+    if (mutating && contentLength > 0 && contentType !== 'application/json' && !rawUpload) {
       return reply.status(415).type('application/problem+json').send({
         type: 'https://xadrez-essencial.local/problems/415',
         title: 'Unsupported Media Type',

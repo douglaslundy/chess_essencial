@@ -54,6 +54,19 @@ describe('GET /v1/health', () => {
     expect(response.json()).toMatchObject({ status: 415 });
   });
 
+  it('accepts a raw upload only on the backup restore route', async () => {
+    const upload = (url: string) =>
+      app.inject({
+        headers: { 'content-type': 'application/octet-stream' },
+        method: 'POST',
+        payload: 'raw-bytes',
+        url,
+      });
+    expect((await upload('/v1/auth/login')).statusCode).toBe(415);
+    // Unauthenticated, so the guard answers (401) instead of the media-type gate (415).
+    expect((await upload('/v1/admin/backup/restore')).statusCode).toBe(401);
+  });
+
   it('rejects cookie-authenticated refresh without trusted CSRF proof', async () => {
     const response = await app.inject({
       headers: {
