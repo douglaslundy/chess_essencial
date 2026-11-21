@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import styles from '@/components/portal/portal-pages.module.css';
 import { webEnv } from '@/env';
+import { getRealtimeAccessToken } from '@/lib/api/client';
 
 const CONFIRMATION = 'APAGAR-E-RESTAURAR';
 
@@ -13,8 +14,9 @@ interface RestoreReport {
   tables: number;
 }
 
-function authHeader(): Record<string, string> {
-  const token = window.localStorage.getItem('xadrez.access_token');
+// The stored value is only a session marker; getRealtimeAccessToken returns (and refreshes) the real JWT.
+async function authHeader(): Promise<Record<string, string>> {
+  const token = await getRealtimeAccessToken();
   return token ? { authorization: `Bearer ${token}` } : {};
 }
 
@@ -33,7 +35,8 @@ export default function AdminBackupPage() {
 
   async function save(path: string, fallbackName: string): Promise<string> {
     const response = await fetch(`${webEnv.NEXT_PUBLIC_API_URL}${path}`, {
-      headers: authHeader(),
+      credentials: 'include',
+      headers: await authHeader(),
     });
     if (!response.ok) throw new Error(await problemMessage(response, 'Falha ao gerar o backup'));
     const blob = await response.blob();
@@ -70,8 +73,9 @@ export default function AdminBackupPage() {
     try {
       const response = await fetch(`${webEnv.NEXT_PUBLIC_API_URL}/admin/backup/restore`, {
         body: file,
+        credentials: 'include',
         headers: {
-          ...authHeader(),
+          ...(await authHeader()),
           'content-type': 'application/octet-stream',
           'x-confirm-restore': CONFIRMATION,
         },
@@ -104,13 +108,13 @@ export default function AdminBackupPage() {
         </p>
       </header>
 
-      <section className={styles.card}>
+      <section className={`${styles.card} ${styles.cardStack}`}>
         <h2>Fazer backup</h2>
         <p className={styles.helpText}>
           Gera e baixa um arquivo .xebak compactado. A plataforma continua funcionando durante o
           backup.
         </p>
-        <label className={styles.field}>
+        <label className={styles.checkbox}>
           <span>
             <input
               checked={withVoices}
@@ -120,7 +124,7 @@ export default function AdminBackupPage() {
             Incluir as vozes geradas (arquivo maior)
           </span>
         </label>
-        <label className={styles.field}>
+        <label className={styles.checkbox}>
           <span>
             <input
               checked={withFiles}
@@ -140,7 +144,7 @@ export default function AdminBackupPage() {
         </button>
       </section>
 
-      <section className={styles.card}>
+      <section className={`${styles.card} ${styles.cardStack}`}>
         <h2>Restaurar de um backup</h2>
         <p className={styles.helpText}>
           Substitui todos os dados atuais pelos do arquivo, numa única operação: se algo falhar,

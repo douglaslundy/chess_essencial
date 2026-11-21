@@ -198,6 +198,17 @@
 .lessonList small {
   color: var(--muted);
 }
+.cardStack {
+  display: grid;
+  gap: 1rem;
+}
+.cardStack h2,
+.cardStack p {
+  margin: 0;
+}
+.cardStack .helpText {
+  margin-top: -0.5rem;
+}
 .formCard {
   display: grid;
   gap: 1rem;
