@@ -192,6 +192,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/public/subscription-plans': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List active subscription plans without authentication (landing page) */
+    get: operations['listPublicSubscriptionPlans'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/me/metrics': {
     parameters: {
       query?: never;
@@ -4341,6 +4358,26 @@ export interface operations {
         };
       };
       401: components['responses']['Problem'];
+    };
+  };
+  listPublicSubscriptionPlans: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Active plans */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SubscriptionPlanList'];
+        };
+      };
     };
   };
   getMyMetrics: {
