@@ -85,15 +85,15 @@ export default async function HomePage() {
           <div className="plansGrid">
             {plans.map((plan) => (
               <article className="planCard" key={plan.id}>
-                {plan.isDefault ? <span className="planBadge planBadge--free">Gratuito</span> : null}
+                {plan.isDefault ? (
+                  <span className="planBadge planBadge--free">Gratuito</span>
+                ) : null}
                 <h3 className="planName">{plan.name}</h3>
                 <p className="planPrice">
                   <span className="planPriceValue">{formatPrice(plan.priceCents)}</span>
                   {plan.priceCents > 0 ? <span className="planPricePeriod">/mês</span> : null}
                 </p>
-                {plan.annualPriceCents ? (
-                  <p>ou {formatPrice(plan.annualPriceCents)}/ano</p>
-                ) : null}
+                {plan.annualPriceCents ? <p>ou {formatPrice(plan.annualPriceCents)}/ano</p> : null}
                 <ul className="planFeatureList">
                   {plan.limits.map((limit) => {
                     const label =
