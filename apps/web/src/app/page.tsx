@@ -16,6 +16,9 @@ const highlights = [
   'Sala de aula com tutor de IA e acompanhamento do seu progresso',
 ];
 
+// Explicit: if the API is down at build time the page would otherwise stay static forever.
+export const revalidate = 300;
+
 // Revalidated page-side so admin price changes reach the landing without a rebuild.
 async function loadPlans(): Promise<SubscriptionPlan[]> {
   try {
