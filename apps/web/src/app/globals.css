@@ -185,6 +185,16 @@ code {
   color: var(--text);
 }
 
+.landingPlans {
+  width: min(100%, 72rem);
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 2.5rem);
+}
+.landingPlans .planCta {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
 .landingFooter {
   width: min(100%, 48rem);
   margin-inline: auto;

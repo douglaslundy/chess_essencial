@@ -224,6 +224,17 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/SubscriptionPlanList'}
         '401': {$ref: '#/components/responses/Problem'}
+  /public/subscription-plans:
+    get:
+      summary: List active subscription plans without authentication (landing page)
+      operationId: listPublicSubscriptionPlans
+      security: []
+      responses:
+        '200':
+          description: Active plans
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SubscriptionPlanList'}
   /me/metrics:
     get:
       summary: Métricas de desempenho do jogador (partidas, tempo, qualidade dos lances, pontos fortes e fracos)

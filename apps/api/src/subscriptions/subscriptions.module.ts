@@ -3,6 +3,7 @@ import { Global, Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { MercadoPagoWebhookController } from './mercado-pago-webhook.controller.js';
+import { PublicPlansController } from './public-plans.controller.js';
 import { SocialAccessGuard } from './social-access.guard.js';
 import { SubscriptionsController } from './subscriptions.controller.js';
 import { SubscriptionsRepository } from './subscriptions.repository.js';
@@ -16,7 +17,7 @@ import { SubscriptionsService } from './subscriptions.service.js';
 @Global()
 @Module({
   imports: [AuthModule, UsersModule],
-  controllers: [SubscriptionsController, MercadoPagoWebhookController],
+  controllers: [SubscriptionsController, PublicPlansController, MercadoPagoWebhookController],
   providers: [SubscriptionsRepository, SubscriptionsService, SocialAccessGuard],
   exports: [SubscriptionsService, SocialAccessGuard],
 })
