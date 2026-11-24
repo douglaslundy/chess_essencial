@@ -17,6 +17,11 @@ export interface MoveQualityInput {
    * before passing it here.
    */
   scoreAfterCp: number | null;
+  /**
+   * The move played is the engine's best move. The two evaluations come from separate searches,
+   * so their difference is search noise, not a loss: such a move is always "ótimo".
+   */
+  playedBestMove?: boolean;
 }
 
 export interface MoveQualityResult {
@@ -53,6 +58,7 @@ function effectiveScore(scoreCp: number | null, mate: number | null): number {
 }
 
 export function classifyMove(input: MoveQualityInput): MoveQualityResult {
+  if (input.playedBestMove) return { centipawnLoss: 0, missedWin: false, quality: 'otimo' };
   const before = effectiveScore(input.scoreBeforeCp, input.mateBefore);
   const after = effectiveScore(input.scoreAfterCp, input.mateAfter);
   const rawLoss = before - after;

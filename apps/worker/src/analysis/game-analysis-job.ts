@@ -20,6 +20,7 @@ interface MoveRow {
   fenAfter: string;
   fenBefore: string;
   ply: number;
+  uci: string;
 }
 
 let running = false;
@@ -181,7 +182,7 @@ async function analyzeGame(sql: Sql, gameId: string, depth: number): Promise<voi
 
 async function analyzeGameCore(sql: Sql, gameId: string, depth: number): Promise<number> {
   const moves = await sql<MoveRow[]>`
-    SELECT ply, color, fen_before AS "fenBefore", fen_after AS "fenAfter"
+    SELECT ply, color, uci, fen_before AS "fenBefore", fen_after AS "fenAfter"
     FROM game_moves WHERE game_id = ${gameId} ORDER BY ply
   `;
   const [firstMove] = moves;
@@ -207,6 +208,7 @@ async function analyzeGameCore(sql: Sql, gameId: string, depth: number): Promise
     const result = classifyMove({
       mateAfter: after.mate,
       mateBefore: before.mate,
+      playedBestMove: before.bestMove === move.uci,
       scoreAfterCp: after.scoreCp,
       scoreBeforeCp: before.scoreCp,
     });

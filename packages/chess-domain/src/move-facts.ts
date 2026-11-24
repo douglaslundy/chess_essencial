@@ -225,9 +225,11 @@ function joinClauses(items: string[]): string {
  */
 export function describeBetterMove(played: MoveFacts | null, best: MoveFacts | null): string[] {
   const sentences: string[] = [];
+  // What the played move also does is no reason to prefer the suggestion.
+  const shared = new Set(played ? describeMoveFacts(played) : []);
   const gains = best
     ? describeMoveFacts(best)
-        .filter((line) => !line.startsWith('Deixa'))
+        .filter((line) => !line.startsWith('Deixa') && !shared.has(line))
         .slice(0, 3)
     : [];
   if (gains.length > 0) sentences.push(`O lance sugerido ${joinClauses(gains)}.`);

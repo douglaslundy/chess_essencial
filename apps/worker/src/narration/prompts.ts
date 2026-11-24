@@ -54,13 +54,13 @@ export interface MomentFacts {
 }
 
 /** Bumped whenever the prompts change, so cached narrations from the old prompt are not reused. */
-export const NARRATION_PROMPT_VERSION = 7;
+export const NARRATION_PROMPT_VERSION = 8;
 
 /**
  * Narrations completed before this instant were written with an older prompt and are redone by
  * the worker. Set it to the deploy time whenever NARRATION_PROMPT_VERSION changes.
  */
-export const NARRATION_PROMPT_EPOCH = '2026-11-07T22:00:00Z';
+export const NARRATION_PROMPT_EPOCH = '2026-11-24T04:13:00Z';
 
 function movePhrase(fen: string, uci: string): string {
   const facts = moveFacts(fen, uci);
@@ -68,7 +68,10 @@ function movePhrase(fen: string, uci: string): string {
   return `${PIECE_NAME_PT[facts.piece]} de ${facts.from} para ${facts.to}`;
 }
 
-export function buildMomentPrompt(moment: MomentFacts): string {
+export function buildMomentPrompt(input: MomentFacts): string {
+  // Analyses stored before the worker fix graded the best move itself by search noise.
+  const moment: MomentFacts =
+    input.bestMoveUci === input.uci ? { ...input, centipawnLoss: 0, quality: 'otimo' } : input;
   const played = moveFacts(moment.fenBefore, moment.uci);
   const playedLines = played ? describeMoveFacts(played) : [];
   const best = moment.bestMoveUci ? moveFacts(moment.fenBefore, moment.bestMoveUci) : null;
@@ -84,7 +87,7 @@ export function buildMomentPrompt(moment: MomentFacts): string {
       ? `Melhor lance: ${movePhrase(moment.fenBefore, moment.bestMoveUci)}. Comparação medida com o lance do aluno: ${comparison.join(' ') || 'sem diferença tática evidente; a diferença está na posição.'}`
       : '',
     '',
-    'Escreva a explicação falada deste lance, de 2 a 3 frases e no máximo 55 palavras, pensando como jogador de xadrez conforme as regras acima. Se o lance for um ponto forte ou um ponto fraco do aluno, diga isso de forma explícita, começando a frase por "Ponto forte:" ou "Ponto fraco:". Responda apenas com o texto da fala, sem aspas e sem introdução.',
+    'Escreva a explicação falada deste lance, de 2 a 3 frases e no máximo 55 palavras, pensando como jogador de xadrez conforme as regras acima. Se o lance for um ponto forte ou um ponto fraco do aluno, diga isso de forma explícita, começando a frase por "Ponto forte:" ou "Ponto fraco:", sempre seguido do motivo concreto tirado dos fatos acima (o que o lance ganha, ou o que ele entrega ou deixa passar). Nunca escreva só "cede vantagem" ou "lance forte" sem dizer qual. Não repita o mesmo fato duas vezes e não se contradiga: um lance fraco nunca é elogiado pelo mesmo motivo que justifica o lance sugerido. Responda apenas com o texto da fala, sem aspas e sem introdução.',
   ];
   return lines.filter((line) => line !== '').join('\n');
 }

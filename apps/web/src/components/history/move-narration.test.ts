@@ -71,7 +71,7 @@ describe('explainMove', () => {
       move({ bestMoveUci: 'c4f7', centipawnLoss: 320, quality: 'gafe', san: 'Ra1' }),
       'text',
     );
-    expect(sentence).toContain('Deixa o bispo em c4 vulnerável a captura.');
+    expect(sentence).toContain('Ponto fraco: deixa o bispo em c4 vulnerável a captura.');
     expect(sentence).toContain('No seu lugar, eu jogaria Bf7');
     expect(sentence).toContain('infelizmente isso foi uma gafe');
   });
@@ -80,6 +80,33 @@ describe('explainMove', () => {
     const text = explainMove(nf3, move({ missedWin: true, quality: 'imprecisao' }), 'text');
     expect(text).not.toContain('chance de ganhar uma vantagem maior');
     expect(text).not.toContain('Pela análise');
+  });
+
+  it('never calls the best move weak nor suggests the move already played', () => {
+    const fen = 'r3kbnr/pppqpppp/2n5/3p1b2/3P1B2/2N5/PPPQPPPP/R3KBNR b KQkq - 0 1';
+    const text = explainMove(
+      { fenBefore: fen, san: 'O-O-O', uci: 'e8c8' },
+      move({ bestMoveUci: 'e8c8', centipawnLoss: 60, quality: 'imprecisao', san: 'O-O-O' }),
+      'text',
+      'opponent',
+    );
+    expect(text).toContain('um ótimo lance');
+    expect(text).toContain('Ponto forte: é o melhor lance aqui, porque faz o roque grande');
+    expect(text).not.toContain('eu jogaria');
+    expect(text).not.toContain('Ponto fraco');
+  });
+
+  it('says what a weak move misses instead of a bare verdict', () => {
+    // Black knight on e5 is loose; Nf3 ignores it, Qxe5 would take it.
+    const fen = '4k3/8/8/4n3/8/8/8/4QK2 w - - 0 1';
+    const text = explainMove(
+      { fenBefore: fen, san: 'Qd2', uci: 'e1d2' },
+      move({ bestMoveUci: 'e1e5', centipawnLoss: 300, quality: 'erro', san: 'Qd2' }),
+      'text',
+    );
+    expect(text).toContain('Ponto fraco: deixa passar a chance de capturar o cavalo.');
+    expect(text).toContain('No seu lugar, eu jogaria Dxe5+.');
+    expect(text).not.toContain('cede parte da vantagem');
   });
 
   it('still names the move when there is no analysis yet', () => {

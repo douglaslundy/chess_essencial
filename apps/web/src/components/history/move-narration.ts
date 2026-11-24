@@ -93,7 +93,9 @@ export function explainMove(
   const mine = side === 'player';
   const name = (san: string, uci: string) =>
     mode === 'speech' ? spokenMove(played.fenBefore, uci) : toBrazilianSan(san);
-  const quality = analysis?.quality ?? null;
+  const bestUci = analysis?.bestMoveUci ?? null;
+  // Analyses stored before the worker fix graded the best move itself by search noise.
+  const quality = bestUci === played.uci ? 'otimo' : (analysis?.quality ?? null);
   const weak = quality === 'imprecisao' || quality === 'erro' || quality === 'gafe';
   const sentences = [
     quality
@@ -103,41 +105,49 @@ export function explainMove(
 
   const facts = moveFacts(played.fenBefore, played.uci);
   const lines = facts ? describeMoveFacts(facts) : [];
-  // A weak move is explained by what it gives away first; a good one by what it achieves.
-  if (weak) lines.sort((a, b) => Number(b.startsWith('Deixa')) - Number(a.startsWith('Deixa')));
-  sentences.push(...lines.slice(0, 3));
+  const gives = lines.filter((line) => line.startsWith('Deixa'));
+  const does = lines.filter((line) => !line.startsWith('Deixa'));
 
-  if (analysis && weak) {
-    const giveaway = lines.some((line) => line.startsWith('Deixa'));
-    if (!giveaway && analysis.centipawnLoss >= 150) {
-      sentences.push(
-        `Com ele ${mine ? 'você entrega' : 'entrega-se'} boa parte da vantagem que ${mine ? 'tinha' : 'havia'} na posição.`,
-      );
-    }
-    const bestUci = analysis.bestMoveUci;
+  if (weak) {
+    sentences.push(...does.slice(0, 2));
+    const bestFacts = bestUci ? moveFacts(played.fenBefore, bestUci) : null;
     const best = bestUci ? sanOfUci(played.fenBefore, bestUci) : null;
+    const bestGoal = bestFacts ? describeMoveGoal(bestFacts) : null;
+    const missed = bestGoal && bestGoal !== (facts ? describeMoveGoal(facts) : null);
+    // Ponto fraco always says what the move gives away, read off the board, never a bare verdict.
+    const reason = gives[0]
+      ? lowerFirst(gives[0].replace(/\.$/, ''))
+      : missed
+        ? `deixa passar a chance de ${bestGoal}`
+        : facts && facts.netMaterial < 0
+          ? 'perde material na troca'
+          : 'não perde material, mas deixa a posição pior do que o lance sugerido';
+    sentences.push(`Ponto fraco: ${reason}.`);
     if (best && bestUci) {
       sentences.push(
         `${mine ? 'No seu lugar' : 'No lugar dele'}, eu jogaria ${name(best, bestUci)}.`,
       );
-      // Why it is better: what it does, the material once exchanges play out.
-      sentences.push(...describeBetterMove(facts, moveFacts(played.fenBefore, bestUci)));
+      const why = describeBetterMove(facts, bestFacts);
+      // The missed chance already says what the suggestion does.
+      sentences.push(...(missed ? why.filter((line) => !line.startsWith('O lance')) : why));
     }
-  }
-  // Names the move as one of the game's strong or weak points, the same labels as the review summary.
-  const goal = facts ? describeMoveGoal(facts) : null;
-  if (weak) {
-    const reason = lines.find((line) => line.startsWith('Deixa'));
+  } else if (quality === 'otimo' || quality === 'excelente') {
+    const verdict = quality === 'otimo' ? 'é o melhor lance aqui' : 'é um dos melhores lances aqui';
+    const [why, ...rest] = does;
     sentences.push(
-      reason
-        ? `Ponto fraco: ${reason.charAt(0).toLowerCase()}${reason.slice(1)}`
-        : 'Ponto fraco: lance que cede parte da vantagem.',
+      why
+        ? `Ponto forte: ${verdict}, porque ${lowerFirst(why.replace(/\.$/, ''))}.`
+        : `Ponto forte: ${verdict}.`,
+      ...rest.slice(0, 1),
+      ...gives.slice(0, 1),
     );
-  } else if ((quality === 'otimo' || quality === 'excelente') && goal) {
-    sentences.push(`Ponto forte: ${goal}.`);
+  } else {
+    sentences.push(...lines.slice(0, 3));
   }
   return sentences.join(' ');
 }
+
+const lowerFirst = (text: string) => `${text.charAt(0).toLowerCase()}${text.slice(1)}`;
 
 export interface ReviewComment {
   /** Shown in the Treinador's bubble. */

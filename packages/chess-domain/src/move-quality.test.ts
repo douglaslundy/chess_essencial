@@ -18,6 +18,13 @@ describe('classifyMove', () => {
     expect(result).toMatchObject({ centipawnLoss: 0, missedWin: false, quality: 'otimo' });
   });
 
+  it('grades the best move as ótimo even when the two searches disagree', () => {
+    const result = classifyMove(
+      input({ playedBestMove: true, scoreAfterCp: 20, scoreBeforeCp: 100 }),
+    );
+    expect(result).toMatchObject({ centipawnLoss: 0, missedWin: false, quality: 'otimo' });
+  });
+
   it.each([
     [15, 'excelente'],
     [40, 'bom'],
