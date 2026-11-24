@@ -7,12 +7,7 @@ import type {
   MoveQuality,
 } from '@xadrez/contracts';
 
-import {
-  describeBetterMove,
-  describeMoveFacts,
-  describeMoveGoal,
-  moveFacts,
-} from '@xadrez/chess-domain';
+import { describeMoveFacts, describeMoveGoal, moveFacts } from '@xadrez/chess-domain';
 import { Chess } from 'chess.js';
 
 import { formatUciSquares, speakableSquares, spokenMove, toBrazilianSan } from '@/lib/notation';
@@ -109,11 +104,17 @@ export function explainMove(
   const does = lines.filter((line) => !line.startsWith('Deixa'));
 
   if (weak) {
-    sentences.push(...does.slice(0, 2));
+    // A weak move gets only why it is weak and what to play; what it does well would read as praise.
     const bestFacts = bestUci ? moveFacts(played.fenBefore, bestUci) : null;
     const best = bestUci ? sanOfUci(played.fenBefore, bestUci) : null;
+    const bestName = best && bestUci ? name(best, bestUci) : null;
     const bestGoal = bestFacts ? describeMoveGoal(bestFacts) : null;
     const missed = bestGoal && bestGoal !== (facts ? describeMoveGoal(facts) : null);
+    // What the suggestion achieves that the played move does not, for when nothing else explains it.
+    const shared = new Set(lines);
+    const gain = bestFacts
+      ? describeMoveFacts(bestFacts).find((line) => !line.startsWith('Deixa') && !shared.has(line))
+      : undefined;
     // Ponto fraco always says what the move gives away, read off the board, never a bare verdict.
     const reason = gives[0]
       ? lowerFirst(gives[0].replace(/\.$/, ''))
@@ -121,15 +122,12 @@ export function explainMove(
         ? `deixa passar a chance de ${bestGoal}`
         : facts && facts.netMaterial < 0
           ? 'perde material na troca'
-          : 'não perde material, mas deixa a posição pior do que o lance sugerido';
+          : bestName && gain
+            ? `${bestName} era melhor, pois ${lowerFirst(gain.replace(/\.$/, ''))}`
+            : 'há um lance melhor nesta posição';
     sentences.push(`Ponto fraco: ${reason}.`);
-    if (best && bestUci) {
-      sentences.push(
-        `${mine ? 'No seu lugar' : 'No lugar dele'}, eu jogaria ${name(best, bestUci)}.`,
-      );
-      const why = describeBetterMove(facts, bestFacts);
-      // The missed chance already says what the suggestion does.
-      sentences.push(...(missed ? why.filter((line) => !line.startsWith('O lance')) : why));
+    if (bestName && !reason.startsWith(bestName)) {
+      sentences.push(`${mine ? 'No seu lugar' : 'No lugar dele'}, eu jogaria ${bestName}.`);
     }
   } else if (quality === 'otimo' || quality === 'excelente') {
     const verdict = quality === 'otimo' ? 'é o melhor lance aqui' : 'é um dos melhores lances aqui';

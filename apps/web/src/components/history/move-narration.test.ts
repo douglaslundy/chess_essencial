@@ -74,6 +74,21 @@ describe('explainMove', () => {
     expect(sentence).toContain('Ponto fraco: deixa o bispo em c4 vulnerável a captura.');
     expect(sentence).toContain('No seu lugar, eu jogaria Bf7');
     expect(sentence).toContain('infelizmente isso foi uma gafe');
+    expect(sentence).not.toContain('saldo de material');
+  });
+
+  it('does not praise a weak move: a check that loses a pawn only says what it loses', () => {
+    // Qa4+ checks, but the d5 pawn is left to the black queen.
+    const fen = '3qk3/8/8/3P4/8/8/8/3QK3 w - - 0 1';
+    const text = explainMove(
+      { fenBefore: fen, san: 'Qa4+', uci: 'd1a4' },
+      move({ bestMoveUci: 'e1f2', centipawnLoss: 150, quality: 'erro', san: 'Qa4+' }),
+      'text',
+      'opponent',
+    );
+    expect(text).not.toContain('Dá xeque');
+    expect(text).toContain('Ponto fraco: deixa o peão em d5 vulnerável a captura.');
+    expect(text).toContain('No lugar dele, eu jogaria Rf2.');
   });
 
   it('does not read out the evaluation or the missed-advantage sentence', () => {

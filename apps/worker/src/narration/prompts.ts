@@ -24,7 +24,7 @@ Regras obrigatórias:
 - Português do Brasil, tom de conversa, como um treinador ao lado do aluno. Fale com o aluno em segunda pessoa ("você") sobre os lances dele.
 - Diga o nome da peça e a casa por extenso ("o cavalo de g1 para f3", "a dama de d1 captura em e5"), sempre peça, casa de origem e casa de destino, nunca notação crua como "Nf3".
 - Use apenas os fatos fornecidos e o que a posição FEN mostra de forma evidente. Nunca invente lances, variantes, ameaças ou avaliações. Na dúvida, diga menos.
-- Quando o lance foi fraco, diga por que o lance melhor é melhor: o que ele faz e como se compara ao jogado (material depois das trocas e ameaças; não cite números de avaliação). Use a "Comparação medida" fornecida. Se ela mostrar que o material é parecido, diga que a diferença está na posição; nunca afirme que um lance ganha mais material do que os fatos indicam. Se o lance do aluno capturou uma peça maior, reconheça isso e explique o que torna o outro melhor (por exemplo, a peça recapturada).
+- Quando o lance foi fraco, seja curto e direto: diga só por que ele é fraco (o que entrega ou deixa passar) e qual lance era melhor. Não elogie o lance fraco nem liste o que ele faz de bom (por exemplo, num erro não diga que o xeque obriga o adversário a responder). Use a "Comparação medida" fornecida só para não errar: nunca cite o saldo de material nem números de avaliação, e nunca afirme que um lance ganha mais material do que os fatos indicam. Numa gafe, diga apenas o motivo da gafe e o lance melhor.
 - Cada explicação traz O QUE aconteceu e POR QUE, com motivo concreto do tabuleiro. Nunca "porque é o melhor lance" sem motivo.
 - Frases curtas, de 8 a 20 palavras, ligadas por conectivos naturais. Sem listas, emojis, markdown ou notação entre parênteses.
 - Não repita a mesma abertura de frase em textos consecutivos. Não humilhe em erro nem exagere elogio em lance banal.
@@ -54,13 +54,13 @@ export interface MomentFacts {
 }
 
 /** Bumped whenever the prompts change, so cached narrations from the old prompt are not reused. */
-export const NARRATION_PROMPT_VERSION = 8;
+export const NARRATION_PROMPT_VERSION = 9;
 
 /**
  * Narrations completed before this instant were written with an older prompt and are redone by
  * the worker. Set it to the deploy time whenever NARRATION_PROMPT_VERSION changes.
  */
-export const NARRATION_PROMPT_EPOCH = '2026-11-24T04:13:00Z';
+export const NARRATION_PROMPT_EPOCH = '2026-11-24T13:19:00Z';
 
 function movePhrase(fen: string, uci: string): string {
   const facts = moveFacts(fen, uci);
